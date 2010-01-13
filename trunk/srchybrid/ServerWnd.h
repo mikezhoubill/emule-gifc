@@ -162,6 +162,7 @@ protected:
 	afx_msg void OnSplitterMoved(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void OnBnClickedFeedchange(); //MORPH
+	afx_msg void OnBnClickedServerLists();
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
 #ifdef DESIGN_SETTINGS

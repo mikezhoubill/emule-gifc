@@ -1,4 +1,4 @@
-/* $Id: id3.h,v 1.2 2007/06/02 20:17:21 pindakaasmod Exp $
+/* $Id: id3.h,v 1.2 2007/06/07 06:11:40 stulleamgym Exp $
  *
  * id3lib: a software library for creating and manipulating id3v1/v2 tags
  * Copyright 1999, 2000  Scott Thomas Haug

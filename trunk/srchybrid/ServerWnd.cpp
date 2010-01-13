@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CServerWnd, CResizableDialog)
 	// Mighty Knife: News feed edit button
 	ON_BN_CLICKED(IDC_FEEDCHANGE, OnBnClickedFeedchange)
 	// [end] Mighty Knife
+	ON_BN_CLICKED(IDC_SERVER_LISTS, &CServerWnd::OnBnClickedServerLists)
 END_MESSAGE_MAP()
 
 CServerWnd::CServerWnd(CWnd* pParent /*=NULL*/)
@@ -306,6 +307,9 @@ BOOL CServerWnd::OnInitDialog()
 	AddAnchor(m_ctrlUpdateServerFrm, TOP_RIGHT);
 	AddAnchor(IDC_SERVERMETURL, TOP_RIGHT);
 	AddAnchor(IDC_UPDATESERVERMETFROMURL, TOP_RIGHT);
+	// >> add by Ken
+	AddAnchor(IDC_SERVER_LISTS, TOP_RIGHT); // Links for Server list and nodes file [Stulle] - Stulle
+	// << add by Ken
 	AddAnchor(StatusSelector, MIDDLE_LEFT, BOTTOM_RIGHT);
 	//MORPH START - Added by SiRoB, XML News [O²]
 	AddAnchor(IDC_FEEDUPDATE, MIDDLE_RIGHT);
@@ -1872,3 +1876,12 @@ void CServerWnd::OnBackcolor()
 }
 #endif
 // <== Design Settings [eWombat/Stulle] - Stulle
+
+// >> add by Ken -- copy from ScareAngle
+// ==> Links for Server list and nodes file [Stulle] - Stulle
+void CServerWnd::OnBnClickedServerLists()
+{
+	ShellExecute(NULL, NULL, _T("http://www.server-met.de/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+}
+// <== Links for Server list and nodes file [Stulle] - Stulle}
+// << add by Ken

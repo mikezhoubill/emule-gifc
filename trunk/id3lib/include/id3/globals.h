@@ -1,5 +1,5 @@
 // -*- C++ -*-
-/* $Id: globals.h,v 1.3 2008/01/09 22:56:40 stulleamgym Exp $
+/* $Id: globals.h,v 1.3 2008/01/09 18:41:13 stulleamgym Exp $
 
  * id3lib: a C++ library for creating and manipulating id3v1/v2 tags
  * Copyright 1999, 2000 Scott Thomas Haug

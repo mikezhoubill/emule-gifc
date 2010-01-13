@@ -73,7 +73,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG;_UNICODE;UNICODE"
-				Culture="1033"
+				Culture="2052"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -181,7 +181,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG;_UNICODE;UNICODE"
-				Culture="1033"
+				Culture="2052"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -339,7 +339,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Inserting Vista application icon..."
-				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP&#x0D;&#x0A;del $(IntDir)\emule.obj"
+				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP&#x0D;&#x0A;del $(IntDir)\emule.obj&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -2953,7 +2953,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\Banner_StulleMule.jpg"
+				>
+			</File>
+			<File
 				RelativePath="res\bold.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\boldFont.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\Browse8.ico"
 				>
 			</File>
 			<File
@@ -3121,6 +3133,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\CloseTab.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\CloseTabSelected.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Collapse.ico"
 				>
 			</File>
@@ -3273,6 +3293,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\Cut.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\CycleView.ico"
 				>
 			</File>
@@ -3313,6 +3337,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\DropDefaults.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\EastShare.ico"
 				>
 			</File>
@@ -3325,7 +3353,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\Edit.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Empty.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Emulator.ico"
 				>
 			</File>
 			<File
@@ -3386,6 +3422,10 @@
 			</File>
 			<File
 				RelativePath="res\emuleCollView.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\emulefuture.ico"
 				>
 			</File>
 			<File
@@ -3609,6 +3649,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\FunnyNick.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\GIFC.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Global.ico"
 				>
 			</File>
@@ -3625,6 +3673,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\icon2.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\iconmax.ico"
 				>
 			</File>
@@ -3634,6 +3686,10 @@
 			</File>
 			<File
 				RelativePath="res\Import.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\Incoming.gif"
 				>
 			</File>
 			<File
@@ -3673,6 +3729,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\italicFont.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Kad.ico"
 				>
 			</File>
@@ -3694,6 +3754,10 @@
 			</File>
 			<File
 				RelativePath="res\KadNodeSearch.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\KadServer.ico"
 				>
 			</File>
 			<File
@@ -3745,7 +3809,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\MagicAngel.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\MediaInfo.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MenuBack.jpg"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\mephisto.ico"
 				>
 			</File>
 			<File
@@ -3770,7 +3846,47 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\MiniMule.ICO"
+				>
+			</File>
+			<File
 				RelativePath=".\res\MiniMuleBack.gif"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_ConCon.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_ConDis.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_ConLow.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_DisCon.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_DisDis.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_DisLow.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_LowCon.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_LowDis.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\MM_LowLow.ico"
 				>
 			</File>
 			<File
@@ -3810,7 +3926,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\New.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\nextEMF.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\NoAccessFolderOvl.ico"
 				>
 			</File>
 			<File
@@ -3822,7 +3946,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\NotShared.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Paste.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Pause.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Pinger.ico"
 				>
 			</File>
 			<File
@@ -3870,6 +4006,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\quickstart.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\Rating-Excellent.ico"
 				>
 			</File>
@@ -3906,6 +4046,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\ReleaseBonus.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Rename.ico"
 				>
 			</File>
@@ -3926,11 +4070,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\Save.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\ScarAngel.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\Scheduler.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\SchedulerAdd.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\SchedulerEdit.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\SchedulerRemove.ico"
 				>
 			</File>
 			<File
@@ -3999,6 +4159,10 @@
 			</File>
 			<File
 				RelativePath="res\SharedFilesList.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\SharedFolderOvl.ico"
 				>
 			</File>
 			<File
@@ -4090,7 +4254,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\Splash_StulleMule.jpg"
+				>
+			</File>
+			<File
 				RelativePath="res\SplitWindow.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\SpreadCredits.ico"
 				>
 			</File>
 			<File
@@ -4138,6 +4310,34 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\stullemule_wiz.gif"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayConnected.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayConnectedPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayDisconnected.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayDisconnectedPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayLowID.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\StulleTrayLowIDPlus.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\Mod\suc.ico"
 				>
 			</File>
@@ -4154,11 +4354,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\transfers.ico"
+				RelativePath="res\transfers.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\transfers.ico"
+				RelativePath=".\res\Mod\transfers.ico"
 				>
 			</File>
 			<File
@@ -4178,11 +4378,11 @@
 				>
 			</File>
 			<File
-				RelativePath="res\TrayConnected.ico"
+				RelativePath=".\res\MOD\TrayConnected.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\TrayConnected.ico"
+				RelativePath="res\TrayConnected.ico"
 				>
 			</File>
 			<File
@@ -4206,7 +4406,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\MOD\ulFont.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\underline.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Undo.ico"
 				>
 			</File>
 			<File
@@ -4223,6 +4431,10 @@
 			</File>
 			<File
 				RelativePath="res\Up1down1.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Update.ico"
 				>
 			</File>
 			<File
@@ -4287,6 +4499,10 @@
 			</File>
 			<File
 				RelativePath="res\Wizzard.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\MOD\Xray.ico"
 				>
 			</File>
 			<File
