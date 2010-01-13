@@ -3656,6 +3656,12 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	menu.AppendMenu(MF_STRING,MP_HM_BMI, GetResString(IDS_BMI_WND) + _T("..."), _T("CLIENTDETAILS"));
 	// BMI calculator - Stulle
 	menu.AppendMenu(MF_SEPARATOR);
+
+	// >> GIFC menu - add by Ken
+	menu.AppendMenu(MF_STRING, 0, GetResString(IDS_GIFC) + _T("..."), _T("GIFC"));
+	menu.AppendMenu(MF_SEPARATOR);
+	// << add by Ken
+
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB") );
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER") );
 

@@ -1527,6 +1527,7 @@
 #define IDS_FOLLOWLINKS                 1571
 #define IDS_RESOLVELINKS                1571
 #define IDC_ANIMATE1                    2000
+#define IDS_GIFC                        2000
 #define IDC_STATUS                      2001
 #define IDC_FILESTATUS                  2002
 #define IDC_TIMELEFT                    2003
@@ -1577,6 +1578,7 @@
 #define IDC_WSRELOADTMPL                2064
 #define IDC_BOOTSTRAPBUTTON             2065
 #define IDC_PV_EXIT                     2066
+#define IDC_NODESFILEBUTTON             2066
 #define IDC_DEBUG_OPTS                  2067
 #define IDC_TRAFFIC_TEXT                2069
 #define IDC_CLOSECHAT                   2071
@@ -1633,6 +1635,7 @@
 #define IDC_SEARCHLIST                  2172
 #define IDC_UPDATESERVERMETFROMURL      2174
 #define IDC_COMBO1                      2175
+#define IDC_SERVER_LISTS                2175
 #define IDC_AUTOSERVER                  2176
 #define IDC_LENGTH                      2178
 #define IDC_ED2KCONNECT                 2179
@@ -2295,11 +2298,6 @@
 #define IDC_AFKADIDLABEL                2993
 #define IDC_SHAREDFILES_FILTER          2994
 #define IDC_EDITCOMMENTFILTER           2995
-#define IDC_WIZZARDOBFUSCATION          12996
-#define IDC_SPIN1                       12997
-#define IDC_TOOLTIPDELAY_SPIN           12997
-#define IDC_CHECK_FILE_OPEN             12998
-#define IDA_ENTER                       32771
 #define IDC_STATIC_PORT                 2996
 #define IDC_STATIC_CONTROLS             2997
 #define IDC_STATIC_NRBLOCKS             2998
@@ -2954,6 +2952,8 @@
 #define IDS_LOG_ERRDWN                  6223
 #define IDS_DOWNFAKECHECKVER            6227
 #define IDS_DOWNFAKECHECKFILE           6228
+#define IDI_ICON2                       6228
+#define IDI_GIFC                        6228
 #define IDS_FC_LOADED                   6229
 #define IDS_LOG_FC_LOADED               6230
 #define IDS_LOG_FC_INFO                 6231
@@ -3042,6 +3042,10 @@
 #define IDS_SCHEDTEXT                   10079
 #define IDC_AUTOBACKUP                  10080
 #define IDC_AUTOBACKUP2                 10081
+#define IDC_WIZZARDOBFUSCATION          12996
+#define IDC_SPIN1                       12997
+#define IDC_TOOLTIPDELAY_SPIN           12997
+#define IDC_CHECK_FILE_OPEN             12998
 #define IDS_SR13_IMPORTPARTS_ERR_ALREADYCOMPLETE 13000
 #define IDS_SR13_IMPORTPARTS_ERR_HASHSETINCOMPLETE 13001
 #define IDS_SR13_IMPORTPARTS_ERR_CANTOPENFILE 13002
@@ -3068,7 +3072,6 @@
 #define IDC_BTN_HTTP_REMOVE             20124
 #define IDC_BTN_HTTP_CLEAR              20125
 #define IDC_EDIT_HTTP                   20126
-//#define IDS_UPNP                        21001
 #define IDS_UPNP_INIT                   21002
 #define IDS_UPNP_FAILEDINIT             21003
 #define IDS_UPNP_PUBLICIP               21004
@@ -3204,46 +3207,43 @@
 #define IDS_PREF_GROUPMOD               21172
 #define IDS_ERR_NOVALIDSTATICSERVERSFOUND 21173
 #define IDS_ERR_NOVALIDOBFUSCATEDSERVERSFOUND 21174
-#define IDS_DEBUGSEARCHDETAILLEVEL     21175
-#define IDS_CRYPTTCPPADDINGLENGTH	    21176
+#define IDS_DEBUGSEARCHDETAILLEVEL      21175
+#define IDS_CRYPTTCPPADDINGLENGTH       21176
 #define IDS_CRYPTTCPPADDINGLENGTH_TIP   21177
 #define IDS_X_ADJUSTNTFSDAYLIGHTFILETIME 21178
-#define IDS_X_PEERCACHESHOW    21179
-#define IDS_X_DATETIMEFORMAT  21180
-#define IDS_X_DATETIMEFORMAT4LOG 21181
-#define IDS_X_LOGERROR         21182
-#define IDS_X_ICH              21183
-#define IDS_X_DONTCOMPRESSAVI  21184
-#define IDS_X_SHOWCOPYED2KLINK 21185
+#define IDS_X_PEERCACHESHOW             21179
+#define IDS_X_DATETIMEFORMAT            21180
+#define IDS_X_DATETIMEFORMAT4LOG        21181
+#define IDS_X_LOGERROR                  21182
+#define IDS_X_ICH                       21183
+#define IDS_X_DONTCOMPRESSAVI           21184
+#define IDS_X_SHOWCOPYED2KLINK          21185
 #define IDS_X_ICON_FLASH_ON_NEW_MESSAGE 21186
 #define IDS_X_SHOWVERTICALHOURMARKERS   21187
-#define IDS_X_LOGWARNING		 21188
-#define IDS_X_LOGSUCCESS		 21189
-#define IDS_X_REBARTOOLBAR		 21190
-
-#define IDS_INCFILES_TIP 21200
-#define IDS_TEMPFILES_TIP 21202
-#define IDS_SHARESELECTOR_TIP 21204
-#define IDS_UNCLIST_TIP 21205
-#define IDS_UNCADD_TIP 21206
-#define IDS_UNCREM_TIP 21207
-
-#define IDS_ENABLE_SCHED_TIP 21209
-#define IDS_REMOVE_SCHED_TIP 21210
-#define IDS_NEW_SCHED_TIP 21211
-#define IDS_SCHEDLIST_TIP 21212
-#define IDS_S_ENABLE_TIP 21213
-#define IDS_S_TITLE_TIP 21214
-#define IDS_TIMESEL_SCHED_TIP 21215
-#define IDS_DATETIMEPICKER1_TIP 21216
-#define IDS_DATETIMEPICKER2_TIP 21217
-#define IDS_CHECKNOENDTIME_SCHED_TIP 21218
-#define IDS_SCHEDACTION_TIP 21319
-#define IDS_STATIC_S_TITLE_TIP 21320
-#define IDS_STATIC_S_TIME_TIP 21321
-#define IDS_STATIC_S_ACTION_TIP 21322
-#define IDS_STATIC_SCHED_TIP 21323
-
+#define IDS_X_LOGWARNING                21188
+#define IDS_X_LOGSUCCESS                21189
+#define IDS_X_REBARTOOLBAR              21190
+#define IDS_INCFILES_TIP                21200
+#define IDS_TEMPFILES_TIP               21202
+#define IDS_SHARESELECTOR_TIP           21204
+#define IDS_UNCLIST_TIP                 21205
+#define IDS_UNCADD_TIP                  21206
+#define IDS_UNCREM_TIP                  21207
+#define IDS_ENABLE_SCHED_TIP            21209
+#define IDS_REMOVE_SCHED_TIP            21210
+#define IDS_NEW_SCHED_TIP               21211
+#define IDS_SCHEDLIST_TIP               21212
+#define IDS_S_ENABLE_TIP                21213
+#define IDS_S_TITLE_TIP                 21214
+#define IDS_TIMESEL_SCHED_TIP           21215
+#define IDS_DATETIMEPICKER1_TIP         21216
+#define IDS_DATETIMEPICKER2_TIP         21217
+#define IDS_CHECKNOENDTIME_SCHED_TIP    21218
+#define IDS_SCHEDACTION_TIP             21319
+#define IDS_STATIC_S_TITLE_TIP          21320
+#define IDS_STATIC_S_TIME_TIP           21321
+#define IDS_STATIC_S_ACTION_TIP         21322
+#define IDS_STATIC_SCHED_TIP            21323
 #define IDS_LOG_IACH                    22542
 #define IDC_TRUSTEDOHCBSENDER           22570
 #define IDC_TAB_WEBSERVER1              22667
@@ -3605,7 +3605,6 @@
 #define IDC_DISABLEOBFUSCATION_TIP      30601
 #define IDC_ONLYOBFUSCATED_TIP          30602
 #define IDC_ENABLEOBFUSCATION_TIP       30603
-
 #define IDS_CHANGEUSERASSERVICE         30699
 #define IDS_SVC_RUNNINGASSERVICE        30700
 #define IDS_SVC_ACCESSDENIED            30701
@@ -3639,7 +3638,7 @@
 #define IDS_NOMINIMIZE                  30737
 #define IDS_YESSERVICETIP               30738
 #define IDS_NOMINIMIZETIP               30739
-#define IDS_DISABLECATCOLORS			30740
+#define IDS_DISABLECATCOLORS            30740
 #define IDS_DISABLECATCOLOR_TIP         30741
 #define IDC_WIZARDREQUIREOBFUSCATED     30800
 #define IDS_WIZARDREQUIREOBFUSCATED     30801
@@ -3693,20 +3692,20 @@
 #define IDS_SLOT_LIMIT_NUM_B            31083
 #define IDS_SLOT_LIMIT_NUM              31084
 #define IDC_BACKUP_FILEFRAME            31101
+#define IDS_BACKUP_FILEFRAME            31101
+#define IDS_BACKUP_SELECTALL            31102
 #define IDC_BACKUP_AUTO                 31103
+#define IDS_BACKUP_AUTOFRAME            31103
+#define IDS_BACKUP_AUTOBACKUP           31104
 #define IDC_BACKUP_NOTE                 31105
+#define IDS_BACKUP_NOTE                 31105
+#define IDS_BACKUP_BACKUPNOW            31106
 #define IDC_BACKUP_MESSAGE              31107
+#define IDS_BACKUP_MESSAGE              31107
+#define IDS_BACKUP_AUTOBACKUP2          31108
 #define IDC_MORPH2_FILE                 31123
 #define IDC_MORPH2_SECURITY             31124
 #define IDC_MORPH2_COUNTRY              31125
-#define IDS_BACKUP_FILEFRAME            31101
-#define IDS_BACKUP_SELECTALL            31102
-#define IDS_BACKUP_AUTOFRAME            31103
-#define IDS_BACKUP_AUTOBACKUP           31104
-#define IDS_BACKUP_NOTE                 31105
-#define IDS_BACKUP_BACKUPNOW            31106
-#define IDS_BACKUP_MESSAGE              31107
-#define IDS_BACKUP_AUTOBACKUP2          31108
 #define IDS_MORPH_RFHA                  31141
 #define IDS_MORPH_RAIF                  31142
 #define IDS_MORPH_KSSERV                31143
@@ -3719,52 +3718,52 @@
 #define IDS_UPNP_INFODISABLED           31254
 #define IDS_UPNP_INFOSTANDBY            31255
 #define IDS_UPNP_INFO_NONEED            31256
-#define IDS_ADDSHAREDIR					31257
-#define IDS_TEXTSHRETOADD				31258
-#define  IDS_SHAREWITHSUBDIR			31259
-#define IDC_SHAREWITHSUBDIR				31260
-#define IDC_TEXTSHRETOADD				31261
-#define IDC_INPUTTEXT					31262
+#define IDS_ADDSHAREDIR                 31257
+#define IDS_TEXTSHRETOADD               31258
+#define IDS_SHAREWITHSUBDIR             31259
+#define IDC_SHAREWITHSUBDIR             31260
+#define IDC_TEXTSHRETOADD               31261
+#define IDC_INPUTTEXT                   31262
 #define IDS_UNCLIST_INACTIVE            31263
-#define IDS_SUBDIRS						31264
-#define IDS_SCHED_RELOAD				31265
-#define IDS_SCHED_WARN_APPLY			31266
-#define IDS_SCHED_WARN_APPLY_TITLE		31267
-#define IDS_SCHED_WARNENDTIME			31268
-#define IDS_USSPINGDATASIZE			    31269
+#define IDS_SUBDIRS                     31264
+#define IDS_SCHED_RELOAD                31265
+#define IDS_SCHED_WARN_APPLY            31266
+#define IDS_SCHED_WARN_APPLY_TITLE      31267
+#define IDS_SCHED_WARNENDTIME           31268
+#define IDS_USSPINGDATASIZE             31269
 #define IDS_PINGDATASIZE_TIP            31270
-#define IDS_VIEW3                       31271 
+#define IDS_VIEW3                       31271
 #define IDS_OVERWRITE1                  31272
-#define IDS_OVERWRITE2                  31273   
-#define IDS_BACKUPERROR					31274  
-#define IDS_BACKUP_PART					31275   
-#define IDS_BACKUP_PART_W				31276   
-#define IDS_BACKUP_COMPLETE				31277   
-#define IDS_NO_OBFUSCATION_KEY			31278
+#define IDS_OVERWRITE2                  31273
+#define IDS_BACKUPERROR                 31274
+#define IDS_BACKUP_PART                 31275
+#define IDS_BACKUP_PART_W               31276
+#define IDS_BACKUP_COMPLETE             31277
+#define IDS_NO_OBFUSCATION_KEY          31278
 #define IDS_OUTOFSERVERS_O              31279
 #define IDS_X_ADJUSTNTFSDAYLIGHTFILETIME_TIP 31280
-#define IDS_X_LOGERROR_TIP            31281
-#define IDS_X_SHOWVERTICALHOURMARKERS_TIP   31282
-#define IDS_X_REBARTOOLBAR_TIP 31283
+#define IDS_X_LOGERROR_TIP              31281
+#define IDS_X_SHOWVERTICALHOURMARKERS_TIP 31282
+#define IDS_X_REBARTOOLBAR_TIP          31283
 #define IDS_X_ICON_FLASH_ON_NEW_MESSAGE_TIP 31284
-#define IDS_X_SHOWCOPYED2KLINK_TIP 31285
-#define IDS_X_DONTCOMPRESSAVI_TIP 31286
-#define IDS_UPNPDETECTSTATUS 31287
-#define IDS_UPNPPORT_TIP  31288
-#define IDS_UPNPCLEARONCLOSE_TIP 31289
+#define IDS_X_SHOWCOPYED2KLINK_TIP      31285
+#define IDS_X_DONTCOMPRESSAVI_TIP       31286
+#define IDS_UPNPDETECTSTATUS            31287
+#define IDS_UPNPPORT_TIP                31288
+#define IDS_UPNPCLEARONCLOSE_TIP        31289
 #define IDS_UPNPLIMITTOFIRSTCONNECTION_TIP 31290
-#define IDS_DETECTUPNP_TIP 31291
+#define IDS_DETECTUPNP_TIP              31291
 #define IDS_UPNPLIMITTOFIRSTCONNECTION  31292
-#define IDS_UPNFORCEUPDATE 31293
-#define IDS_UPNFORCEUPDATE_TIP 31294
-#define IDS_DONOTWATCHCLIP    31295
-#define IDS_DONOTWATCHCLIP_TIP 31296
-#define  IDS_USS_INITIAL_TTL 31297
-#define  IDS_USS_INITIAL_TTL_TIP  31298
-#define  IDC_SELFILES 31299
-#define  IDS_SELFILES_TIP 31300
-#define  IDS_USEDOWNLOADOVERHEAD 31301
-#define  IDS_USEDOWNLOADOVERHEAD_TIP 31302
+#define IDS_UPNFORCEUPDATE              31293
+#define IDS_UPNFORCEUPDATE_TIP          31294
+#define IDS_DONOTWATCHCLIP              31295
+#define IDS_DONOTWATCHCLIP_TIP          31296
+#define IDS_USS_INITIAL_TTL             31297
+#define IDS_USS_INITIAL_TTL_TIP         31298
+#define IDC_SELFILES                    31299
+#define IDS_SELFILES_TIP                31300
+#define IDS_USEDOWNLOADOVERHEAD         31301
+#define IDS_USEDOWNLOADOVERHEAD_TIP     31302
 #define IDS_APPLY_SETTINGS              31303
 #define IDS_TAB_WEB_SERVER              31304
 #define IDS_TAB_MULTI_USER              31305
@@ -3773,11 +3772,9 @@
 #define IDS_PURGE_PARTIALLY             31308
 #define IDS_PURGE_COMPLETLY             31309
 #define IDS_REMOVE_AICH_IMMEDIATLY      31310
-#define IDS_IPFILTERWHITELOADED         31311 //MORPH - Added by Stulle, IP Filter White List [Stulle]
-//MORPH START - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
+#define IDS_IPFILTERWHITELOADED         31311
 #define IDS_AUTOIPFILTERFAILED          31312
 #define IDS_DL_NONE                     31313
-//MORPH END   - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
 #define IDS_X_FILE_BUFFER_TIME_LIMIT    31314
 #define IDS_X_FILE_BUFFER_TIME_LIMIT_TIP 31315
 #define IDS_X_DATETIMEFORMAT4LIST       31316
@@ -3794,11 +3791,9 @@
 #define IDS_FILTER_CLIENTFAILEDDOWN     31327
 #define IDS_FILTER_CLIENTFAILEDDOWN_TIP 31328
 #define IDS_TCP_CONS                    31329
-
+#define IDA_ENTER                       32771
 #define IDS_EASTSHARE                   51583
 #define IDS_FINECS                      51584
-
-// ==> StulleMule Preferences window - Stulle
 #define IDD_PPG_STULLE                  60000
 #define IDC_STULLE_OPTS                 60001
 #define IDC_PUSHSMALL                   60002
@@ -3806,39 +3801,30 @@
 #define IDC_PUSHSMALL_SLIDER            60004
 #define IDS_CON_TWEAKS                  60005
 #define IDS_MISC                        60006
-// <== StulleMule Preferences window - Stulle
-#define IDS_PUSH                        60010 // push files - Stulle
-// ==> push small files [sivka] - Stulle
+#define IDS_PUSH                        60010
 #define IDS_PUSH_SMALL                  60011
 #define IDS_SMALL                       60012
 #define IDS_PUSH_SMALL_BOOST            60013
-// <== push small files [sivka] - Stulle
-// ==> push rare file - Stulle
 #define IDS_PUSH_RARE                   60015
 #define IDS_RARE                        60016
-// <== push rare file - Stulle
-// ==> Show sources on title - Stulle
 #define IDS_SHOWSRCONTITLE              60020
 #define IDS_SHOWSRCSTRING               60021
-// <== Show sources on title - Stulle
-// ==> show overhead on title - Stulle
 #define IDC_SHOWOVERHEADONTITLE         60030
 #define IDS_SHOWOVERHEADONTITLE         60031
-// <== show overhead on title - Stulle
-// ==> ZZ Ratio Activation Changes - Stulle
+#define IDC_DEFAULT_BUTTON              60032
+#define IDS_HARDLIMIT_LABEL             60033
+#define IDC_HARDLIMIT_TAKEOVER          60034
+#define IDC_HARDLIMIT                   60035
+#define IDC_HARDLIMIT_LABEL             60036
 #define IDS_ZZRATIO_CHECK5_NEW          60040
 #define IDS_ZZRATIO_CHECK6              60041
 #define IDS_ZZRATIO_CHECK8              60043
-// <== ZZ Ratio Activation Changes - Stulle
-#define IDS_AVG_QUEUE                   60050 // Average Queue Ranking [Xman] - Stulle
-// ==> Sivka-Ban [cyrex2001] - Stulle
+#define IDS_AVG_QUEUE                   60050
 #define IDS_SIVKA_BAN_CONTROL           60060
 #define IDS_SIVKA_BAN                   60061
 #define IDS_SIVKA_ASK_TIME              60062
 #define IDS_SIVKA_ASK_COUNTER           60063
 #define IDS_SIVKA_ASK_LOG               60064
-// <== Sivka-Ban [cyrex2001] - Stulle
-// ==> ban systems optional - Stulle
 #define IDS_BAD_NICK_BAN                60069
 #define IDS_ANTI_MOD_FAKER              60070
 #define IDS_ANTI_NICK_THIEF             60071
@@ -3859,22 +3845,14 @@
 #define IDS_NICK_CHANGER                60086
 #define IDS_FILEFAKER                   60087
 #define IDS_VAGAA                       60088
-// <== ban systems optional - Stulle
-// ==> Inform Clients after IP Change - Stulle
 #define IDS_RSAIC                       60100
 #define IDS_IQCAOC                      60101
-// <== Inform Clients after IP Change - Stulle
-#define IDS_REASK_FILE_SRC              60110 // Timer for ReAsk File Sources - Stulle
-// ==> new credit system - Stulle
+#define IDS_REASK_FILE_SRC              60110
 #define IDS_SIVKA_CREDIT                60120
 #define IDS_SWAT_CREDIT                 60121
-//#define IDS_MA_CREDIT                   60122
-//#define IDS_MAPLUS_CREDIT               60123
 #define IDS_TK4_CREDIT                  60124
 #define IDS_XTREME_CREDIT               60125
 #define IDS_ZZUL_CREDIT                 60126
-// <== new credit system - Stulle
-// ==> Quick start [TPT] - Stulle
 #define IDS_QUICK_START_GROUP           60130
 #define IDS_QUICK_START                 60131
 #define IDS_QUICK_START_MAX_TIME        60132
@@ -3883,8 +3861,6 @@
 #define IDS_QUICK_START_AFTER_IP_CHANGE 60135
 #define IDS_QUICK_START_MAX_CONN_PER_FIVE_BACK 60136
 #define IDS_QUICK_START_MAX_CONN_BACK   60137
-// <== Quick start [TPT] - Stulle
-// ==> FunnyNick Tag - Stulle
 #define IDS_FN_TAG                      60140
 #define IDS_NO_TAG                      60141
 #define IDS_SHORT_TAG                   60142
@@ -3892,18 +3868,9 @@
 #define IDS_CUSTOM_TAG                  60144
 #define IDS_SET_CUSTOM_TAG              60145
 #define IDS_FN_TAG_AT_END               60146
-// <== FunnyNick Tag - Stulle
-// ==> Pay Back First for insecure clients - Stulle
 #define IDS_PAYBACKFIRST2               60150
 #define IDS_PAYBACKFIRSTLIMIT2          60151
-// <== Pay Back First for insecure clients - Stulle
-#define IDS_CLIENT_BAN_TIME             60160 // adjust ClientBanTime - Stulle
-// ==> drop sources - Stulle
-#define IDC_DEFAULT_BUTTON              60032
-#define IDS_HARDLIMIT_LABEL             60033
-#define IDC_HARDLIMIT_TAKEOVER          60034
-#define IDC_HARDLIMIT                   60035
-#define IDC_HARDLIMIT_LABEL             60036
+#define IDS_CLIENT_BAN_TIME             60160
 #define IDC_NNS_TIMER_TAKEOVER          60170
 #define IDC_REMOVENNSLIMITLABEL_TAKEOVER 60171
 #define IDC_MAXREMOVENNSLIMIT_TAKEOVER  60172
@@ -3941,12 +3908,10 @@
 #define IDS_AUTO_FQS                    60204
 #define IDS_AUTO_QRS                    60205
 #define IDS_DROP_DEFAULTS               60206
-#define IDC_GLOBAL_HL                   60207 // Global Source Limit (customize for files) - Stulle
-#define IDC_GLOBAL_HL_TAKEOVER          60208 // Global Source Limit (customize for files) - Stulle
-// <== drop sources - Stulle
-#define IDS_SHOW_GLOBAL_HL              60210 // show global HL - Stulle
-#define IDS_SHOW_DROPPED_SRC            60230 // show # of dropped sources - Stulle
-// ==> TBH: minimule - Stulle
+#define IDC_GLOBAL_HL                   60207
+#define IDC_GLOBAL_HL_TAKEOVER          60208
+#define IDS_SHOW_GLOBAL_HL              60210
+#define IDS_SHOW_DROPPED_SRC            60230
 #define IDD_MINI_MULE                   60260
 #define IDC_SM_PLACEHOLDER              60261
 #define IDC_MM_ULDL                     60263
@@ -3972,20 +3937,14 @@
 #define IDS_MM_RATIO                    60283
 #define IDS_MM_OPEN                     60284
 #define IDS_MM_GROUP                    60285
-// <== TBH: minimule - Stulle
-#define IDS_SHOWINMSN7                  60290 //Show in MSN7 [TPT] - Stulle
-// ==> Anti Uploader Ban - Stulle
+#define IDS_SHOWINMSN7                  60290
 #define IDS_UNBAN_UPLOADER              60300
 #define IDS_ANTI_CASE_1                 60301
 #define IDS_ANTI_CASE_2                 60302
 #define IDS_ANTI_CASE_3                 60303
-// <== Anti Uploader Ban - Stulle
-// ==> Spread Credits Slot - Stulle
 #define IDS_SPREAD_CREDITS_SLOT         60310
 #define IDS_SPREAD_CREDITS_SLOT_COUNTER 60311
 #define IDS_SPREAD_CREDITS_SLOT_PS      60312
-// <== Spread Credits Slot - Stulle
-// ==> Source Graph - Stulle
 #define IDC_SRCGRAPH                    60320
 #define IDC_STATIC_STATSHL              60321
 #define IDC_STATSHL_MIN                 60322
@@ -3993,14 +3952,10 @@
 #define IDS_SRCGRAPH                    60324
 #define IDS_STATIC_STATSHL              60325
 #define IDS_SP_SRCGRAPH                 60326
-// <== Source Graph - Stulle
-#define IDS_SHOW_FILE_HL_CONST          60330 // show HL per file constantly
-// ==> Average download speed - Stulle
+#define IDS_SHOW_FILE_HL_CONST          60330
 #define IDC_AVGDL                       60340
 #define IDC_FD_AVGDL                    60341
 #define IDS_FD_AVGDL                    60342
-// <== Average download speed - Stulle
-// ==> BMI calculator - Stulle
 #define IDD_BMI_WND                     60350
 #define IDC_BMI_HEAD                    60351
 #define IDC_BMI_WEIGHT                  60352
@@ -4025,22 +3980,16 @@
 #define IDS_BMI_RESULT3                 60371
 #define IDS_BMI_RESULT4                 60372
 #define IDC_BMI_EGG                     60373
-// <== BMI calculator - Stulle
-#define IDS_TRAY_COMPLETE               60390 // Completed in Tray - Stulle
-#define IDS_ANTI_XS_EXPLOITER           60400 // Anti-XS-Exploit [Xman] - Stulle
-#define IDS_SPAM_BAN                    60410 // Spam Ban [Xman] - Stulle
-// ==> Global Source Limit (customize for files) - Stulle
+#define IDS_TRAY_COMPLETE               60390
+#define IDS_ANTI_XS_EXPLOITER           60400
+#define IDS_SPAM_BAN                    60410
 #define IDS_GLOBAL_HL_DEFAULT           60420
 #define IDS_GLOBAL_HL_ALL               60421
-// <== Global Source Limit (customize for files) - Stulle
-// ==> StulleMule Version Check - Stulle
 #define IDS_VISITSVERSIONCHECK          60430
 #define IDS_SVERSIONCHECK               60431
 #define IDS_NONEWSVERVERSION            60432
 #define IDS_NEWSVERSIONAVL              60433
 #define IDS_NEWSVERSIONAVLPOPUP         60435
-// <== StulleMule Version Check - Stulle
-// ==> Emulate others [WiZaRd/Spike/shadow2004] - Stulle
 #define IDS_EMULATOR_GROUP              60440
 #define IDS_EMULATE_ML                  60441
 #define IDS_EMULATE_DONK                60442
@@ -4048,28 +3997,20 @@
 #define IDS_EMULATE_SHA                 60444
 #define IDS_EMULATE_PHANT               60445
 #define IDS_EMULATE_LOG                 60446
-// <== Emulate others [WiZaRd/Spike/shadow2004] - Stulle
-// ==> CPU/MEM usage [$ick$/Stulle] - Stulle
 #define IDC_CPU                         60450
 #define IDC_CPUCOUNT                    60451
 #define IDC_MEM                         60452
 #define IDC_MEMCOUNT                    60453
 #define IDS_SYS_INFO_GROUP              60454
 #define IDS_SYS_INFO_GLOBAL             60455
-// <== CPU/MEM usage [$ick$/Stulle] - Stulle
-// ==> Release Bonus [sivka] - Stulle
 #define IDS_RELEASE_BONUS_GROUP         60460
 #define IDS_RELEASE_BONUS_EDIT          60461
 #define IDS_RELEASE_BONUS_12            60462
-// <== Release Bonus [sivka] - Stulle
-#define IDS_RELEASE_SCORE_ASSURANCE     60470 // Release Score Assurance - Stulle
-// ==> Connection Checker [eWombat/WiZaRd] - Stulle
+#define IDS_RELEASE_SCORE_ASSURANCE     60470
 #define IDS_CONCHECK                    60480
 #define IDS_ENABLE_ICMP                 60481
 #define IDS_PING_TIME_OUT               60482
 #define IDS_PING_TTL                    60483
-// <== Connection Checker [eWombat/WiZaRd] - Stulle
-// ==> Reduce Score for leecher - Stulle
 #define IDS_PUNISHMENT                  60490
 #define IDS_PUNISHMENT_BAN              60491
 #define IDS_PUNISHMENT_REDUCE           60492
@@ -4103,15 +4044,11 @@
 #define IDS_BAN_FILEFAKER               60523
 #define IDS_BAN_APPLE_JUICE             60524
 #define IDS_BAN_VAGAA                   60525
-// <== Reduce Score for leecher - Stulle
-#define IDS_MOD_STATS                   60530 // Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-// ==> Limit PS by amount of data uploaded - Stulle
+#define IDS_MOD_STATS                   60530
 #define IDS_PS_AMOUNT_LIMIT             60540
 #define IDS_PS_AMOUNT_LIMIT_LABEL       60541
 #define IDS_PS_AMOUNT_LIMIT_WRONG       60542
-// <== Limit PS by amount of data uploaded - Stulle
-#define IDS_NO_BAD_PUSHING              60550 // Disable PS/PBF for leechers [Stulle/idea by sfrqlxert] - Stulle
-// ==> Design Settings [eWombat/Stulle] - Stulle
+#define IDS_NO_BAD_PUSHING              60550
 #define IDC_COLOR_BOX                   60600
 #define IDC_COLOR_MASTER_COMBO          60601
 #define IDC_COLOR_SUB_COMBO             60602
@@ -4172,8 +4109,6 @@
 #define IDS_COLOR_MASTER6               60658
 #define IDS_COLOR_W10                   60659
 #define IDS_COLOR_S3                    60660
-// <== Design Settings [eWombat/Stulle] - Stulle
-// ==> Automatic shared files updater [MoNKi] - Stulle
 #define IDS_AUTO_SHARED_UPDATER         60750
 #define IDS_ASFU_RELOADTIME             60751
 #define IDS_ASFU_DELAY                  60752
@@ -4181,27 +4116,19 @@
 #define IDS_ASFU_RELOADING              60754
 #define IDS_ASFU_SINGLE                 60755
 #define IDS_ASFU_TIMEBETWEEN            60756
-// <== Automatic shared files updater [MoNKi] - Stulle
-// ==> Control download priority [tommy_gun/iONiX] - Stulle
 #define IDS_AUTO_DOWN_GROUP             60760
 #define IDS_AUTO_DOWN_PERC              60761
 #define IDS_AUTO_DOWN_PERC_VAL          60762
 #define IDS_AUTO_DOWN_SIZE              60763
 #define IDS_AUTO_DOWN_SIZE_VAL          60764
 #define IDS_AUTO_DOWN_PRIO              60765
-// <== Control download priority [tommy_gun/iONiX] - Stulle
-// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
 #define IDD_SPEEDGRAPH                  60770
 #define IDS_SHOW_SPEED_METER            60771
-// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
-// ==> Enforce Ratio - Stulle
 #define IDS_RATIO_GROUP                 60780
 #define IDS_ENFORCE_RATIO               60781
 #define IDS_RATIO_VALUE                 60782
 #define IDS_ZZRATIO_CHECK1_NEW          60783
 #define IDS_ZZRATIO_CHECK9              60784
-// <== Enforce Ratio - Stulle
-// ==> XP Style Menu [Xanatos] - Stulle
 #define IDS_MENU_PREVIEW                60790
 #define IDS_HISTORY                     60791
 #define IDS_COLUMNS                     60792
@@ -4209,8 +4136,6 @@
 #define IDS_PS_LIMITED_AMNT             60794
 #define IDS_FUNCTION                    60795
 #define IDS_RELEASER                    60796
-// <== XP Style Menu [Xanatos] - Stulle
-// ==> Adjustable NT Service Strings - Stulle
 #define IDS_SERVICE_STR_GROUP           60800
 #define IDS_SERVICE_NAME                60801
 #define IDS_SERVICE_DISP_NAME           60802
@@ -4222,13 +4147,14 @@
 #define IDS_SERVICE_UNINSTALL_TITLE     60808
 #define IDS_SERVICE_INSTALL_FAIL        60809
 #define IDS_SERVICE_INSTALL_TITLE       60810
-// <== Adjustable NT Service Strings - Stulle
+#define IDS_NODESFILEBUTTON             61351
+#define IDS_SERVER_LISTS                61353
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        6226
+#define _APS_NEXT_RESOURCE_VALUE        6229
 #define _APS_NEXT_COMMAND_VALUE         31257
 #define _APS_NEXT_CONTROL_VALUE         6218
 #define _APS_NEXT_SYMED_VALUE           106

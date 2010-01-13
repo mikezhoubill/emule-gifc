@@ -3361,7 +3361,10 @@ void CPreferences::LoadPreferences()
 #endif
 
 	m_nWebMirrorAlertLevel = ini.GetInt(L"WebMirrorAlertLevel",0);
-	updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
+	// >> modified by Ken
+	//updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
+	updatenotify=ini.GetBool(L"UpdateNotifyTestClient",false);
+	// << modified by Ken
 
 	SetUserNick(ini.GetStringUTF8(L"Nick", DEFAULT_NICK));
 	if (strNick.IsEmpty() || IsDefaultNick(strNick))
@@ -3550,7 +3553,10 @@ void CPreferences::LoadPreferences()
 	confirmExit=ini.GetBool(L"ConfirmExit",true);
 	filterLANIPs=ini.GetBool(L"FilterBadIPs",true);
 	m_bAllocLocalHostIP=ini.GetBool(L"AllowLocalHostIP",false);
-	autoconnect=ini.GetBool(L"Autoconnect",false);
+	// >> modified by Ken
+	//autoconnect=ini.GetBool(L"Autoconnect",false);
+	autoconnect=ini.GetBool(L"Autoconnect",true);
+	// << modified by Ken
 	showRatesInTitle=ini.GetBool(L"ShowRatesOnTitle",false);
 	m_bIconflashOnNewMessage=ini.GetBool(L"IconflashOnNewMessage",true); //MORPH
 
@@ -3620,7 +3626,10 @@ void CPreferences::LoadPreferences()
 	m_bIRCEnableSmileys = ini.GetBool(L"IRCEnableSmileys", true);
 	m_bMessageEnableSmileys = ini.GetBool(L"MessageEnableSmileys", true);
 
-	m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",true);
+	// >> modified by Ken
+	//m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",true);
+	m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",false);
+	// << modified by Ken
 	log2disk = ini.GetBool(L"SaveLogToDisk",false);
 	uMaxLogFileSize = ini.GetInt(L"MaxLogFileSize", 1024*1024);
 	iMaxLogBuff = ini.GetInt(L"MaxLogBuff",64) * 1024;
@@ -3868,7 +3877,10 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_IP2CountryVersion, 0, sizeof m_IP2CountryVersion);
 	delete[] pst;
-	AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),false);
+	// >> modified by Ken
+	//AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),false);
+	AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),true);
+	// << modified by Ken
     //Commander - Added: IP2Country Auto-updating - End
 
 	//MORPH START - Added by milobac, FakeCheck, FakeReport, Auto-updating
@@ -3879,12 +3891,18 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_FakesDatVersion, 0, sizeof m_FakesDatVersion);
 	delete[] pst;
-	UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),false);
+	// >> modified by Ken
+	//UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),false);
+	UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),true);
+	// << modified by Ken
 	//MORPH END - Added by milobac, FakeCheck, FakeReport, Auto-updating
 
 	//EastShare - added by AndCycle, IP to Country
 	m_iIP2CountryNameMode = ini.GetInt(_T("IP2Country"), IP2CountryName_DISABLE); 
-	m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), false);
+	// >> modified by Ken
+	//m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), false);
+	m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), true);
+	// << modified by Ken
 	//EastShare - added by AndCycle, IP to Country
 	
 	//MORPH START - Added by SiRoB, Datarate Average Time Management

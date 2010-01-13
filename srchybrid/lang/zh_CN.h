@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by zh_CN.rc
 //
+#define IDS_GIFC                        2000
 
 // Next default values for new objects
 // 

@@ -61,6 +61,7 @@ BEGIN_MESSAGE_MAP(CKademliaWnd, CResizableDialog)
 	ON_BN_CLICKED(IDC_RADIP, UpdateControlsState)
 	ON_BN_CLICKED(IDC_RADNODESURL, UpdateControlsState)
 	ON_WM_HELPINFO()
+	ON_BN_CLICKED(IDC_NODESFILEBUTTON, &CKademliaWnd::OnBnClickedNodesFileButton)
 END_MESSAGE_MAP()
 
 CKademliaWnd::CKademliaWnd(CWnd* pParent /*=NULL*/)
@@ -126,6 +127,9 @@ BOOL CKademliaWnd::OnInitDialog()
 	AddAnchor(IDC_KADSEARCHLAB, MIDDLE_LEFT);
 	AddAnchor(IDC_BSSTATIC, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPBUTTON, TOP_RIGHT);
+	// >> add by Ken
+	AddAnchor(IDC_NODESFILEBUTTON, TOP_RIGHT); // Links for Server list and nodes file [Stulle] - Stulle
+	// << add by Ken
 	AddAnchor(IDC_BOOTSTRAPPORT, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPIP, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPURL, TOP_RIGHT);
@@ -284,6 +288,9 @@ void CKademliaWnd::SetAllIcons()
 void CKademliaWnd::Localize()
 {
 	m_ctrlBootstrap.SetWindowText(GetResString(IDS_BOOTSTRAP));
+	// >> add by Ken
+	GetDlgItem(IDC_NODESFILEBUTTON)->SetWindowText(GetResString(IDS_NODESFILEBUTTON)); // Links for Server list and nodes file [Stulle] - Stulle
+	// << add by Ken
 	GetDlgItem(IDC_BOOTSTRAPBUTTON)->SetWindowText(GetResString(IDS_BOOTSTRAP));
 	GetDlgItem(IDC_SSTATIC4)->SetWindowText(GetResString(IDS_SV_ADDRESS) + _T(":"));
 	GetDlgItem(IDC_SSTATIC7)->SetWindowText(GetResString(IDS_SV_PORT) + _T(":"));
@@ -440,3 +447,12 @@ void CKademliaWnd::OnBackcolor()
 }
 #endif
 // <== Design Settings [eWombat/Stulle] - Stulle
+
+// >> add by Ken -- copy from ScareAngle
+// ==> Links for Server list and nodes file [Stulle] - Stulle
+void CKademliaWnd::OnBnClickedNodesFileButton()
+{
+	ShellExecute(NULL, NULL, _T("http://www.nodes-dat.com/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+}
+// <== Links for Server list and nodes file [Stulle] - Stulle
+// << add by Ken

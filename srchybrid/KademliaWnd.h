@@ -59,6 +59,7 @@ protected:
 	afx_msg void OnEnSetfocusBootstrapNodesdat();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
+	afx_msg void OnBnClickedNodesFileButton();
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
 #ifdef DESIGN_SETTINGS
