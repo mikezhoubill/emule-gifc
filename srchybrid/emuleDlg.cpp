@@ -120,6 +120,10 @@
 
 #include "BmiDlg.h" // BMI calculator - Stulle
 
+// >> add by Ken -- search GIFC
+#include "SearchParamsWnd.h"
+// << add by Ken
+
 #ifndef RBBS_USECHEVRON
 #define RBBS_USECHEVRON     0x00000200  // display drop-down button for this band if it's sized smaller than ideal width
 #endif
@@ -3433,6 +3437,14 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		case MP_HM_SEARCH:
 			SetActiveDialog(searchwnd);
 			break;
+		// >> add by Ken
+		case MP_HM_GIFC:
+			searchwnd->m_pwndParams->m_ctlName.SetWindowText(L"GIFC");
+			searchwnd->m_pwndParams->m_ctlFileType.SelectItemDataStringA(ED2KFTSTR_ARCHIVE);
+			SetActiveDialog(searchwnd);
+			searchwnd->m_pwndParams->OnBnClickedStart();
+			break;
+		// << add by Ken
 		case TBBTN_SHARED:
 		case MP_HM_FILES:
 			SetActiveDialog(sharedfileswnd);
@@ -3658,7 +3670,7 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	menu.AppendMenu(MF_SEPARATOR);
 
 	// >> GIFC menu - add by Ken
-	menu.AppendMenu(MF_STRING, 0, GetResString(IDS_GIFC) + _T("..."), _T("GIFC"));
+	menu.AppendMenu(MF_STRING, MP_HM_GIFC, GetResString(IDS_GIFC) + _T("..."), _T("GIFC"));
 	menu.AppendMenu(MF_SEPARATOR);
 	// << add by Ken
 

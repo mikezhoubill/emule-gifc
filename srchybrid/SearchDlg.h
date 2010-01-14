@@ -72,8 +72,11 @@ public:
 #endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
-protected:
+	// >> modified by Ken -- change attribute from protected to public
 	CSearchParamsWnd* m_pwndParams;
+	// << modified by Ken
+
+protected:
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 

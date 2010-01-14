@@ -3545,7 +3545,10 @@ void CPreferences::LoadPreferences()
 	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",false);
 	m_bAddServersFromClients=ini.GetBool(L"AddServersFromClient",false);
 	splashscreen=ini.GetBool(L"Splashscreen",true);
-	startupsound=ini.GetBool(L"Startupsound",true);//Commander - Added: Enable/Disable Startupsound
+	// >> modified by Ken
+	//startupsound=ini.GetBool(L"Startupsound",true);//Commander - Added: Enable/Disable Startupsound
+	startupsound=ini.GetBool(L"Startupsound",false);//Commander - Added: Enable/Disable Startupsound
+	// << modified by Ken
 	sidebanner=ini.GetBool(L"Sidebanner",true);//Commander - Added: Side Banner
 	bringtoforeground=ini.GetBool(L"BringToFront",true);
 	transferDoubleclick=ini.GetBool(L"TransferDoubleClick",true);
