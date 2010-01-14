@@ -135,6 +135,9 @@
 #define MP_FOLLOW_THE_MAJORITY  10263 // EastShare       - FollowTheMajority by AndCycle
 */
 // <== Set and save Follow the Majority per file - Stulle
+// >> add by Ken
+#define MP_HM_GIFC				10270 // search/download GIFC tools menu item
+// << add by Ken
 
 #define MP_PRIOVERYLOW			10300
 #define MP_PRIOLOW				10301
