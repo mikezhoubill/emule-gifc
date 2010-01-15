@@ -3360,6 +3360,11 @@ void CPreferences::LoadPreferences()
 	m_iDbgHeap = 0;
 #endif
 
+	// >> add by Ken -- associate ed2k protocal
+	if (Ask4RegFix(true, false, true))
+		Ask4RegFix(false, false, true);
+	// << add by Ken
+
 	m_nWebMirrorAlertLevel = ini.GetInt(L"WebMirrorAlertLevel",0);
 	// >> modified by Ken
 	//updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
@@ -3547,8 +3552,9 @@ void CPreferences::LoadPreferences()
 	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",true);
 	// << modified by Ken
 	m_bAddServersFromClients=ini.GetBool(L"AddServersFromClient",false);
-	splashscreen=ini.GetBool(L"Splashscreen",true);
 	// >> modified by Ken
+	//splashscreen=ini.GetBool(L"Splashscreen",true);
+	splashscreen=ini.GetBool(L"Splashscreen",false);
 	//startupsound=ini.GetBool(L"Startupsound",true);//Commander - Added: Enable/Disable Startupsound
 	startupsound=ini.GetBool(L"Startupsound",false);//Commander - Added: Enable/Disable Startupsound
 	// << modified by Ken
@@ -3727,7 +3733,10 @@ void CPreferences::LoadPreferences()
 	m_bPreviewOnIconDblClk=ini.GetBool(L"PreviewOnIconDblClk",false);
 	m_bCheckFileOpen=ini.GetBool(L"CheckFileOpen",true);
 	indicateratings=ini.GetBool(L"IndicateRatings",true);
-	watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",false);
+	// >> modified by Ken
+	//watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",false);
+	watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",true);
+	// << modified by Ken
 	m_iSearchMethod=ini.GetInt(L"SearchMethod",0);
 
 	showCatTabInfos=ini.GetBool(L"ShowInfoOnCatTabs",false);
