@@ -3542,7 +3542,10 @@ void CPreferences::LoadPreferences()
 
 	m_bPreventStandby = ini.GetBool(L"PreventStandby", false);
 	m_bStoreSearches = ini.GetBool(L"StoreSearches", true);
-	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",false);
+	// >> modified by Ken
+	//m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",false);
+	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",true);
+	// << modified by Ken
 	m_bAddServersFromClients=ini.GetBool(L"AddServersFromClient",false);
 	splashscreen=ini.GetBool(L"Splashscreen",true);
 	// >> modified by Ken
@@ -3869,7 +3872,10 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_IPfilterVersion, 0, sizeof m_IPfilterVersion);
 	delete[] pst;
-	AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),false); //added by milobac: Ipfilter.dat update
+	// >> modified by Ken
+	//AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),false); //added by milobac: Ipfilter.dat update
+	AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),true); //added by milobac: Ipfilter.dat update
+	// << modified by Ken
 	//MORPH END added by Yun.SF3: Ipfilter.dat update
     
     //Commander - Added: IP2Country Auto-updating - Start
@@ -4110,7 +4116,10 @@ void CPreferences::LoadPreferences()
 
 	m_bWinaTransToolbar = ini.GetBool(L"WinaTransToolbar", true);
 
-	m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", false);
+	// >> modified by Ken
+	//m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", false);
+	m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", true);
+	// << modified by Ken
 	m_bCryptLayerRequired = ini.GetBool(L"CryptLayerRequired", false);
 	m_bCryptLayerSupported = ini.GetBool(L"CryptLayerSupported", true);
 	m_dwKadUDPKey = ini.GetInt(L"KadUDPKey", GetRandomUInt32());
