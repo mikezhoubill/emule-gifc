@@ -507,6 +507,10 @@ void CSearchResultsWnd::SearchCanceled(UINT uSearchID)
 			m_pwndParams->m_ctlStart.EnableWindow(m_pwndParams->m_ctlName.GetWindowTextLength() > 0);
 		}
 	}
+	// >> add by Ken
+	if (m_pwndParams->m_bAutoDownload)
+		AutoDownloadGIFC();
+	// << add by Ken
 }
 
 void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailable)
@@ -526,7 +530,57 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 			VERIFY( (global_search_timer = SetTimer(TimerGlobalSearch, 750, 0)) != NULL );
 	}
 	m_pwndParams->m_ctlMore.EnableWindow(bMoreResultsAvailable && m_iSentMoreReq < MAX_MORE_SEARCH_REQ);
+	// >> add by Ken
+	if (m_pwndParams->m_bAutoDownload)
+		AutoDownloadGIFC();
+	// << add by Ken
 }
+
+// >> add by Ken
+void CSearchResultsWnd::AutoDownloadGIFC()
+{
+	if (m_pwndParams->m_bAutoDownload)
+	{
+		int selCount = 0;
+		for (int i = 0; i < searchlistctrl.GetItemCount(); i++)
+		{
+			searchlistctrl.SetItemState(i, 0, LVIS_SELECTED); // unselect first
+
+			CString str = searchlistctrl.GetItemText(i,0);
+			int curPos = 0;
+			CString resToken = str.Tokenize(L"_", curPos);
+			if (resToken != "GIFC")  // start with GIFC
+				continue;
+
+			resToken = str.Tokenize(L"_", curPos);
+			if (resToken.GetLength() != 8) // follow YYYYMMDD
+				continue;
+			int y = _wtoi(resToken.Left(4).GetString());
+			if (y < 2009 || y > 2020) continue;
+			int m = _wtoi(resToken.Mid(4,2).GetString());
+			if (m < 1 || m > 12) continue;
+			int d = _wtoi(resToken.Right(2).GetString());
+			if (d < 1 && d > 31) continue;
+
+			resToken = str.Tokenize(L".", curPos); // product and version
+			if (resToken == "") continue;
+
+			if (str.Right(str.GetLength()-curPos).CompareNoCase(L"zip")) // extension
+				continue;
+
+			searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+			selCount++;
+		}
+		if (selCount)
+		{
+			DownloadSelected();
+			CemuleDlg* emuleDlg = (CemuleDlg*)GetTopLevelFrame()->GetParent();
+			emuleDlg->SetActiveDialog(emuleDlg->transferwnd);
+		}
+		m_pwndParams->m_bAutoDownload = false;
+	}
+}
+// << add by Ken
 
 void CSearchResultsWnd::AddGlobalEd2kSearchResults(UINT count)
 {
@@ -589,7 +643,10 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 	if (!pos) return; // No point in asking for a category if there are no selected files to download.
 	int useCat = GetSelectedCat();
 	bool	bCreatedNewCat = false;
-	if (useCat==-1 && thePrefs.SelectCatForNewDL() && thePrefs.GetCatCount()>1)
+	if (useCat==-1 && thePrefs.SelectCatForNewDL() && thePrefs.GetCatCount()>1 
+		// >> add by Ken
+		&& !m_pwndParams->m_bAutoDownload)
+		// << add by Ken
 	{
 		CSelCategoryDlg* getCatDlg = new CSelCategoryDlg((CWnd*)theApp.emuledlg);
 		getCatDlg->DoModal();
@@ -653,7 +710,10 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 			}
 			
 			//EastShare START - Modified by Pretender [MoNKi: -Check already downloaded files-]
-			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName()) )
+			// >> modified by Ken
+			//if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName()) )
+			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName(), m_pwndParams->m_bAutoDownload) )
+			// << modified by Ken
 			{
 				if (thePrefs.SmallFileDLPush() && parent->GetFileSize() < (uint64)154624)
 					theApp.downloadqueue->AddSearchToDownload(&tempFile, bPaused, fileCat, 0);

@@ -19,11 +19,18 @@
 
 //MORPH START - Added by SiRoB, [-modname-]
 //START - This part should not be changed in anyway
-#define MOD_VERSION_MJR		6
-#define MOD_VERSION_MIN		2
-#define MOD_VERSION_BUILD	8
-#define	MOD_VERSION			_T("StulleMule") // remark: last sign != ' ' (space) !!!
-#define	MOD_VERSION_LONG	_T("StulleMule v")
+// >> modified by Ken
+//#define MOD_VERSION_MJR		6
+//#define MOD_VERSION_MIN		2
+//#define MOD_VERSION_BUILD	8
+//#define	MOD_VERSION			_T("StulleMule") // remark: last sign != ' ' (space) !!!
+//#define	MOD_VERSION_LONG	_T("StulleMule v")
+#define MOD_VERSION_MJR		1
+#define MOD_VERSION_MIN		0
+#define MOD_VERSION_BUILD	1
+#define	MOD_VERSION			_T("eMule-GIFC") // remark: last sign != ' ' (space) !!!
+#define	MOD_VERSION_LONG	_T("eMule-GIFC v")
+// << modified by Ken
 ///END - This part should not be changed in anyway
 //MORPH END  - Added by SiRoB, [-modname-]
 

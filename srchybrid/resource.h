@@ -1529,6 +1529,7 @@
 #define IDC_ANIMATE1                    2000
 #define IDS_GIFC                        2000
 #define IDC_STATUS                      2001
+#define IDS_GIFC1                       2001
 #define IDC_FILESTATUS                  2002
 #define IDC_TIMELEFT                    2003
 #define IDC_TRANSFER_RATE               2004
@@ -1537,8 +1538,11 @@
 #define IDC_INPUTWINDOW                 2007
 #define IDC_IRC_SERVER_BOX              2008
 #define IDC_ELINK                       2010
+#define IDS_SHOWLESS                    2010
 #define IDC_IRC_NAME_BOX                2011
+#define IDS_SHOWMORE                    2011
 #define IDC_NICK                        2012
+#define IDS_SHOWEXT                     2012
 #define IDC_LOGBOX                      2013
 #define IDC_IRC_NICK_BOX                2016
 #define IDC_WIZ_TRUEDOWNLOAD_BOX        2018
@@ -2956,6 +2960,7 @@
 #define IDI_GIFC                        6228
 #define IDS_FC_LOADED                   6229
 #define IDS_LOG_FC_LOADED               6230
+#define IDI_ICON1                       6230
 #define IDS_LOG_FC_INFO                 6231
 #define IDS_LOG_FC_ERR1                 6232
 #define IDS_LOG_FC_ERR2                 6233
@@ -4154,7 +4159,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        6229
+#define _APS_NEXT_RESOURCE_VALUE        6231
 #define _APS_NEXT_COMMAND_VALUE         31257
 #define _APS_NEXT_CONTROL_VALUE         6218
 #define _APS_NEXT_SYMED_VALUE           106

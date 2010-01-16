@@ -622,6 +622,11 @@ BOOL CemuleDlg::OnInitDialog()
 
 	// if still no active window, activate server window
 	if (activewnd == NULL)
+		// >> add by Ken - if thePrefs.IsLessControl, active transfer window
+		if (thePrefs.IsLessControls())
+			SetActiveDialog(transferwnd);
+		else
+		// << add by Ken
 		SetActiveDialog(serverwnd);
 
 	SetAllIcons();
@@ -3158,7 +3163,10 @@ LRESULT CemuleDlg::OnTaskbarNotifierClicked(WPARAM /*wParam*/, LPARAM lParam)
 		// ==> StulleMule Version Check - Stulle
 		case TBN_NEWSVERSION:
 		{
-			ShellExecute(NULL, NULL, _T("http://stulle.emule-web.de"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+			// >> modified by Ken
+			//ShellExecute(NULL, NULL, _T("http://stulle.emule-web.de"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+			ShellExecute(NULL, NULL, _T("http://code.google.com/p/emule-gifc/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+			// << modified by Ken
 			break;
 		}
 		// <== StulleMule Version Check - Stulle
@@ -3435,14 +3443,29 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 		case TBBTN_SEARCH:
 		case MP_HM_SEARCH:
+			searchwnd->m_pwndParams->m_bAutoDownload = false;
 			SetActiveDialog(searchwnd);
 			break;
 		// >> add by Ken
 		case MP_HM_GIFC:
+		case MP_HM_GIFC1:
 			searchwnd->m_pwndParams->m_ctlName.SetWindowText(L"GIFC");
 			searchwnd->m_pwndParams->m_ctlFileType.SelectItemDataStringA(ED2KFTSTR_ARCHIVE);
 			SetActiveDialog(searchwnd);
+			searchwnd->m_pwndParams->m_bAutoDownload = (wParam == MP_HM_GIFC);
 			searchwnd->m_pwndParams->OnBnClickedStart();
+			break;
+		case MP_HM_SHOWLESS:
+			thePrefs.SetLessControls(true);
+			thePrefs.SetExtControls(false);
+			break;
+		case MP_HM_SHOWMORE:
+			thePrefs.SetLessControls(false);
+			thePrefs.SetExtControls(false);
+			break;
+		case MP_HM_SHOWEXT:
+			thePrefs.SetLessControls(false);
+			thePrefs.SetExtControls(true);
 			break;
 		// << add by Ken
 		case TBBTN_SHARED:
@@ -3659,23 +3682,45 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	}
 
 	menu.AppendMenu(MF_STRING,MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
+	// >> add by Ken
+	if (!thePrefs.IsLessControls()) {
+	// << add by Ken
 	menu.AppendMenu(MF_STRING,MP_HM_CONVERTPF, GetResString(IDS_IMPORTSPLPF) + _T("..."), _T("CONVERT"));
 	menu.AppendMenu(MF_STRING,MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 	menu.AppendMenu(MF_STRING,MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
+	// >> add by Ken
+	}
+	// << add by Ken
 	menu.AppendMenu(MF_STRING,MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 
+	// >> add by Ken
+	if (!thePrefs.IsLessControls()) {
+	// << add by Ken
 	// BMI calculator - Stulle
 	menu.AppendMenu(MF_STRING,MP_HM_BMI, GetResString(IDS_BMI_WND) + _T("..."), _T("CLIENTDETAILS"));
 	// BMI calculator - Stulle
+	// >> add by Ken
+	}
+	// << add by Ken
 	menu.AppendMenu(MF_SEPARATOR);
 
 	// >> GIFC menu - add by Ken
-	menu.AppendMenu(MF_STRING, MP_HM_GIFC, GetResString(IDS_GIFC) + _T("..."), _T("GIFC"));
+	bool gifcEnable = !(!theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected()));
+	menu.AppendMenu(MF_STRING|(gifcEnable?MF_ENABLED:MF_GRAYED), MP_HM_GIFC, GetResString(IDS_GIFC), _T("GIFC"));
+	menu.AppendMenu(MF_STRING|(gifcEnable?MF_ENABLED:MF_GRAYED), MP_HM_GIFC1, GetResString(IDS_GIFC1) + _T("..."), _T("GIFC1"));
+	menu.AppendMenu(MF_SEPARATOR);
+	menu.AppendMenu(MF_STRING|(thePrefs.IsLessControls()?MF_CHECKED:MF_UNCHECKED), MP_HM_SHOWLESS, GetResString(IDS_SHOWLESS), _T("SHOWLESS"));
+	menu.AppendMenu(MF_STRING|(!thePrefs.IsLessControls()&&!thePrefs.IsExtControlsEnabled())?MF_CHECKED:MF_UNCHECKED, MP_HM_SHOWMORE, GetResString(IDS_SHOWMORE), _T("SHOWMORE"));
+	menu.AppendMenu(MF_STRING|(!thePrefs.IsLessControls()&&thePrefs.IsExtControlsEnabled())?MF_CHECKED:MF_UNCHECKED, MP_HM_SHOWEXT, GetResString(IDS_SHOWEXT), _T("SHOWEXT"));
+	if (!thePrefs.IsLessControls()) {
 	menu.AppendMenu(MF_SEPARATOR);
 	// << add by Ken
 
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB") );
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER") );
+	// >> add by Ken
+	}
+	// << add by Ken
 
 	if (!toolsonly) {
 		menu.AppendMenu(MF_SEPARATOR);
@@ -5279,7 +5324,10 @@ LRESULT CemuleDlg::OnSVersionCheckResponse(WPARAM /*wParam*/, LPARAM lParam)
 					Log(LOG_SUCCESS|LOG_STATUSBAR,GetResString(IDS_NEWSVERSIONAVL));
 					ShowNotifier(GetResString(IDS_NEWSVERSIONAVLPOPUP), TBN_NEWSVERSION);
 					if (AfxMessageBox(GetResString(IDS_NEWSVERSIONAVL)+GetResString(IDS_VISITSVERSIONCHECK),MB_YESNO)==IDYES) {
-						ShellExecute(NULL, NULL, _T("http://stulle.emule-web.de/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+						// >> modified by Ken
+						//ShellExecute(NULL, NULL, _T("http://stulle.emule-web.de/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+						ShellExecute(NULL, NULL, _T("http://code.google.com/p/emule-gifc/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
+						// << modified by Ken
 					}
 				}
 				else{

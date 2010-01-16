@@ -3584,7 +3584,11 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_GIFC                "搜索/下載GIFC..."
+    IDS_GIFC                "自動下載GIFC軟体"
+    IDS_GIFC1               "搜索/下載GIFC軟体..."
+    IDS_SHOWLESS            "顯示簡化界面"
+    IDS_SHOWMORE            "顯示標準界面"
+    IDS_SHOWEXT             "顯示專家界面"
 END
 
 #endif    // Chinese (Taiwan) resources

@@ -87,7 +87,10 @@ public:
 
 	//Added by MoNKi [MoNKi: -Check already downloaded files-]
 	int CheckAlreadyDownloadedFile(const uchar* hash, CString filename=_T(""), CArray<CKnownFile*,CKnownFile*> *files = NULL);
-	bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename);
+	// >> modified by Ken
+	//bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename);
+	bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool silence = false);
+	// << modified by Ken
 	//end MoNKi
 
 private:

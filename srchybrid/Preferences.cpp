@@ -3742,9 +3742,15 @@ void CPreferences::LoadPreferences()
 	showCatTabInfos=ini.GetBool(L"ShowInfoOnCatTabs",false);
 //	resumeSameCat=ini.GetBool(L"ResumeNextFromSameCat",false);
 	dontRecreateGraphs =ini.GetBool(L"DontRecreateStatGraphsOnResize",false);
-	m_bExtControls =ini.GetBool(L"ShowExtControls",true); // Stulle
+	// >> modified by Ken
+	//m_bExtControls =ini.GetBool(L"ShowExtControls",true); // Stulle
+	m_bExtControls =ini.GetBool(L"ShowExtControls",false); // Stulle
 	// MORPH START show less controls
-	m_bShowLessControls =ini.GetBool(L"ShowLessControls",false);
+	//m_bShowLessControls =ini.GetBool(L"ShowLessControls",false);
+	m_bShowLessControls =ini.GetBool(L"ShowLessControls",true);
+	if (m_bShowLessControls)
+		autoconnect = true;
+	// << modified by Ken
     // MORPH END  show less controls
 	versioncheckLastAutomatic=ini.GetInt(L"VersionCheckLastAutomatic",0);
 	//MORPH START - Added by SiRoB, New Version check
@@ -3817,7 +3823,10 @@ void CPreferences::LoadPreferences()
 	m_bUseOldTimeRemaining= ini.GetBool(L"UseSimpleTimeRemainingcomputation",false);
 
 	// Toolbar
-	m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultToolbar);
+	// >> modified by Ken
+	//m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultToolbar);
+	m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultLessControlsToolbar);
+	// << modified by Ken
 	m_sToolbarBitmap = ini.GetString(L"ToolbarBitmap", L"");
 	m_sToolbarBitmapFolder = ini.GetString(L"ToolbarBitmapFolder", _T(""));
 	if (m_sToolbarBitmapFolder.IsEmpty()) // We want GetDefaultDirectory to also create the folder, so we have to know if we use the default or not
@@ -3881,10 +3890,7 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_IPfilterVersion, 0, sizeof m_IPfilterVersion);
 	delete[] pst;
-	// >> modified by Ken
-	//AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),false); //added by milobac: Ipfilter.dat update
-	AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),true); //added by milobac: Ipfilter.dat update
-	// << modified by Ken
+	AutoUpdateIPFilter=ini.GetBool(_T("AutoUPdateIPFilter"),false); //added by milobac: Ipfilter.dat update
 	//MORPH END added by Yun.SF3: Ipfilter.dat update
     
     //Commander - Added: IP2Country Auto-updating - Start
@@ -3909,10 +3915,7 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_FakesDatVersion, 0, sizeof m_FakesDatVersion);
 	delete[] pst;
-	// >> modified by Ken
-	//UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),false);
-	UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),true);
-	// << modified by Ken
+	UpdateFakeStartup=ini.GetBool(_T("UpdateFakeStartup"),false);
 	//MORPH END - Added by milobac, FakeCheck, FakeReport, Auto-updating
 
 	//EastShare - added by AndCycle, IP to Country
