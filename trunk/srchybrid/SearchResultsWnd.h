@@ -133,6 +133,9 @@ protected:
 	void SetActiveSearchResultsIcon(UINT uSearchID);
 	void SetInactiveSearchResultsIcon(UINT uSearchID);
 	
+	// >> add by Ken
+	void AutoDownloadGIFC();
+	// << add by Ken
 
 	virtual void OnInitialUpdate();
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);

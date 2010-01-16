@@ -49,6 +49,10 @@ public:
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
+	// >> add by Ken
+	bool m_bAutoDownload;
+	// << add by Ken
+
 protected:
 	HCURSOR m_hcurMove;
 	CComboBoxEx2 m_ctlMethod;

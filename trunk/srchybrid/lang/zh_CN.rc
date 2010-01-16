@@ -4037,7 +4037,11 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_GIFC                "搜索/下载 GIFC..."
+    IDS_GIFC                "自动下载 GIFC软件"
+    IDS_GIFC1               "搜索/下载 GIFC软件..."
+    IDS_SHOWLESS            "显示简化界面"
+    IDS_SHOWMORE            "显示标准界面"
+    IDS_SHOWEXT             "显示专家界面"
 END
 
 STRINGTABLE 

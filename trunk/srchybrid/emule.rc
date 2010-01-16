@@ -1772,7 +1772,7 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_FONTUL              ICON                    "res\\MOD\\ulFont.ico"
-GIFC                    ICON                    "res\\GIFC.ico"
+GIFC1                   ICON                    "res\\GIFC1.ico"
 AAAEMULEAPP             ICON                    "res\\MOD\\iconstulle.ico"
 AABCOLLECTIONFILETYPE   ICON                    "res\\emuleCollectionFileType.ico"
 COLOUR                  ICON                    "res\\colour.ico"
@@ -2070,6 +2070,10 @@ MM_DISLOW               ICON                    "res\\MOD\\MM_DisLow.ico"
 MM_DISDIS               ICON                    "res\\MOD\\MM_DisDis.ico"
 IDI_FONTI               ICON                    "res\\MOD\\italicFont.ico"
 IDI_FONTB               ICON                    "res\\MOD\\boldFont.ico"
+GIFC                    ICON                    "res\\GIFC.ico"
+SHOWLESS                ICON                    "res\\ShowLess.ico"
+SHOWMORE                ICON                    "res\\ShowMore.ico"
+SHOWEXT                 ICON                    "res\\ShowExt.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -6381,6 +6385,10 @@ END
 STRINGTABLE 
 BEGIN
     IDS_GIFC                "Search/DownLoad GIFC"
+    IDS_GIFC1               "Auto download GIFC software"
+    IDS_SHOWLESS            "Show simple interface"
+    IDS_SHOWMORE            "Show standard interface"
+    IDS_SHOWEXT             "Show expert interface"
 END
 
 STRINGTABLE 

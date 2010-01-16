@@ -193,7 +193,10 @@ public:
 	CPPgWiz1General(UINT nIDTemplate, LPCTSTR pszCaption = NULL, LPCTSTR pszHeaderTitle = NULL, LPCTSTR pszHeaderSubTitle = NULL)
 		: CDlgPageWizard(nIDTemplate, pszCaption, pszHeaderTitle, pszHeaderSubTitle)
 	{
-		m_iAutoConnectAtStart = 0;
+		// >> modified by Ken
+		//m_iAutoConnectAtStart = 0;
+		m_iAutoConnectAtStart = 1;
+		// << modified by Ken
 		m_iAutoStart = 0;
 	}
 	virtual ~CPPgWiz1General();
@@ -220,7 +223,10 @@ END_MESSAGE_MAP()
 CPPgWiz1General::CPPgWiz1General()
 	: CDlgPageWizard(CPPgWiz1General::IDD)
 {
-	m_iAutoConnectAtStart = 0;
+	// >> modified by Ken
+	//m_iAutoConnectAtStart = 0;
+	m_iAutoConnectAtStart = 1;
+	// << modified by Ken
 	m_iAutoStart = 0;
 }
 
@@ -990,7 +996,10 @@ int FirstTimeWizard() //lh ftw
 	page2.m_strNick = thePrefs.GetUserNick();
 	if (page2.m_strNick.IsEmpty())
 		page2.m_strNick = DEFAULT_NICK;
+	// >> modified by Ken
+	//page2.m_iAutoConnectAtStart = 0;
 	page2.m_iAutoConnectAtStart = 0;
+	// << modified by Ken
 	page3.m_sTCP.Format(_T("%u"), thePrefs.GetPort());
 	page3.m_sUDP.Format(_T("%u"), thePrefs.GetUDPPort());
 // MORPH less is more

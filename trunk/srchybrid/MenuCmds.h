@@ -136,7 +136,11 @@
 */
 // <== Set and save Follow the Majority per file - Stulle
 // >> add by Ken
-#define MP_HM_GIFC				10270 // search/download GIFC tools menu item
+#define MP_HM_GIFC				10270 // auto download GIFC tools menu item
+#define MP_HM_GIFC1				10271 // search/download GIFC tools menu item
+#define MP_HM_SHOWLESS			10275 // show simple interface
+#define MP_HM_SHOWMORE			10276 // show standard interface
+#define MP_HM_SHOWEXT			10277 // show expert interface
 // << add by Ken
 
 #define MP_PRIOVERYLOW			10300

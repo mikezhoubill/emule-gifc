@@ -18,7 +18,10 @@
 
 const CString strDefaultToolbar = _T("0099010203040506070899091011");
 // MORPH START show less controls
-const CString strDefaultLessControlsToolbar = _T("0099020304059909991011");
+// >> modified by Ken
+//const CString strDefaultLessControlsToolbar = _T("0099020304059909991011");
+const CString strDefaultLessControlsToolbar = _T("030499099910");
+// << modified by Ken
 // MORPH END  show less controls
 
 // ==> Design Settings [eWombat/Stulle] - Stulle
