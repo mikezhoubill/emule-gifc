@@ -357,7 +357,10 @@ bool	CPreferences::m_bDisableKnownClientList;
 bool	CPreferences::m_bDisableQueueList;
 bool	CPreferences::m_bExtControls;
 // MORPH START show less controls
-bool	CPreferences::m_bShowLessControls;
+bool	CPreferences::m_bShowLessControls
+	// >> add by Ken
+	= true;
+	// << add by Ken
 // MORPH END  show less controls
 bool	CPreferences::m_bTransflstRemain;
 UINT	CPreferences::versioncheckdays;
@@ -1328,6 +1331,19 @@ void CPreferences::Init()
 			AfxMessageBox(strError, MB_ICONERROR);
 		}
 	}
+	// >> add by Ken
+	// Explicitly inform the user about errors with gifc folders!
+	if (!PathFileExists(GetMuleDirectory(EMULE_GIFCDIR)) && !::CreateDirectory(GetMuleDirectory(EMULE_GIFCDIR),0)) {
+		CString strError;
+		strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_GIFC), GetMuleDirectory(EMULE_GIFCDIR), GetErrorMessage(GetLastError()));
+		AfxMessageBox(strError, MB_ICONERROR);
+
+		if (!PathFileExists(GetMuleDirectory(EMULE_GIFCDIR))){
+			strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_GIFC), GetMuleDirectory(EMULE_GIFCDIR), GetErrorMessage(GetLastError()));
+			AfxMessageBox(strError, MB_ICONERROR);
+		}
+	}
+	// << add by Ken
 	if (!PathFileExists(GetTempDir()) && !::CreateDirectory(GetTempDir(),0)) {
 		CString strError;
 		strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_TEMP), GetTempDir(), GetErrorMessage(GetLastError()));
@@ -5502,6 +5518,10 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 				break;
 		}
 		::CreateDirectory(m_astrDefaultDirs[eDirectory], NULL);
+		// >> add by Ken
+		if (eDirectory == EMULE_INCOMINGDIR)
+			::CreateDirectory(m_astrDefaultDirs[eDirectory] + CString("_GIFC"), NULL);
+		// << add by Ken
 		m_abDefaultDirsCreated[eDirectory] = true;
 	}
 	return m_astrDefaultDirs[eDirectory];
@@ -5518,6 +5538,10 @@ CString	CPreferences::GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreat
 			return m_strSkinProfileDir;
 		case EMULE_TOOLBARDIR:
 			return m_sToolbarBitmapFolder;
+		// >> add by Ken
+		case EMULE_GIFCDIR:
+			return m_strIncomingDir + CString("_GIFC");
+		// << add by Ken
 		default:
 			return GetDefaultDirectory(eDirectory, bCreate);
 	}
@@ -5526,6 +5550,9 @@ CString	CPreferences::GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreat
 void CPreferences::SetMuleDirectory(EDefaultDirectory eDirectory, CString strNewDir){
 	switch (eDirectory){
 		case EMULE_INCOMINGDIR:
+		// >> add by Ken
+		case EMULE_GIFCDIR:
+		// << add by Ken
 			m_strIncomingDir = strNewDir;
 			break;
 		case EMULE_SKINDIR:

@@ -3,6 +3,7 @@
 // Used by zh_TW.rc
 //
 #define IDS_GIFC1                       2001
+#define IDS_OPENGIFC                    2003
 #define IDS_SHOWLESS                    2010
 #define IDS_SHOWMORE                    2011
 #define IDS_SHOWEXT                     2012

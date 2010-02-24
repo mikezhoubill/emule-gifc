@@ -1531,7 +1531,9 @@
 #define IDC_STATUS                      2001
 #define IDS_GIFC1                       2001
 #define IDC_FILESTATUS                  2002
+#define IDS_PW_GIFC                     2002
 #define IDC_TIMELEFT                    2003
+#define IDS_OPENGIFC                    2003
 #define IDC_TRANSFER_RATE               2004
 #define IDC_MAXSOURCEPERFILE            2005
 #define IDC_TITLEWINDOW                 2006
@@ -2960,9 +2962,10 @@
 #define IDI_GIFC                        6228
 #define IDS_FC_LOADED                   6229
 #define IDS_LOG_FC_LOADED               6230
-#define IDI_ICON1                       6230
 #define IDS_LOG_FC_INFO                 6231
+#define IDI_ICON1                       6231
 #define IDS_LOG_FC_ERR1                 6232
+#define IDI_ICON3                       6232
 #define IDS_LOG_FC_ERR2                 6233
 #define IDS_MASSRENAME_TITLE            6234
 #define IDS_LOG_CRC32_WRN1              6235
@@ -4159,7 +4162,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        6231
+#define _APS_NEXT_RESOURCE_VALUE        6233
 #define _APS_NEXT_COMMAND_VALUE         31257
 #define _APS_NEXT_CONTROL_VALUE         6218
 #define _APS_NEXT_SYMED_VALUE           106

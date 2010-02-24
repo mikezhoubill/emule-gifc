@@ -58,6 +58,9 @@ enum EDefaultDirectory{
 	EMULE_EXPANSIONDIR = 12, // this is a base directory accessable for all users for things eMule installs
 	EMULE_WAPSERVERDIR = 13, // Wapserver [emulEspaña]
 	EMULE_FEEDSDIR = 14 // MORPH - Added, XML News [O²]
+	// >> add by Ken
+	,EMULE_GIFCDIR = 15
+	// << add by Ken
 };
 
 

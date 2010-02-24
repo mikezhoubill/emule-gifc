@@ -4037,8 +4037,10 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_GIFC                "自动下载 GIFC软件"
-    IDS_GIFC1               "搜索/下载 GIFC软件..."
+    IDS_GIFC                "自动下载 GIFC翻墙软件"
+    IDS_GIFC1               "搜索/下载 GIFC翻墙软件..."
+    IDS_PW_GIFC             "GIFC下载文件"
+    IDS_OPENGIFC            "打开GIFC目录"
     IDS_SHOWLESS            "显示简化界面"
     IDS_SHOWMORE            "显示标准界面"
     IDS_SHOWEXT             "显示专家界面"
@@ -4047,7 +4049,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_NODESFILEBUTTON     "节点文件"
-    IDS_SERVER_LISTS        "服务器列表"
+    IDS_SERVER_LISTS        "打开GIFC目录"
 END
 
 #endif    // Chinese (P.R.C.) resources

@@ -467,3 +467,7 @@ long GetValidIP(char **szText);
 #define ELEMENT_COUNT(X) (sizeof(X) / sizeof(X[0]))
 #endif
 // <== Design Settings [eWombat/Stulle] - Stulle
+
+// >> add by Ken
+bool IsGIFCFileName(const CString& str);
+//  << add by Ken

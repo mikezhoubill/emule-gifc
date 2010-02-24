@@ -757,7 +757,8 @@ int CKnownFileList::CheckAlreadyDownloadedFile(const uchar* hash, CString filena
 //	true if you can download it
 // >> modified by Ken
 //bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename){
-bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool silence){
+bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool bAutoDownloadGIFC){
+// << modified by Ken
 	CArray<CKnownFile *,CKnownFile*> filesFound;
 	int ret;
 
@@ -775,8 +776,7 @@ bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CStri
 		CString msg;
 		if(ret==1){
 			// >> add by Ken
-			if (silence)
-				return true;
+			if (bAutoDownloadGIFC) return true;
 			// << add by Ken
 			msg = GetResString(IDS_DOWNHISTORY_CHECK1);
 		}
@@ -784,8 +784,7 @@ bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CStri
 		else if(ret==3)
 		{
 			// >> add by Ken
-			if (silence)
-				return true;
+			if (bAutoDownloadGIFC) return true;
 			// << add by Ken
 			msg= GetResString(IDS_DOWNHISTORY_CHECK4);
 		}
@@ -807,7 +806,7 @@ bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CStri
 		msg += GetResString(IDS_DOWNHISTORY_CHECK3);
 		// >> modified by Ken
 		//if(MessageBox(NULL, msg, GetResString(IDS_DOWNHISTORY),MB_YESNO|MB_ICONQUESTION)==IDYES)
-		if(!silence && MessageBox(NULL, msg, GetResString(IDS_DOWNHISTORY),MB_YESNO|MB_ICONQUESTION)==IDYES)
+		if(!bAutoDownloadGIFC && MessageBox(NULL, msg, GetResString(IDS_DOWNHISTORY),MB_YESNO|MB_ICONQUESTION)==IDYES)
 		// << modified by Ken
 			return true;
 		else
