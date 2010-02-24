@@ -4556,10 +4556,18 @@ BOOL CPartFile::PerformFileComplete()
 
 	if (PathFileExists(thePrefs.GetCategory(GetCategory())->strIncomingPath)){
 		indir = thePrefs.GetCategory(GetCategory())->strIncomingPath;
+		// >> add by Ken
+		if (IsGIFCFileName(newfilename))
+			indir += CString("_GIFC");
+		// << add by Ken
 		strNewname.Format(_T("%s\\%s"), indir, newfilename);
 	}
 	else{
 		indir = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
+		// >> add by Ken
+		if (IsGIFCFileName(newfilename))
+			indir += CString("_GIFC");
+		// << add by Ken
 		strNewname.Format(_T("%s\\%s"), indir, newfilename);
 	}
 
@@ -4751,6 +4759,9 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 		// give visual response
 		Log(LOG_SUCCESS | LOG_STATUSBAR, GetResString(IDS_DOWNLOADDONE), GetFileName());
 		theApp.emuledlg->ShowNotifier(GetResString(IDS_TBN_DOWNLOADDONE) + _T('\n') + GetFileName(), TBN_DOWNLOADFINISHED, GetFilePath());
+		// >> add by Ken
+		bool bGIFCFileName = IsGIFCFileName(GetFileName());
+		// << add by Ken
 		if (dwResult & FILE_COMPLETION_THREAD_RENAMED)
 		{
 			CString strFilePath(GetFullName());

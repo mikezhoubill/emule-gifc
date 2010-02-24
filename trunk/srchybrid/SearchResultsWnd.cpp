@@ -539,46 +539,27 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 // >> add by Ken
 void CSearchResultsWnd::AutoDownloadGIFC()
 {
-	if (m_pwndParams->m_bAutoDownload)
+	if (!m_pwndParams->m_bAutoDownload)
+		return;
+
+	int selCount = 0;
+	for (int i = 0; i < searchlistctrl.GetItemCount(); i++)
 	{
-		int selCount = 0;
-		for (int i = 0; i < searchlistctrl.GetItemCount(); i++)
-		{
-			searchlistctrl.SetItemState(i, 0, LVIS_SELECTED); // unselect first
+		searchlistctrl.SetItemState(i, 0, LVIS_SELECTED); // unselect first
 
-			CString str = searchlistctrl.GetItemText(i,0);
-			int curPos = 0;
-			CString resToken = str.Tokenize(L"_", curPos);
-			if (resToken != "GIFC")  // start with GIFC
-				continue;
+		if (!IsGIFCFileName(searchlistctrl.GetItemText(i,0)))
+			continue;
 
-			resToken = str.Tokenize(L"_", curPos);
-			if (resToken.GetLength() != 8) // follow YYYYMMDD
-				continue;
-			int y = _wtoi(resToken.Left(4).GetString());
-			if (y < 2009 || y > 2020) continue;
-			int m = _wtoi(resToken.Mid(4,2).GetString());
-			if (m < 1 || m > 12) continue;
-			int d = _wtoi(resToken.Right(2).GetString());
-			if (d < 1 && d > 31) continue;
-
-			resToken = str.Tokenize(L".", curPos); // product and version
-			if (resToken == "") continue;
-
-			if (str.Right(str.GetLength()-curPos).CompareNoCase(L"zip")) // extension
-				continue;
-
-			searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
-			selCount++;
-		}
-		if (selCount)
-		{
-			DownloadSelected();
-			CemuleDlg* emuleDlg = (CemuleDlg*)GetTopLevelFrame()->GetParent();
-			emuleDlg->SetActiveDialog(emuleDlg->transferwnd);
-		}
-		m_pwndParams->m_bAutoDownload = false;
+		searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+		selCount++;
 	}
+	if (selCount)
+	{
+		DownloadSelected();
+		CemuleDlg* emuleDlg = (CemuleDlg*)GetTopLevelFrame()->GetParent();
+		emuleDlg->SetActiveDialog(emuleDlg->transferwnd);
+	}
+	m_pwndParams->m_bAutoDownload = false;
 }
 // << add by Ken
 

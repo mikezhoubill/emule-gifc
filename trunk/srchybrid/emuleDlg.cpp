@@ -1013,7 +1013,10 @@ void CALLBACK CemuleDlg::StartupTimer(HWND /*hwnd*/, UINT /*uiMsg*/, UINT /*idEv
 					theApp.emuledlg->OnBnClickedButton2();
 				}
 				// wait until emule is ready before opening the wizard
+				// >> modified by Ken
 				if (thePrefs.IsFirstStart())
+				// << modified by Ken
+				if (!thePrefs.IsLessControls() && thePrefs.IsFirstStart())
 				{
 					extern int FirstTimeWizard(); // MORPH first start wizard
 					int whatnext= FirstTimeWizard(); // return 0,1,2,3
@@ -3496,6 +3499,11 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		case MP_HM_OPENINC:
 			ShellExecute(NULL, _T("open"), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR),NULL, NULL, SW_SHOW); 
 			break;
+		// >> add by Ken
+		case MP_HM_OPENGIFC:
+			ShellExecute(NULL, _T("open"), thePrefs.GetMuleDirectory(EMULE_GIFCDIR), NULL, NULL, SW_SHOW);
+			break;
+		// << add by Ken
 		case MP_HM_HELP:
 		case TBBTN_HELP:
 			if (activewnd != NULL) {
@@ -3683,6 +3691,8 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 
 	menu.AppendMenu(MF_STRING,MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
 	// >> add by Ken
+	menu.AppendMenu(MF_STRING,MP_HM_OPENGIFC, GetResString(IDS_OPENGIFC) + _T("..."), _T("INGIFC"));
+	// << add by Ken
 	if (!thePrefs.IsLessControls()) {
 	// << add by Ken
 	menu.AppendMenu(MF_STRING,MP_HM_CONVERTPF, GetResString(IDS_IMPORTSPLPF) + _T("..."), _T("CONVERT"));

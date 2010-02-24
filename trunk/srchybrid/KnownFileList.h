@@ -89,7 +89,7 @@ public:
 	int CheckAlreadyDownloadedFile(const uchar* hash, CString filename=_T(""), CArray<CKnownFile*,CKnownFile*> *files = NULL);
 	// >> modified by Ken
 	//bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename);
-	bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool silence = false);
+	bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool bAutoDownloadGIFC = false);
 	// << modified by Ken
 	//end MoNKi
 

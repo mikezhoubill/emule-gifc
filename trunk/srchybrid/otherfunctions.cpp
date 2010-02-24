@@ -4500,3 +4500,32 @@ long GetValidIP(char **szText)          //     Find a valid IP-number in szText
 	return inet_addr(s); 
 }
 // <== Connection Checker [eWombat/WiZaRd] - Stulle
+
+// >> add by Ken
+bool IsGIFCFileName(const CString& str)
+{
+	int curPos = 0;
+	CString resToken = str.Tokenize(L"_", curPos);
+	if (resToken.CompareNoCase(L"GIFC"))  // start with GIFC
+		return false;
+
+	resToken = str.Tokenize(L"_", curPos);
+	if (resToken.GetLength() != 8) // follow YYYYMMDD
+		return false;
+	int y = _wtoi(resToken.Left(4).GetString());
+	if (y < 2010 || y > 2020) 
+		return false;
+	int m = _wtoi(resToken.Mid(4,2).GetString());
+	if (m < 1 || m > 12) 
+		return false;
+	int d = _wtoi(resToken.Right(2).GetString());
+	if (d < 1 && d > 31) 
+		return false;
+
+	resToken = str.Tokenize(L".", curPos); // product and version
+	if (resToken == "") 
+		return false;
+
+	return str.Right(str.GetLength()-curPos).CompareNoCase(L"zip") == 0; // extension
+}
+// << add by Ken

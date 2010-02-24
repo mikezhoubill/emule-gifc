@@ -141,6 +141,7 @@
 #define MP_HM_SHOWLESS			10275 // show simple interface
 #define MP_HM_SHOWMORE			10276 // show standard interface
 #define MP_HM_SHOWEXT			10277 // show expert interface
+#define MP_HM_OPENGIFC			10278 // open GIFC directory
 // << add by Ken
 
 #define MP_PRIOVERYLOW			10300

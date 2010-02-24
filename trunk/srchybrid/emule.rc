@@ -2074,6 +2074,7 @@ GIFC                    ICON                    "res\\GIFC.ico"
 SHOWLESS                ICON                    "res\\ShowLess.ico"
 SHOWMORE                ICON                    "res\\ShowMore.ico"
 SHOWEXT                 ICON                    "res\\ShowExt.ico"
+INGIFC                  ICON                    "res\\IncomingGIFC.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -6386,6 +6387,8 @@ STRINGTABLE
 BEGIN
     IDS_GIFC                "Search/DownLoad GIFC"
     IDS_GIFC1               "Auto download GIFC software"
+    IDS_PW_GIFC             "GIFC File"
+    IDS_OPENGIFC            "Open GIFC Folder"
     IDS_SHOWLESS            "Show simple interface"
     IDS_SHOWMORE            "Show standard interface"
     IDS_SHOWEXT             "Show expert interface"
