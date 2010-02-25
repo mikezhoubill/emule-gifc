@@ -3376,11 +3376,6 @@ void CPreferences::LoadPreferences()
 	m_iDbgHeap = 0;
 #endif
 
-	// >> add by Ken -- associate ed2k protocal
-	if (Ask4RegFix(true, false, true))
-		Ask4RegFix(false, false, true);
-	// << add by Ken
-
 	m_nWebMirrorAlertLevel = ini.GetInt(L"WebMirrorAlertLevel",0);
 	// >> modified by Ken
 	//updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
@@ -4648,6 +4643,11 @@ void CPreferences::LoadPreferences()
 
 	LoadCats();
 	SetLanguage();
+
+	// >> add by Ken -- associate ed2k protocal
+	if (Ask4RegFix(true, false, true))
+		Ask4RegFix(false, false, true);
+	// << add by Ken
 }
 
 WORD CPreferences::GetWindowsVersion(){

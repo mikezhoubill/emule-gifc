@@ -4721,6 +4721,9 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 {
 	CKnownFile* test = theApp.sharedfiles->GetFileByID(GetFileHash()); 	// SLUGFILLER: mergeKnown
 	bool isShared = theApp.sharedfiles && (test == NULL || test == this); 	// SLUGFILLER: mergeKnown
+	// >> add by Ken
+	bool isGIFCFile = IsGIFCFileName(GetFileName());
+	// << add by Ken
 	if (dwResult & FILE_COMPLETION_THREAD_SUCCESS)
 	{
 		SetStatus(PS_COMPLETE); // (set status and) update status-modification related GUI elements
@@ -4728,7 +4731,10 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 
 		//MORPH START - Added, Downloaded History [Monki/Xman]
 #ifndef NO_HISTORY
-		if(theApp.emuledlg && theApp.emuledlg->IsRunning())
+		if(theApp.emuledlg && theApp.emuledlg->IsRunning()
+		// >> add by Ken
+		&& !isGIFCFile)
+		// << add by Ken
 			theApp.emuledlg->sharedfileswnd->historylistctrl.AddFile(this);
 #endif
 		//MORPH END   - Added, Downloaded History [Monki/Xman]
@@ -4736,6 +4742,9 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 		if (isShared)	// SLUGFILLER: mergeKnown
 			theApp.knownfiles->SafeAddKFile(this);
 		theApp.downloadqueue->RemoveFile(this);
+		// >> add by Ken
+		if (!isGIFCFile)
+		// << add by Ken
 		theApp.mmserver->AddFinishedFile(this);
 		if (thePrefs.GetRemoveFinishedDownloads())
 			theApp.emuledlg->transferwnd->downloadlistctrl.RemoveFile(this);
@@ -4759,9 +4768,6 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 		// give visual response
 		Log(LOG_SUCCESS | LOG_STATUSBAR, GetResString(IDS_DOWNLOADDONE), GetFileName());
 		theApp.emuledlg->ShowNotifier(GetResString(IDS_TBN_DOWNLOADDONE) + _T('\n') + GetFileName(), TBN_DOWNLOADFINISHED, GetFilePath());
-		// >> add by Ken
-		bool bGIFCFileName = IsGIFCFileName(GetFileName());
-		// << add by Ken
 		if (dwResult & FILE_COMPLETION_THREAD_RENAMED)
 		{
 			CString strFilePath(GetFullName());
