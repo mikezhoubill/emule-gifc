@@ -842,6 +842,11 @@ bool CSharedFileList::CheckAndAddSingleFile(const CString& rstrFilePath)
 
 bool CSharedFileList::SafeAddKFile(CKnownFile* toadd, bool bOnlyAdd)
 {
+	// >> add by Ken
+	if (IsGIFCFileName(toadd->GetFileName()))
+		return false;
+	// << add by Ken
+
 	bool bAdded = false;
 	RemoveFromHashing(toadd);	// SLUGFILLER: SafeHash - hashed ok, remove from list, in case it was on the list
 	bAdded = AddFile(toadd);
