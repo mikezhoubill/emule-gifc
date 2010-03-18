@@ -1535,6 +1535,7 @@
 #define IDC_TIMELEFT                    2003
 #define IDS_OPENGIFC                    2003
 #define IDC_TRANSFER_RATE               2004
+#define IDS_SEARCHWAIT                  2004
 #define IDC_MAXSOURCEPERFILE            2005
 #define IDC_TITLEWINDOW                 2006
 #define IDC_INPUTWINDOW                 2007
@@ -2952,6 +2953,7 @@
 #define IDS_CRC32_TITLE                 6216
 #define IDS_LOG_IPFILTER_LOADED         6217
 #define IDS_LOG_IPFILTER_INFO           6218
+#define IDC_SEARCHWAIT                  6218
 #define IDS_IPFILTER_SAVERR             6219
 #define IDS_IPFILTER_NOTAVAIL           6220
 #define IDS_IPFILTER_DLVERSION          6221
@@ -2965,8 +2967,8 @@
 #define IDS_LOG_FC_INFO                 6231
 #define IDI_ICON1                       6231
 #define IDS_LOG_FC_ERR1                 6232
-#define IDI_ICON3                       6232
 #define IDS_LOG_FC_ERR2                 6233
+#define IDD_SEARCHWAIT                  6233
 #define IDS_MASSRENAME_TITLE            6234
 #define IDS_LOG_CRC32_WRN1              6235
 #define IDS_LOG_CRC32_WRN2              6236
@@ -4162,9 +4164,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        6233
+#define _APS_NEXT_RESOURCE_VALUE        6234
 #define _APS_NEXT_COMMAND_VALUE         31257
-#define _APS_NEXT_CONTROL_VALUE         6218
+#define _APS_NEXT_CONTROL_VALUE         6219
 #define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

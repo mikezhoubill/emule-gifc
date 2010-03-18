@@ -3588,6 +3588,7 @@ BEGIN
     IDS_GIFC1               "搜索/下載GIFC翻墻軟体..."
     IDS_PW_GIFC             "GIFC檔案資料夾"
     IDS_OPENGIFC            "開啟GIFC資料夾"
+    IDS_SEARCHWAIT          "正在搜索，請稍候……"
     IDS_SHOWLESS            "顯示簡化界面"
     IDS_SHOWMORE            "顯示標準界面"
     IDS_SHOWEXT             "顯示專家界面"

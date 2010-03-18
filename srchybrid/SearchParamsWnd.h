@@ -4,6 +4,9 @@
 #include "ComboBoxEx2.h"
 #include "ListCtrlEditable.h"
 class CCustomAutoComplete;
+// >> add by Ken
+class CSearchWaitDialog;
+// << add by Ken
 
 typedef enum EOptsRows
 {
@@ -37,6 +40,9 @@ public:
 	CButton m_ctlCancel;
 	CButton m_ctlMore;
 	CSearchResultsWnd* m_searchdlg;
+	// >> add by Ken
+	CSearchWaitDialog* m_searchWaitDlg;
+	// << add by Ken
 
 	void Localize();
 	void ResetHistory();

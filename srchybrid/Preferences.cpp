@@ -3912,10 +3912,7 @@ void CPreferences::LoadPreferences()
 	else
 		memset(&m_IP2CountryVersion, 0, sizeof m_IP2CountryVersion);
 	delete[] pst;
-	// >> modified by Ken
-	//AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),false);
-	AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),true);
-	// << modified by Ken
+	AutoUpdateIP2Country=ini.GetBool(_T("AutoUPdateIP2Country"),false);
     //Commander - Added: IP2Country Auto-updating - End
 
 	//MORPH START - Added by milobac, FakeCheck, FakeReport, Auto-updating
@@ -3931,10 +3928,7 @@ void CPreferences::LoadPreferences()
 
 	//EastShare - added by AndCycle, IP to Country
 	m_iIP2CountryNameMode = ini.GetInt(_T("IP2Country"), IP2CountryName_DISABLE); 
-	// >> modified by Ken
-	//m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), false);
-	m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), true);
-	// << modified by Ken
+	m_bIP2CountryShowFlag = ini.GetBool(_T("IP2CountryShowFlag"), false);
 	//EastShare - added by AndCycle, IP to Country
 	
 	//MORPH START - Added by SiRoB, Datarate Average Time Management
