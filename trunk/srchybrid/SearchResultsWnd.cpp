@@ -17,6 +17,9 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "SearchDlg.h"
+// >> add by Ken
+#include "SearchWaitDialog.h"
+// << add by Ken
 #include "SearchResultsWnd.h"
 #include "SearchParamsWnd.h"
 #include "SearchParams.h"
@@ -539,6 +542,13 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 // >> add by Ken
 void CSearchResultsWnd::AutoDownloadGIFC()
 {
+	if (m_pwndParams->m_searchWaitDlg)
+	{
+		m_pwndParams->m_searchWaitDlg->DestroyWindow();
+		delete m_pwndParams->m_searchWaitDlg;
+		m_pwndParams->m_searchWaitDlg = 0;
+	}
+
 	if (!m_pwndParams->m_bAutoDownload)
 		return;
 

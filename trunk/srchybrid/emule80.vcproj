@@ -2052,6 +2052,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SearchWaitDialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath="SelCategoryDlg.cpp"
 				>
 			</File>
@@ -2709,6 +2713,10 @@
 			</File>
 			<File
 				RelativePath="SearchResultsWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SearchWaitDialog.h"
 				>
 			</File>
 			<File
@@ -4006,11 +4014,11 @@
 				>
 			</File>
 			<File
-				RelativePath="res\queue.ico"
+				RelativePath=".\res\Mod\queue.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\queue.ico"
+				RelativePath="res\queue.ico"
 				>
 			</File>
 			<File
@@ -4374,11 +4382,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\transfers.ico"
+				RelativePath="res\transfers.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\transfers.ico"
+				RelativePath=".\res\Mod\transfers.ico"
 				>
 			</File>
 			<File
@@ -4398,19 +4406,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\TrayConnected.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\TrayConnected.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\TrayDisconnected.ico"
+				RelativePath=".\res\MOD\TrayConnected.ico"
 				>
 			</File>
 			<File
 				RelativePath=".\res\MOD\Traydisconnected.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\TrayDisconnected.ico"
 				>
 			</File>
 			<File

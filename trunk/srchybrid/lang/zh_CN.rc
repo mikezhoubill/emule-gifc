@@ -4041,6 +4041,7 @@ BEGIN
     IDS_GIFC1               "搜索/下载 GIFC翻墙软件..."
     IDS_PW_GIFC             "GIFC下载文件"
     IDS_OPENGIFC            "打开GIFC目录"
+    IDS_SEARCHWAIT          "正在搜索，请稍等……"
     IDS_SHOWLESS            "显示简化界面"
     IDS_SHOWMORE            "显示标准界面"
     IDS_SHOWEXT             "显示专家界面"
