@@ -1537,6 +1537,8 @@
 #define IDC_TRANSFER_RATE               2004
 #define IDS_SEARCHWAIT                  2004
 #define IDC_MAXSOURCEPERFILE            2005
+#define IDS_GIFCUPDATED                 2005
+#define IDS_GIFCNOTFOUND                2005
 #define IDC_TITLEWINDOW                 2006
 #define IDC_INPUTWINDOW                 2007
 #define IDC_IRC_SERVER_BOX              2008

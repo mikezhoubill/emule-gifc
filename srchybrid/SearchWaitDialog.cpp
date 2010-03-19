@@ -39,6 +39,7 @@ BOOL CSearchWaitDialog::OnInitDialog()
 	InitWindowStyles(this);
 	CenterWindow();
 	
+	SetWindowText(L"");
 	SetDlgItemText(IDC_SEARCHWAIT, GetResString(IDS_SEARCHWAIT));
 	return TRUE;
 }

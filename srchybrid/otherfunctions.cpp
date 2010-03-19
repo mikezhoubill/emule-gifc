@@ -4502,7 +4502,8 @@ long GetValidIP(char **szText)          //     Find a valid IP-number in szText
 // <== Connection Checker [eWombat/WiZaRd] - Stulle
 
 // >> add by Ken
-bool IsGIFCFileName(const CString& str)
+CString EmptyString;
+bool IsGIFCFileName(const CString& str, CString& datestr, CString& namestr)
 {
 	int curPos = 0;
 	CString resToken = str.Tokenize(L"_", curPos);
@@ -4521,10 +4522,27 @@ bool IsGIFCFileName(const CString& str)
 	int d = _wtoi(resToken.Right(2).GetString());
 	if (d < 1 && d > 31) 
 		return false;
+	if (&datestr != &EmptyString)
+		datestr = resToken;
 
-	resToken = str.Tokenize(L".", curPos); // product and version
+	resToken = str.Tokenize(L"_", curPos); // product
+	if (resToken == "")
+		return false;
+	if (&namestr != &EmptyString)
+		namestr = resToken;
+
+	resToken = str.Tokenize(L".", curPos); // some product (ex.FreeU) & version
 	if (resToken == "") 
 		return false;
+
+	for (int i = 0; i < resToken.GetLength(); i++)
+	{
+		if (isdigit(resToken[i]))
+			break;
+		if (i == 0)
+			namestr += "_";
+		namestr += resToken[i];
+	}
 
 	return str.Right(str.GetLength()-curPos).CompareNoCase(L"zip") == 0; // extension
 }
