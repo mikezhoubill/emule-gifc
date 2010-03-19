@@ -540,6 +540,31 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 }
 
 // >> add by Ken
+struct CArrayObj
+{
+	CArrayObj() {}
+	CArrayObj(const CString& datestr, const CString& namestr):
+		date(datestr),
+		name(namestr),
+		ver(0) {}
+	CString date;
+	CString name;
+	int ver;
+};
+
+static int SearchName(const CArray<CArrayObj>& ar, const CString& name)
+{
+	bool found = false;
+	for (int i = 0; i < ar.GetCount(); i++)
+	{
+		found = (ar[i].name.CompareNoCase(name) == 0);
+		if (found)
+			return i;
+	}
+
+	return -1;
+}
+
 void CSearchResultsWnd::AutoDownloadGIFC()
 {
 	if (m_pwndParams->m_searchWaitDlg)
@@ -552,16 +577,44 @@ void CSearchResultsWnd::AutoDownloadGIFC()
 	if (!m_pwndParams->m_bAutoDownload)
 		return;
 
+	searchlistctrl.SortItems(100); // sort by name, decending
+
+	CArray<CArrayObj> ar;
 	int selCount = 0;
 	for (int i = 0; i < searchlistctrl.GetItemCount(); i++)
 	{
 		searchlistctrl.SetItemState(i, 0, LVIS_SELECTED); // unselect first
 
-		if (!IsGIFCFileName(searchlistctrl.GetItemText(i,0)))
+		CString datestr, namestr;
+		if (!IsGIFCFileName(searchlistctrl.GetItemText(i,0), datestr, namestr))
 			continue;
 
-		searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
-		selCount++;
+		//only select the lastest 2 versions
+		int k = SearchName(ar, namestr);
+		if (k == -1)
+		{
+			CArrayObj o(datestr, namestr);
+				ar.Add(o);
+			searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+			selCount++;
+		}
+		else if (ar[k].ver < 2)
+		{
+			if (ar[k].date == datestr)
+			{
+				ar[k].date = datestr;
+				searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+				selCount++;
+			}
+			else
+			{
+				if (++ar[k].ver < 2)
+				{
+					searchlistctrl.SetItemState(i, LVIS_SELECTED, LVIS_SELECTED);
+					selCount++;
+				}
+			}
+		}
 	}
 	if (selCount)
 	{
@@ -569,6 +622,8 @@ void CSearchResultsWnd::AutoDownloadGIFC()
 		CemuleDlg* emuleDlg = (CemuleDlg*)GetTopLevelFrame()->GetParent();
 		emuleDlg->SetActiveDialog(emuleDlg->transferwnd);
 	}
+	else
+		::MessageBox(m_hWnd, GetResString(IDS_GIFCNOTFOUND), L"", MB_OK);
 	m_pwndParams->m_bAutoDownload = false;
 }
 // << add by Ken

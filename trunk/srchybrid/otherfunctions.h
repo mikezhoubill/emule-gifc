@@ -469,5 +469,6 @@ long GetValidIP(char **szText);
 // <== Design Settings [eWombat/Stulle] - Stulle
 
 // >> add by Ken
-bool IsGIFCFileName(const CString& str);
+extern CString EmptyString;
+bool IsGIFCFileName(const CString& str, CString& datestr = EmptyString, CString& namestr = EmptyString);
 //  << add by Ken

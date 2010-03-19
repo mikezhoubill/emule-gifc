@@ -6431,10 +6431,11 @@ END
 STRINGTABLE 
 BEGIN
     IDS_GIFC                "Search/DownLoad GIFC"
-    IDS_GIFC1               "Auto download GIFC software"
+    IDS_GIFC1               "Auto download recent GIFC software"
     IDS_PW_GIFC             "GIFC File"
     IDS_OPENGIFC            "Open GIFC Folder"
     IDS_SEARCHWAIT          "Searching... Please wait."
+    IDS_GIFCNOTFOUND        "Your GIFC software is updated."
     IDS_SHOWLESS            "Show simple interface"
     IDS_SHOWMORE            "Show standard interface"
     IDS_SHOWEXT             "Show expert interface"
@@ -6443,7 +6444,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_NODESFILEBUTTON     "Nodes File"
-    IDS_SERVER_LISTS        "Searching... Please wait."
+    IDS_SERVER_LISTS        "Server Lists"
 END
 
 #endif    // English (U.S.) resources
