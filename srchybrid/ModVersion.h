@@ -25,8 +25,8 @@
 //#define MOD_VERSION_BUILD	8
 //#define	MOD_VERSION			_T("StulleMule") // remark: last sign != ' ' (space) !!!
 //#define	MOD_VERSION_LONG	_T("StulleMule v")
-#define MOD_VERSION_MJR		1
-#define MOD_VERSION_MIN		0
+#define MOD_VERSION_MJR		0
+#define MOD_VERSION_MIN		94
 #define MOD_VERSION_BUILD	1
 #define	MOD_VERSION			_T("eMule-GIFC") // remark: last sign != ' ' (space) !!!
 #define	MOD_VERSION_LONG	_T("eMule-GIFC v")
