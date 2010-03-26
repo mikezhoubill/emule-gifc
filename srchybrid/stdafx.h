@@ -195,6 +195,11 @@
 #include <afxtempl.h>
 #include <math.h>
 
+// >> add by Ken
+#include   <Ws2tcpip.h>  
+#include   <Wspiapi.h>  
+// << add by Ken
+
 
 #ifndef EWX_FORCEIFHUNG
 #define EWX_FORCEIFHUNG			0x00000010
