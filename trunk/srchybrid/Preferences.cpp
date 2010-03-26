@@ -4639,7 +4639,7 @@ void CPreferences::LoadPreferences()
 	SetLanguage();
 
 	// >> add by Ken -- associate ed2k protocal
-	if (Ask4RegFix(true, false, true))
+	if (m_bFirstStart && Ask4RegFix(true, false, true))
 		Ask4RegFix(false, false, true);
 	// << add by Ken
 }
