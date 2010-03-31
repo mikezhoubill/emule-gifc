@@ -5,6 +5,7 @@ http://emule-gifc.googlecode.com/files/emule-gifc%200.94.rar
 SHA1 Checksum: fb7366cc67538d9ae49a6674f373a82b20ce6e30
 
 以后上载连接需要遵守如下规则。
+
 1。 每个EXE package需要用最大压缩的ZIP文件上载， 其中包含一个CompileVer.txt， 其中包含编译该EXE的 SVN 当前版本号。这样以后其他人也容易编译出同一版本的EXE。
 
 2。 每个EXE package， 命名为    emule-gifc-V0.94B.zip.   名字中没有空格，版本号后面的B表示Beta版， 没有B表示正式版。
