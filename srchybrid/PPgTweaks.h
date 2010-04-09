@@ -1,12 +1,7 @@
 #pragma once
 #include "TreeOptionsCtrlEx.h"
 
-// MORPH START leuk_he tooltipped
-/*
 class CPPgTweaks : public CPropertyPage
-*/
-class CPPgTweaks : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgTweaks)
 
@@ -25,7 +20,6 @@ protected:
 	int m_iMaxConnPerFive;
 	int m_iMaxHalfOpen;
 	bool m_bConditionalTCPAccept;
-	DWORD m_dwBindAddr; //MORPH leuk_he bindaddr
 	bool m_bAutoTakeEd2kLinks;
 	bool m_bVerbose;
 	bool m_bDebugSourceExchange;
@@ -35,14 +29,17 @@ protected:
 	bool m_bLogFilteredIPs;
 	bool m_bLogFileSaving;
     bool m_bLogA4AF;
+	bool m_bLogDrop; //Xman Xtreme Downloadmanager
+	bool m_bLogpartmismatch; //Xman Log part/size-mismatch
 	bool m_bLogUlDlEvents;
-	//MORPH START - Added by SiRoB, WebCache 1.2f
-	bool m_bLogICHEvents;//JP log ICH events
-	//MORPH END   - Added by SiRoB, WebCache 1.2f
+	// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+	/*
 	bool m_bCreditSystem;
+	*/
+	// <== CreditSystems [EastShare/ MorphXT] - Stulle
 	bool m_bLog2Disk;
 	bool m_bDebug2Disk;
-	bool m_bDateFileNameLog;//Morph - added by AndCycle, Date File Name Log
+	bool m_bDateFileNameLog; // Date File Name Log [AndCycle] - Stulle
 	int m_iCommitFiles;
 	bool m_bFilterLANIPs;
 	bool m_bExtControls;
@@ -52,13 +49,14 @@ protected:
 	bool m_bCheckDiskspace;
 	float m_fMinFreeDiskSpaceMB;
 	CString m_sYourHostname;
-	// Removed by MoNKi [MoNKi: -Improved ICS-Firewall support-]
-	/* Moved to PPgEmulespana
+	// ==> Improved ICS-Firewall support [MoNKi] - Max
+	/*
 	bool m_bFirewallStartup;
 	*/
+	// <== Improved ICS-Firewall support [MoNKi] - Max
 	int m_iLogLevel;
 	bool m_bDisablePeerCache;
-	// ==> removed - Stulle
+	//Xman
 	/*
     bool m_bDynUpEnabled;
     int m_iDynUpMinUpload;
@@ -68,118 +66,24 @@ protected:
     int m_iDynUpGoingUpDivider;
     int m_iDynUpGoingDownDivider;
     int m_iDynUpNumberOfPings;
-	*/
-	// <== removed - Stulle
     bool m_bA4AFSaveCpu;
+	*/
+	//Xman end
 	bool m_bAutoArchDisable;
 	int m_iExtractMetaData;
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+	bool m_bIsUPnPEnabled; //zz_fly :: add UPnP option in Tweaks
+	bool m_bCloseUPnPOnExit;
+	bool m_bSkipWANIPSetup;
+	bool m_bSkipWANPPPSetup;
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	int m_iShareeMule;
+	int m_iCryptTCPPaddingLength; //Xman Added PaddingLength to Extended preferences
 	bool bShowedWarning;
 	bool m_bResolveShellLinks;
-	// MORPH START leuk_he Advanced official preferences.
-	bool bMiniMuleAutoClose;
-	int iMiniMuleTransparency;
-	bool bCreateCrashDump;
-	bool bCheckComctl32 ;
-	bool bCheckShell32;
-	bool bIgnoreInstances;
-	CString sNotifierMailEncryptCertName;
-	CString  sMediaInfo_MediaInfoDllPath;
-	bool bMediaInfo_RIFF;
-	bool bMediaInfo_ID3LIB;
-	int iMaxLogBuff;
-	int m_iMaxChatHistory;
-	int m_iPreviewSmallBlocks;
-	bool m_bRestoreLastMainWndDlg;
-	bool m_bRestoreLastLogPane;
-	bool m_bPreviewCopiedArchives;
-	int m_iStraightWindowStyles;
-	int m_iLogFileFormat;
-	bool m_bRTLWindowsLayout;
-	bool m_bPreviewOnIconDblClk;
-	CString sInternetSecurityZone;
-	CString sTxtEditor;
-	int iServerUDPPort; // really a unsigned int 16
-	bool m_bRemoveFilesToBin;
-    bool m_bHighresTimer;
-	bool m_bTrustEveryHash;
-    int m_iInspectAllFileTypes;
-    int  m_umaxmsgsessions;
-    bool m_bPreferRestrictedOverUser;
-	bool m_bUseUserSortedServerList;
-    int m_iWebFileUploadSizeLimitMB;
-    CString m_sAllowedIPs;
-	int m_iDebugSearchResultDetailLevel;
-	int m_iCryptTCPPaddingLength ;
-	bool m_bAdjustNTFSDaylightFileTime; //neo offcial pref II
-	CString m_strDateTimeFormat;
-	CString m_strDateTimeFormat4Log;
-	CString m_strDateTimeFormat4List;
-	COLORREF m_crLogError;
-	COLORREF m_crLogWarning;
-	COLORREF m_crLogSuccess;
-	bool m_bShowVerticalHourMarkers;
-	bool m_bReBarToolbar;
-	bool m_bIconflashOnNewMessage;
-	bool m_bShowCopyEd2kLinkCmd;
-	bool m_dontcompressavi;
-	bool m_ICH;
-	int m_iFileBufferTimeLimit;
-	bool m_bRearrangeKadSearchKeywords;
 
-    // continue extra official preferences....
-	HTREEITEM m_hti_advanced;
-    HTREEITEM m_hti_bMiniMuleAutoClose;
-	HTREEITEM m_hti_iMiniMuleTransparency;
-	HTREEITEM m_hti_bCreateCrashDump;
-	HTREEITEM m_hti_bCheckComctl32 ;
-	HTREEITEM m_hti_bCheckShell32;
-	HTREEITEM m_hti_bIgnoreInstances;
-	HTREEITEM m_hti_sNotifierMailEncryptCertName;
-	HTREEITEM m_hti_sMediaInfo_MediaInfoDllPath;
-	HTREEITEM m_hti_bMediaInfo_RIFF;
-	HTREEITEM m_hti_bMediaInfo_ID3LIB;
-	HTREEITEM m_hti_iMaxLogBuff;
-	HTREEITEM m_hti_m_iMaxChatHistory;
-	HTREEITEM m_hti_m_iPreviewSmallBlocks;
-	HTREEITEM m_hti_m_bRestoreLastMainWndDlg;
-	HTREEITEM m_hti_m_bRestoreLastLogPane;
-	HTREEITEM m_hti_m_bPreviewCopiedArchives;
-	HTREEITEM m_hti_m_iStraightWindowStyles;
-	HTREEITEM m_hti_m_iLogFileFormat;
-	HTREEITEM m_hti_m_bRTLWindowsLayout;
-	HTREEITEM m_hti_m_bPreviewOnIconDblClk;
-	HTREEITEM m_hti_sInternetSecurityZone;
-	HTREEITEM m_hti_sTxtEditor;
-	HTREEITEM m_hti_iServerUDPPort;
-	HTREEITEM m_hti_m_bRemoveFilesToBin;
-	HTREEITEM m_hti_HighresTimer;
-	HTREEITEM m_hti_TrustEveryHash;
-	HTREEITEM m_hti_InspectAllFileTypes;
-	HTREEITEM m_hti_maxmsgsessions;
-	HTREEITEM m_hti_PreferRestrictedOverUser;
-	HTREEITEM m_hti_WebFileUploadSizeLimitMB ;
-	HTREEITEM m_hti_AllowedIPs;
-	HTREEITEM m_hti_UseUserSortedServerList;
-	HTREEITEM m_hti_DebugSearchResultDetailLevel;
-	HTREEITEM m_htiCryptTCPPaddingLength;
-	HTREEITEM m_htiAdjustNTFSDaylightFileTime;	  //neo offcial pref II
-	HTREEITEM m_htidatetimeformat;
-	HTREEITEM m_htidatetimeformat4log;
-	HTREEITEM m_htidatetimeformat4list;
-	HTREEITEM m_htiLogError;
-	HTREEITEM m_htiLogWarning;
-	HTREEITEM m_htiLogSuccess;
-	HTREEITEM m_htiShowVerticalHourMarkers;
-	HTREEITEM m_htiReBarToolbar;
-	HTREEITEM m_htiIconflashOnNewMessage;
-	HTREEITEM m_htiShowCopyEd2kLinkCmd;
-	HTREEITEM m_htidontcompressavi;
-	HTREEITEM m_htiICH;
-	HTREEITEM m_htiFileBufferTimeLimit;
-	HTREEITEM m_htiRearrangeKadSearchKeywords;
-	// MORPH END  leuk_he Advanced official preferences. 
-	
 
 	CSliderCtrl m_ctlFileBuffSize;
 	CSliderCtrl m_ctlQueueSize;
@@ -199,15 +103,17 @@ protected:
 	HTREEITEM m_htiLogFilteredIPs;
 	HTREEITEM m_htiLogFileSaving;
     HTREEITEM m_htiLogA4AF;
+	HTREEITEM m_htiLogDrop; //Xman Xtreme Downloadmanager
+	HTREEITEM m_htiLogpartmismtach; //Xman Log part/size-mismatch
 	HTREEITEM m_htiLogUlDlEvents;
-	//MORPH START - Added by SiRoB, WebCache 1.2f
-	HTREEITEM m_htiLogICHEvents; //JP log ICH events
-	//MORPH END   - Added by SiRoB, WebCache 1.2f
-
+	// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+	/*
 	HTREEITEM m_htiCreditSystem;
+	*/
+	// <== CreditSystems [EastShare/ MorphXT] - Stulle
 	HTREEITEM m_htiLog2Disk;
 	HTREEITEM m_htiDebug2Disk;
-	HTREEITEM m_htiDateFileNameLog;//Morph - added by AndCycle, Date File Name Log
+	HTREEITEM m_htiDateFileNameLog; // Date File Name Log [AndCycle] - Stulle
 	HTREEITEM m_htiCommit;
 	HTREEITEM m_htiCommitNever;
 	HTREEITEM m_htiCommitOnShutdown;
@@ -215,22 +121,21 @@ protected:
 	HTREEITEM m_htiFilterLANIPs;
 	HTREEITEM m_htiExtControls;
 	HTREEITEM m_htiServerKeepAliveTimeout;
-	HTREEITEM  m_htiBindAddr;	//MORPH leuk_he bindaddr
 	HTREEITEM m_htiSparsePartFiles;
 	HTREEITEM m_htiFullAlloc;
 	HTREEITEM m_htiCheckDiskspace;
 	HTREEITEM m_htiMinFreeDiskSpace;
 	HTREEITEM m_htiYourHostname;
-	// Removed by MoNKi [MoNKi: -Improved ICS-Firewall support-]
-	/* Moved to PPgEmulespana
+	// ==> Improved ICS-Firewall support [MoNKi] - Max
+	/*
 	HTREEITEM m_htiFirewallStartup;
 	*/
-	// End emulEspaña
+	// <== Improved ICS-Firewall support [MoNKi] - Max
 	HTREEITEM m_htiLogLevel;
 	HTREEITEM m_htiDisablePeerCache;
-	// ==> removed - Stulle
+	//Xman
 	/*
-	HTREEITEM m_htiDynUp;
+    HTREEITEM m_htiDynUp;
 	HTREEITEM m_htiDynUpEnabled;
     HTREEITEM m_htiDynUpMinUpload;
     HTREEITEM m_htiDynUpPingTolerance;
@@ -241,19 +146,35 @@ protected:
     HTREEITEM m_htiDynUpGoingUpDivider;
     HTREEITEM m_htiDynUpGoingDownDivider;
     HTREEITEM m_htiDynUpNumberOfPings;
+    HTREEITEM m_htiA4AFSaveCpu;
 	*/
-	// <== removed - Stulle
-	HTREEITEM m_htiA4AFSaveCpu;
+	//Xman end
+
+	// ==> UPnP support [MoNKi] - leuk_he verbose log
+	bool m_bLogUPnP;
+	HTREEITEM m_htiLogUPnP;
+	// <== UPnP support [MoNKi] - leuk_he 
 	HTREEITEM m_htiExtractMetaData;
 	HTREEITEM m_htiExtractMetaDataNever;
 	HTREEITEM m_htiExtractMetaDataID3Lib;
 	HTREEITEM m_htiAutoArch;
+	HTREEITEM m_htiUPnP;
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+	HTREEITEM m_htiIsUPnPEnabled; //zz_fly :: add UPnP option in Tweaks
+	HTREEITEM m_htiCloseUPnPPorts;
+	HTREEITEM m_htiSkipWANIPSetup;
+	HTREEITEM m_htiSkipWANPPPSetup;
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	HTREEITEM m_htiShareeMule;
 	HTREEITEM m_htiShareeMuleMultiUser;
 	HTREEITEM m_htiShareeMulePublicUser;
 	HTREEITEM m_htiShareeMuleOldStyle;
 	//HTREEITEM m_htiExtractMetaDataMediaDet;
 	HTREEITEM m_htiResolveShellLinks;
+
+	HTREEITEM m_htiCryptTCPPaddingLength; //Xman Added PaddingLength to Extended preferences
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
@@ -267,9 +188,4 @@ protected:
 	afx_msg LRESULT OnTreeOptsCtrlNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHelp();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
-	// Added by MoNKi [MoNKi: -UPnPNAT Support-]
-protected:
-	bool			m_bLogUPnP;
-	HTREEITEM	m_htiLogUPnP;
-	// End -UPnPNAT Support-
 };

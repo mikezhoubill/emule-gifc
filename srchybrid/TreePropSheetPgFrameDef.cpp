@@ -8,9 +8,9 @@
 * Redistribution is appreciated.
 *
 * $Workfile:$
-* $Revision: 1.4 $
+* $Revision:$
 * $Modtime:$
-* $Author: stulleamgym $
+* $Author:$
 *
 * Revision History:
 *	$History:$
@@ -92,7 +92,7 @@ void CPropPageFrameDefault::SetCaption(LPCTSTR lpszCaption, HICON hIcon /*= NULL
 		BITMAP	bm;
 		bmMask.GetBitmap(&bm);
 
-		if (!m_Images.Create(bm.bmWidth, bm.bmHeight, theApp.m_iDfltImageListColorFlags|ILC_MASK, 0, 1))
+		if (!m_Images.Create(bm.bmWidth, bm.bmHeight, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1))
 			return;
 
 		if (m_Images.Add(hIcon) == -1)
@@ -168,10 +168,10 @@ void CPropPageFrameDefault::DrawCaption(CDC *pDc, CRect rect, LPCTSTR lpszCaptio
 	COLORREF clrRight;
 	if (!g_bLowColorDesktop)
 	{
-	if (g_xpStyle.IsThemeActive() && g_xpStyle.IsAppThemed())
-		clrRight = pDc->GetPixel(rect.right-1, rect.top); // not very smart, but for XP styles, we need the 'real' background color
-	else
-		clrRight = GetSysColor(COLOR_3DFACE);
+		if (g_xpStyle.IsThemeActive() && g_xpStyle.IsAppThemed())
+			clrRight = pDc->GetPixel(rect.right-1, rect.top); // not very smart, but for XP styles, we need the 'real' background color
+		else
+			clrRight = GetSysColor(COLOR_3DFACE);
 	}
 	else
 		clrRight = clrLeft;
@@ -183,7 +183,7 @@ void CPropPageFrameDefault::DrawCaption(CDC *pDc, CRect rect, LPCTSTR lpszCaptio
 		IMAGEINFO	ii;
 		m_Images.GetImageInfo(0, &ii);
 		CPoint		pt(rect.left + 3, rect.CenterPoint().y - (ii.rcImage.bottom-ii.rcImage.top)/2);
-		m_Images.Draw(pDc, 0, pt, ILD_TRANSPARENT);
+		m_Images.Draw(pDc, 0, pt, ILD_NORMAL);
 		rect.left+= (ii.rcImage.right-ii.rcImage.left) + 3;
 	}
 
@@ -194,7 +194,7 @@ void CPropPageFrameDefault::DrawCaption(CDC *pDc, CRect rect, LPCTSTR lpszCaptio
 	int			nBkStyle = pDc->SetBkMode(TRANSPARENT);
 	CFont		*pFont = (CFont*)pDc->SelectObject(&theApp.m_fontDefaultBold);
 
-	pDc->DrawText(lpszCaption, rect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
+	pDc->DrawText(lpszCaption, rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
 
 	pDc->SetTextColor(clrPrev);
 	pDc->SetBkMode(nBkStyle);

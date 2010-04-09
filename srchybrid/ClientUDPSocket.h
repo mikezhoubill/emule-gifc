@@ -41,15 +41,17 @@ public:
 	CClientUDPSocket();
 	virtual ~CClientUDPSocket();
 
+	bool	IsSocketUploading() const {return false;} //Xman Xtreme Upload
+
 	bool	Create();
 	bool	Rebind();
 	uint16	GetConnectedPort()			{ return m_port; }
 	bool	SendPacket(Packet* packet, uint32 dwIP, uint16 nPort, bool bEncrypt, const uchar* pachTargetClientHashORKadID, bool bKad, uint32 nReceiverVerifyKey);
-	 SocketSentBytes  SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize); // ZZ:UploadBandWithThrottler (UDP)
+    SocketSentBytes  SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize); // ZZ:UploadBandWithThrottler (UDP)
 
 protected:
 	bool	ProcessPacket(const BYTE* packet, UINT size, uint8 opcode, uint32 ip, uint16 port);
-
+	
 	virtual void	OnSend(int nErrorCode);	
 	virtual void	OnReceive(int nErrorCode);
 

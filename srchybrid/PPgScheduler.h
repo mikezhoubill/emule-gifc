@@ -1,12 +1,6 @@
 #pragma once
 
-
-// MORPH START leuk_he tooltipped
-/*
 class CPPgScheduler : public CPropertyPage
-*/
-class CPPgScheduler : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgScheduler)
 
@@ -26,13 +20,6 @@ protected:
 	CDateTimeCtrl m_timeTo;
 	CListCtrl m_list;
 	CListCtrl m_actions;
-  // MORPH START  leuk_he: Remove 2nd apply in scheduler
-	virtual void SetModified(bool bChanged=1);
-	bool modified;
-	bool bSuppressModifications;
-	int miActiveSelection; // remember active selection. 
-  // MORPH END leuk_he: Remove 2nd apply in scheduler
-
 
 	CString GetActionLabel(int index);
 	CString GetDayLabel(int index);
@@ -48,12 +35,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnBnClickedAdd();
-  /* MORPH START leuk_he: Remove 2nd apply in scheduler
 	afx_msg void OnBnClickedApply();
-  */
-	afx_msg void OnListItemChanging(NMHDR* /*pNMHDR*/, LRESULT* pResult) ;
-	afx_msg void OnSettingsChangeTime(NMHDR *, LRESULT *) {SetModified();}
-  // MORPH END leuk_he: Remove 2nd apply in scheduler
 	afx_msg void OnBnClickedRemove();
 	afx_msg void OnDisableTime2();
 	afx_msg void OnEnableChange();
@@ -62,5 +44,9 @@ protected:
 	afx_msg void OnNmDblClkActionlist(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNmRClickActionlist(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSettingsChange() {SetModified();}
-	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct); // XP Style Menu [Xanatos] - Stulle
+
+	// ==> XP Style Menu [Xanatos] - Stulle
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
+	// <== XP Style Menu [Xanatos] - Stulle
 };

@@ -46,8 +46,10 @@
 #include "ClientUDPSocket.h"
 #include "SHAHashSet.h"
 #include "Log.h"
+//Xman
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+#include "FirewallOpener.h" // Improved ICS-Firewall support [MoNKi] - Max
 
-#include "FirewallOpener.h" //MORPH - Added by SiRoB, [MoNKi: -Random Ports-]
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -107,9 +109,18 @@ CClientReqSocket::~CClientReqSocket()
 {
 	//This will update our statistics.
 	SetConState(SS_Other);
+	//Xman
+	// Maella -Code Fix-
+	/*
 	if (client)
 		client->socket = 0;
 	client = 0;
+	*/
+	if(client != NULL && client->socket == this){
+		client->socket = NULL;
+	}
+	client = NULL;
+	// Maella End
 	theApp.listensocket->RemoveSocket(this);
 
 	DEBUG_ONLY (theApp.clientlist->Debug_SocketDeleted(this));
@@ -146,6 +157,21 @@ UINT CClientReqSocket::GetTimeOut()
 		// we have a downloading PC socket
 		return max(CEMSocket::GetTimeOut(), client->m_pPCDownSocket->GetTimeOut());
 	}
+	//Xman / Maella:
+	// Normally a TCP session is closed after 40s of inactivity 
+	// To limit the number of simultaneous TCP session we use an adaptive timeout
+	else if((client != NULL && IsRawDataMode()==false) && //client->m_pPCDownSocket==NULL && client->m_pPCUpSocket==NULL) && //Xman: don't touch peercache
+		(client->GetUploadState() == US_ONUPLOADQUEUE || client->GetUploadState() == US_NONE) &&
+		(client->GetDownloadState() == DS_ONQUEUE     || client->GetDownloadState() == DS_NONE)){
+			// Smaller timeout (30s)
+			// => help to reduce up to 25% the number of simultaneous connections
+			return SEC2MS(30);
+	}
+	//Xman Xtreme Upload
+	else if(client != NULL  && IsRawDataMode()==false && //&& client->m_pPCDownSocket==NULL && client->m_pPCUpSocket==NULL && //Xman: don't touch peercache
+		client->GetUploadState()== US_CONNECTING)
+		return SEC2MS(20); 
+	//Xman end
 	else
 		return CEMSocket::GetTimeOut();
 }
@@ -158,11 +184,23 @@ bool CClientReqSocket::CheckTimeOut()
 		//if this socket is actually failing, or if this socket is just queued in SP2's new
 		//protection queue. Therefore we give the socket a chance to either finally report
 		//the connection error, or finally make it through SP2's new queued socket system..
+		//Xman : 90 seconds should be enough
+		/*
 		if (::GetTickCount() - timeout_timer > CEMSocket::GetTimeOut()*4){
+		*/
+		if (::GetTickCount() - timeout_timer > SEC2MS(90)){
 			timeout_timer = ::GetTickCount();
 			CString str;
 			str.Format(_T("Timeout: State:%u = SS_Half"), m_nOnConnect);
+			//Xman : at a test I found out a second retry brings nothing at this state
+			if(client) client->m_cFailed=5;
+			//Xman end
+			// Maella -Upload Stop Reason-
+			/*
 			Disconnect(str);
+			*/
+			Disconnect(str,CUpDownClient::USR_SOCKET);
+			//Xman end
 			return true;
 		}
 		return false;
@@ -184,9 +222,23 @@ bool CClientReqSocket::CheckTimeOut()
 		timeout_timer = ::GetTickCount();
 		CString str;
 		str.Format(_T("Timeout: State:%u (0 = SS_Other, 1 = SS_Half, 2 = SS_Complete"), m_nOnConnect);
+		// Maella -Upload Stop Reason-
+		/*
 		Disconnect(str);
+		*/
+		Disconnect(str, CUpDownClient::USR_SOCKET);
+		//Xman end
 		return true;
 	}
+	
+	//there are some clients which are uploading to us.. and also get an uploadslot from us..
+	//but they don't send a blockrequest. the socket won't timeout and we have a 0-uploadsocket
+	if(client && client->GetUploadState()==US_UPLOADING && isready==false && client->HasPeerCacheState()==false && client->GetUpStartTimeDelay()>=MIN2MS(1)) //Xman Xtreme Upload: Peercache-part
+	{
+		//timeout_timer = ::GetTickCount();
+		theApp.uploadqueue->RemoveFromUploadQueue(client, _T("0-Uploadsocket"),CUpDownClient::USR_SOCKET); // Maella -Upload Stop Reason-
+	}
+	//Xman end
 	return false;
 }
 
@@ -205,17 +257,49 @@ void CClientReqSocket::OnClose(int nErrorCode){
 	}
 	else
 		pszReason = NULL;
+	// Maella -Upload Stop Reason-
+	/*
 	Disconnect(pszReason);
+	*/
+	Disconnect(pszReason, CUpDownClient::USR_SOCKET);
+	//Xman end
 	delete pstrReason;
 }
 
+//Xman improved socket closing
+void CClientReqSocket::CloseSocket()
+{
+	CEMSocket::OnClose(0);
+	Close();
+	deltimer = ::GetTickCount();
+}
+//Xman end
+
+// Maella -Upload Stop Reason-
+/*
 void CClientReqSocket::Disconnect(LPCTSTR pszReason){
+*/
+void CClientReqSocket::Disconnect(LPCTSTR pszReason, CUpDownClient::UpStopReason reason){
+//Xman end
 	AsyncSelect(0);
+
+	//Xman 4.8.2
+	//Threadsafe Statechange
+	/*
 	byConnected = ES_DISCONNECTED;
+	*/
+	SetConnectedState(ES_DISCONNECTED);
+	//Xman end
+
 	if (!client)
 		Safe_Delete();
 	else
+		// Maella -Upload Stop Reason-
+		/*
         if(client->Disconnected(CString(_T("CClientReqSocket::Disconnect(): ")) + pszReason, true)){
+		*/
+		if(client->Disconnected(CString(_T("CClientReqSocket::Disconnect(): ")) + pszReason, true, reason)){
+		//Xman end
 			CUpDownClient* temp = client;
 			client->socket = NULL;
 			client = NULL;
@@ -231,6 +315,16 @@ void CClientReqSocket::Disconnect(LPCTSTR pszReason){
 void CClientReqSocket::Delete_Timed(){
 // it seems that MFC Sockets call socketfunctions after they are deleted, even if the socket is closed
 // and select(0) is set. So we need to wait some time to make sure this doesn't happens
+
+	//Xman improved socket closing
+	//other than official this isn't anymore the time between shutting down and deletion
+	//but the time from closing and removing from uploadbandwidththrottler to deletion
+	//because we had already some waiting-time we can reduce this one (maybe we don't need it anymore)
+	//for the moment 10 seconds for safety
+	//Xman end
+	//zz_fly :: it is confirm that this fix is necessary to very big uploaders(upload>3000). normal user do not need this fix.
+	//			a simple solution is increase the time here. but for unknown reason, Xman had dropped it.
+	//			althought Xman's fix use more memory(about 10~20MB), but i restore it.
 	if (::GetTickCount() - deltimer > 10000)
 		delete this;
 }
@@ -242,10 +336,24 @@ void CClientReqSocket::Safe_Delete()
 	deltimer = ::GetTickCount();
 	if (m_SocketData.hSocket != INVALID_SOCKET) // deadlake PROXYSUPPORT - changed to AsyncSocketEx
 		ShutDown(SD_BOTH);
+	//Xman
+	// - Maella -Code Fix-
+	/*
 	if (client)
 		client->socket = 0;
 	client = 0;
 	byConnected = ES_DISCONNECTED;
+	*/
+	if(client != NULL && client->socket == this){
+		// They might have an error in the cross link somewhere
+		client->socket = NULL;
+	}
+	client = NULL;
+	// Maella end
+	//Xman 4.8.2
+	//Threadsafe Statechange
+	SetConnectedState(ES_DISCONNECTED);
+	//Xman end
 	deletethis = true;
 }
 
@@ -253,30 +361,26 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 {
 	try
 	{
+		//Xman Xtreme Mod Exception Handling 
+		/*
 		try
 		{
+		*/
+		//Xman end
 			if (!client && opcode != OP_HELLO)
 			{
 				theStats.AddDownDataOverheadOther(size);
 				throw GetResString(IDS_ERR_NOHELLO);
 			}
 			else if (client && opcode != OP_HELLO && opcode != OP_HELLOANSWER)
-/*
 				client->CheckHandshakeFinished();
-  MORPH START: */
-				client->CheckHandshakeFinished(OP_EDONKEYPROT, opcode);
- // MORPH END
-
 			switch(opcode)
 			{
 				case OP_HELLOANSWER:
 				{
-					//MORPH START - Added & Modified by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
-					if(thePrefs.IsSUCDoesWork())
-						SmartUploadControl();
-					//MORPH END - Added & Modified by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
 					theStats.AddDownDataOverheadOther(size);
 					client->ProcessHelloAnswer(packet,size);
+					client->ProcessBanMessage(); //Xman Anti-Leecher
 					if (thePrefs.GetDebugClientTCPLevel() > 0){
 						DebugRecv("OP_HelloAnswer", client);
 						Debug(_T("  %s\n"), client->DbgGetHelloInfo());
@@ -287,6 +391,11 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					//	- we have received eMule-OP_HELLOANSWER (new eMule)
 					if (client->GetInfoPacketsReceived() == IP_BOTH)
 						client->InfoPacketsReceived();
+
+					//Xman don't continue sending after banning
+					if(client && client->GetUploadState()==US_BANNED)
+						break;
+					//Xman end
 
 					if (client)
 					{
@@ -299,7 +408,29 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 				{
 					theStats.AddDownDataOverheadOther(size);
 
+					//Xman
+					// Maella -Code Fix-
+					/*
 					bool bNewClient = !client;
+					*/
+					if(client != NULL)
+					{
+						CString oldHash;
+						CString newHash;
+						if(size > 17){
+							oldHash = (client->GetUserHash() == NULL) ? _T("null") : EncodeBase16(client->GetUserHash(), 16);
+							newHash = EncodeBase16((const uchar*)&packet[1], 16);
+						}
+						if(oldHash != newHash){
+							AddDebugLogLine(true,  _T("User %s (client=%s) try to send multiple OP_HELLO, old hash=%s, new has=%s"), client->GetUserName(), client->GetClientSoftVer(), oldHash, newHash);
+						}
+						else {
+							AddDebugLogLine(true, _T("User %s (client=%s) try to send multiple OP_HELLO"), client->GetUserName(), client->GetClientSoftVer());
+						}
+						throw CString(_T("Invalid request received"));
+					}
+					bool bNewClient = (client == NULL);
+					// Maella end
 					if (bNewClient)
 					{
 						// create new client to save standart informations
@@ -335,14 +466,26 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					{
 						// update the old client informations
 						bIsMuleHello = client->ProcessHelloPacket(packet,size);
+						client->ProcessBanMessage(); //Xman Anti-Leecher
 					}
-					else if (bNewClient) //MOPRH - Changed by SiRoB, Optimization
+					else 
 					{
-						theApp.clientlist->AddClient(client, true); //MOPRH - Changed by SiRoB, Optimization
+						//Xman Code Improvement don't search new generated clients in lists
+						/*
+						theApp.clientlist->AddClient(client);
+						*/
+						theApp.clientlist->AddClient(client, bNewClient );
+						//Xman end
 						client->SetCommentDirty();
+						client->ProcessBanMessage(); //Xman Anti-Leecher
 					}
 
 					theApp.emuledlg->transferwnd->clientlistctrl.RefreshClient(client);
+
+					//Xman don't continue sending after banning
+					if(client && client->GetUploadState()==US_BANNED)
+						break;
+					//Xman end
 
 					// send a response packet with standart informations
 					if (client->GetHashType() == SO_EMULE && !bIsMuleHello)
@@ -374,10 +517,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 
 					if (size >= 16)
 					{
-						/* EastShare START - Marked by TAHO, modified SUQWT
+						// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+						/*
 						if (!client->GetWaitStartTime())
 							client->SetWaitStartTime();
-						 EastShare END - Marked by TAHO, modified SUQWT */
+						*/
+						// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 						CSafeMemFile data_in(packet, size);
 						uchar reqfilehash[16];
@@ -402,6 +547,7 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						if (md4cmp(client->GetUploadFileID(), reqfilehash) != 0)
 							client->SetCommentDirty();
 						client->SetUploadFileID(reqfile);
+						client->SetLastAction(OP_REQUESTFILENAME);	//Xman fix for startupload
 
 						if (!client->ProcessExtendedInfo(&data_in, reqfile)){
 							if (thePrefs.GetDebugClientTCPLevel() > 0)
@@ -410,7 +556,8 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 							md4cpy(replypacket->pBuffer, reqfile->GetFileHash());
 							theStats.AddUpDataOverheadFileRequest(replypacket->size);
 							SendPacket(replypacket, true);
-							DebugLogWarning(_T("Partcount mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
+							if(thePrefs.GetLogPartmismatch()) //Xman Log part/size-mismatch
+								DebugLogWarning(_T("Partcount mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
 							break;
 						}
 
@@ -418,12 +565,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						// no passive adding of files with only one part
 						if (reqfile->IsPartFile() && reqfile->GetFileSize() > (uint64)PARTSIZE)
 						{
-							//MORPH START - Modified by Stulle, Global Source Limit
+							//Xman GlobalMaxHarlimit for fairness
 							/*
 							if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount())
 							*/
-							if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount() && ((CPartFile*)reqfile)->IsSrcReqOrAddAllowed())
-							//MORPH END   - Modified by Stulle, Global Source Limit
+							if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount() && ((CPartFile*)reqfile)->IsGlobalSourceAddAllowed()==true)
+							//Xman end
 								theApp.downloadqueue->CheckAndAddKnownSource((CPartFile*)reqfile, client, true);
 						}
 
@@ -452,12 +599,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 
 					if (size == 16)
 					{
-						// EastShare START - Marked by TAHO, modified SUQWT
+						// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 						/*
 						if (!client->GetWaitStartTime())
 							client->SetWaitStartTime();
 						*/
-						// EastShare END - Marked by TAHO, modified SUQWT
+						// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 						CKnownFile* reqfile;
 						if ( (reqfile = theApp.sharedfiles->GetFileByID(packet)) == NULL ){
@@ -490,22 +637,31 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						if (md4cmp(client->GetUploadFileID(), packet) != 0)
 							client->SetCommentDirty();
 
-						// ==> File Faker Check [Xman] - Stulle
-						if(thePrefs.IsFileFaker() && reqfile->IsPartFile() && ((CPartFile*)reqfile)->m_DeadSourceList.IsDeadSource(client))
+						//Xman FileFaker detection
+						/*
+						client->SetUploadFileID(reqfile);
+						*/
+						if(reqfile->IsPartFile() && ((CPartFile*)reqfile)->m_DeadSourceList.IsDeadSource(client))
 						{
-							client->BanLeecher(NULL,BAN_FILEFAKER);
+							client->BanLeecher(_T("FileFaker"),19);
+							client->ProcessBanMessage();
 							break;
 						}
-						// <== File Faker Check [Xman] - Stulle
-
 						client->SetUploadFileID(reqfile);
+						//Xman end
+						client->SetLastAction(OP_SETREQFILEID);	//Xman fix for startupload
 
 						// send filestatus
 						CSafeMemFile data(16+16);
 						data.WriteHash16(reqfile->GetFileHash());
 						if (reqfile->IsPartFile())
-							((CPartFile*)reqfile)->WritePartStatus(&data, client);	// SLUGFILLER: hideOS
-						else if (!reqfile->HideOvershares(&data, client))	//Slugfiller: HideOS
+							((CPartFile*)reqfile)->WritePartStatus(&data);
+						//Xman PowerRelease
+						/*
+						else
+						*/
+						else if (!reqfile->HideOvershares(&data, client))
+						//Xman end
 							data.WriteUInt16(0);
 						Packet* packet = new Packet(&data);
 						packet->opcode = OP_FILESTATUS;
@@ -513,20 +669,6 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 							DebugSend("OP__FileStatus", client, reqfile->GetFileHash());
 						theStats.AddUpDataOverheadFileRequest(packet->size);
 						SendPacket(packet, true);
-						//Morph Start - added by AndCycle, ICS
-					    // enkeyDEV: ICS - Send incomplete parts
-					    if (client->GetIncompletePartVersion() && reqfile->IsPartFile())  // netfinity: Don't send on complete files
-					    {
-						    CSafeMemFile data(16+16);
-						    data.WriteHash16(reqfile->GetFileHash());
-							  ((CPartFile*)reqfile)->WriteIncPartStatus(&data);
-						    Packet* packet = new Packet(&data, OP_EMULEPROT);
-						    packet->opcode = OP_FILEINCSTATUS;
-						    theStats.AddUpDataOverheadFileRequest(packet->size);
-						    SendPacket(packet,true);
-					    }
-					    // <--- enkeyDEV: ICS
-					    //Morph End - added by AndCycle, ICS
 						break;
 					}
 					throw GetResString(IDS_ERR_WRONGPACKAGESIZE);
@@ -547,8 +689,8 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						else
 							reqfile->m_DeadSourceList.AddDeadSource(client);
 
-						// ==> File Faker Check [Xman] - Stulle
-						if(thePrefs.IsFileFaker() && client->GetUploadState()!=US_NONE && reqfile->GetFileSize()>PARTSIZE)
+						//Xman Filefaker Detection		
+						if(client->GetUploadState()!=US_NONE && reqfile->GetFileSize()>PARTSIZE)
 						{
 							CKnownFile* upfile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
 							if(upfile && upfile == reqfile) //we speak about the same file
@@ -558,19 +700,28 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 								theApp.uploadqueue->RemoveFromWaitingQueue(client);
 							}
 						}
-						// <== File Faker Check [Xman] - Stulle
+						//Xman end
 
 						// if that client does not have my file maybe has another different
 						// we try to swap to another file ignoring no needed parts files
+						if (client->GetRequestFile()==reqfile) //Xman just to be sure
 						switch (client->GetDownloadState())
 						{
 							case DS_CONNECTED:
 							case DS_ONQUEUE:
 							case DS_NONEEDEDPARTS:
+								//Xman Xtreme Downloadmanager
+								/*
                                 client->DontSwapTo(client->GetRequestFile()); // ZZ:DownloadManager
                                 if (!client->SwapToAnotherFile(_T("Source says it doesn't have the file. CClientReqSocket::ProcessPacket()"), true, true, true, NULL, false, false)) { // ZZ:DownloadManager
     								theApp.downloadqueue->RemoveSource(client);
                                 }
+								*/
+								if (!client->SwapToAnotherFile(true, true, true, NULL)) 
+								{ 
+									theApp.downloadqueue->RemoveSource(client);
+								}
+								//Xman end
 							break;
 						}
 						break;
@@ -604,16 +755,22 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					data.ReadHash16(cfilehash);
 					CPartFile* file = theApp.downloadqueue->GetFileByID(cfilehash);
 					if (file == NULL)
+						//Xman Code Fix
+						//following situation: we are downloading a cue file (100 bytes) from many sources
+						//this file will be finished earlier than our sources are answering
+						//throwing an exception will filter good sources
+						//added by zz_fly. this situation can also happen here. thanks Enig123
+					{
+						CKnownFile* reqfiletocheck = theApp.sharedfiles->GetFileByID(cfilehash);
+						if(reqfiletocheck!=NULL){ 
+							AddDebugLogLine(false, _T("client send NULL FileStatus: %s"), client->DbgGetClientInfo());
+							break;
+						}
+						else
+						//Xman end
 						client->CheckFailedFileIdReqs(cfilehash);
+					} //Xman
 					client->ProcessFileStatus(false, &data, file);
-
-                    //MORPH START - ZZUL_20070513-2310
-			if(client->GetDownloadState() == DS_DOWNLOADING) {
-                        AddDebugLogLine(false, _T("Checking if we should send block request, since OP_FILESTATUS was received when client->GetDownloadState() == DS_DOWNLOADING() %s"), client->DbgGetClientInfo());
-                        client->SendBlockRequests();
-			}
-					//MORPH END  - ZZUL_20070513-2310
-
 					break;
 				}
 				case OP_STARTUPLOADREQ:
@@ -622,36 +779,10 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						DebugRecv("OP_StartUpLoadReq", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadFileRequest(size);
 				
-					// ==> Sivka-Ban [cyrex2001] - Stulle
-					client->AddAskedCount();
-					client->SetLastUpRequest();
-					client->uiULAskingCounter++;
-					if( client->IsBanned() )
-						break;
-					// <== Sivka-Ban [cyrex2001] - Stulle 
-					if (!client->CheckHandshakeFinished(OP_EDONKEYPROT, opcode))  //morph
+					if (!client->CheckHandshakeFinished())
 						break;
 					if (size == 16)
 					{
-						// ==> Sivka-Ban [cyrex2001] - Stulle
-						if( thePrefs.GetEnableSivkaBan() && client->uiULAskingCounter > uint16 (thePrefs.GetSivkaAskCounter()) && ((::GetTickCount()-client->dwThisClientIsKnownSince)/client->uiULAskingCounter) < uint32 (MIN2MS(thePrefs.GetSivkaAskTime()))){
-							if (thePrefs.SivkaAskLog)
-								{
-								DebugLog(LOG_MORPH, _T("OP_STARTUPLOADREQ: (%s/%u)=%s ==> %s(%s) ASK TO FAST, BANNED!!!"), 
-								CastSecondsToHM((::GetTickCount()-client->dwThisClientIsKnownSince)/1000), 
-								client->uiULAskingCounter, 
-								CastSecondsToHM(((::GetTickCount()-client->dwThisClientIsKnownSince)/client->uiULAskingCounter)/1000), 
-								client->GetUserName(),
-								client->DbgGetFullClientSoftVer() );
-								}
-							client->BanLeecher(NULL,BAN_SIVKA);
-							theApp.uploadqueue->RemoveFromUploadQueue(client,_T("Ask to fast"),true,false);
-							Packet* response = new Packet(OP_QUEUEFULL,0,OP_EMULEPROT);
-							theStats.AddUpDataOverheadFileRequest(response->size);
-							SendPacket(response,true);
-							break;
-						}
-						// <== Sivka-Ban [cyrex2001] - Stulle
 						CKnownFile* reqfile = theApp.sharedfiles->GetFileByID(packet);
 						if (reqfile)
 						{
@@ -659,11 +790,19 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 								client->SetCommentDirty();
 							client->SetUploadFileID(reqfile);
 							client->SendCommentInfo(reqfile);
+							client->SetLastAction(OP_STARTUPLOADREQ); //Xman fix for startupload
 							theApp.uploadqueue->AddClientToQueue(client);
 						}
 						else
 							client->CheckFailedFileIdReqs(packet);
 					}
+					//Xman Anti-Leecher
+					else if(thePrefs.GetAntiLeecher())
+					{
+						client->BanLeecher(_T("wrong OPSTARTUPLOADREQ"),16); 
+						client->ProcessBanMessage();
+					}
+					//Xman end
 					break;
 				}
 				case OP_QUEUERANK:
@@ -712,86 +851,72 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						Debug(_T("  Start2=%u  End2=%u  Size=%u\n"), auStartOffsets[1], auEndOffsets[1], auEndOffsets[1] - auStartOffsets[1]);
 						Debug(_T("  Start3=%u  End3=%u  Size=%u\n"), auStartOffsets[2], auEndOffsets[2], auEndOffsets[2] - auStartOffsets[2]);
 					}
-					//MORPH START - Added by SiRoB, ZZ Upload System 20030723-0133
-					uchar tempfileid[16];
-                    md4clr(tempfileid);
-					//MORPH START - Added by SiRoB, Anti-leecher feature
-					// ==> Reduce Score for leecher - Stulle
-					/*
-					if(client->IsLeecher()) {
-					*/
-					if(client->IsLeecher() && client->GetScoreReduce()==false) {
-					// <== Reduce Score for leecher - Stulle
-						// Flag blocks to delete
-                        auStartOffsets[0] = 0; auEndOffsets[0] = 0; 
-                        auStartOffsets[1] = 0; auEndOffsets[1] = 0; 
-                        auStartOffsets[2] = 0; auEndOffsets[2] = 0; 
 
-						// Remove client from the upload queue
-						theApp.uploadqueue->RemoveFromUploadQueue(client,GetResString(IDS_UPSTOPPEDLEECHER), true, true);
-						AddDebugLogLine(false, GetResString(IDS_LEECHERDETREM));
-						
-						theApp.uploadqueue->AddClientToQueue(client);
-						AddDebugLogLine(false, GetResString(IDS_LEECHERPUTBACK));
-						client->SetUploadFileID(theApp.sharedfiles->GetFileByID(reqfilehash));
+					//Xman Anti-Leecher
+					if(client->GetUploadState()==US_BANNED) //just to be sure
+					{
+						theApp.uploadqueue->RemoveFromUploadQueue(client,_T("banned client detected during upload")); 
+						client->SetUploadFileID(NULL); 
+						AddLeecherLogLine(false,_T("banned client was in upload: %s"),client->DbgGetClientInfo());
 					}
-					//MORPH END   - Added by SiRoB, Anti-leecher feature
-					// Remark: There is a security leak that a leecher mod might exploit here.
+					//Xman end
+
+					//Xman Xtreme Mod
+					// Close Backdoor v2 (idea Maella)
+					//after seeing that many official clients swap the file just when they get an uploadslot
+					//I decided to allow the upload if the new requested file
+					//has same or higher priority
+					//
+					// Remark: There is a security leak that a leecher mod could exploit here.
 					//         A client might send reqblock for another file than the one it 
 					//         was granted to download. As long as the file ID in reqblock
 					//         is the same in all reqblocks, it won't be rejected.  
 					//         With this a client might be in a waiting queue with a high 
 					//         priority but download block of a file set to a lower priority.
-					else if(md4cmp(reqfilehash, client->GetUploadFileID()) != 0 && md4cmp(reqfilehash, tempfileid) != 0){
-						// client requested another file than it queued up for. Try to decide if the swith should be allowed.
-						bool allowSwitch = false;
-
-	                    CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(reqfilehash);
-                        if(currequpfile != NULL) {
-                            // save original file id asked for, to be able to log it
-							uchar uploadFileId[16];
-							md4cpy(uploadFileId, client->GetUploadFileID());
-
-							if(client->HasLowID() && (client->IsFriend() && client->GetFriendSlot()) == true) {
-								allowSwitch = true;
-							} else {
-								client->SetUploadFileID(currequpfile);
-
-                                // we need to compare with the client that would get to replace this if we kick it out
-								CUpDownClient* bestQueuedClient = theApp.uploadqueue->FindBestClientInQueue();
-
-                                // This checks if which of client and bestClient would be on top on the queue, if client is put back.
-                                // Allow switch of file if bestClient wouldn't be on top. Clients score is calculated with the new file
-                                // it requested, since we used SetUploadFileID above.
-								if(bestQueuedClient == NULL || !theApp.uploadqueue->RightClientIsBetter(client, client->GetScore(false), bestQueuedClient, bestQueuedClient->GetScore(false))) {
-									allowSwitch = true;
-								}
-							}
-							if(allowSwitch == false) {
-                                // Flag blocks to delete
-                                auStartOffsets[0] = 0; auEndOffsets[0] = 0; 
-                                auStartOffsets[1] = 0; auEndOffsets[1] = 0; 
-                                auStartOffsets[2] = 0; auEndOffsets[2] = 0; 
-
-								// Put client back on queue and trace some info
-								AddDebugLogLine(false, GetResString(IDS_TRIEDDLOTHERFILE), 
-									client->GetUserName(), md4str(uploadFileId), md4str(reqfilehash));
-
-                                if(client->GetSessionUp() == 0) {
-								// Remove client from the upload queue
-								theApp.uploadqueue->RemoveFromUploadQueue(client, GetResString(IDS_IPSTOPPEDOTHFILE), true, true);
-	
-								// Put back with wating time intact
-								theApp.uploadqueue->AddClientToQueue(client, true, true);
-
-								AddDebugLogLine(false, GetResString(IDS_CLIENTPUTBACK));
-						
-								client->SetUploadFileID(currequpfile);
-							}
+					CKnownFile* reqfileNr1 = theApp.sharedfiles->GetFileByID(reqfilehash);
+					CKnownFile* reqfileNr2 = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+					if(reqfileNr1==NULL) 
+					{
+						//We don't know the requesting file, this can happen when we delete the file during upload
+						//the prevent to run in a file exception when creating next block
+						//send a cancel and remove client from queue
+						Packet* packet = new Packet(OP_OUTOFPARTREQS, 0); 
+						theStats.AddUpDataOverheadFileRequest(packet->size);
+						client->socket->SendPacket(packet, true, true);
+						theApp.uploadqueue->RemoveFromUploadQueue(client,_T("Client requested unknown file"),CUpDownClient::USR_DIFFERENT_FILE); // Maella -Upload Stop Reason-
+						client->SetUploadFileID(NULL); 
+						break;
+					}							
+					// ==> push small files [sivka] - Stulle
+					/*
+					else if(reqfileNr2!=NULL && reqfileNr1->GetUpPriorityEx()  < reqfileNr2->GetUpPriorityEx())
+					*/
+					else if(reqfileNr2!=NULL &&
+						(reqfileNr1->GetUpPriorityEx()  < reqfileNr2->GetUpPriorityEx() ||
+						(reqfileNr1->IsPushSmallFile()==false && reqfileNr2->IsPushSmallFile()==true) ||
+						((int)(10*reqfileNr1->GetFileRatio()) < (int)(10*reqfileNr2->GetFileRatio())))) // push rare file - Stulle
+					// <== push small files [sivka] - Stulle
+					{
+						if(thePrefs.GetLogUlDlEvents()){
+							AddDebugLogLine(false, _T("--> Upload session ended due wrong requested FileID (client=%s, expected=%s, asked=%s)"), 
+								client->GetUserName(),reqfileNr2->GetFileName(), reqfileNr1->GetFileName());
+						}
+						theApp.uploadqueue->RemoveFromUploadQueue(client, _T("wrong file"), CUpDownClient::USR_DIFFERENT_FILE,true); // Maella -Upload Stop Reason-
+						client->SetUploadFileID(reqfileNr1); //Xman Fix!  (needed for see onUploadqueue)
+						client->SetLastAction(OP_STARTUPLOADREQ); //Xman fix for startupload  special case!
+						client->SendOutOfPartReqsAndAddToWaitingQueue();
+						client->SetWaitStartTime(); // Penality (soft punishement)
+						break;
+					}
+					else if(reqfileNr2!=reqfileNr1)
+					{
+						// Maella -Filter verbose messages-
+						if(thePrefs.GetLogUlDlEvents()){
+							AddDebugLogLine(false, _T("--> we allow to upload different file: (client=%s, expected=%s, asked=%s)"), 
+								client->GetUserName(),reqfileNr2->GetFileName(), reqfileNr1->GetFileName());
 						}
 					}
-					}
-					//MORPH END - Added by SiRoB, ZZ Upload System
+					//Xman end
 
 					for (int i = 0; i < ARRSIZE(auStartOffsets); i++)
 					{
@@ -813,10 +938,9 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 							}
 						}
 					}
-					//MORPH START -  Used to not wait uploadqueue timer (110ms) capping upload to 1ReadBlock/110ms~1.6MB/s
-					if (client->GetUploadState() == US_UPLOADING)
+					//Xman for SiRoB: ReadBlockFromFileThread
+					if(client->GetUploadState() == US_UPLOADING)
 						client->CreateNextBlockPackage();
-					//MORPH END
 					break;
 				}
 				case OP_CANCELTRANSFER:
@@ -824,7 +948,14 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_CancelTransfer", client);
 					theStats.AddDownDataOverheadFileRequest(size);
+					//Xman Code Improvement
+					/*
 					theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Remote client cancelled transfer."));
+					*/
+					if (theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Remote client cancelled transfer."), CUpDownClient::USR_CANCELLED)){ // Maella -Upload Stop Reason-
+						client->SetUploadFileID(NULL);
+					}
+					//Xman end
 					break;
 				}
 				case OP_END_OF_DOWNLOAD:
@@ -833,7 +964,16 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						DebugRecv("OP_EndOfDownload", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadFileRequest(size);
 					if (size>=16 && !md4cmp(client->GetUploadFileID(),packet))
+					//Xman Code Improvement
+					/*
 						theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Remote client ended transfer."));
+					*/
+					{
+						if (theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Remote client ended transfer."), CUpDownClient::USR_CANCELLED)){ // Maella -Upload Stop Reason-
+							client->SetUploadFileID(NULL);
+						}
+					}
+					//Xman end
 					else
 						client->CheckFailedFileIdReqs(packet);
 					break;
@@ -863,29 +1003,29 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					if (thePrefs.GetDebugClientTCPLevel() > 1)
 						DebugRecv("OP_SendingPart", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadFileRequest(24);
-					//EastShare Start - Added by AndCycle, Only download complete files v2.1 (shadow)
-					/*
 					if (client->GetRequestFile() && !client->GetRequestFile()->IsStopped() && (client->GetRequestFile()->GetStatus()==PS_READY || client->GetRequestFile()->GetStatus()==PS_EMPTY))
-					*/
-					if (client->GetRequestFile() && !client->GetRequestFile()->IsStopped() && (client->GetRequestFile()->GetStatus()==PS_READY || client->GetRequestFile()->GetStatus()==PS_EMPTY) && !client->GetRequestFile()->notSeenCompleteSource())
-					//EastShare End - Added by AndCycle, Only download complete files v2.1 (shadow)
 					{
 						client->ProcessBlockPacket(packet, size, false, false);
-						//EastShare Start - Added by AndCycle, Only download complete files v2.1 (shadow)
-						/*
 						if (client->GetRequestFile()->IsStopped() || client->GetRequestFile()->GetStatus()==PS_PAUSED || client->GetRequestFile()->GetStatus()==PS_ERROR)
-						*/
-						if (client->GetRequestFile()->IsStopped() || client->GetRequestFile()->GetStatus()==PS_PAUSED || client->GetRequestFile()->GetStatus()==PS_ERROR || client->GetRequestFile()->notSeenCompleteSource())
-						//EastShare End - Added by AndCycle, Only download complete files v2.1 (shadow)	
 						{
 							client->SendCancelTransfer();
+							// Maella -Download Stop Reason-
+							/*
 							client->SetDownloadState(client->GetRequestFile()->IsStopped() ? DS_NONE : DS_ONQUEUE);
+							*/
+							client->SetDownloadState(client->GetRequestFile()->IsStopped() ? DS_NONE : DS_ONQUEUE,_T("paused file"), CUpDownClient::DSR_PAUSED);
+							//Xman end
 						}
 					}
 					else
 					{
 						client->SendCancelTransfer();
+						// Maella -Download Stop Reason-
+						/*
 						client->SetDownloadState((client->GetRequestFile()==NULL || client->GetRequestFile()->IsStopped()) ? DS_NONE : DS_ONQUEUE);
+						*/
+						client->SetDownloadState((client->GetRequestFile()==NULL || client->GetRequestFile()->IsStopped()) ? DS_NONE : DS_ONQUEUE,_T("paused file"), CUpDownClient::DSR_PAUSED);
+						//Xman end
 					}
 					break;
 				}
@@ -896,7 +1036,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					theStats.AddDownDataOverheadFileRequest(size);
 					if (client->GetDownloadState() == DS_DOWNLOADING)
 					{
+						// Maella -Download Stop Reason-
+						/*
 						client->SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."));
+						*/
+						client->SetDownloadState(DS_ONQUEUE, _T("The remote client decided to stop/complete the transfer (got OP_OutOfPartReqs)."), CUpDownClient::DSR_OUTOFPART);
+						//Xman end
 					}
 					break;
 				}
@@ -990,25 +1135,19 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						{
 							theApp.sharedfiles->m_Files_map.GetNextAssoc(pos,bufKey,cur_file);
 							if (!cur_file->IsLargeFile() || client->SupportsLargeFiles())
-							// xMule_MOD: showSharePermissions
-							// only show the files that you agree to show (because sometimes people would like to show
-							// most of their files but hesitate to show a few ones (for some reasons :))
-							{
-								int Perm = cur_file->GetPermissions()>=0?cur_file->GetPermissions():thePrefs.GetPermissions();
-								// Mighty Knife: Community visible filelist
-								if ( (Perm == PERM_ALL)
-									|| ((Perm == PERM_FRIENDS) && client->IsFriend())
-									|| ((Perm == PERM_COMMUNITY) && (client->IsCommunity()) || client->IsFriend()) )
-									list.AddTail((void*&)cur_file);
-							}  //morph
-							// [end] Mighty Knife
-							// xMule_MOD: showSharePermissions
+								list.AddTail((void*&)cur_file);
 						}
 						AddLogLine(true, GetResString(IDS_REQ_SHAREDFILES), client->GetUserName(), client->GetUserIDHybrid(), GetResString(IDS_ACCEPTED));
 					}
 					else
 					{
+						//Xman show his IP
+						/*
 						AddLogLine(true, GetResString(IDS_REQ_SHAREDFILES), client->GetUserName(), client->GetUserIDHybrid(), GetResString(IDS_DENIED));
+						*/
+						CString buffer(CString(client->GetUserName()) + _T(" [") + client->GetUserIPString() + _T("]"));
+						AddLogLine(true, GetResString(IDS_REQ_SHAREDFILES), buffer, client->GetUserIDHybrid(), GetResString(IDS_DENIED));
+						//Xman end
 					}
 
 					// now create the memfile for the packet
@@ -1083,29 +1222,14 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 								CPartFile* pFile = theApp.downloadqueue->GetFileByIndex(i);
 								if (pFile == NULL || pFile->GetStatus(true) != PS_READY || (pFile->IsLargeFile() && !client->SupportsLargeFiles()))
 									continue;
-								// xMule_MOD: showSharePermissions
-								// only show the files that you agree to show (because sometimes people would like to show
-								// most of their files but hesitate to show a few ones (for some reasons :))
-								int Perm = pFile->GetPermissions()>=0?pFile->GetPermissions():thePrefs.GetPermissions();
-								// Migty Knife: Community visible filelist
-								if (( (Perm==PERM_ALL)
-									|| ((Perm==PERM_COMMUNITY) && (client->IsCommunity() || client->IsFriend()) )
-									|| ((Perm==PERM_FRIENDS) && client->IsFriend()) ) )
-										list.AddTail(pFile);
-								// [end] Mighty Knife
-								// xMule_MOD: showSharePermissions
+								list.AddTail(pFile);
 							}
 						}
 						else
 						{
 							bool bSingleSharedFiles = strReqDir == OP_OTHER_SHARED_FILES;
 							if (!bSingleSharedFiles)
-								//MORPH START - make pseudos small in all cases
-							{
-								strReqDir.MakeLower();
-								//MORPH END   - make pseudos small in all cases
 								strReqDir = theApp.sharedfiles->GetDirNameByPseudo(strReqDir);
-							} //MORPH - make pseudos small in all cases
 							if (!strReqDir.IsEmpty())
 							{
 								// get all shared files from requested directory
@@ -1116,19 +1240,11 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 									theApp.sharedfiles->m_Files_map.GetNextAssoc(pos, bufKey, cur_file);
 
 									// all files which are not within a shared directory have to be single shared files
-									// xMule_MOD: showSharePermissions
-									// only show the files that you agree to show (because sometimes people would like to show
-									// most of their files but hesitate to show a few ones (for some reasons :))
-									int Perm = cur_file->GetPermissions()>=0?cur_file->GetPermissions():thePrefs.GetPermissions();
-									// Migty Knife: Community visible filelist
 									if (((!bSingleSharedFiles && CompareDirectories(strReqDir, cur_file->GetSharedDirectory()) == 0) || (bSingleSharedFiles && !theApp.sharedfiles->ShouldBeShared(cur_file->GetSharedDirectory(), _T(""), false)))
-										&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()) &&
-										( (Perm==PERM_ALL)
-										|| ((Perm==PERM_COMMUNITY) && (client->IsCommunity() || client->IsFriend()) )
-										|| ((Perm==PERM_FRIENDS) && client->IsFriend()) ) )
+										&& (!cur_file->IsLargeFile() || client->SupportsLargeFiles()))
+									{
 										list.AddTail(cur_file);
-									// [end] Mighty Knife
-									// xMule_MOD: showSharePermissions
+									}
 
 								}
 							}
@@ -1231,10 +1347,18 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
                 }
 				default:
 					theStats.AddDownDataOverheadOther(size);
+					//Xman final version: don't log too much
+					/*
 					PacketToDebugLogLine(_T("eDonkey"), packet, size, opcode);
+					*/
+#ifdef LOGTAG
+					AddDebugLogLine(_T("Received unknown edonkey-Packet"));
+					PacketToDebugLogLine(false, packet, size, opcode);
+#endif
 					break;
 			}
-		}
+		//Xman Xtreme Mod Exception Handling 
+		/*
 		catch(CFileException* error)
 		{
 			error->Delete();
@@ -1245,7 +1369,11 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 			error->Delete();
 			throw CString(_T("Memory exception"));
 		}
+		*/
+		//Xman end
 	}
+	//Xman Xtreme Mod Exception Handling 
+	/*
 	catch(CClientException* ex) // nearly same as the 'CString' exception but with optional deleting of the client
 	{
 		if (thePrefs.GetVerbose() && !ex->m_strMsg.IsEmpty())
@@ -1259,7 +1387,7 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 	catch(CString error)
 	{
 		if (thePrefs.GetVerbose() && !error.IsEmpty()){
-			if (opcode == OP_REQUESTFILENAME /*low priority for OP_REQUESTFILENAME*/)
+			if (opcode == OP_REQUESTFILENAME /*low priority for OP_REQUESTFILENAME*//*)
 				DebugLogWarning(_T("Error: %s - while processing eDonkey packet: opcode=%s  size=%u; %s"), error, DbgGetDonkeyClientTCPOpcode(opcode), size, DbgGetClientInfo());
 			else
 				DebugLogWarning(_T("Error: %s - while processing eDonkey packet: opcode=%s  size=%u; %s"), error, DbgGetDonkeyClientTCPOpcode(opcode), size, DbgGetClientInfo());
@@ -1269,6 +1397,84 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 		Disconnect(_T("Error when processing packet.") + error);
 		return false;
 	}
+	*/
+	catch(CString error)
+	{
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+		if (client != NULL){
+			if (thePrefs.GetVerbose() && !error.IsEmpty()){
+					DebugLogWarning(_T("Error: %s - while processing eDonkey packet: opcode=%s  size=%u; %s"), error, DbgGetDonkeyClientTCPOpcode(opcode), size, DbgGetClientInfo());
+					AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			}									
+			client->SetDownloadState(DS_ERROR, _T("Error while processing eDonkey packet (CString exception): ") + error, CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
+
+			if (thePrefs.GetVerbose() && !error.IsEmpty()){
+				AddDebugLogLine(false, _T("Client with IP=%s caused an error or did something bad: %s. Disconnecting client!"), ipstr(sockAddr.sin_addr), error.GetBuffer());
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+			}
+		}
+		//PacketToDebugLogLine(true, packet, size, opcode, DLP_DEFAULT);	//Xman too many infos
+		Disconnect(_T("processing eDonkey packet:  CString Exception ") + error, CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	catch(CFileException* pFileException){
+		pFileException->Delete();
+		if (thePrefs.GetVerbose())
+		{
+			AddDebugLogLine(true, _T("A client has caused an exception. Disconnecting client!"));		
+			PacketToDebugLogLine(true, packet, size, opcode);
+		}
+		// Xman -Temporary Ban IP of clients causing an error-
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+
+		if (client != NULL){ 			
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			client->SetDownloadState(DS_ERROR, _T("Error while processing eDonkey packet. CFile Exception "), CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+		}		
+		Disconnect(_T("processing eDonkey packet: client caused a FileException"),CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	catch(...){
+		if (thePrefs.GetVerbose())
+		{
+			AddDebugLogLine(true, _T("A client has caused an undefined exception. Disconnecting client!"));		
+			PacketToDebugLogLine(true, packet, size, opcode);
+		}
+		// Xman -Temporary Ban IP of clients causing an error-
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+
+		if (client != NULL){ 			
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			client->SetDownloadState(DS_ERROR, _T("Error while processing eDonkey packet. undefined Exception "), CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+		}		
+		Disconnect(_T("processing eDonkey packet: client caused an undefined Exception"),CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	//Xman end
 	return true;
 }
 
@@ -1276,8 +1482,12 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 {
 	try
 	{
+		//Xman Xtreme Mod Exception Handling 
+		/*
 		try
 		{
+		*/
+		//Xman end
 			if (!client && opcode!=OP_PORTTEST)
 			{
 				theStats.AddDownDataOverheadOther(uRawSize);
@@ -1297,7 +1507,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 							DebugRecv("OP_MultiPacket", client, (size >= 16) ? packet : NULL);
 					}
 					theStats.AddDownDataOverheadFileRequest(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode); //morph
+					client->CheckHandshakeFinished();
 
 					if( client->GetKadPort() )
 						Kademlia::CKademlia::Bootstrap(ntohl(client->GetIP()), client->GetKadPort(), (client->GetKadVersion() > 1));
@@ -1342,35 +1552,37 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						md4cpy(replypacket->pBuffer, packet);
 						theStats.AddUpDataOverheadFileRequest(replypacket->size);
 						SendPacket(replypacket, true);
-						DebugLogWarning(_T("Size Mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
+						//Xman Log part/size-mismatch
+						if(thePrefs.GetLogPartmismatch())
+							DebugLogWarning(_T("Size Mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
 						break;
 					}
 
-					// EastShare START - Marked by TAHO, modified SUQWT
+					// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 					/*
 					if (!client->GetWaitStartTime())
 						client->SetWaitStartTime();
 					*/
-					// EastShare END - Marked by TAHO, modified SUQWT
+					// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 					// if we are downloading this file, this could be a new source
 					// no passive adding of files with only one part
+					//Xman Code Improvement: Add passive source after we evaluated OP_REQUESTFILENAME
+					/*
 					if (reqfile->IsPartFile() && reqfile->GetFileSize() > (uint64)PARTSIZE)
 					{
-						//MORPH START - Modified by Stulle, Global Source Limit
-						/*
 						if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount())
-						*/
-						if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount() && ((CPartFile*)reqfile)->IsSrcReqOrAddAllowed())
-						//MORPH END - Modified by Stulle, Global Source Limit
 							theApp.downloadqueue->CheckAndAddKnownSource((CPartFile*)reqfile, client, true);
 					}
+					*/
+					//Xman end
 
 					// check to see if this is a new file they are asking for
 					if (md4cmp(client->GetUploadFileID(), reqfilehash) != 0)
 						client->SetCommentDirty();
 
 					client->SetUploadFileID(reqfile);
+					client->SetLastAction(opcode);	//Xman fix for startupload
 
 					uint8 opcode_in;
 					CSafeMemFile data_out(128);
@@ -1393,10 +1605,23 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 										md4cpy(replypacket->pBuffer, reqfile->GetFileHash());
 										theStats.AddUpDataOverheadFileRequest(replypacket->size);
 										SendPacket(replypacket, true);
-										DebugLogWarning(_T("Partcount mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
+										//Xman Log part/size-mismatch
+										if(thePrefs.GetLogPartmismatch())
+											DebugLogWarning(_T("Partcount mismatch on requested file, sending FNF; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
 										bAnswerFNF = true;
 										break;
 								}
+								
+								//Xman Code Improvement: Add passive source after we evaluated OP_REQUESTFILENAME
+								// if we are downloading this file, this could be a new source
+								// no passive adding of files with only one part
+								if (reqfile->IsPartFile() && reqfile->GetFileSize() > (uint64)PARTSIZE)
+								{
+									if (((CPartFile*)reqfile)->GetMaxSources() > ((CPartFile*)reqfile)->GetSourceCount() && ((CPartFile*)reqfile)->IsGlobalSourceAddAllowed()==true) //Xman GlobalMaxHarlimit for fairness
+										theApp.downloadqueue->CheckAndAddKnownSource((CPartFile*)reqfile, client, true);
+								}
+								//Xman end
+
 								data_out.WriteUInt8(OP_REQFILENAMEANSWER);
 								data_out.WriteString(reqfile->GetFileName(), client->GetUnicodeSupport());
 								break;
@@ -1419,34 +1644,26 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 								if (thePrefs.GetDebugClientTCPLevel() > 0)
 									DebugRecv("OP_MPSetReqFileID", client, packet);
 
-								// ==> File Faker Check [Xman] - Stulle
-								if(thePrefs.IsFileFaker() && reqfile->IsPartFile() && ((CPartFile*)reqfile)->m_DeadSourceList.IsDeadSource(client))
+								//Xman FileFaker detection
+								if(reqfile->IsPartFile() && ((CPartFile*)reqfile)->m_DeadSourceList.IsDeadSource(client))
 								{
-									client->BanLeecher(NULL,BAN_FILEFAKER);
+									client->BanLeecher(_T("FileFaker"),19);
+									client->ProcessBanMessage();
 									bAnswerFNF=true; //will skip to answer
 									break;
 								}
-								// <== File Faker Check [Xman] - Stulle
+								//Xman end
 
 								data_out.WriteUInt8(OP_FILESTATUS);
 								if (reqfile->IsPartFile())
-									((CPartFile*)reqfile)->WritePartStatus(&data_out, client);	// SLUGFILLER: hideOS
-								else if (!reqfile->HideOvershares(&data_out, client))	//Slugfiller: HideOS
-										data_out.WriteUInt16(0);
-								
-								//Morph Start - added by AndCycle, ICS
-								// enkeyDev: ICS - Send incomplete parts
-								if (client->GetIncompletePartVersion() && reqfile->IsPartFile())  // netfinity: Don't send on complete files
-					    		{
-									data_out.WriteUInt8(OP_FILEINCSTATUS);
-									if (reqfile->IsPartFile())
-										((CPartFile*)reqfile)->WriteIncPartStatus(&data_out);
-									else
-										data_out.WriteUInt16(0);
-								}
-								// <--- enkeyDev: ICS
-								//Morph End - added by AndCycle, ICS
-										
+									((CPartFile*)reqfile)->WritePartStatus(&data_out);
+								//Xman PowerRelease
+								/*
+								else
+								*/
+								else if (!reqfile->HideOvershares(&data_out, client))
+								//Xman end
+									data_out.WriteUInt16(0);
 								break;
 							}
 							//We still send the source packet seperately.. 
@@ -1459,10 +1676,11 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 								if (thePrefs.GetDebugSourceExchange())
 									AddDebugLogLine(false, _T("SXRecv: Client source request; %s, File=\"%s\""), client->DbgGetClientInfo(), reqfile->GetFileName());
 								
-								// ==> Anti-XS-Exploit [Xman] - Stulle
-								if(thePrefs.GetAntiXSExploiter() && client->IsXSExploiter())
+								//Xman Anti-Leecher
+								//>>> Anti-XS-Exploit (Xman)
+								if(thePrefs.GetAntiLeecherXSExploiter() && client->IsXSExploiter())
 									break; //no answer
-								// <== Anti-XS-Exploit [Xman] - Stulle
+								//Xman end
 
 								uint8 byRequestedVersion = 0;
 								uint16 byRequestedOptions = 0;
@@ -1527,7 +1745,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_MultiPacketAns", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadFileRequest(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode); //moprh
+					client->CheckHandshakeFinished();
 
 					if( client->GetKadPort() )
 						Kademlia::CKademlia::Bootstrap(ntohl(client->GetIP()), client->GetKadPort(), (client->GetKadVersion() > 1));
@@ -1539,12 +1757,42 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					//Make sure we are downloading this file.
 					if (reqfile==NULL){
 						client->CheckFailedFileIdReqs(reqfilehash);
-						throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile==NULL)");
+						//Xman Code Fix
+						//following situation: we are downloading a cue file (100 bytes) from many sources
+						//this file will be finished earlier than our sources are answering
+						//throwing an exception will filter good sources
+						//swapping can't be done at this point, so I let it just timeout.
+						CKnownFile* reqfiletocheck = theApp.sharedfiles->GetFileByID(reqfilehash);
+						if(reqfiletocheck!=NULL)
+						{
+							
+							AddDebugLogLine(false, _T("client send NULL reqfile: %s"), client->DbgGetClientInfo());
+							break;
+						}
+						else
+						//Xman end
+							throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile==NULL)");
 					}
 					if (client->GetRequestFile()==NULL)
 						throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; client->GetRequestFile()==NULL)");
 					if (reqfile != client->GetRequestFile())
-						throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile!=client->GetRequestFile())");
+					{
+						//Xman Code Fix
+						client->CheckFailedFileIdReqs(reqfilehash);
+						//can happen with a late answer after swapping -->break!
+						break;
+						/*
+						CKnownFile* reqfiletocheck = theApp.sharedfiles->GetFileByID(reqfilehash);
+						if(reqfiletocheck!=NULL)
+						{
+							AddDebugLogLine(false, _T("reqfile!=client->GetRequestFile(): %s"), client->DbgGetClientInfo());
+							break;
+						}
+						else
+							throw GetResString(IDS_ERR_WRONGFILEID) + _T(" (OP_MULTIPACKETANSWER; reqfile!=client->GetRequestFile())");
+						*/
+						//Xman end
+					}
 					uint8 opcode_in;
 					while(data_in.GetLength()-data_in.GetPosition())
 					{
@@ -1565,14 +1813,6 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 									DebugRecv("OP_MPFileStatus", client, packet);
 
 								client->ProcessFileStatus(false, &data_in, reqfile);
-
-                                //MORPH START - ZZUL_20070513-2310
-				if(client->GetDownloadState() == DS_DOWNLOADING) {
-                                    AddDebugLogLine(false, _T("Checking if we should send block request, since OP_FILESTATUS in OP_MULTIPACKETANSWER was received when client->GetDownloadState() == DS_DOWNLOADING() %s"), client->DbgGetClientInfo());
-                                    client->SendBlockRequests();
-                                }
-				//MORPH END  - ZZUL_20070513-2310
-
 								break;
 							}
 							case OP_AICHFILEHASHANS:
@@ -1583,16 +1823,6 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 								client->ProcessAICHFileHash(&data_in, reqfile);
 								break;
 							}
-							//Morph Start - added by AndCycle, ICS
-							// enkeyDEV: ICS
-							case OP_FILEINCSTATUS:
-							{
-								theStats.AddDownDataOverheadFileRequest(size);
-								client->ProcessFileIncStatus(&data_in,size,reqfile);
-								break;
-							}
-							// <--- enkeyDEV: ICS
-							//Morph End - added by AndCycle, ICS
 							default:
 							{
 								CString strError;
@@ -1606,7 +1836,22 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 				case OP_EMULEINFO:
 				{
 					theStats.AddDownDataOverheadOther(uRawSize);
+					//zz_fly :: Anti-Leecher - Fake Client ban
+					// X-Ray :: Argos :: Start
+					if(client->GetClientSoft() == SO_EMULE){
+						//Enig123 - correct version check [idea from Xtreme] ->
+						// Clients above 0.30 does not send this packet anymore
+						if(client->GetVersion() > MAKE_CLIENT_VERSION(0, 30, 0)) {
+						//Enig123 <<-
+							CString strBanReason = _T("Fake eMule Version");
+							AddLeecherLogLine(false, _T("[%s](ban): %s"), strBanReason, DbgGetClientInfo());
+							client->Ban(strBanReason);
+							break;
+						}
+					}
+					// X-Ray :: Argos :: End
 					client->ProcessMuleInfoPacket(packet,size);
+					client->ProcessBanMessage(); //Xman Anti-Leecher
 					if (thePrefs.GetDebugClientTCPLevel() > 0){
 						DebugRecv("OP_EmuleInfo", client);
 						Debug(_T("  %s\n"), client->DbgGetMuleInfo());
@@ -1624,6 +1869,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 				{
 					theStats.AddDownDataOverheadOther(uRawSize);
 					client->ProcessMuleInfoPacket(packet,size);
+					client->ProcessBanMessage(); //Xman Anti-Leecher
 					if (thePrefs.GetDebugClientTCPLevel() > 0){
 						DebugRecv("OP_EmuleInfoAnswer", client);
 						Debug(_T("  %s\n"), client->DbgGetMuleInfo());
@@ -1674,7 +1920,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_QueueRanking", client);
 					theStats.AddDownDataOverheadFileRequest(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->CheckHandshakeFinished();
 
 					client->ProcessEmuleQueueRank(packet, size);
 					break;
@@ -1687,12 +1933,13 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						DebugRecv(opcode == OP_REQUESTSOURCES2 ? "OP_MPReqSources2" : "OP_MPReqSources", client, (size >= 16) ? packet : NULL);
 					
 					theStats.AddDownDataOverheadSourceExchange(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->CheckHandshakeFinished();
 
-					// ==> Anti-XS-Exploit [Xman] - Stulle
-					if(thePrefs.GetAntiXSExploiter() && client->IsXSExploiter())
+					//Xman Anti-Leecher
+					//>>> Anti-XS-Exploit (Xman)
+					if(thePrefs.GetAntiLeecherXSExploiter() && client->IsXSExploiter())
 						break; //no answer
-					// <== Anti-XS-Exploit [Xman] - Stulle
+					//Xman end
 
 					uint8 byRequestedVersion = 0;
 					uint16 byRequestedOptions = 0;
@@ -1757,10 +2004,9 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_AnswerSources", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadSourceExchange(uRawSize);
+					client->CheckHandshakeFinished();
 
-					client->IncXSAnswer(); // Anti-XS-Exploit [Xman] - Stulle
-
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->IncXSAnswer();//>>> Anti-XS-Exploit (Xman)
 
 					CSafeMemFile data(packet, size);
 					uchar hash[16];
@@ -1784,10 +2030,9 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_AnswerSources2", client, (size >= 17) ? packet : NULL);
 					theStats.AddDownDataOverheadSourceExchange(uRawSize);
-
-					client->IncXSAnswer(); // Anti-XS-Exploit [Xman] - Stulle //Fafner: missing - 080531
-
 					client->CheckHandshakeFinished();
+
+					client->IncXSAnswer();//>>> Anti-XS-Exploit (Xman)
 
 					CSafeMemFile data(packet, size);
 					uint8 byVersion = data.ReadUInt8();
@@ -1812,7 +2057,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_FileDesc", client);
 					theStats.AddDownDataOverheadFileRequest(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->CheckHandshakeFinished();
 
 					client->ProcessMuleCommentPacket(packet,size);
 					break;
@@ -1822,8 +2067,8 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_RequestPreView", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadOther(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
-
+					client->CheckHandshakeFinished();
+	
 					if (thePrefs.CanSeeShares()==vsfaEverybody || (thePrefs.CanSeeShares()==vsfaFriends && client->IsFriend()))	
 					{
 						if (thePrefs.GetVerbose())
@@ -1843,7 +2088,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					if (thePrefs.GetDebugClientTCPLevel() > 0)
 						DebugRecv("OP_PreviewAnswer", client, (size >= 16) ? packet : NULL);
 					theStats.AddDownDataOverheadOther(uRawSize);
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->CheckHandshakeFinished();
 
 					client->ProcessPreviewAnswer(packet, size);
 					break;
@@ -1963,7 +2208,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						if( callback == NULL )
 						{
 							callback = new CUpDownClient(NULL,tcp,ip,0,0);
-							theApp.clientlist->AddClient(callback, true); //MOPRH - Changed by SiRoB, Optimization
+							theApp.clientlist->AddClient(callback);
 						}
 						callback->TryToConnect(true);
 					}
@@ -2067,8 +2312,10 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 							if(sender->GetUDPVersion() > 3)
 							{
 								if (reqfile->IsPartFile())
-									((CPartFile*)reqfile)->WritePartStatus(&data_out, sender);	// SLUGFILLER: hideOS
-								else if (!reqfile->HideOvershares(&data_out, sender))	//Slugfiller: HideOS
+									((CPartFile*)reqfile)->WritePartStatus(&data_out);
+								else
+									//Xman PowerRelease
+									if (!reqfile->HideOvershares(&data_out, sender))
 										data_out.WriteUInt16(0);
 							}
 							data_out.WriteUInt16((uint16)theApp.uploadqueue->GetWaitingPosition(sender));
@@ -2089,11 +2336,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					else
 					{
 						if (!bSenderMultipleIpUnknown){
-							//Morph - modified by AndCycle, SLUGFILLER: infiniteQueue
-							/*
 							if (((uint32)theApp.uploadqueue->GetWaitingUserCount() + 50) > thePrefs.GetQueueSize())
-							*/
-							if (((uint32)theApp.uploadqueue->GetWaitingUserCount() + 50) > thePrefs.GetQueueSize() && !thePrefs.IsInfiniteQueueEnabled())
 							{
 								if (thePrefs.GetDebugClientUDPLevel() > 0)
 									DebugSend("OP__QueueFull", NULL);
@@ -2192,82 +2435,72 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						Debug(_T("  Start2=%I64u  End2=%I64u  Size=%I64u\n"), auStartOffsets[1], auEndOffsets[1], auEndOffsets[1] - auStartOffsets[1]);
 						Debug(_T("  Start3=%I64u  End3=%I64u  Size=%I64u\n"), auStartOffsets[2], auEndOffsets[2], auEndOffsets[2] - auStartOffsets[2]);
 					}
-					//MORPH START - Added by SiRoB, ZZ Upload System
-					uchar tempfileid[16];
-                    md4clr(tempfileid);
-					//MORPH START - Added by SiRoB, Anti-leecher feature
-					// ==> Reduce Score for leecher - Stulle
-					/*
-					if(client->IsLeecher()) {
-					*/
-					if(client->IsLeecher() && client->GetScoreReduce()==false) {
-					// <== Reduce Score for leecher - Stulle
-						// Flag blocks to delete
-                        auStartOffsets[0] = 0; auEndOffsets[0] = 0; 
-                        auStartOffsets[1] = 0; auEndOffsets[1] = 0; 
-                        auStartOffsets[2] = 0; auEndOffsets[2] = 0; 
 
-						// Remove client from the upload queue
-						theApp.uploadqueue->RemoveFromUploadQueue(client,GetResString(IDS_UPSTOPPEDLEECHER), true, true);
-						AddDebugLogLine(false, GetResString(IDS_LEECHERDETREM));
-						
-						theApp.uploadqueue->AddClientToQueue(client);
-						AddDebugLogLine(false, GetResString(IDS_LEECHERPUTBACK));
-						client->SetUploadFileID(theApp.sharedfiles->GetFileByID(reqfilehash));
+					//Xman Anti-Leecher
+					if(client->GetUploadState()==US_BANNED) //just to be sure
+					{
+						theApp.uploadqueue->RemoveFromUploadQueue(client,_T("banned client detected during upload")); 
+						client->SetUploadFileID(NULL); 
+						AddLeecherLogLine(false,_T("banned client was in upload: %s"),client->DbgGetClientInfo());
 					}
-					//MORPH END   - Added by SiRoB, Anti-leecher feature
-					// Remark: There is a security leak that a leecher mod might exploit here.
+					//Xman end
+
+					//Xman Xtreme Mod
+					// Close Backdoor v2 (idea Maella)
+					//after seeing that many official clients swap the file just when they get an uploadslot
+					//I decided to allow the upload if the new requested file
+					//has same or higher priority
+					//
+					// Remark: There is a security leak that a leecher mod could exploit here.
 					//         A client might send reqblock for another file than the one it 
 					//         was granted to download. As long as the file ID in reqblock
 					//         is the same in all reqblocks, it won't be rejected.  
 					//         With this a client might be in a waiting queue with a high 
 					//         priority but download block of a file set to a lower priority.
-					else if(md4cmp(reqfilehash, client->GetUploadFileID()) != 0 && md4cmp(reqfilehash, tempfileid) != 0 && client->GetSessionUp() == 0){
-						// client requested another file than it queued up for. Try to decide if the swith should be allowed.
-						bool allowSwitch = false;
-	                    CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(reqfilehash);
-                        if(currequpfile != NULL) {
-                            // save original file id asked for, to be able to log it
-							uchar uploadFileId[16];
-							md4cpy(uploadFileId, client->GetUploadFileID());
-
-							if(client->HasLowID() && (client->IsFriend() && client->GetFriendSlot()) == true) {
-								allowSwitch = true;
-							} else {
-								client->SetUploadFileID(currequpfile);
-
-                                // we need to compare with the client that would get to replace this if we kick it out
-								CUpDownClient* bestQueuedClient = theApp.uploadqueue->FindBestClientInQueue();
-
-                                // This checks if which of client and bestClient would be on top on the queue, if client is put back.
-                                // Allow switch of file if bestClient wouldn't be on top. Clients score is calculated with the new file
-                                // it requested, since we used SetUploadFileID above.
-								if(bestQueuedClient == NULL || !theApp.uploadqueue->RightClientIsBetter(client, client->GetScore(false), bestQueuedClient, bestQueuedClient->GetScore(false))) {
-									allowSwitch = true;
-								}
-							}
-							if(allowSwitch == false) {
-                                // Flag blocks to delete
-                                auStartOffsets[0] = 0; auEndOffsets[0] = 0; 
-                                auStartOffsets[1] = 0; auEndOffsets[1] = 0; 
-                                auStartOffsets[2] = 0; auEndOffsets[2] = 0; 
-
-								// Put client back on queue and trace some info
-								AddDebugLogLine(false, GetResString(IDS_TRIEDDLOTHERFILE), 
-									client->GetUserName(), md4str(uploadFileId), md4str(reqfilehash));
-
-								// Remove client from the upload queue
-								theApp.uploadqueue->RemoveFromUploadQueue(client, GetResString(IDS_IPSTOPPEDOTHFILE), true, true);
-	
-								// Put back with wating time intact
-								theApp.uploadqueue->AddClientToQueue(client, true, true);
-
-								AddDebugLogLine(false, GetResString(IDS_CLIENTPUTBACK));
-								client->SetUploadFileID(currequpfile);
-							}
+					CKnownFile* reqfileNr1 = theApp.sharedfiles->GetFileByID(reqfilehash);
+					CKnownFile* reqfileNr2 = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+					if(reqfileNr1==NULL) 
+					{
+						//We don't know the requesting file, this can happen when we delete the file during upload
+						//the prevent to run in a file exception when creating next block
+						//send a cancel and remove client from queue
+						Packet* packet = new Packet(OP_OUTOFPARTREQS, 0); 
+						theStats.AddUpDataOverheadFileRequest(packet->size);
+						client->socket->SendPacket(packet, true, true);
+						theApp.uploadqueue->RemoveFromUploadQueue(client,_T("Client requested download unknown file"),CUpDownClient::USR_DIFFERENT_FILE); // Maella -Upload Stop Reason-
+						client->SetUploadFileID(NULL); 
+						break;
+					}							
+					// ==> push small files [sivka] - Stulle
+					/*
+					else if(reqfileNr2!=NULL && reqfileNr1->GetUpPriorityEx()  < reqfileNr2->GetUpPriorityEx())
+					*/
+					else if(reqfileNr2!=NULL &&
+						(reqfileNr1->GetUpPriorityEx()  < reqfileNr2->GetUpPriorityEx() ||
+						(reqfileNr1->IsPushSmallFile()==false && reqfileNr2->IsPushSmallFile()==true) ||
+						((int)(10*reqfileNr1->GetFileRatio()) < (int)(10*reqfileNr2->GetFileRatio())))) // push rare file - Stulle
+					// <== push small files [sivka] - Stulle
+					{
+						if(thePrefs.GetLogUlDlEvents()){
+							AddDebugLogLine(false, _T("--> Upload session ended due wrong requested FileID (client=%s, expected=%s, asked=%s)"), 
+								client->GetUserName(),reqfileNr2->GetFileName(), reqfileNr1->GetFileName());
+						}
+						theApp.uploadqueue->RemoveFromUploadQueue(client, _T("wrong file"), CUpDownClient::USR_DIFFERENT_FILE,true); // Maella -Upload Stop Reason-
+						client->SetUploadFileID(reqfileNr1); //Xman Fix!  (needed for see onUploadqueue)
+						client->SetLastAction(OP_STARTUPLOADREQ); //Xman fix for startupload  special case!
+						client->SendOutOfPartReqsAndAddToWaitingQueue();
+						client->SetWaitStartTime(); // Penality (soft punishement)
+						break;
+					}
+					else if(reqfileNr2!=reqfileNr1)
+					{
+						// Maella -Filter verbose messages-
+						if(thePrefs.GetLogUlDlEvents()){
+							AddDebugLogLine(false, _T("--> we allow to upload different file: (client=%s, expected=%s, asked=%s)"), 
+								client->GetUserName(),reqfileNr2->GetFileName(), reqfileNr1->GetFileName());
 						}
 					}
-					//MORPH END - Added by SiRoB, ZZ Upload System
+					//Xman end
 
 					for (int i = 0; i < ARRSIZE(auStartOffsets); i++)
 					{
@@ -2289,10 +2522,9 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 							}
 						}
 					}
-					//MORPH START -  Used to not wait uploadqueue timer (110ms) capping upload to 1ReadBlock/110ms~1.6MB/s
-					if (client->GetUploadState() == US_UPLOADING)
+					//Xman for SiRoB: ReadBlockFromFileThread
+					if(client->GetUploadState() == US_UPLOADING)
 						client->CreateNextBlockPackage();
-					//MORPH END
 					break;
 				}
 				case OP_COMPRESSEDPART:
@@ -2310,7 +2542,7 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					}
 					
 					theStats.AddDownDataOverheadFileRequest(16 + 2*(opcode == OP_COMPRESSEDPART ? 4 : 8));
-					client->CheckHandshakeFinished(OP_EMULEPROT, opcode);//MOrph
+					client->CheckHandshakeFinished();
 
 					if (client->GetRequestFile() && !client->GetRequestFile()->IsStopped() && (client->GetRequestFile()->GetStatus()==PS_READY || client->GetRequestFile()->GetStatus()==PS_EMPTY))
 					{
@@ -2318,13 +2550,23 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						if (client->GetRequestFile()->IsStopped() || client->GetRequestFile()->GetStatus()==PS_PAUSED || client->GetRequestFile()->GetStatus()==PS_ERROR)
 						{
 							client->SendCancelTransfer();
+							// Maella -Download Stop Reason-
+							/*
 							client->SetDownloadState(client->GetRequestFile()->IsStopped() ? DS_NONE : DS_ONQUEUE);
+							*/
+							client->SetDownloadState(client->GetRequestFile()->IsStopped() ? DS_NONE : DS_ONQUEUE,_T("paused file"), CUpDownClient::DSR_PAUSED);
+							//Xman end
 						}
 					}
 					else
 					{
 						client->SendCancelTransfer();
+						// Maella -Download Stop Reason-
+						/*
 						client->SetDownloadState((client->GetRequestFile()==NULL || client->GetRequestFile()->IsStopped()) ? DS_NONE : DS_ONQUEUE);
+						*/
+						client->SetDownloadState((client->GetRequestFile()==NULL || client->GetRequestFile()->IsStopped()) ? DS_NONE : DS_ONQUEUE,_T("paused file") ,CUpDownClient::DSR_PAUSED);
+						//Xman end
 					}
 					break;
 				}
@@ -2370,26 +2612,6 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						DebugLogWarning(_T("Unrequested OP_KAD_FWTCPCHECK_ACK packet from client %s"), client->DbgGetClientInfo());
 					break;
 				}
-				
-				//Morph Start - added by AndCycle, ICS
-			    // enkeyDEV: ICS
-			    case OP_FILEINCSTATUS:
-				{
-				    if (thePrefs.GetDebugClientTCPLevel() > 0)
-						DebugRecv("OP_FileIncStatus", client, (size >= 16) ? packet : NULL);
-					theStats.AddDownDataOverheadFileRequest(size);
-
-					CSafeMemFile data(packet, size);
-					uchar cfilehash[16];
-					data.ReadHash16(cfilehash);
-					CPartFile* file = theApp.downloadqueue->GetFileByID(cfilehash);
-					if (file == NULL)
-						client->CheckFailedFileIdReqs(cfilehash);
-					client->ProcessFileIncStatus(&data,size,file);
-				    break;
-			    }
-			    // <--- enkeyDEV: ICS
-			    //Morph End - added by AndCycle, ICS
 				// ==> Recognize MlDonkey XS Answer [Spike2/ideas by Wiz] - Stulle
 				case OP_XSMLDONKEY:
 				{
@@ -2397,17 +2619,25 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 						DebugRecv("OP_XSmlDonkey", client);
 					theStats.AddDownDataOverheadOther(size);
 
-					client->CheckHandshakeFinished(OP_EDONKEYPROT, opcode);
+					client->CheckHandshakeFinished();
 
 					break;
 				}
 				// <== Recognize MlDonkey XS Answer [Spike2/ideas by Wiz] - Stulle
 				default:
 					theStats.AddDownDataOverheadOther(uRawSize);
+					//Xman final version: don't log too much
+					/*
 					PacketToDebugLogLine(_T("eMule"), packet, size, opcode);
+					*/
+#ifdef LOGTAG
+					AddDebugLogLine(_T("Received unknown emule-Packet"));
+					PacketToDebugLogLine(false, packet, size, opcode);
+#endif
 					break;
 			}
-		}
+		//Xman Xtreme Mod Exception Handling 
+		/*
 		catch(CFileException* error)
 		{
 			error->Delete();
@@ -2418,7 +2648,11 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 			error->Delete();
 			throw CString(_T("Memory exception"));
 		}
+		*/
+		//Xman end
 	}
+	//Xman Xtreme Mod Exception Handling 
+	/*
 	catch(CClientException* ex) // nearly same as the 'CString' exception but with optional deleting of the client
 	{
 		if (thePrefs.GetVerbose() && !ex->m_strMsg.IsEmpty())
@@ -2440,11 +2674,100 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 	}
 	return true;
 }
+	*/
+	catch(CString error)
+	{
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+		if (client != NULL){
+			if (thePrefs.GetVerbose() && !error.IsEmpty()){
+				DebugLogWarning(_T("Error: %s - while processing eMule packet: opcode=%s  size=%u; %s"), error, DbgGetDonkeyClientTCPOpcode(opcode), size, DbgGetClientInfo());
+				AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			}									
+			client->SetDownloadState(DS_ERROR, _T("ProcessExtPacket error. CString Exception ") + error, CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
 
+			if (thePrefs.GetVerbose() && !error.IsEmpty()){
+				AddDebugLogLine(false, _T("Client with IP=%s caused an error or did something bad: %s. Disconnecting client!"), ipstr(sockAddr.sin_addr), error.GetBuffer());
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+			}
+		}
+		//PacketToDebugLogLine(true, packet, size, opcode, DLP_DEFAULT);	//Xman too many infos
+		Disconnect(_T("ProcessExtPacket error. CString Exception") + error, CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	catch(CFileException* pFileException){
+		pFileException->Delete();
+		if (thePrefs.GetVerbose())
+		{
+			AddDebugLogLine(true, _T("A client has caused an exception. Disconnecting client!"));		
+			PacketToDebugLogLine(true, packet, size, opcode);
+		}
+		// Xman -Temporary Ban IP of clients causing an error-
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+
+		if (client != NULL){ 			
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			client->SetDownloadState(DS_ERROR,_T("ProcessExtPacket error. CFile Exception "), CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+		}		
+		Disconnect(_T("ProcessExtPacket: client caused a FileException") ,CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	catch(...){
+		if (thePrefs.GetVerbose())
+		{
+			AddDebugLogLine(true, _T("A client has caused an undefined exception. Disconnecting client!"));		
+			PacketToDebugLogLine(true, packet, size, opcode);
+		}
+		// Xman -Temporary Ban IP of clients causing an error-
+		SOCKADDR_IN sockAddr;
+		memset(&sockAddr, 0, sizeof(sockAddr));
+		uint32 nSockAddrLen = sizeof(sockAddr);
+		GetPeerName((SOCKADDR*)&sockAddr,(int*)&nSockAddrLen);
+		theApp.ipfilter->AddIPTemporary(ntohl(sockAddr.sin_addr.S_un.S_addr));
+
+		if (client != NULL){ 			
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Client %s with IP: %s has been added temporary to the filtered list"), client->GetUserName(), client->GetFullIP());			
+			client->SetDownloadState(DS_ERROR,_T("ProcessExtPacket error. undefined Exception "), CUpDownClient::DSR_EXCEPTION); // Maella -Download Stop Reason-
+		}
+		else {
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("IP: %s has been added temporary to the filtered list"), ipstr(sockAddr.sin_addr));			
+		}		
+		Disconnect(_T("ProcessExtPacket: client caused an undefined Exception"), CUpDownClient::USR_EXCEPTION);  // Maella -Upload Stop Reason-
+		return false;
+	}
+	return true;
+}
+//Xman end
+
+//Xman
+// - Maella -Dump information of unknown packet in debug tab-
+/*
 void CClientReqSocket::PacketToDebugLogLine(LPCTSTR protocol, const uchar* packet, uint32 size, UINT opcode)
+*/
+void CClientReqSocket::PacketToDebugLogLine(bool isOpcodeKnown, const uchar* packet, uint32 size, UINT opcode)
+//Xman end
 {
 	if (thePrefs.GetVerbose())
 	{
+		//Xman
+		// - Maella -Dump information of unknown packet in debug tab-
+		/*
 		CString buffer; 
 	    buffer.Format(_T("Unknown %s Protocol Opcode: 0x%02x, Size=%u, Data=["), protocol, opcode, size);
 		UINT i;
@@ -2458,6 +2781,93 @@ void CClientReqSocket::PacketToDebugLogLine(LPCTSTR protocol, const uchar* packe
 		buffer += (i == size) ? _T("]") : _T("..]");
 		DbgAppendClientInfo(buffer);
 		DebugLogWarning(_T("%s"), buffer);
+		*/
+		CString buffer; 
+		// Dump Packet information	
+		if(isOpcodeKnown == false)
+			buffer.Format(_T("Packet with unknown opcode: 0x%x, size=%d"), opcode, size);
+		else
+			buffer.Format(_T("Invalid packet with opcode: 0x%x, size=%d"), opcode, size);
+
+		// Client information
+		if(client != NULL){
+			CString uploadString = _T("unknown");
+			switch (client->GetUploadState()){
+			case US_ONUPLOADQUEUE:
+				uploadString = GetResString(IDS_ONQUEUE);
+				break;
+			case US_BANNED:
+				uploadString = GetResString(IDS_BANNED);
+				break;
+			case US_CONNECTING:
+				uploadString = GetResString(IDS_CONNECTING);
+				break;
+			case US_UPLOADING:
+				uploadString = GetResString(IDS_TRANSFERRING);
+				break;
+			case US_NONE:
+				uploadString = _T("none");
+				break;
+			}
+
+			CString downloadString = _T("unknown");
+			switch (client->GetDownloadState()) {
+			case DS_CONNECTING:
+				downloadString = GetResString(IDS_CONNECTING);
+				break;
+			case DS_CONNECTED:
+				downloadString = GetResString(IDS_ASKING);
+				break;
+			case DS_WAITCALLBACK:
+				downloadString = GetResString(IDS_CONNVIASERVER);
+				break;
+			case DS_ONQUEUE:
+				if( client->IsRemoteQueueFull() )
+					downloadString = GetResString(IDS_QUEUEFULL);
+				else
+					downloadString = GetResString(IDS_ONQUEUE);
+				break;
+			case DS_DOWNLOADING:
+				downloadString = GetResString(IDS_TRANSFERRING);
+				break;
+			case DS_REQHASHSET:
+				downloadString = GetResString(IDS_RECHASHSET);
+				break;
+			case DS_NONEEDEDPARTS:
+				downloadString = GetResString(IDS_NONEEDEDPARTS);
+				break;
+			case DS_LOWTOLOWIP:
+				downloadString = GetResString(IDS_NOCONNECTLOW2LOW);
+				break;
+			case DS_TOOMANYCONNS:
+				downloadString = GetResString(IDS_TOOMANYCONNS);
+				break;
+			case DS_NONE:
+				downloadString = _T("none");
+				break;
+			}
+
+			buffer += _T(", client=") + client->GetClientSoftVer();
+			buffer += _T(", up. state=") + uploadString;
+			buffer += _T(", down. state=") + downloadString;
+		}
+		// Hex packet dump
+		buffer += _T(", data=[");	
+		UINT i;
+#ifdef LOGTAG
+		for (i = 0; i < size ; i++){
+#else
+		for (i = 0; i < size && i < 50; i++){
+#endif
+			if (i > 0)
+				buffer += _T(' ');
+			TCHAR temp[33];
+			buffer += _itot((unsigned char)packet[i], temp, 16);		
+		}
+		buffer += (i == size) ? _T("]") : _T("..]");
+		DbgAppendClientInfo(buffer);
+		AddDebugLogLine(false,_T("%s"), buffer);
+		// Maella end
 	}
 }
 
@@ -2493,17 +2903,33 @@ void CClientReqSocket::OnConnect(int nErrorCode)
 	CEMSocket::OnConnect(nErrorCode);
 	if (nErrorCode)
 	{
-	    CString strTCPError = GetErrorMessage(nErrorCode); //Morph - Moved up by SiRoB
+	    CString strTCPError;
+		//Xman Bugfix, thanks Howe
+		/*
 		if (thePrefs.GetVerbose())
 		{
+			strTCPError = GetFullErrorMessage(nErrorCode);
 		    if ((nErrorCode != WSAECONNREFUSED && nErrorCode != WSAETIMEDOUT) || !GetLastProxyError().IsEmpty())
 			    DebugLogError(_T("Client TCP socket (OnConnect): %s; %s"), strTCPError, DbgGetClientInfo());
 		}
+		*/
+		strTCPError = GetFullErrorMessage(nErrorCode);
+		if ((nErrorCode != WSAECONNREFUSED && nErrorCode != WSAETIMEDOUT) || !GetLastProxyError().IsEmpty())
+		{
+		    //Xman final version:
+			//don't show this "error" because it's too normal and I only saw:
+			//WSAENETUNREACH and WSAEHOSTUNREACH
+			//DebugLogError(_T("Client TCP socket (OnConnect): %s; %s"), strTCPError, DbgGetClientInfo());
+			//Xman Xtreme Mod: in such a case don't give the clients more connection-retrys
+			if(client)
+				client->m_cFailed=5;
+		}
+		// Maella -Upload Stop Reason-
+		/*
 		Disconnect(strTCPError);
-
-        /*ZZ*/if(client && (client->GetUploadState() == US_CONNECTING || client->GetUploadState() == US_UPLOADING || client->GetUploadState() == US_BANNED)) { //MORPH - Changed by SiRoB
-        /*ZZ*/    theApp.uploadqueue->RemoveFromUploadQueue(client, _T("Failed to connect: ") + strTCPError);
-        /*ZZ*/}
+		*/
+		Disconnect(strTCPError, CUpDownClient::USR_SOCKET);
+		//Xman end
 	}
 	else
 	{
@@ -2516,6 +2942,20 @@ void CClientReqSocket::OnSend(int nErrorCode)
 {
 	ResetTimeOutTimer();
 	CEMSocket::OnSend(nErrorCode);
+
+	//Xman NAFC
+	//after any socket is connected we have the only change to find out which IP emule was bound
+	if(theApp.listensocket->boundcheck)
+	{
+		theApp.listensocket->boundcheck=false;
+		sockaddr_in socketcheck;
+		int length= sizeof(socketcheck);
+		if(getsockname(m_SocketData.hSocket, (SOCKADDR*)&socketcheck, &length)==0)
+		{
+			theApp.pBandWidthControl->SetBoundIP(socketcheck.sin_addr.S_un.S_addr);
+		}
+
+	}
 }
 
 void CClientReqSocket::OnError(int nErrorCode)
@@ -2535,14 +2975,25 @@ void CClientReqSocket::OnError(int nErrorCode)
 			strTCPError = GetErrorMessage(nErrorCode);
 		DebugLogWarning(_T("Client TCP socket: %s; %s"), strTCPError, DbgGetClientInfo());
 	}
+	//Xman Xtreme Mod: in such a case don't give the clients more connection-retrys
+	if(client)
+		client->m_cFailed=5;
 
+	// Maella -Upload Stop Reason-
+	/*
 	Disconnect(strTCPError);
+	*/
+	Disconnect(strTCPError, CUpDownClient::USR_SOCKET);
+	//Xman end
 }
 
 bool CClientReqSocket::PacketReceivedCppEH(Packet* packet)
 {
 	bool bResult;
 	UINT uRawSize = packet->size;
+#ifdef LOGTAG
+		PacketToDebugLogLine(false, (const BYTE*)packet->pBuffer,packet->size,packet->opcode); //Xman for test
+#endif
 	switch (packet->prot){
 		case OP_EDONKEYPROT:
 			bResult = ProcessPacket((const BYTE*)packet->pBuffer, packet->size, packet->opcode);
@@ -2562,9 +3013,18 @@ bool CClientReqSocket::PacketReceivedCppEH(Packet* packet)
 			if (thePrefs.GetVerbose())
 				DebugLogWarning(_T("Received unknown client TCP packet; %s; %s"), DbgGetClientTCPPacket(packet->prot, packet->opcode, packet->size), DbgGetClientInfo());
 
+			// Maella -Download Stop Reason-
+			/*
 			if (client)
 				client->SetDownloadState(DS_ERROR, _T("Unknown protocol"));
 			Disconnect(_T("Unknown protocol"));
+			*/
+			if (client){
+				client->SetDownloadState(DS_ERROR, _T("Unknown protocol"), CUpDownClient::DSR_EXCEPTION);
+				theApp.clientlist->m_globDeadSourceList.AddDeadSource(client); //Xman Xtreme Mod  I don't AddDeadsource in disconnected
+			}
+			Disconnect(_T("Unknown protocol"), CUpDownClient::USR_EXCEPTION);
+			//Xman end
 			bResult = false;
 		}
 	}
@@ -2635,8 +3095,17 @@ bool CClientReqSocket::PacketReceived(Packet* packet)
 	if (iResult < 0)
 	{
 		if (client)
+		// Maella -Download Stop Reason-
+		/*
 			client->SetDownloadState(DS_ERROR, _T("Unknown Exception"));
 		Disconnect(_T("Unknown Exception"));
+		*/
+		{
+			client->SetDownloadState(DS_ERROR, _T("Unknown Exception"), CUpDownClient::DSR_EXCEPTION);
+			theApp.clientlist->m_globDeadSourceList.AddDeadSource(client); //Xman Xtreme Mod  I don't AddDeadsource in disconnected
+		}
+		Disconnect(_T("Unknown Exception"), CUpDownClient::USR_EXCEPTION);
+		//Xman end
 		bResult = false;
 	}
 	else
@@ -2662,26 +3131,16 @@ bool CClientReqSocket::Create()
 SocketSentBytes CClientReqSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend)
 {
     SocketSentBytes returnStatus = CEMSocket::SendControlData(maxNumberOfBytesToSend, overchargeMaxBytesToSend);
-    /*zz*/if (returnStatus.success) {
-        if(returnStatus.sentBytesControlPackets > 0 || returnStatus.sentBytesStandardPackets > 0)
+    if (returnStatus.success && (returnStatus.sentBytesControlPackets > 0 || returnStatus.sentBytesStandardPackets > 0))
         ResetTimeOutTimer();
-    } else if (returnStatus.errorThatOccured != 0 && thePrefs.GetVerbose()){
-        CString pstrReason = GetErrorMessage(returnStatus.errorThatOccured, 1);
-        theApp.QueueDebugLogLine(false,_T("CClientReqSocket::SendControlData: An error has occured: %s Client: %s"), pstrReason, DbgGetClientInfo());
-    }
     return returnStatus;
 }
 
 SocketSentBytes CClientReqSocket::SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend)
 {
     SocketSentBytes returnStatus = CEMSocket::SendFileAndControlData(maxNumberOfBytesToSend, overchargeMaxBytesToSend);
-	/*zz*/if (returnStatus.success) {
-        if(returnStatus.sentBytesControlPackets > 0 || returnStatus.sentBytesStandardPackets > 0)
+    if (returnStatus.success && (returnStatus.sentBytesControlPackets > 0 || returnStatus.sentBytesStandardPackets > 0))
         ResetTimeOutTimer();
-    } else if (returnStatus.errorThatOccured != 0 && thePrefs.GetVerbose()){
-        CString pstrReason = GetErrorMessage(returnStatus.errorThatOccured, 1);
-        theApp.QueueDebugLogLine(false,_T("CClientReqSocket::SendFileAndControlData: An error has occured: %s Client: %s"), pstrReason, DbgGetClientInfo());
-    }
     return returnStatus;
 }
 
@@ -2690,16 +3149,6 @@ void CClientReqSocket::SendPacket(Packet* packet, bool delpacket, bool controlpa
 	ResetTimeOutTimer();
 	CEMSocket::SendPacket(packet, delpacket, controlpacket, actualPayloadSize, bForceImmediateSend);
 }
-
-//MORPH START - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
-#if !defined DONT_USE_SEND_ARRAY_PACKET
-void CClientReqSocket::SendPacket(Packet* packet[], uint32 npacket, bool delpacket, bool controlpacket, uint32 actualPayloadSize, bool bForceImmediateSend)
-{
-	ResetTimeOutTimer();
-	CEMSocket::SendPacket(packet, npacket, delpacket,controlpacket, actualPayloadSize, bForceImmediateSend);
-}
-#endif
-//MORPH START - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
 
 bool CListenSocket::SendPortTestReply(char result, bool disconnect)
 {
@@ -2738,7 +3187,8 @@ CListenSocket::CListenSocket()
 	m_port=0;
 	m_nHalfOpen = 0;
 	m_nComp = 0;
-	per5average = 0; //MORPH - Added by Yun.SF3, Auto DynUp changing
+	//Xman NAFC
+	boundcheck=true;
 }
 
 CListenSocket::~CListenSocket()
@@ -2747,25 +3197,18 @@ CListenSocket::~CListenSocket()
 	KillAllSockets();
 }
 
+// ==> UPnP support [MoNKi] - leuk_he
+/*
 bool CListenSocket::Rebind()
 {
-	// emulEspaña: Modified by MoNKi [MoNKi: -Random Ports-]
-	/*
 	if (thePrefs.GetPort() == m_port)
 		return false;
-	*/
-	if (!thePrefs.GetUseRandomPorts() && thePrefs.GetPort(false, true)==m_port)
-		return false;
-
-	// Modified by MoNKi [MoNKi: -UPnPNAT Support-]
-	if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts()){
-		theApp.m_UPnP_IGDControlPoint->DeletePortMapping(m_port, CUPnP_IGDControlPoint::UNAT_TCP, _T("TCP Port"));
-	}
-	// End -UPnPNAT Support-
-	// End emulEspaña
 
 	Close();
 	KillAllSockets();
+
+	//Xman NAFC
+	boundcheck=true;
 
 	return StartListening();
 }
@@ -2779,13 +3222,87 @@ bool CListenSocket::StartListening()
 	// socket is already used by some other application (e.g. a 2nd emule), we though bind
 	// to that socket leading to the situation that 2 applications are listening at the same
 	// port!
-	//
-	//MORPH START - Modified by SiRoB, [MoNKi: -UPnPNAT Support-]
-	//MORPH START - Modified by SiRoB, [MoNKi: -Random Ports-]
-	//
-	//if (!Create(thePrefs.GetPort(), SOCK_STREAM, FD_ACCEPT, thePrefs.GetBindAddrA(), FALSE/*bReuseAddr*/))
-	//	return false;
+	if (!Create(thePrefs.GetPort(), SOCK_STREAM, FD_ACCEPT, thePrefs.GetBindAddrA(), FALSE/*bReuseAddr*//*))
+		return false;
 
+	// Rejecting a connection with conditional WSAAccept and not using SO_CONDITIONAL_ACCEPT
+	// -------------------------------------------------------------------------------------
+	// recv: SYN
+	// send: SYN ACK (!)
+	// recv: ACK
+	// send: ACK RST
+	// recv: PSH ACK + OP_HELLO packet
+	// send: RST
+	// --- 455 total bytes (depending on OP_HELLO packet)
+	// In case SO_CONDITIONAL_ACCEPT is not used, the TCP/IP stack establishes the connection
+	// before WSAAccept has a chance to reject it. That's why the remote peer starts to send
+	// it's first data packet.
+	// ---
+	// Not using SO_CONDITIONAL_ACCEPT gives us 6 TCP packets and the OP_HELLO data. We
+	// have to lookup the IP only 1 time. This is still way less traffic than rejecting the
+	// connection by closing it after the 'Accept'.
+
+	// Rejecting a connection with conditional WSAAccept and using SO_CONDITIONAL_ACCEPT
+	// ---------------------------------------------------------------------------------
+	// recv: SYN
+	// send: ACK RST
+	// recv: SYN
+	// send: ACK RST
+	// recv: SYN
+	// send: ACK RST
+	// --- 348 total bytes
+	// The TCP/IP stack tries to establish the connection 3 times until it gives up. 
+	// Furthermore the remote peer experiences a total timeout of ~ 1 minute which is
+	// supposed to be the default TCP/IP connection timeout (as noted in MSDN).
+	// ---
+	// Although we get a total of 6 TCP packets in case of using SO_CONDITIONAL_ACCEPT,
+	// it's still less than not using SO_CONDITIONAL_ACCEPT. But, we have to lookup
+	// the IP 3 times instead of 1 time.
+
+	//if (thePrefs.GetConditionalTCPAccept() && !thePrefs.GetProxySettings().UseProxy) {
+	//	int iOptVal = 1;
+	//	VERIFY( SetSockOpt(SO_CONDITIONAL_ACCEPT, &iOptVal, sizeof iOptVal) );
+	//}
+
+	if (!Listen())
+		return false;
+
+	m_port = thePrefs.GetPort();
+	return true;
+}
+*/
+bool CListenSocket::Rebind()
+{
+	// ==> Random Ports [MoNKi] - Stulle
+	/*
+	if (thePrefs.GetPort()==m_port)
+		return false;
+	*/
+	if (!thePrefs.GetUseRandomPorts() && thePrefs.GetPort(false, true)==m_port)
+		return false;
+	// <== Random Ports [MoNKi] - Stulle
+
+	if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts()){
+		theApp.m_UPnP_IGDControlPoint->DeletePortMapping(m_port, CUPnP_IGDControlPoint::UNAT_TCP, _T("TCP Port"));
+	}
+
+	Close();
+	KillAllSockets();
+	
+	return StartListening();
+}
+
+bool CListenSocket::StartListening()
+{
+	bListening = true;
+
+	// Creating the socket with SO_REUSEADDR may solve LowID issues if emule was restarted
+	// quickly or started after a crash, but(!) it will also create another problem. If the
+	// socket is already used by some other application (e.g. a 2nd emule), we though bind
+	// to that socket leading to the situation that 2 applications are listening at the same
+	// port!
+
+	// ==> Random Ports [MoNKi] - Stulle
 	bool ret = false;
 	WORD rndPort;
 	int retries=0;
@@ -2800,12 +3317,14 @@ bool CListenSocket::StartListening()
 			retries++;
 			rndPort = thePrefs.GetPort(!bFirstRun);
 
+			// ==> Improved ICS-Firewall support [MoNKi] - Max
 			if((retries < (maxRetries / 2)) && ((thePrefs.GetICFSupport() && !theApp.m_pFirewallOpener->DoesRuleExist(rndPort, NAT_PROTOCOL_TCP))
 				|| !thePrefs.GetICFSupport()))
 			{
 				ret = Create(thePrefs.GetPort(), SOCK_STREAM, FD_ACCEPT, thePrefs.GetBindAddrA(), FALSE/*bReuseAddr*/)!=0;
 			}
 			else if (retries >= (maxRetries / 2))
+			// <== Improved ICS-Firewall support [MoNKi] - Max
 				ret = Create(thePrefs.GetPort(), SOCK_STREAM, FD_ACCEPT, thePrefs.GetBindAddrA(), FALSE/*bReuseAddr*/)!=0;
 		}while(!ret && retries<maxRetries);
 	}
@@ -2851,25 +3370,19 @@ bool CListenSocket::StartListening()
 	//	VERIFY( SetSockOpt(SO_CONDITIONAL_ACCEPT, &iOptVal, sizeof iOptVal) );
 	//}
 
-	/*
-	if (!Listen())
-		return false;
-
-	m_port = thePrefs.GetPort();
-	return true;
-	*/
-
 	bFirstRun = false;
 
 	if(ret && Listen()){
 		m_port=thePrefs.GetPort();		
-	
+
+		// ==> Improved ICS-Firewall support [MoNKi] - Max
 		if(thePrefs.GetICFSupport()){
 			if (theApp.m_pFirewallOpener->OpenPort(thePrefs.GetPort(), NAT_PROTOCOL_TCP, EMULE_DEFAULTRULENAME_TCP, thePrefs.IsOpenPortsOnStartupEnabled() || thePrefs.GetUseRandomPorts()))
 				theApp.QueueLogLine(false, GetResString(IDS_FO_TEMPTCP_S), thePrefs.GetPort());
 			else
 				theApp.QueueLogLine(false, GetResString(IDS_FO_TEMPTCP_F), thePrefs.GetPort());
 		}
+		// <== Improved ICS-Firewall support [MoNKi] - Max
 
 		if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts()){
 			theApp.m_UPnP_IGDControlPoint->AddPortMapping(m_port, CUPnP_IGDControlPoint::UNAT_TCP, _T("TCP Port"));
@@ -2879,9 +3392,9 @@ bool CListenSocket::StartListening()
 	}
 	else
 		return false;
-	//MORPH END   - Modified by SiRoB, [MoNKi: -Random Ports-]
-	//MORPH END   - Modified by SiRoB, [MoNKi: -UPnPNAT Support-]
+	// <== Random Ports [MoNKi] - Stulle
 }
+// <== UPnP support [MoNKi] - leuk_he
 
 void CListenSocket::ReStartListening()
 {
@@ -2921,7 +3434,12 @@ int CALLBACK AcceptConnectionCond(LPWSABUF lpCallerId, LPWSABUF /*lpCallerData*/
 		if (theApp.clientlist->IsBannedClient(pSockAddr->sin_addr.S_un.S_addr)){
 			if (thePrefs.GetLogBannedClients()){
 				CUpDownClient* pClient = theApp.clientlist->FindClientByIP(pSockAddr->sin_addr.S_un.S_addr);
+				//Xman code fix
+				/*
 				AddDebugLogLine(false, _T("Rejecting connection attempt of banned client %s %s"), ipstr(pSockAddr->sin_addr.S_un.S_addr), pClient->DbgGetClientInfo());
+				*/
+				AddDebugLogLine(false, _T("Rejecting connection attempt of banned client %s %s"), ipstr(pSockAddr->sin_addr.S_un.S_addr), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+				//Xman end
 			}
 			s_iAcceptConnectionCondRejected = 2;
 			return CF_REJECT;
@@ -2939,6 +3457,10 @@ void CListenSocket::OnAccept(int nErrorCode)
 {
 	if (!nErrorCode)
 	{
+		//Xman
+		// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		theApp.pBandWidthControl->AddeMuleInTCPOverall(0); // SYN
+		// Maella end
 		m_nPendingConnections++;
 		if (m_nPendingConnections < 1){
 			ASSERT(0);
@@ -2993,6 +3515,11 @@ void CListenSocket::OnAccept(int nErrorCode)
 					continue;
 				}
 				newclient = new CClientReqSocket;
+				//Xman
+				// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+				theApp.pBandWidthControl->AddeMuleOutTCPOverall(0);
+				// Maella end
+
 				VERIFY( newclient->InitAsyncSocketExInstance() );
 				newclient->m_SocketData.hSocket = sNew;
 				newclient->AttachHandle(sNew);
@@ -3002,6 +3529,10 @@ void CListenSocket::OnAccept(int nErrorCode)
 			else
 			{
 				newclient = new CClientReqSocket;
+				//Xman
+				// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+				theApp.pBandWidthControl->AddeMuleOutTCPOverall(0);
+				// Maella end
 			    if (!Accept(*newclient, (SOCKADDR*)&SockAddr, &iSockAddrLen)){
 				    newclient->Safe_Delete();
 				    DWORD nError = GetLastError();
@@ -3050,7 +3581,12 @@ void CListenSocket::OnAccept(int nErrorCode)
 			    if (theApp.clientlist->IsBannedClient(SockAddr.sin_addr.S_un.S_addr)){
 				    if (thePrefs.GetLogBannedClients()){
 					    CUpDownClient* pClient = theApp.clientlist->FindClientByIP(SockAddr.sin_addr.S_un.S_addr);
+						//Xman Code Fix
+						/*
 					    AddDebugLogLine(false, _T("Rejecting connection attempt of banned client %s %s"), ipstr(SockAddr.sin_addr.S_un.S_addr), pClient->DbgGetClientInfo());
+						*/
+						AddDebugLogLine(false, _T("Rejecting connection attempt of banned client %s %s"), ipstr(SockAddr.sin_addr.S_un.S_addr), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+						//Xman end
 				    }
 				    newclient->Safe_Delete();
 				    continue;
@@ -3063,14 +3599,13 @@ void CListenSocket::OnAccept(int nErrorCode)
 	}
 }
 
+//Xman
+// Maella -Code Improvement-
+/*
 void CListenSocket::Process()
 {
 	m_OpenSocketsInterval = 0;
 	POSITION pos2;
-	//MORPH START - Added by Yun.SF3, Auto DynUp changing
-	if (per5average)
-		per5average /= 2;
-	//MORPH END - Added by Yun.SF3, Auto DynUp changing
 	for (POSITION pos1 = socket_list.GetHeadPosition(); (pos2 = pos1) != NULL; )
 	{
 		socket_list.GetNext(pos1);
@@ -3092,6 +3627,38 @@ void CListenSocket::Process()
 	if ((GetOpenSockets() + 5 < thePrefs.GetMaxConnections() || theApp.serverconnect->IsConnecting()) && !bListening)
 		ReStartListening();
 }
+*/
+void CListenSocket::Process()
+{
+
+	// Update counter
+	m_OpenSocketsInterval = 0;
+	// Check state	
+	for(POSITION pos = socket_list.GetHeadPosition(); pos != NULL; ){
+		CClientReqSocket* cur_sock = socket_list.GetNext(pos);
+		if(cur_sock->deletethis == true){
+			//Xman improved socket closing
+			if(cur_sock->m_SocketData.hSocket != NULL && cur_sock->m_SocketData.hSocket != INVALID_SOCKET){
+				//cur_sock->Close();	// calls 'closesocket'
+				cur_sock->CloseSocket();
+			}
+			//Xman end
+			else {
+				// Remove instance from the list (Recursive)
+				cur_sock->Delete_Timed();;	// may delete 'cur_sock'
+			}
+		}
+		else {
+			cur_sock->CheckTimeOut();	// may call 'shutdown'
+		}
+	}
+
+	if((bListening == false) && 
+		(GetOpenSockets()+5 < thePrefs.GetMaxConnections() || theApp.serverconnect->IsConnecting() == true)){
+			ReStartListening();
+		}
+}
+// Maella end
 
 void CListenSocket::RecalculateStats()
 {
@@ -3118,6 +3685,9 @@ void CListenSocket::AddSocket(CClientReqSocket* toadd)
 	socket_list.AddTail(toadd);
 }
 
+//Xman
+// - Maella -Code Improvement-
+/*
 void CListenSocket::RemoveSocket(CClientReqSocket* todel)
 {
 	for (POSITION pos = socket_list.GetHeadPosition(); pos != NULL; )
@@ -3139,20 +3709,44 @@ void CListenSocket::KillAllSockets()
 			delete cur_socket;
 	}
 }
+*/
+void CListenSocket::RemoveSocket(CClientReqSocket* todel)
+{
+	POSITION pos = socket_list.Find(todel);
+	if (pos)
+		socket_list.RemoveAt(pos);
+}
+
+void CListenSocket::KillAllSockets()
+{
+	while(socket_list.GetHeadPosition() != NULL)
+	{
+		CClientReqSocket* cur_socket = socket_list.GetHead();
+		if (cur_socket->client)
+			delete cur_socket->client;
+		else
+		{
+			//Xman  Codefix
+			//Threadsafe Statechange
+			cur_socket->SetConnectedState(ES_DISCONNECTED);
+			//Xman end
+			//Xman at some system there is a crash in ASyncsocketEx when closing this socket
+			//this error occur after the socket is removed from socket-list. a try catch should avoid this crash
+			try{
+				delete cur_socket;
+			}
+			catch (...) {
+				//nothing todo
+			}
+			//Xman end
+		}
+	}
+}
+//Xman end
 
 void CListenSocket::AddConnection()
 {
-	//MORPH START - Added by Yun.SF3, Auto DynUp changing
-	per5average++;
-	//MORPH END - Added by Yun.SF3, Auto DynUp changing
 	m_OpenSocketsInterval++;
-//MORPH START - Added by Yun.SF3, Auto DynUp changing
-	if (thePrefs.IsAutoDynUpSwitching())
-		if (per5average >= thePrefs.MaxConnectionsSwitchBorder() && !thePrefs.IsSUCEnabled())
-			SwitchSUC(true);
-		else if (per5average <= 5 && !thePrefs.IsDynUpEnabled())
-			SwitchSUC(false);
-//MORPH END - Added by Yun.SF3, Auto DynUp changing
 }
 
 bool CListenSocket::TooManySockets(bool bIgnoreInterval)
@@ -3198,10 +3792,13 @@ void CListenSocket::UpdateConnectionsStatus()
 	if (theApp.IsConnected())
 	{
 		totalconnectionchecks++;
+		//Xman : how should this become 0 ?
+		/*
 		if (totalconnectionchecks == 0) {
 			 // wrap around occured, avoid division by zero
 			 totalconnectionchecks = 100;
 		}
+		*/
 
 		// Get a weight for the 'avg. connections' value. The longer we run the higher 
 		// gets the weight (the percent of 'avg. connections' we use).
@@ -3219,6 +3816,8 @@ void CListenSocket::UpdateConnectionsStatus()
 	}
 }
 
+//Xman Xtreme Mod
+/*
 float CListenSocket::GetMaxConperFiveModifier()
 {
 	float SpikeSize = GetOpenSockets() - averageconnections;
@@ -3232,63 +3831,28 @@ float CListenSocket::GetMaxConperFiveModifier()
 	float Modifier = 1.0F - SpikeSize / SpikeTolerance;
 	return Modifier;
 }
+*/
+float CListenSocket::GetMaxConperFiveModifier(){
 
-//MORPH START - Added & Modified by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
-void CClientReqSocket::SmartUploadControl()
-{
-  // Smart Upload Control v2 (SUC) Version 17.3.2003 by [lovelace]
-  // MaxVUR: maximum variable upload rate
-  uint32 VUR=theApp.uploadqueue->GetMaxVUR();
-  int checkrespond=(int)(::GetTickCount() - client->GetAskTime());
-  
-  uint32 VURstep=(((thePrefs.GetMaxUpload()*1024-theApp.uploadqueue->GetDatarate())>10000)
-         ? (thePrefs.GetMaxUpload()*1024-theApp.uploadqueue->GetDatarate())/2 
-         : UPLOAD_CHECK_CLIENT_DR/2);
+	//Xman if we have reached 96% of max connections --> 33 % of connections per 5
+	if ((float)GetOpenSockets() > (0.96f * thePrefs.GetMaxConnections()))
+		return 0.33f;
+	//Xman if we have reached 88% of max connections --> 60 % of connections per 5
+	if ((float)GetOpenSockets() > (0.88f * thePrefs.GetMaxConnections()))
+		return 0.6f;
+	//Xman if we have reached 80% of max connections --> 80 % of connections per 5
+	if ((float)GetOpenSockets() > (0.8f * thePrefs.GetMaxConnections()))
+		return 0.8f;
 
-  if (checkrespond<(int)theApp.uploadqueue->GetAvgRespondTime(1))
-    theApp.uploadqueue->SetAvgRespondTime(0,(uint32)(0.95*theApp.uploadqueue->GetAvgRespondTime(0)));
-  else
-    theApp.uploadqueue->SetAvgRespondTime(0,(uint32)((19*theApp.uploadqueue->GetAvgRespondTime(0)+1000)*0.05));
-  if (checkrespond<thePrefs.GetSUCPitch())
-    theApp.uploadqueue->SetAvgRespondTime(1,(uint32)((499*theApp.uploadqueue->GetAvgRespondTime(1)+checkrespond)*0.002));
+	const float SpikeSize = (float)GetOpenSockets() - (int)averageconnections ;
+	if ( SpikeSize < 1.0f )
+		return 1.0f;
 
-  if ((int)theApp.uploadqueue->GetAvgRespondTime(0)>thePrefs.GetSUCHigh())
-    //lower
-	theApp.uploadqueue->SetMaxVUR((uint32)(theApp.uploadqueue->GetDatarate()-UPLOAD_CHECK_CLIENT_DR/2));
-  else if ((int)theApp.uploadqueue->GetAvgRespondTime(0)<thePrefs.GetSUCLow())
-    {
-    //higher
-    if (VUR<(theApp.uploadqueue->GetDatarate()+VURstep))
-	  theApp.uploadqueue->SetMaxVUR(theApp.uploadqueue->GetDatarate()+VURstep);
-	}
-  else
-  { // slightly drift higher
-    if (VUR<theApp.uploadqueue->GetDatarate()+thePrefs.GetSUCDrift() && thePrefs.GetSUCDrift())
-	  theApp.uploadqueue->SetMaxVUR(theApp.uploadqueue->GetDatarate()+thePrefs.GetSUCDrift());
-	}
-  if (thePrefs.IsSUCLog ()) {
-	AddDebugLogLine(false,_T("Smart Upload Control: (time:%ims, clip:%ims, ratio:%i) VUR:%iB/s"),
-		checkrespond,
-		theApp.uploadqueue->GetAvgRespondTime(1),
-		theApp.uploadqueue->GetAvgRespondTime(0),
-		theApp.uploadqueue->GetMaxVUR());
-  }
+	// Remark: default factor (XMan 3)2.5, try to increase the number of connections per 5 second
+	const float SpikeTolerance = 3.0f * (float)thePrefs.GetMaxConperFive();
+	if ( SpikeSize > SpikeTolerance )
+		return 0.0f;
+
+	return 1.0f - (SpikeSize/SpikeTolerance);
 }
-//MORPH END - Added & Modified by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
-
-//MORPH START - Added by Yun.SF3, Auto DynUp changing
-void CListenSocket::SwitchSUC(bool bSetSUCOn)
-{
-	if (bSetSUCOn){
-		thePrefs.SetDynUpEnabled(false);
-		AddDebugLogLine(false,GetResString(IDS_SWITCHSUC));
-		thePrefs.SetSUCEnabled(true);
-	}
-	else{
-		thePrefs.SetSUCEnabled(false);
-		AddDebugLogLine(false,GetResString(IDS_SWITCHDYNUP));
-		thePrefs.SetDynUpEnabled(true);
-
-	}
-}
-//MORPH END - Added by Yun.SF3, Auto DynUp changing
+//Xman end

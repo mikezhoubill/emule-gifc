@@ -17,12 +17,12 @@ public:
 	BOOL TraySetMenu(HMENU hMenu);
 	BOOL TraySetMenu(LPCTSTR lpszMenuName);
 	BOOL TrayUpdate();
-	// ==> TBH: minimule - Stulle
+	// ==> TBH: minimule - MyTh88
 	/*
 	BOOL TrayShow();
 	*/
 	BOOL TrayShow(BOOL bMiniMule = true);
-	// <== TBH: minimule - Stulle
+	// <== TBH: minimule - MyTh88
 	BOOL TrayHide();
 	void TraySetToolTip(LPCTSTR lpszToolTip);
 	void TraySetIcon(HICON hIcon, bool bDelete = false);
@@ -50,7 +50,9 @@ protected:
 	CMenu m_mnuTrayMenu;
 	UINT m_nDefaultMenuItem;
 	UINT m_uSingleClickTimer;
-	BOOL m_bMaximized; // Restore maximized patch - Stulle
+	// ==> Static Tray Icon [MorphXT] - MyTh88
+	BOOL m_bMaximized; 
+	// <== Static Tray Icon [MorphXT] - MyTh88
 	BOOL m_bTbhMiniMuleVis; // TBH: minimule - Stulle
 
 	void KillSingleClickTimer();

@@ -26,8 +26,6 @@
 #include "emule.h"
 #include "emuledlg.h"
 #include "Searchdlg.h"
-#include "Fakecheck.h" //MORPH - Added by SiRoB
-
 #ifdef _DEBUG
 #include "DebugHelpers.h"
 #endif
@@ -134,22 +132,26 @@ CSearchFile::CSearchFile(const CSearchFile* copyfrom)
 	m_nClientID = copyfrom->GetClientID();
 	m_nClientPort = copyfrom->GetClientPort();
 	m_pszDirectory = copyfrom->GetDirectory()? _tcsdup(copyfrom->GetDirectory()) : NULL;
-	m_pszIsFake = copyfrom->GetFakeComment()? _tcsdup(copyfrom->GetFakeComment()) : NULL; //MORPH - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
 	m_nSearchID = copyfrom->GetSearchID();
 	m_bKademlia = copyfrom->IsKademlia();
 	
-/*  vs2008 needs a helper to compare Strcuts in simplearray 
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	// vs2008 needs a helper to compare Strcuts in simplearray 
+	/*
 	const CSimpleArray<SClient>& clients = copyfrom->GetClients();
-*/
+	*/
 	const CSimpleArray<SClient,CSClientEqualHelper>& clients = copyfrom->GetClients();
-// end vs2008
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	for (int i = 0; i < clients.GetSize(); i++)
 		AddClient(clients[i]);
-/*  vs2008 needs a helper to compare Strcuts in simplearray 
+	
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	// vs2008 needs a helper to compare Strcuts in simplearray 
+	/*
 	const CSimpleArray<SServer>& servers = copyfrom->GetServers();
-*/
+	*/
 	const CSimpleArray<SServer,CSServerEqualHelper>& servers = copyfrom->GetServers();
-// end vs2008
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	for (int i = 0; i < servers.GetSize(); i++)
 		AddServer(servers[i]);
 
@@ -282,8 +284,7 @@ CSearchFile::CSearchFile(CFileDataIO* in_data, bool bOptUTF8,
 		AddServer(server);
 	}
 	m_pszDirectory = pszDirectory ? _tcsdup(pszDirectory) : NULL;
-
-	m_pszIsFake = theApp.FakeCheck->IsFake(m_abyFileHash,GetFileSize()) ? _tcsdup(theApp.FakeCheck->GetLastHit()) : NULL;; //MORPH - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
+	
 	m_list_bExpanded = false;
 	m_list_parent = NULL;
 	m_list_childcount = 0;
@@ -295,11 +296,7 @@ CSearchFile::CSearchFile(CFileDataIO* in_data, bool bOptUTF8,
 
 CSearchFile::~CSearchFile()
 {
-		free(m_pszDirectory);
-	//MORPH START - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
-	if (m_pszIsFake)
-		free(m_pszIsFake);
-	//MORPH END   - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
+	free(m_pszDirectory);
 	for (int i = 0; i < m_listImages.GetSize(); i++)
 		delete m_listImages[i];
 }
@@ -338,16 +335,16 @@ void CSearchFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 		if (!m_bHasComment && !entry->GetStrTagValue(TAG_DESCRIPTION).IsEmpty())
 			m_bHasComment = true;
 		UINT rating = (UINT)entry->GetIntTagValue(TAG_FILERATING);
-		if(rating!=0)
+		if (rating != 0)
 		{
 			uRatings++;
 			uUserRatings += rating;
 		}
 	}
-
+	
 	// searchfile specific
 	// the file might have had a serverrating, don't change the rating if no kad ratings were found
-	if(uRatings)
+	if (uRatings)
 		m_uUserRating = (uint32)ROUND((float)uUserRatings / uRatings);
 
 	if (bOldHasComment != m_bHasComment || uOldUserRatings != m_uUserRating || bForceUpdate)
@@ -433,7 +430,7 @@ int CSearchFile::IsComplete(UINT uSources, UINT uCompleteSources) const
 	}
 	else {
 		return 0;		// not complete
-}
+	}
 }
 
 time_t CSearchFile::GetLastSeenComplete() const

@@ -86,6 +86,7 @@ void CPeerCacheSocket::DetachFromClient()
 
 void CPeerCacheSocket::Safe_Delete()
 {
+	DEBUG_ONLY( Debug(_T("%08x %hs\n"), this, __FUNCTION__) ); //Xman
 	DetachFromClient();
 	CClientReqSocket::Safe_Delete();
 	m_client = NULL;
@@ -157,6 +158,7 @@ CPeerCacheDownSocket::~CPeerCacheDownSocket()
 
 void CPeerCacheDownSocket::DetachFromClient()
 {
+	DEBUG_ONLY( Debug(_T("%08x %hs\n"), this, __FUNCTION__) ); //Xman
 	if (GetClient())
 	{
 		if (GetClient()->m_pPCDownSocket == this)
@@ -225,8 +227,15 @@ CPeerCacheUpSocket::CPeerCacheUpSocket(CUpDownClient* pClient)
 CPeerCacheUpSocket::~CPeerCacheUpSocket()
 {
 	DEBUG_ONLY( Debug(_T("%08x %hs\n"), this, __FUNCTION__) );
+	//Xman Xtreme Upload: Peercache-part
+	//Xman moved down, because of replace method
+	/*
     theApp.uploadBandwidthThrottler->RemoveFromAllQueues(this);
 	DetachFromClient();
+	*/
+	DetachFromClient();
+	theApp.uploadBandwidthThrottler->RemoveFromAllQueues(this);
+	//Xman end
 }
 
 void CPeerCacheUpSocket::DetachFromClient()
@@ -235,8 +244,20 @@ void CPeerCacheUpSocket::DetachFromClient()
 	{
         if (GetClient()->m_pPCUpSocket == this) {
 			GetClient()->m_pPCUpSocket = NULL;
-            theApp.uploadBandwidthThrottler->RemoveFromStandardList(this);
-        }
+			//Xman Xtreme Upload: Peercache-part
+			if(GetClient()->IsDownloading() && GetClient()->socket!=NULL)
+			{
+				DEBUG_ONLY( Debug(_T("Replacing Slots in DetachFromClient\n")));
+				theApp.uploadBandwidthThrottler->ReplaceSocket(GetClient()->socket, (CClientReqSocket*)this ,GetClient()->socket);
+			}
+			else
+			{
+				DEBUG_ONLY( Debug(_T("DetachFromClient without uploading/normal socket")));
+				theApp.uploadBandwidthThrottler->RemoveFromStandardList(this);
+			}
+			//remark: replace socket can only be done because the socket-events are synchronized to the main-thread!
+			//Xman end
+		}
 	}
 }
 
@@ -249,7 +270,11 @@ void CPeerCacheUpSocket::OnSend(int nErrorCode)
 void CPeerCacheUpSocket::OnClose(int nErrorCode)
 {
 	DEBUG_ONLY( Debug(_T("%08x %hs\n"), this, __FUNCTION__) );
+	//Xman moved down, because of replace method
+	/*
 	CPeerCacheSocket::OnClose(nErrorCode);
+	*/
+	//Xman end
 	if (GetClient())
 	{
 		if (GetClient()->m_pPCUpSocket == this)
@@ -260,6 +285,7 @@ void CPeerCacheUpSocket::OnClose(int nErrorCode)
 			//GetClient()->OnPeerCacheUpSocketClosed(nErrorCode);
 		}
 	}
+	CPeerCacheSocket::OnClose(nErrorCode); //Xman Xtreme Upload: Peercache-part
 }
 
 #ifndef _DEBUG
@@ -311,8 +337,14 @@ bool CPeerCacheUpSocket::ProcessHttpRequest()
 	GetClient()->SetHttpSendState(0);
 
 	SetHttpState(HttpStateRecvExpected);
-	GetClient()->SetUploadState(US_UPLOADING);
-	
+	//Xman Xtreme Upload: Peercache-part
+	//Xman Xtreme upload, little bugfix
+	//it can happen, that a client is continuing sending HttpRequests although it isn't uploading
+	//then we set a wrong state here
+	if(GetClient()->GetUploadState()==US_CONNECTING)
+	//Xman end
+		GetClient()->SetUploadState(US_UPLOADING);
+
 	return true;
 }
 
@@ -586,8 +618,13 @@ bool CUpDownClient::SendHttpBlockRequests()
 			ASSERT( m_pPCDownSocket == NULL );
 			SetPeerCacheDownState(PCDS_NONE);
 		}
+		// - Maella -Download Stop Reason-
+		/*
 		SetDownloadState(DS_NONEEDEDPARTS);
         SwapToAnotherFile(_T("A4AF for NNP file. CUpDownClient::SendHttpBlockRequests()"), true, false, false, NULL, true, true);
+		*/
+		SetDownloadState(DS_NONEEDEDPARTS, _T("No needed parts"), CUpDownClient::DSR_NONEEDEDPARTS);
+		//Xman end
 		return false;
 	}
 
@@ -630,12 +667,7 @@ bool CUpDownClient::SendHttpBlockRequests()
 	strPCRequest.AppendFormat("GET http://%s/.ed2khash=%s HTTP/1.0\r\n", ipstrA(m_uPeerCacheRemoteIP), md4strA(reqfile->GetFileHash()));
 	strPCRequest.AppendFormat("X-ED2K-PushId: %u\r\n", m_uPeerCacheDownloadPushId);
 	strPCRequest.AppendFormat("Range: bytes=%I64u-%I64u\r\n", m_uReqStart, m_uReqEnd);
-	//MORPH START - Added by SiRoB, [-modname-]
-	/*
 	strPCRequest.AppendFormat("User-Agent: eMule/%ls\r\n", theApp.m_strCurVersionLong);
-	*/
-	strPCRequest.AppendFormat("User-Agent: eMule/%ls %ls\r\n", theApp.m_strCurVersionLong, theApp.m_strModVersion);
-	//MORPH END   - Added by SiRoB, [-modname-]
 	strPCRequest.AppendFormat("X-Network: eDonkey,Kademlia\r\n");
 	strPCRequest.AppendFormat("\r\n");
 
@@ -800,6 +832,7 @@ bool CUpDownClient::ProcessPeerCacheQuery(const uchar* packet, UINT size)
 
 	if (m_pPCUpSocket != NULL)
 	{
+		DEBUG_ONLY( Debug(_T("ProcessPeerCacheQuery Deleting socket"))); //Xman
         SetPeerCacheUpState(PCUS_NONE);
 		m_pPCUpSocket->Safe_Delete();
 		ASSERT( m_pPCUpSocket == NULL );
@@ -1080,13 +1113,28 @@ void CUpDownClient::SetPeerCacheUpState(EPeerCacheUpState eState)
 	if (m_ePeerCacheUpState != eState)
 	{
 		//if (thePrefs.GetVerbose())
+		//Xman
+		/*
 			//AddDebugLogLine(false, _T(" %s changed PeercacheState to %i"), DbgGetClientInfo(), eState);
+		*/
+		DEBUG_ONLY( Debug(_T(" %s changed PeercacheState to %i\n"), DbgGetClientInfo(), eState));
+		//Xman end
 
 		m_ePeerCacheUpState = eState;
 		if (m_ePeerCacheUpState == PCUS_NONE)
 			m_bPeerCacheUpHit = false;
 
+		//Xman Xtreme Upload: Peercache-part
+		/*
         theApp.uploadqueue->ReSortUploadSlots(true);
+		*/
+		if(IsDownloading() && m_ePeerCacheUpState!=PCUS_WAIT_CACHE_REPLY) 
+		{
+			//theApp.uploadqueue->ReSortUploadSlots(true);
+			DEBUG_ONLY( Debug(_T("Replacing Slots in setstate")));
+			theApp.uploadqueue->ReplaceSlot(this);
+		}
+		//Xman end
 
 		UpdateDisplayedInfo();
 	}

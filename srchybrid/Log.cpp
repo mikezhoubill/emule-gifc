@@ -27,7 +27,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -190,11 +190,29 @@ void AddDebugLogLine(EDebugLogPriority Priority, bool bAddToStatusBar, LPCTSTR p
 	va_end(argptr);	
 }
 
+//Xman Anti-Leecher-Log
+void AddLeecherLogLine(bool bAddToStatusBar, LPCTSTR pszLine, ...)
+{
+	ASSERT(pszLine != NULL);
+
+	va_list argptr;
+	va_start(argptr, pszLine);
+	AddLogTextV(LOG_LEECHER | (bAddToStatusBar ? LOG_STATUSBAR : 0), DLP_DEFAULT, pszLine, argptr);
+	va_end(argptr);	
+}
+//Xman end
+
+
 void AddLogTextV(UINT uFlags, EDebugLogPriority dlpPriority, LPCTSTR pszLine, va_list argptr)
 {
 	ASSERT(pszLine != NULL);
 
+	//Xman Anti-Leecher-Log
+	/*
 	if ((uFlags & LOG_DEBUG) && !(thePrefs.GetVerbose() && dlpPriority >= thePrefs.GetVerboseLogPriority()))
+	*/
+	if (((uFlags & LOG_DEBUG) || (uFlags & LOG_LEECHER)) && !(thePrefs.GetVerbose() && dlpPriority >= thePrefs.GetVerboseLogPriority()))
+	//Xman end
 		return;	
 
 	TCHAR szLogLine[1000];
@@ -209,6 +227,8 @@ void AddLogTextV(UINT uFlags, EDebugLogPriority dlpPriority, LPCTSTR pszLine, va
 
 		TCHAR szFullLogLine[1060];
 		int iLen = _sntprintf(szFullLogLine, _countof(szFullLogLine), _T("%s: %s\r\n"), CTime::GetCurrentTime().Format(thePrefs.GetDateTimeFormat4Log()), szLogLine);
+		//Xman Anti-Leecher-Log //Xman Code Improvement
+		/*
 		if (iLen > 0)
 		{
 			if (!(uFlags & LOG_DEBUG))
@@ -218,6 +238,16 @@ void AddLogTextV(UINT uFlags, EDebugLogPriority dlpPriority, LPCTSTR pszLine, va
 			}
 
 			if (thePrefs.GetVerbose() && ((uFlags & LOG_DEBUG) || thePrefs.GetFullVerbose()))
+		*/
+		if (iLen > 0)
+		{
+			if (!((uFlags & LOG_DEBUG) || (uFlags & LOG_LEECHER)))
+			{
+				if (thePrefs.GetLog2Disk())
+					theLog.Log(szFullLogLine, iLen);
+			}
+			else if (thePrefs.GetVerbose())
+		//Xman end
 			{
 				if (thePrefs.GetDebug2Disk())
 					theVerboseLog.Log(szFullLogLine, iLen);
@@ -258,7 +288,7 @@ bool CLogFile::SetFilePath(LPCTSTR pszFilePath)
 		return false;
 	m_strFilePath = pszFilePath;
 
-	//Morph START - Added by SiRoB, AndCycle, Date File Name Log
+	// ==> Date File Name Log [AndCycle] - Stulle
 	//get the original file name
 	TCHAR szDrv[_MAX_DRIVE];
 	TCHAR szDir[_MAX_DIR];
@@ -276,7 +306,7 @@ bool CLogFile::SetFilePath(LPCTSTR pszFilePath)
 			break;
 		}
 	}
-	//Morph END - Added by SiRoB, AndCycle, Date File Name Log
+	// <== Date File Name Log [AndCycle] - Stulle
 
 	return true;
 }
@@ -390,7 +420,7 @@ bool CLogFile::Log(LPCTSTR pszMsg, int iLen)
 	if (m_fp == NULL)
 		return false;
 
-	//Morph START - Added by SiRoB, AndCycle, Date File Name Log
+	// ==> Date File Name Log [AndCycle] - Stulle
 	//it DateNameLog enable, and it's time to change filename
 	if (thePrefs.DateFileNameLog() && ::GetTickCount() >= m_dwNextRenameTick){
 
@@ -428,14 +458,14 @@ bool CLogFile::Log(LPCTSTR pszMsg, int iLen)
 		   return false; // leuk_he extra check
 
 	}
-	//Morph END - Added by SiRoB, AndCycle, Date File Name Log
+	// <== Date File Name Log [AndCycle] - Stulle
 
 	size_t uWritten;
 	if (m_eFileFormat == Unicode)
 	{
 		// don't use 'fputs' + '_filelength' -- gives poor performance
 		size_t uToWrite = ((iLen == -1) ? _tcslen(pszMsg) : (size_t)iLen)*sizeof(TCHAR);
-			uWritten = fwrite(pszMsg, 1, uToWrite, m_fp);
+		uWritten = fwrite(pszMsg, 1, uToWrite, m_fp);
 	}
 	else
 	{
@@ -445,13 +475,13 @@ bool CLogFile::Log(LPCTSTR pszMsg, int iLen)
 	bool bResult = !ferror(m_fp);
 	m_uBytesWritten += uWritten;
 
-	//Morph START - added by AndCycle, Date File Name Log
-	//the start time (m_tStarted) is so strange, so I wanna keep my date log name intact
-	if (m_uBytesWritten >= m_uMaxFileSize && !thePrefs.DateFileNameLog())
-	/*//original
+	// ==> Date File Name Log [AndCycle] - Stulle
+	/*
 	if (m_uBytesWritten >= m_uMaxFileSize)
 	*/
-	//Morph END - added by AndCycle, Date File Name Log
+	//the start time (m_tStarted) is so strange, so I wanna keep my date log name intact
+	if (m_uBytesWritten >= m_uMaxFileSize && !thePrefs.DateFileNameLog())
+	// <== Date File Name Log [AndCycle] - Stulle
 		StartNewLogFile();
 	else
 		fflush(m_fp);

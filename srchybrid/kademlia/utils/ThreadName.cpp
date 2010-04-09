@@ -56,14 +56,13 @@ namespace Kademlia
 			    iLenBuf += 128;
 			    delete[] pcharBuffer;
 			    pcharBuffer = new char[iLenBuf];
-          // netf  vs2003 sp1:
-          #if   _MSC_VER  <= 1310 
+			    // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+#if   _MSC_VER  <= 1310 
 			    iLenResult = _vsnprintf(pcharBuffer, iLenBuf, szThreadName, args);
-          //vs 2005:
-		      #else
+#else
 			    iLenResult = _vsnprintf_s(pcharBuffer, iLenBuf, iLenBuf, szThreadName, args);
-           #endif
-          //netf end
+#endif
+			    // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		    }
 		    while (iLenResult == -1);
 		    va_end(args);
@@ -104,14 +103,13 @@ namespace Kademlia
 			    iLenBuf += 128;
 			    delete [] pcharBuffer;
 			    pcharBuffer = new char[iLenBuf];
-         // netf
-         #if   _MSC_VER  <= 1310 
-			   iLenResult = _vsnprintf(pcharBuffer, iLenBuf, szThreadName, args);
-	       #else
-				///vs2005 and up
-			   iLenResult = _vsnprintf_s(pcharBuffer, iLenBuf, iLenBuf, szThreadName, args);
-         #endif
-          // end netf
+			    // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+#if   _MSC_VER  <= 1310 
+			    iLenResult = _vsnprintf(pcharBuffer, iLenBuf, szThreadName, args);
+#else
+			    iLenResult = _vsnprintf_s(pcharBuffer, iLenBuf, iLenBuf, szThreadName, args);
+#endif
+			    // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		    }
 		    while (iLenResult == -1);
 		    va_end(args);
@@ -122,7 +120,12 @@ namespace Kademlia
 		    info.dwFlags = 0;
 		    __try
 		    {
-		        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(DWORD), (ULONG_PTR*) &info); //netf
+		        // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		        /*
+		        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(DWORD), (DWORD *)&info);
+		        */
+		        RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(DWORD), (ULONG_PTR*) &info);
+		        // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		    } __except (EXCEPTION_CONTINUE_EXECUTION)
 	    { }
 	    delete [] pcharBuffer;

@@ -14,8 +14,6 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
-#include "MenuCmds.h" //Morph
-#include "SettingsSaver.h" // drop sources - Stulle
 
 class CSafeMemFile;
 class CSearchFile;
@@ -31,9 +29,11 @@ namespace Kademlia
 	class CUInt128;
 };
 
-// khaos::categorymod+
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 #include "SelCategoryDlg.h"
-// khaos::categorymod-
+#include "MenuCmds.h"
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+#include "SettingsSaver.h" // File Settings [sivka/Stulle] - Stulle
 
 class CSourceHostnameResolveWnd : public CWnd
 {
@@ -59,8 +59,7 @@ private:
 	char m_aucHostnameBuffer[MAXGETHOSTSTRUCT];
 };
 
-// ==> drop sources - Stulle
-#ifdef FILESETTINGS_SAVE_THREAD
+// ==> File Settings [sivka/Stulle] - Stulle
 class CSaveSettingsThread : public CWinThread
 {
 public:
@@ -83,13 +82,11 @@ private:
 	volatile bool bDoWait;
 	DWORD m_dwLastWait;
 };
-#endif
-// <== drop sources - Stulle
+// <== File Settings [sivka/Stulle] - Stulle
 
 class CDownloadQueue
 {
 	friend class CAddFileThread;
-	friend class CImportPartsFileThread;
 	friend class CServerSocket;
 
 public:
@@ -102,21 +99,28 @@ public:
 	// add/remove entries
 	void	AddPartFilesToShare();
 	void	AddDownload(CPartFile* newfile, bool paused);
-	//MORPH START - Changed by SiRoB, Selection category support khaos::categorymod+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	void	AddSearchToDownload(CSearchFile* toadd, uint8 paused = 2, int cat = 0);
+	void	AddSearchToDownload(CString link, uint8 paused = 2, int cat = 0);
+	void	AddFileLinkToDownload(class CED2KFileLink* pLink, int cat = 0);
+	*/
 	//Modified these three functions by adding and in some cases removing params.
 	void	AddSearchToDownload(CSearchFile* toadd, uint8 paused = 2, int cat = 0, uint16 useOrder = 0);
 	void	AddSearchToDownload(CString link,uint8 paused = 2, int cat = 0, uint16 useOrder = 0);
-	void	AddFileLinkToDownload(class CED2KFileLink* pLink, int cat = 0, bool AllocatedLink = false,bool bFromClipboard = false);
-	//MORPH END   - Changed by SiRoB, Selection category support khaos::categorymod-
+	void	AddFileLinkToDownload(class CED2KFileLink* pLink, int cat = 0, bool AllocatedLink = false);
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	void	RemoveFile(CPartFile* toremove);
 	void	DeleteAll();
 
-	int		GetFileCount() const { return filelist.GetCount(); }
+	int		GetFileCount() const { return filelist.GetCount();}
 	UINT	GetDownloadingFileCount() const;
 	UINT	GetPausedFileCount() const;
 
 	bool	IsFileExisting(const uchar* fileid, bool bLogWarnings = true) const;
 	bool	IsPartFile(const CKnownFile* file) const;
+
+	//Xman
 	bool	IsTempFile(const CString& rstrDirectory, const CString& rstrName) const;	// SLUGFILLER: SafeHash
 
 	CPartFile* GetFileByID(const uchar* filehash) const;
@@ -124,17 +128,11 @@ public:
 	CPartFile* GetFileByKadFileSearchID(uint32 ID) const;
 
     void    StartNextFileIfPrefs(int cat);
-	// khaos::categorymod+
-	bool	StartNextFile(int cat=-1,bool force=false);
-	void	StopPauseLastFile(int Mode = MP_PAUSE, int Category = -1);
-	UINT	GetMaxCatResumeOrder(UINT iCategory = 0);
-	void	GetCategoryFileCounts(UINT iCategory, int cntFiles[]);
-	UINT	GetCategoryFileCount(UINT iCategory);
-	UINT	GetHighestAvailableSourceCount(int nCat = -1);
-	UINT	GetCatActiveFileCount(UINT iCategory);
-	UINT	GetAutoCat(CString sFullName, EMFileSize nFileSize);
-	bool	ApplyFilterMask(CString sFullName, UINT nCat);
-	// khaos::categorymod-
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	void	StartNextFile(int cat=-1,bool force=false);
+	*/
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	void	RefilterAllComments();	
 
@@ -144,7 +142,7 @@ public:
 	bool	IsInList(const CUpDownClient* client) const;
 
 	bool    CheckAndAddSource(CPartFile* sender,CUpDownClient* source);
-	bool    CheckAndAddKnownSource(CPartFile* sender,CUpDownClient* source, bool bIgnoreGlobDeadList = false, bool doThrow = false);
+	bool    CheckAndAddKnownSource(CPartFile* sender,CUpDownClient* source, bool bIgnoreGlobDeadList = false);
 	bool	RemoveSource(CUpDownClient* toremove, bool bDoStatsUpdate = true);
 
 	// statistics
@@ -153,26 +151,39 @@ public:
 	} SDownloadStats;
 	void	GetDownloadSourcesStats(SDownloadStats& results);
 	int		GetDownloadFilesStats(uint64 &ui64TotalFileSize, uint64 &ui64TotalLeftToTransfer, uint64 &ui64TotalAdditionalNeededSpace);
+	//Xman
+	/*
 	uint32	GetDatarate() {return datarate;}
+	*/
+	//Xman end
 
 	void	AddUDPFileReasks()								{m_nUDPFileReasks++;}
 	uint32	GetUDPFileReasks() const						{return m_nUDPFileReasks;}
 	void	AddFailedUDPFileReasks()						{m_nFailedUDPFileReasks++;}
 	uint32	GetFailedUDPFileReasks() const					{return m_nFailedUDPFileReasks;}
+	//Xman Xtreme Mod
+	void	AddTCPFileReask()								{m_TCPFileReask++;}
+	uint32	GetTCPFileReasks() const							{return m_TCPFileReask;}
+	void	AddFailedTCPFileReask()							{m_FailedTCPFileReask++;}
+	uint32	GetFailedTCPFileReasks() const					{return m_FailedTCPFileReask;}
+	//Xman end
 
 	// categories
-	// khaos::categorymod+	
-	void	ResetCatParts(UINT cat, UINT useCat = 0);
-	// khaos::categorymod-
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	void	ResetCatParts(UINT cat);
+	*/
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	void	SetCatPrio(UINT cat, uint8 newprio);
     void    RemoveAutoPrioInCat(UINT cat, uint8 newprio); // ZZ:DownloadManager
 	void	SetCatStatus(UINT cat, int newstatus);
 	void	MoveCat(UINT from, UINT to);
-	//MORPH START - Removed by SiRoB, Due to Khaos Categorie
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	/*
 	void	SetAutoCat(CPartFile* newfile);
 	*/
-	//MORPH END   - Removed by SiRoB, Due to Khaos Categorie
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
 	// searching on local server
 	void	SendLocalSrcRequest(CPartFile* sender);
 	void	RemoveLocalServerRequest(CPartFile* pFile);
@@ -199,16 +210,29 @@ public:
 	CString GetOptimalTempDir(UINT nCat, EMFileSize nFileSize);
 
 	CServer* cur_udpserver;
-	bool	IsFilesPowershared(); //MORPH - Added by SiRoB, ZZ Ratio
-	// khaos::kmod+ Advanced A4AF: Brute Force
-	CPartFile* forcea4af_file;
-	// khaos::kmod-
 
-	//MORPH START - Added by SiRoB, ZZ Ratio in Work
-	bool	IsZZRatioInWork() {return m_bIsZZRatioInWork;}
-	//MORPH END   - Added by SiRoB, ZZ Ratio in Work
-        
-        
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	void	CompDownloadRate();
+
+	//Xman askfordownload priority
+	uint16	GetTooManyConnections(bool recalc=false);
+	uint8	GetMaxDownPrio(void) const {return m_maxdownprio;}
+	void	SetMaxDownPrioNew(uint8 newprio) {m_maxdownprionew=newprio;}
+	uint8	GetMaxDownPrioNew(void) const {return m_maxdownprionew;}
+	//Xman end
+
+	//Xman GlobalMaxHarlimit for fairness
+	void	IncGlobSources() {m_uGlobsources++;	}
+	void	DecGlobSources() {m_uGlobsources--;	}
+	uint32	GetGlobalSources() const {return m_uGlobsources;	}
+	uint8	GetLimitState() const {return m_limitstate;}
+	//Xman end
+
+#ifdef PRINT_STATISTIC
+	void	PrintStatistic();
+#endif
+
 protected:
 	bool	SendNextUDPPacket();
 	void	ProcessLocalRequests();
@@ -219,13 +243,34 @@ private:
 	bool	CompareParts(POSITION pos1, POSITION pos2);
 	void	SwapParts(POSITION pos1, POSITION pos2);
 	void	HeapSort(UINT first, UINT last);
-public: // drop sources - Stulle
-	CTypedPtrList<CPtrList, CPartFile*> filelist;
-private: // drop sources - Stulle
+
+//Xman see all sources
+public:
+	CTypedPtrList<CPtrList, CPartFile*> filelist;  
+private:
+//Xman end
+	
 	CTypedPtrList<CPtrList, CPartFile*> m_localServerReqQueue;
 	uint16	filesrdy;
-	uint32	datarate;
 	
+	// Maella -Pseudo overhead datarate control-
+	/*
+	uint32	datarate;
+	*/
+	uint32 m_lastProcessTime;
+	uint64 m_lastOverallReceivedBytes;	
+	uint64 m_lastReceivedBytes;	
+	sint64 m_nDownloadSlopeControl; //Xman changed to sint64
+	// Maella end
+
+	//Xman askfordownload priority
+	uint16		m_toomanyconnections;
+	//uint32	m_toomanytimestamp;
+	uint8 m_maxdownprio;
+	uint8 m_maxdownprionew;
+	//Xman end
+
+
 	CPartFile*	lastfile;
 	uint32		lastcheckdiskspacetime;
 	uint32		lastudpsearchtime;
@@ -236,85 +281,99 @@ private: // drop sources - Stulle
 	int			m_iSearchedServers;
 	uint32		lastkademliafilerequest;
 
+	//Xman
+	/*
 	uint64		m_datarateMS;
+	*/
+	//Xman end
 	uint32		m_nUDPFileReasks;
 	uint32		m_nFailedUDPFileReasks;
+	//Xman Xtreme Mod
+	uint32		m_TCPFileReask;
+	uint32		m_FailedTCPFileReask;
+	//Xman end
 
+	//Xman GlobalMaxHarlimit for fairness
+	uint32		m_uGlobsources;
+	uint8		m_limitstate;
+
+	//Xman
+	/*
 	// By BadWolf - Accurate Speed Measurement
 	typedef struct TransferredData {
 		uint32	datalen;
 		DWORD	timestamp;
 	};
-	//MORPH START - Removed by SiRoB, sum datarate calculated for each file
-	/*
 	CList<TransferredData> avarage_dr_list;
+	// END By BadWolf - Accurate Speed Measurement
 	*/
-	//MORPH END   - Removed by SiRoB, sum datarate calculated for each file
-	
+	//Xman end
+
 	CSourceHostnameResolveWnd m_srcwnd;
 
+	CCriticalSection srcLock;	//zz_fly :: make source add action thread safe :: Enig123
+
+    //Xman
+    /*
     DWORD       m_dwLastA4AFtime; // ZZ:DownloadManager
-	// khaos::categorymod+ For queuing ED2K link additions.
-	bool		m_bBusyPurgingLinks;
-	bool		PurgeED2KLinkQueue();
-	uint32		m_iLastLinkQueuedTick;
-	bool        m_bClipboardLinkInQueue;
-       public: // public for category selection box:
-	CTypedPtrList<CPtrList, CED2KFileLink*> m_ED2KLinkQueue;
-	// khaos::categorymod-
+    */
+    //Xman end
 
-	//MORPH START - Added by SiRoB, ZZ Ratio in Work
-	bool	m_bIsZZRatioInWork;
-	//MORPH START - Added by SiRoB, ZZ Ratio in Work
+	uint32 GlobalHardLimitTemp; // show global HL - Stulle
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> File Settings [sivka/Stulle] - Stulle
+public:
+	void InitTempVariables(CPartFile* file);
+	void UpdateFileSettings(CPartFile* file);
+	void SaveFileSettings(bool bStart = true);
+protected:
+	CSettingsSaver m_SettingsSaver;
+	CSaveSettingsThread* m_SaveSettingsThread;
+	bool m_bSaveAgain;
+	DWORD m_dwLastSave;
+	// <== File Settings [sivka/Stulle] - Stulle
+
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 public:
 	void SetHardLimits();
 	void SetUpdateHlTime(DWORD in){m_dwUpdateHlTime = in;}
 	bool GetPassiveMode() const {return m_bPassiveMode;}
 	void SetPassiveMode(bool in){m_bPassiveMode=in;}
 	bool GetGlobalHLSrcReqAllowed() const {return m_bGlobalHLSrcReqAllowed;}
-	uint16 GetGlobalSourceCount();
 protected:
 	DWORD m_dwUpdateHL;
 	DWORD m_dwUpdateHlTime;
 	bool m_bPassiveMode;
 	bool m_bGlobalHLSrcReqAllowed;
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
-	//MORPH START - Added by schnulli900, count failed TCP/IP connections [Xman]
+	DWORD m_dwResTimer; // CPU/MEM usage [$ick$/Stulle] - Max
+
 public:
-	void	AddTCPFileReask()		{m_uTCPFileReask++;}
-	uint32	GetTCPFileReasks() const	{return m_uTCPFileReask;}
-	void	AddFailedTCPFileReask()		{m_uFailedTCPFileReask++;}
-	uint32	GetFailedTCPFileReasks() const	{return m_uFailedTCPFileReask;}
-private:
-	uint32	m_uTCPFileReask;
-	uint32	m_uFailedTCPFileReask;
-        //MORPH END   - Added by schnulli900, count failed TCP/IP connections [Xman]
+	uint16 GetGlobalSourceCount(); // Show sources on title - Stulle
 
-	uint32 GlobalHardLimitTemp; // show global HL - Stulle
-
-// ==> Quick start [TPT] - Stulle
-public:
+	// ==> Quick start [TPT] - Max
 	int quickflag;
 	int quickflags;
-// <== Quick start [TPT] - Stulle
+	// <== Quick start [TPT] - Max
 
-	// ==> drop sources - Stulle
-	void RemoveSourceAndDontAsk(CUpDownClient* toremove, bool bDoStatsUpdate = true);
-	void InitTempVariables(CPartFile* file);
-	void UpdateFileSettings(CPartFile* file);
-	CSettingsSaver m_SettingsSaver;
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	bool	StartNextFile(int cat=-1,bool force=false);
+	void	StopPauseLastFile(int Mode = MP_PAUSE, int Category = -1);
+	UINT	GetMaxCatResumeOrder(UINT iCategory = 0);
+	void	GetCategoryFileCounts(UINT iCategory, int cntFiles[]);
+	UINT	GetCategoryFileCount(UINT iCategory);
+	UINT	GetHighestAvailableSourceCount(int nCat = -1);
+	UINT	GetCatActiveFileCount(UINT iCategory);
+	UINT	GetAutoCat(CString sFullName, EMFileSize nFileSize);
+	bool	ApplyFilterMask(CString sFullName, UINT nCat);
+	void	ResetCatParts(UINT cat, UINT useCat = 0);
 
-#ifdef FILESETTINGS_SAVE_THREAD
-	void SaveFileSettings(bool bStart = true);
-protected:
-	CSaveSettingsThread* m_SaveSettingsThread;
-	bool m_bSaveAgain;
-	DWORD m_dwLastSave;
-#endif
-	// <== drop sources - Stulle
+private:
+	bool		m_bBusyPurgingLinks;
+	bool		PurgeED2KLinkQueue();
+	uint32		m_iLastLinkQueuedTick;
 
-	DWORD m_dwResTimer; // CPU/MEM usage [$ick$/Stulle] - Stulle
+	CTypedPtrList<CPtrList, CED2KFileLink*> m_ED2KLinkQueue;
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 };

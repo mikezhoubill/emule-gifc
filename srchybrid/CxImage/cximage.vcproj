@@ -84,9 +84,11 @@
 			WholeProgramOptimization="FALSE">
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/EHa"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\jpeg,..\png,..\..\zlib,..\mng,..\tiff,..\j2k,..\jasper\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;JAS_WIN_MSVC_BUILD"
+				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				TreatWChar_tAsBuiltInType="TRUE"
@@ -126,66 +128,6 @@
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
-		<Configuration
-			Name="Release P4-AthlonXP|Win32"
-			OutputDirectory=".\Release_P4_AthlonXP"
-			IntermediateDirectory=".\Release_P4_AthlonXP"
-			ConfigurationType="4"
-			UseOfMFC="1"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2"
-			WholeProgramOptimization="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="3"
-				GlobalOptimizations="TRUE"
-				InlineFunctionExpansion="2"
-				EnableIntrinsicFunctions="TRUE"
-				FavorSizeOrSpeed="1"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="3"
-				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="..\jpeg,..\png,..\..\zlib,..\mng,..\tiff,..\j2k,..\jasper\include"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;JAS_WIN_MSVC_BUILD"
-				StringPooling="TRUE"
-				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				EnableEnhancedInstructionSet="1"
-				PrecompiledHeaderFile=".\Release_P4_AthlonXP/CxImage.pch"
-				AssemblerListingLocation=".\Release_P4_AthlonXP/"
-				ObjectFile=".\Release_P4_AthlonXP/"
-				ProgramDataBaseFileName=".\Release_P4_AthlonXP/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				OutputFile=".\Release_P4_AthlonXP\CxImage.lib"
-				SuppressStartupBanner="TRUE"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1040"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -212,14 +154,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximabmp.cpp">
@@ -239,14 +173,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -268,14 +194,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximaenc.cpp">
@@ -295,14 +213,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -324,14 +234,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="xImage.cpp">
@@ -351,14 +253,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -380,14 +274,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximahist.cpp">
@@ -407,14 +293,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -436,14 +314,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximainfo.cpp">
@@ -463,14 +333,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -492,14 +354,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximajas.cpp">
@@ -519,14 +373,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -548,14 +394,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximajpg.cpp">
@@ -575,14 +413,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -604,14 +434,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximalyr.cpp">
@@ -631,14 +453,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -660,14 +474,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximapal.cpp">
@@ -687,14 +493,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -716,14 +514,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximapng.cpp">
@@ -743,14 +533,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -772,14 +554,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximasel.cpp">
@@ -799,14 +573,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -828,14 +594,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximatga.cpp">
@@ -855,14 +613,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -884,14 +634,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximatif.cpp">
@@ -911,14 +653,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -940,14 +674,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximawbmp.cpp">
@@ -967,14 +693,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -996,14 +714,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="ximawnd.cpp">
@@ -1024,14 +734,6 @@
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="xmemfile.cpp">
@@ -1051,14 +753,6 @@
 						AdditionalIncludeDirectories=""
 						PreprocessorDefinitions=""
 						BasicRuntimeChecks="3"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release P4-AthlonXP|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""/>
 				</FileConfiguration>
 			</File>
 		</Filter>

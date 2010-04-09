@@ -54,6 +54,8 @@ public:
 	afx_msg	void OnBnClickedAutoHQRS_TimerTakeOver();
 	afx_msg	void OnBnClickedMaxRemoveQRSTakeOver();
 	afx_msg	void OnBnClickedMaxRemoveQRSLimitTakeOver();
+	afx_msg void OnBnClickedHQRXmanTakeOver();
+	afx_msg void OnBnClickedHQRXman();
 	afx_msg	void OnBnClickedGlobalHlTakeOver(); // Global Source Limit (customize for files) - Stulle
 
 private:

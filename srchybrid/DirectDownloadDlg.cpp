@@ -22,10 +22,7 @@
 #include "DownloadQueue.h"
 #include "ED2KLink.h"
 #include "Preferences.h"
-
-// emulEspaña: Added by Announ [MoNKi: -Check already downloaded files-]
-#include "KnownFileList.h"
-// End emulEspaña
+#include "KnownFileList.h" //Xman [MoNKi: -Check already downloaded files-]
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -41,7 +38,7 @@ IMPLEMENT_DYNAMIC(CDirectDownloadDlg, CDialog)
 BEGIN_MESSAGE_MAP(CDirectDownloadDlg, CResizableDialog)
 	ON_EN_KILLFOCUS(IDC_ELINK, OnEnKillfocusElink)
 	ON_EN_UPDATE(IDC_ELINK, OnEnUpdateElink)
-	ON_NOTIFY(NM_CLICK, IDC_CATS, OnNMClickCats) //MORPH - Added by SiRoB, Selection category support
+	ON_NOTIFY(NM_CLICK, IDC_CATS, OnNMClickCats) // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 END_MESSAGE_MAP()
 
 CDirectDownloadDlg::CDirectDownloadDlg(CWnd* pParent /*=NULL*/)
@@ -97,22 +94,27 @@ void CDirectDownloadDlg::OnOK()
 			strTok += _T("/");
 		try
 		{
-			CED2KLink* pLink = CED2KLink::CreateLinkFromUrl(strTok.Trim());// Morph trim
+			CED2KLink* pLink = CED2KLink::CreateLinkFromUrl(strTok);
 			if (pLink)
 			{
 				if (pLink->GetKind() == CED2KLink::kFile)
 				{
-				
-					//MORPH START - Changed by SiRoB, Selection category support khaos::categorymod+
+					// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 					/*
-					theApp.downloadqueue->AddFileLinkToDownload(pLink->GetFileLink(), (thePrefs.GetCatCount() == 0) ? 0 : m_cattabs.GetCurSel());
+					//Xman [MoNKi: -Check already downloaded files-]
+					if(theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pLink->GetFileLink()->GetHashKey(),pLink->GetFileLink()->GetName()))
+					{
+						theApp.downloadqueue->AddFileLinkToDownload(pLink->GetFileLink(), (thePrefs.GetCatCount() == 0) ? 0 : m_cattabs.GetCurSel());
+					}
+					//Xman end
 					*/
 					CED2KFileLink* pFileLink = (CED2KFileLink*)CED2KLink::CreateLinkFromUrl(strTok.Trim());
-					//EastShare START - Modified by Pretender, [MoNKi: -Check already downloaded files-]
 					if(theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pLink->GetFileLink()->GetHashKey(),pLink->GetFileLink()->GetName()))
-					//EastShare END
-						theApp.downloadqueue->AddFileLinkToDownload(pFileLink, (thePrefs.GetCatCount()==0)?-1 : m_cattabs.GetCurSel(), true);
-					//MORPH END   - Changed by SiRoB, Selection category support khaos::categorymod-
+					{
+						theApp.downloadqueue->AddFileLinkToDownload(pFileLink,
+							(thePrefs.GetCatCount()==0)?-1 : m_cattabs.GetCurSel(), true);
+					}
+					// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 				}
 				else
 				{
@@ -167,12 +169,7 @@ BOOL CDirectDownloadDlg::OnInitDialog()
 	GetDlgItem(IDCANCEL)->SetWindowText(GetResString(IDS_CANCEL));
 	
 
-	//khaos::categorymod+
-	/*
 	if (thePrefs.GetCatCount()==0) {
-	*/
-	if (thePrefs.GetCatCount()==1) {
-	//khaos::categorymod-
 		GetDlgItem(IDC_CATLABEL)->ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_CATS)->ShowWindow(SW_HIDE);
 	}
@@ -195,7 +192,7 @@ void CDirectDownloadDlg::UpdateCatTabs() {
 	int oldsel=m_cattabs.GetCurSel();
 	m_cattabs.DeleteAllItems();
 	for (int ix=0;ix<thePrefs.GetCatCount();ix++) {
-	//MORPH START - Changed by SiRoB, Selection category support
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	/*
 		CString label=(ix==0)?GetResString(IDS_ALL):thePrefs.GetCategory(ix)->strTitle;
 		label.Replace(_T("&"),_T("&&"));
@@ -209,13 +206,12 @@ void CDirectDownloadDlg::UpdateCatTabs() {
 		m_cattabs.InsertItem(ix,label);
 	}
 	if (oldsel>=m_cattabs.GetItemCount())
-		oldsel=-1;
-	//MORPH END   - Changed by SiRoB, Selection category support
+		oldsel=-1; 
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	m_cattabs.SetCurSel(oldsel);
 }
-
-//MORPH START - Added by SiRoB, Selection category support
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 void CDirectDownloadDlg::OnNMClickCats(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 {
 	POINT point;
@@ -236,5 +232,4 @@ void CDirectDownloadDlg::OnNMClickCats(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 			m_cattabs.DeselectAll(false);
 		}
 	*pResult = 0;
-}
-//MORPH END - Added by SiRoB, Selection category support
+}// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle

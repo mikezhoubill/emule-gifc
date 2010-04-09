@@ -39,6 +39,9 @@
 #include "kademlia/kademlia/kademlia.h"
 #include "emuledlg.h"
 #include "Log.h"
+//Xman
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+#include "Scheduler.h" // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -171,6 +174,9 @@ void CMMServer::ProcessStatusRequest(CMMSocket* sender, CMMPacket* packet){
 	else
 		packet->WriteByte(MMP_STATUSANSWER);
 
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	packet->WriteShort((uint16)theApp.uploadqueue->GetDatarate()/100);
 	packet->WriteShort((uint16)((thePrefs.GetMaxGraphUploadRate(true)*1024)/100));
 	packet->WriteShort((uint16)theApp.downloadqueue->GetDatarate()/100);
@@ -179,6 +185,28 @@ void CMMServer::ProcessStatusRequest(CMMSocket* sender, CMMPacket* packet){
 	packet->WriteByte((uint8)theApp.downloadqueue->GetPausedFileCount());
 	packet->WriteInt((uint32)(theStats.sessionReceivedBytes/1048576));
 	packet->WriteShort((uint16)((theStats.GetAvgDownloadRate(0)*1024)/100));
+	*/
+	uint32 eMuleIn;
+	uint32 eMuleOut;
+	uint32 notUsed;
+	uint32 downloadrate;
+	theApp.pBandWidthControl->GetDatarates(thePrefs.GetDatarateSamples(),
+		eMuleIn, notUsed,
+		eMuleOut, notUsed,
+		notUsed, notUsed);
+
+	theApp.pBandWidthControl->GetFullHistoryDatarates(notUsed, notUsed,
+		downloadrate, notUsed);
+
+	packet->WriteShort((uint16)eMuleOut/100);
+	packet->WriteShort((uint16)((thePrefs.GetMaxGraphUploadRate()*1024)/100));
+	packet->WriteShort((uint16)eMuleIn/100);
+	packet->WriteShort((uint16)((thePrefs.GetMaxGraphDownloadRate()*1024)/100));
+	packet->WriteByte((uint8)theApp.downloadqueue->GetDownloadingFileCount());
+	packet->WriteByte((uint8)theApp.downloadqueue->GetPausedFileCount());
+	packet->WriteInt((uint32)(theApp.pBandWidthControl->GeteMuleIn()/1048576));
+	packet->WriteShort((uint16)(downloadrate/1024.0/100));
+	//Xman end
 	if (theApp.serverconnect->IsConnected()){
 		if(theApp.serverconnect->IsLowID())
 			packet->WriteByte(1);
@@ -468,14 +496,23 @@ void  CMMServer::ProcessSearchRequest(CMMData* data, CMMSocket* sender){
 }
 
 void  CMMServer::ProcessChangeLimitRequest(CMMData* data, CMMSocket* sender){
+	//Xman
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	/*
 	uint16 nNewUpload = data->ReadShort();
 	uint16 nNewDownload = data->ReadShort();
+	*/
+	float nNewUpload = data->ReadShort();
+	float nNewDownload = data->ReadShort();
+	//Xman end
 	thePrefs.SetMaxUpload(nNewUpload);
 	thePrefs.SetMaxDownload(nNewDownload);
 
+	theApp.scheduler->SaveOriginals(); // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
+
 	CMMPacket* packet = new CMMPacket(MMP_CHANGELIMITANS);
-	packet->WriteShort((uint16)((thePrefs.GetMaxUpload() >= UNLIMITED) ? 0 : thePrefs.GetMaxUpload())); //MORPH uint16 is not enough
-	packet->WriteShort((uint16)((thePrefs.GetMaxDownload() >=UNLIMITED) ? 0 : thePrefs.GetMaxDownload())); //MORPH uint16 is not enough
+	packet->WriteShort((uint16)((thePrefs.GetMaxUpload() >= UNLIMITED) ? 0 : thePrefs.GetMaxUpload()));
+	packet->WriteShort((uint16)((thePrefs.GetMaxDownload() >= UNLIMITED) ? 0 : thePrefs.GetMaxDownload()));
 	sender->SendPacket(packet);
 }
 
@@ -684,6 +721,14 @@ VOID CALLBACK CMMServer::CommandTimer(HWND /*hwnd*/, UINT /*uMsg*/, UINT_PTR /*i
 		}
 	}
 	CATCH_DFLT_EXCEPTIONS(_T("CMMServer::CommandTimer"))
+		// Maella -Code Improvement-
+		// Remark: The macro CATCH_DFLT_EXCEPTIONS will not catch all types of exception.
+		//         The exceptions thrown in callback function are not intercepted by the dbghelp.dll (e.g. eMule Dump, crashRpt, etc...)
+		catch(...) {
+			if(theApp.emuledlg != NULL)
+				AddLogLine(true, _T("Unknown %s exception in "), __FUNCTION__);
+		}
+		// Maella end
 }
 
 void  CMMServer::ProcessStatisticsRequest(CMMData* data, CMMSocket* sender){
@@ -724,7 +769,7 @@ void CMMServer::WriteFileInfo(CPartFile* selFile, CMMPacket* packet){
 	packet->WriteInt64( selFile->GetFileSize() );
 	packet->WriteInt64( selFile->GetTransferred() );
 	packet->WriteInt64( selFile->GetCompletedSize() );
-	packet->WriteShort((uint16)(selFile->GetDatarate()/100));
+	packet->WriteShort((uint16)(selFile->GetDownloadDatarate()/100)); //Xman // Maella -Accurate measure of bandwidth
 	packet->WriteShort((uint16)(selFile->GetSourceCount()));
 	packet->WriteShort((uint16)(selFile->GetTransferringSrcCount()));
 	if (selFile->IsAutoDownPriority()){

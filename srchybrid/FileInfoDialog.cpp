@@ -22,8 +22,7 @@
 #include "PartFile.h"
 #include "Preferences.h"
 #include "UserMsgs.h"
-
-#include "SharedFileList.h" //MORPH - Added, Downloaded History [Monki/Xman]
+#include "SharedFileList.h" //Xman [MoNKi: -Downloaded History-]
 
 // id3lib
 #pragma warning(disable:4100) // unreferenced formal parameter
@@ -137,7 +136,6 @@ public:
 		m_pfnMediaInfo_Close = NULL;
 		m_pfnMediaInfo_Get = NULL;
 		m_pfnMediaInfo_Count_Get = NULL;
-		m_pfnMediaInfo_inform =NULL ; //morph
 	}
 	~CMediaInfoDLL()
 	{
@@ -151,12 +149,12 @@ public:
 		{
 			m_bInitialized = TRUE;
 
-			// morph use prefs
+			// ==> Advanced Options [Official/MorphXT] - Stulle
 			/*
 			CString strPath = theApp.GetProfileString(_T("eMule"), _T("MediaInfo_MediaInfoDllPath"), _T("MEDIAINFO.DLL"));
 			*/
 			CString strPath = CPreferences::sMediaInfo_MediaInfoDllPath;
-			// morph use prefs
+			// <== Advanced Options [Official/MorphXT] - Stulle
 			if (strPath == _T("<noload>"))
 				return false;
 			m_hLib = LoadLibrary(strPath);
@@ -247,7 +245,9 @@ public:
 					(FARPROC &)m_pfnMediaInfo_Open = GetProcAddress(m_hLib, "MediaInfo_Open");
 					(FARPROC &)m_pfnMediaInfo_Close = GetProcAddress(m_hLib, "MediaInfo_Close");
 					(FARPROC &)m_pfnMediaInfo_Get = GetProcAddress(m_hLib, "MediaInfo_Get");
-					(FARPROC &)m_pfnMediaInfo_inform = GetProcAddress(m_hLib, "MediaInfo_Inform"); // morph. 
+					// ==> Advanced Options [Official/MorphXT] - Stulle
+					(FARPROC &)m_pfnMediaInfo_inform = GetProcAddress(m_hLib, "MediaInfo_Inform");
+					// <== Advanced Options [Official/MorphXT] - Stulle
 					(FARPROC &)m_pfnMediaInfo_Count_Get = GetProcAddress(m_hLib, "MediaInfo_Count_Get");
 					if (m_pfnMediaInfo_New && m_pfnMediaInfo_Delete && m_pfnMediaInfo_Open && m_pfnMediaInfo_Close && m_pfnMediaInfo_Get) {
 						m_ullVersion = ullVersion;
@@ -316,9 +316,8 @@ public:
 		return _T("");
 	}
 
-
-// morph  start
-CString Inform(void* Handle,size_t format)
+	// ==> Advanced Options [Official/MorphXT] - Stulle
+	CString Inform(void* Handle,size_t format)
 	{
 		if (m_pfnMediaInfo_inform) 
 			if (m_ullVersion >= MAKEDLLVERULL(0, 7, 0, 0)) {
@@ -326,9 +325,7 @@ CString Inform(void* Handle,size_t format)
 		}
 		return _T("");
 	}
-		//morph end
-
-
+	// <== Advanced Options [Official/MorphXT] - Stulle
 
 	int Count_Get(void* Handle, stream_t_C StreamKind, int StreamNumber)
 	{
@@ -360,9 +357,9 @@ protected:
 	int				(__stdcall *m_pfnMediaInfo_Open)(void* Handle, const wchar_t* File) throw(...);
 	void*			(__stdcall *m_pfnMediaInfo_New)() throw(...);
 	void			(__stdcall *m_pfnMediaInfo_Delete)(void* Handle) throw(...);
-	// morph:
+	// ==> Advanced Options [Official/MorphXT] - Stulle
 	const wchar_t*  (__stdcall *m_pfnMediaInfo_inform)(void* Handle,size_t reserved) throw(...);
-	// morph end
+	// <== Advanced Options [Official/MorphXT] - Stulle
 };
 
 CMediaInfoDLL theMediaInfoDLL;
@@ -430,11 +427,13 @@ BOOL CFileInfoDialog::OnInitDialog()
 	AddAnchor(IDC_ALANGUAGE, TOP_CENTER, TOP_RIGHT);
 
 	AddAnchor(IDC_FULL_FILE_INFO, TOP_LEFT, BOTTOM_RIGHT);
-   /* morph vs2008 no win98
+
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	m_fi.LimitText(afxIsWin95() ? 0xFFFF : 0x7FFFFFFF);
-    */
-		m_fi.LimitText(0x7FFFFFFF);
-    // end morph
+	*/
+	m_fi.LimitText(0x7FFFFFFF);
+	// <== Drop Win95 support [MorphXT] - Stulle
 	m_fi.SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
 	m_fi.SetAutoURLDetect();
 	m_fi.SetEventMask(m_fi.GetEventMask() | ENM_LINK);
@@ -503,11 +502,13 @@ BOOL CGetMediaInfoThread::InitInstance()
 
 int CGetMediaInfoThread::Run()
 {
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+
 	CoInitialize(NULL);
 
 	HWND hwndRE = CreateWindow(RICHEDIT_CLASS, _T(""), ES_MULTILINE | ES_READONLY | WS_DISABLED, 0, 0, 200, 200, NULL, NULL, NULL, NULL);
@@ -520,11 +521,12 @@ int CGetMediaInfoThread::Run()
 	{
 		CRichEditStream re;
 		re.Attach(hwndRE);
-		/* MORPH no win95
+		// ==> Drop Win95 support [MorphXT] - Stulle
+		/*
 		re.LimitText(afxIsWin95() ? 0xFFFF : 0x7FFFFFFF);
 		*/
 		re.LimitText( 0x7FFFFFFF);
-		// MORPH END
+		// <== Drop Win95 support [MorphXT] - Stulle
 		PARAFORMAT pf = {0};
 		pf.cbSize = sizeof pf;
 		if (re.GetParaFormat(pf)) {
@@ -760,7 +762,7 @@ LRESULT CFileInfoDialog::OnMediaInfoResult(WPARAM, LPARAM lParam)
 	if (ami.fFileLengthSec) {
 		CString strLength(CastSecondsToHM((time_t)ami.fFileLengthSec));
 		if (ami.bFileLengthEstimated)
-			strLength += _T(" (")+GetResString(IDS_ESTIMATED)+ _T(")");
+			strLength += _T(" (") + GetResString(IDS_ESTIMATED)+ _T(")");
 		SetDlgItemText(IDC_LENGTH, strLength);
 	}
 
@@ -931,13 +933,11 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 	if (!pFile)
 		return false;
 
-	//MORPH START - Added, Downloaded History [Monki/Xman]
-#ifndef NO_HISTORY
+	//Xman [MoNKi: -Downloaded History-]
 	if(!pFile->IsKindOf(RUNTIME_CLASS(CKnownFile)) || !pFile->IsPartFile() && !theApp.sharedfiles->IsFilePtrInList(((CKnownFile*)pFile))){
 		return false;
 	}
-#endif
-	//MORPH END   - Added, Downloaded History [Monki/Xman]
+	//Xman end
 
 	ASSERT( !pFile->GetFilePath().IsEmpty() );
 
@@ -978,11 +978,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 	// Check for AVI file
 	//
 	bool bIsAVI = false;
-	/* morph use advanced pref
-	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_RIFF"), 1)) 
+	// ==> Advanced Options [Official/MorphXT] - Stulle
+	/*
+	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_RIFF"), 1))
 	*/
 	if (CPreferences::bMediaInfo_RIFF) 
-    // end morph advanced pref
+	// <== Advanced Options [Official/MorphXT] - Stulle
 	{
 		try
 		{
@@ -1006,7 +1007,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 	// Check for RM file
 	//
 	bool bIsRM = false;
+	// ==> Advanced Options [Official/MorphXT] - Stulle
+	/*
 	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_RM"), 1))
+	*/
+	if (CPreferences::m_bMediaInfo_RM)
+	// <== Advanced Options [Official/MorphXT] - Stulle
 	{
 		try
 		{
@@ -1031,7 +1037,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 	//
 #ifdef HAVE_WMSDK_H
 	bool bIsWM = false;
+	// ==> Advanced Options [Official/MorphXT] - Stulle
+	/*
 	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_WM"), 1))
+	*/
+	if (CPreferences::m_bMediaInfo_WM)
+	// <== Advanced Options [Official/MorphXT] - Stulle
 	{
 		try
 		{
@@ -1059,7 +1070,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 	////////////////////////////////////////////////////////////////////////////
 	// Check for MPEG Audio file
 	//
+	// ==> Advanced Options [Official/MorphXT] - Stulle
+	/*
 	if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_ID3LIB"), 1) &&
+	*/
+	if (CPreferences::bMediaInfo_ID3LIB &&
+	// <== Advanced Options [Official/MorphXT] - Stulle
 		(_tcscmp(szExt, _T(".mp3"))==0 || _tcscmp(szExt, _T(".mp2"))==0 || _tcscmp(szExt, _T(".mp1"))==0 || _tcscmp(szExt, _T(".mpa"))==0))
 	{
 		try
@@ -1248,7 +1264,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					CString strText(sText);
 					strText.Trim();
 					strFidInfo << strText;
-					delete [] sText;
+					delete[] sText;
 					break;
 				}
 				case ID3FID_BPM:
@@ -1257,7 +1273,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					long lLength = _wtol(sText);
 					if (lLength) // check for != "0"
 						strFidInfo << sText;
-					delete [] sText;
+					delete[] sText;
 					break;
 				}
 				case ID3FID_SONGLEN:
@@ -1270,7 +1286,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 						SecToTimeLength(lLength, strLength);
 						strFidInfo << strLength;
 					}
-					delete [] sText;
+					delete[] sText;
 					break;
 				}
 				case ID3FID_USERTEXT:
@@ -1291,8 +1307,8 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 							strFidInfo << _T(": ");
 						strFidInfo << strText;
 					}
-					delete [] sText;
-					delete [] sDesc;
+					delete[] sText;
+					delete[] sDesc;
 					break;
 				}
 				case ID3FID_COMMENT:
@@ -1322,9 +1338,9 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 							strFidInfo << _T(": ");
 						strFidInfo << strText;
 					}
-					delete [] sText;
-					delete [] sDesc;
-					delete [] sLang;
+					delete[] sText;
+					delete[] sDesc;
+					delete[] sLang;
 					break;
 				}
 				case ID3FID_WWWAUDIOFILE:
@@ -1340,7 +1356,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					CString strURL(sURL);
 					strURL.Trim();
 					strFidInfo << strURL;
-					delete [] sURL;
+					delete[] sURL;
 					break;
 				}
 				case ID3FID_WWWUSER:
@@ -1361,8 +1377,8 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 							strFidInfo << _T(": ");
 						strFidInfo << strURL;
 					}
-					delete [] sURL;
-					delete [] sDesc;
+					delete[] sURL;
+					delete[] sDesc;
 					break;
 				}
 				case ID3FID_INVOLVEDPEOPLE:
@@ -1372,7 +1388,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					{
 						wchar_t *sPeople = ID3_GetStringW(frame, ID3FN_TEXT, nIndex);
 						strFidInfo << sPeople;
-						delete [] sPeople;
+						delete[] sPeople;
 						if (nIndex + 1 < nItems)
 							strFidInfo << _T(", ");
 					}
@@ -1389,9 +1405,9 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					nDataSize  = frame->GetField(ID3FN_DATA)->Size();
 					strFidInfo << _T("(") << sDesc << _T(")[") << sFormat << _T(", ")
 							   << nPicType << _T("]: ") << sMimeType << _T(", ") << nDataSize << _T(" bytes");
-					delete [] sMimeType;
-					delete [] sDesc;
-					delete [] sFormat;
+					delete[] sMimeType;
+					delete[] sDesc;
+					delete[] sFormat;
 					break;
 				}
 				case ID3FID_GENERALOBJECT:
@@ -1403,10 +1419,10 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					size_t
 					nDataSize = frame->GetField(ID3FN_DATA)->Size();
 					strFidInfo << _T("(") << sDesc << _T(")[")
-						<< sFileName << _T("]: ") << sMimeType << _T(", ") << nDataSize << _T(" bytes");
-					delete [] sMimeType;
-					delete [] sDesc;
-					delete [] sFileName;
+							   << sFileName << _T("]: ") << sMimeType << _T(", ") << nDataSize << _T(" bytes");
+					delete[] sMimeType;
+					delete[] sDesc;
+					delete[] sFileName;
 					break;
 				}
 				case ID3FID_UNIQUEFILEID:
@@ -1414,7 +1430,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					wchar_t *sOwner = ID3_GetStringW(frame, ID3FN_OWNER);
 					size_t nDataSize = frame->GetField(ID3FN_DATA)->Size();
 					strFidInfo << sOwner << _T(", ") << nDataSize << _T(" bytes");
-					delete [] sOwner;
+					delete[] sOwner;
 					break;
 				}
 				case ID3FID_PLAYCOUNTER:
@@ -1430,7 +1446,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 					nCounter = frame->GetField(ID3FN_COUNTER)->Get(),
 					nRating = frame->GetField(ID3FN_RATING)->Get();
 					strFidInfo << sEmail << _T(", counter=") << nCounter << _T(" rating=") << nRating;
-					delete [] sEmail;
+					delete[] sEmail;
 					break;
 				}
 				case ID3FID_CRYPTOREG:
@@ -1474,8 +1490,8 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 								<< format << "] ";
 						}
 					}*/
-					delete [] sDesc;
-					delete [] sLang;
+					delete[] sDesc;
+					delete[] sLang;
 					break;
 				}
 				case ID3FID_AUDIOCRYPTO:
@@ -1590,7 +1606,9 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 							}
 						}
 
-						CString strInform = theMediaInfoDLL.Inform(Handle,0); // morph
+						// ==> Advanced Options [Official/MorphXT] - Stulle
+						CString strInform = theMediaInfoDLL.Inform(Handle,0);
+						// <== Advanced Options [Official/MorphXT] - Stulle
 						CString strTitle = theMediaInfoDLL.Get(Handle, Stream_General, 0, _T("Title"), Info_Text, Info_Name);
 						CString strTitleMore = theMediaInfoDLL.Get(Handle, Stream_General, 0, _T("Title_More"), Info_Text, Info_Name);
 						if (!strTitleMore.IsEmpty() && !strTitle.IsEmpty() && strTitleMore != strTitle)
@@ -1928,16 +1946,16 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 							if (!str.IsEmpty())
 								mi->strInfo << _T("   ") << GetResString(IDS_PW_LANG) << _T(":\t") << str << _T("\n");
 						}
-						// morph start verbose mediainfo
+						// ==> Advanced Options [Official/MorphXT] - Stulle
 						if (!strInform.IsEmpty()) {
 								if (!mi->strInfo.IsEmpty()) 
 									 mi->strInfo << _T("\n");
 								mi->strInfo.SetSelectionCharFormat(mi->strInfo.m_cfBold);
 								mi->strInfo<< _T("Verbose   \n");
-             					mi->strInfo << strInform ; //morph
+             					mi->strInfo << strInform;
 						}
-						// morph en verbose mediainfo
- 
+						// <== Advanced Options [Official/MorphXT] - Stulle
+
 						theMediaInfoDLL.Close(Handle);
 
 						// MediaInfoLib does not handle MPEG files correctly in regards of
@@ -1995,7 +2013,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 				{
 					EED2KFileType eED2KFileType = GetED2KFileTypeID(pFile->GetFilePath());
 					if (eED2KFileType == ED2KFT_AUDIO || eED2KFileType == ED2KFT_VIDEO)
-					bGiveMediaInfoLibHint = true;
+						bGiveMediaInfoLibHint = true;
 				}
 			}
 			catch(...)
@@ -2012,7 +2030,12 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 		//
 		// Avoid processing of some file types which are known to crash due to bugged DirectShow filters.
 #ifdef HAVE_QEDIT_H
+		// ==> Advanced Options [Official/MorphXT] - Stulle
+		/*
 		if (theApp.GetProfileInt(_T("eMule"), _T("MediaInfo_MediaDet"), 1)
+		*/
+		if (CPreferences::m_bMediaInfo_MediaDet
+		// <== Advanced Options [Official/MorphXT] - Stulle
 			&& (   thePrefs.GetInspectAllFileTypes() 
 			    || (_tcscmp(szExt, _T(".ogm"))!=0 && _tcscmp(szExt, _T(".ogg"))!=0 && _tcscmp(szExt, _T(".mkv"))!=0)))
 		{
@@ -2258,7 +2281,7 @@ bool CGetMediaInfoThread::GetMediaInfo(HWND hWndOwner, const CShareableFile* pFi
 		PathRemoveFileSpec(strInstFolder.GetBuffer(strInstFolder.GetLength()));
 		strInstFolder.ReleaseBuffer();
 		CString strHint;
-		strHint.Format( GetResString(IDS_MEDIAINFO_DLLMISSING), strInstFolder);
+		strHint.Format(GetResString(IDS_MEDIAINFO_DLLMISSING), strInstFolder);
 		if (!mi->strInfo.IsEmpty())
 			mi->strInfo << _T("\r\n");
 		mi->strInfo << strHint;

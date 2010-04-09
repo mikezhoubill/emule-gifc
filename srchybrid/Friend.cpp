@@ -48,10 +48,6 @@ CFriend::CFriend(void)
 	m_dwLastKadSearch = 0;
 
     m_friendSlot = false;
-
-	// MORPH (CB) Friendnote START
-	m_frNote.Empty();
-	// MORPH (CB) Friendnote END
 }
 
 //Added this to work with the IRC.. Probably a better way to do it.. But wanted this in the release..
@@ -77,7 +73,12 @@ CFriend::CFriend(const uchar* abyUserhash, uint32 dwLastSeen, uint32 dwLastUsedI
 CFriend::CFriend(CUpDownClient* client){
 	ASSERT ( client );
 	m_dwLastSeen = time(NULL);
+	//zz_fly :: minor issue with friends handling :: WiZaRd :: start
+	/*
 	m_dwLastUsedIP = client->GetIP();
+	*/
+	m_dwLastUsedIP = client->GetConnectIP();
+	//zz_fly :: end
 	m_nLastUsedPort = client->GetUserPort();
 	m_dwLastChatted = 0;
     m_LinkedClient = NULL;
@@ -125,37 +126,8 @@ void CFriend::LoadFromFile(CFileDataIO* file)
 				ASSERT( newtag->IsHash() );
 				if (newtag->IsHash())
 					md4cpy(m_abyKadID, newtag->GetHash());
-				//MORPH START - Added by Yun.SF3, ZZ Upload System
-				// import old settings... if possible Oo
-				else if (newtag->IsInt())
-					m_friendSlot = (newtag->GetInt() == 1) ? true : false;
-				//MORPH END - Added by Yun.SF3, ZZ Upload System
 				break;
 			}
-			//MORPH START - Added by Yun.SF3, ZZ Upload System
-			case FF_FRIENDSLOT: {
-				if (newtag->IsInt())
-					m_friendSlot = (newtag->GetInt() == 1) ? true : false;
-				break;
-			}
-			//MORPH END - Added by Yun.SF3, ZZ Upload System
-			// ==> Import 0x66 FriendSlots - Stulle
-			case 0x66: {
-				if(thePrefs.m_bImport60Friends && newtag->IsInt())
-					m_friendSlot = (newtag->GetInt() == 1) ? true : false;
-				break;
-			}
-			// <== Import 0x66 FriendSlots - Stulle
-			// MORPH (CB) Friendnote START
-			case FF_FRIENDNOTE: {
-				ASSERT( newtag->IsStr() );
-				if (newtag->IsStr()) {
-					if (m_frNote.IsEmpty())
-					m_frNote = newtag->GetStr();
-				}
-				break;
-			}
-			// MORPH (CB) Friendnote END
 		}
 		delete newtag;
 	}
@@ -183,21 +155,6 @@ void CFriend::WriteToFile(CFileDataIO* file)
 		tag.WriteNewEd2kTag(file);
 		uTagCount++;
 	}
-
-	//MORPH START - Added by SiRoB, Slot Friend
-	if(m_LinkedClient != NULL && m_LinkedClient->GetFriendSlot() || m_LinkedClient == NULL && m_friendSlot == true) {
-		CTag friendslottag(FF_FRIENDSLOT,1);
-		friendslottag.WriteTagToFile(file);
-		uTagCount++;
-	}
-	//MORPH END   - Added by SiRoB, Slot Friend
-	// MORPH START CB: FriendNote	 START
-	if (!m_frNote.IsEmpty()) {
-		CTag nametag(FF_FRIENDNOTE, m_frNote);
-		nametag.WriteTagToFile(file, utf8strOptBOM);
-		uTagCount++;
-	}
-	// // MORPH END CB: FriendNote END
 
 	file->Seek(uTagCountFilePos, CFile::begin);
 	file->WriteUInt32(uTagCount);
@@ -242,7 +199,12 @@ void CFriend::SetLinkedClient(CUpDownClient* linkedClient) {
             m_dwLastSeen = time(NULL);
             m_dwLastUsedIP = linkedClient->GetConnectIP();
             m_nLastUsedPort = linkedClient->GetUserPort();
-			/*FunnyNick*/m_strName = linkedClient->GetUserName(false); // MORPH funnynick
+            //Xman possible crashfix
+            /*
+            m_strName = linkedClient->GetUserName();
+            */
+            m_strName = linkedClient->GetUserName() ? linkedClient->GetUserName() : _T("UNKNOWN");
+            //Xman end
             md4cpy(m_abyUserhash,linkedClient->GetUserHash());
 
             linkedClient->m_Friend = this;
@@ -294,7 +256,12 @@ bool CFriend::TryToConnect(CFriendConnectionListener* pConnectionReport)
 		return true;
 	}
 	if (isnulmd4(m_abyKadID) && (m_dwLastUsedIP == 0 || m_nLastUsedPort == 0) 
+		//zz_fly :: minor issue with friends handling :: WiZaRd :: start
+		/*
 		&& (GetLinkedClient() == NULL || GetLinkedClient()->GetIP() == 0 || GetLinkedClient()->GetUserPort() == 0))
+		*/
+		&& (GetLinkedClient() == NULL || GetLinkedClient()->GetConnectIP() == 0 || GetLinkedClient()->GetUserPort() == 0))
+		//zz_fly :: end
 	{
 		pConnectionReport->ReportConnectionProgress(m_LinkedClient, _T("*** ") + GetResString(IDS_CONNECTING), false);
 		pConnectionReport->ConnectingResult(GetLinkedClient(), false);	

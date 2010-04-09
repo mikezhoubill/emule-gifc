@@ -10,7 +10,6 @@
 #endif
 
 #include <emule_site_config.h>
-#include "FeatureDefines.h" // StulleMule - Stulle
 
 // MSDN: Using the Windows Headers
 // ===========================================================
@@ -183,9 +182,18 @@
 #include <afxdtctl.h>		// MFC support for 'CDateTimeCtrl' and 'CMonthCalCtrl'
 #include <afxcmn.h>			// MFC support for Windows Common Controls
 #include <afxole.h>			// MFC OLE support
+
+//<<< eWombat [WINSOCK2]
+// stullemon test
+/*
 #include <winsock2.h>
 #define _WINSOCKAPI_
 #include <afxsock.h>		// MFC support for Windows Sockets
+*/
+// stullemon test end
+#include "afxsock.h"		// MFC-Socket-Erweiterungen
+//>>> eWombat [WINSOCK2]
+
 #include <afxdhtml.h>
 #include <afxmt.h>			// MFC Multithreaded Extensions (Syncronization Objects)
 #include <afxdlgs.h>		// MFC Standard dialogs

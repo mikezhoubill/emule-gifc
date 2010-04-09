@@ -39,9 +39,7 @@ InputBox::InputBox(CWnd* pParent /*=NULL*/)
 	m_cancel = true;
 	m_bFilenameMode = false;
 	m_icMain = NULL;
-	// khaos::categorymod+
-	isNumber=false;
-	// khaos::categorymod-
+	isNumber=false; // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 }
 
 InputBox::~InputBox()
@@ -58,26 +56,15 @@ void InputBox::DoDataExchange(CDataExchange* pDX)
 void InputBox::OnOK()
 {
 	m_cancel = false;
-	//MORPH START - Added by SiRoB, categorymod
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	if (isNumber)
 		GetDlgItemText(IDC_TEXTNUM,m_return);
 	else
-	//MORPH END   - Added by SiRoB, categorymod
-		GetDlgItemText(IDC_TEXT, m_return);
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	GetDlgItemText(IDC_TEXT, m_return);
 	m_return.Trim();
 	CDialog::OnOK();
 }
-
-
-// khaos::categorymod+
-void InputBox::OnCancel()
-{
-	if (isNumber) m_return = "-1";
-	else m_return = "0";
-	
-	CDialog::OnCancel();
-}
-// khaos::categorymod-
 
 void InputBox::SetLabels(CString title, CString label, CString defaultStr)
 {
@@ -93,7 +80,10 @@ BOOL InputBox::OnInitDialog()
 	SetIcon( m_icMain = theApp.LoadIcon(_T("RENAME")),FALSE);
 
 	GetDlgItem(IDC_IBLABEL)->SetWindowText(m_label);
-	// khaos::categorymod+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	GetDlgItem(IDC_TEXT)->SetWindowText(m_default);
+	*/
 	if (!isNumber)
 		GetDlgItem(IDC_TEXT)->SetWindowText(m_default);
 	else {
@@ -102,7 +92,7 @@ BOOL InputBox::OnInitDialog()
 		GetDlgItem(IDC_TEXTNUM)->ShowWindow(SW_SHOW);
 		GetDlgItem(IDC_TEXTNUM)->SetFocus();
 	}
-	// khaos::categorymod-
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	SetWindowText(m_title);
 
 	SetDlgItemText(IDOK, GetResString(IDS_TREEOPTIONS_OK) );
@@ -119,3 +109,13 @@ void InputBox::OnCleanFilename()
 	GetDlgItem(IDC_TEXT)->GetWindowText(filename);
 	GetDlgItem(IDC_TEXT)->SetWindowText(CleanupFilename(filename));
 }
+
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+void InputBox::OnCancel()
+{
+	if (isNumber) m_return = "-1";
+	else m_return = "0";
+	
+	CDialog::OnCancel();
+}
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle

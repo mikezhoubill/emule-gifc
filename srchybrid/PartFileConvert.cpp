@@ -122,11 +122,12 @@ UINT AFX_CDECL CPartFileConvert::run(LPVOID /*lpParam*/)
 	DbgSetThreadName("Partfile-Converter");
 	InitThreadLocale();
 
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	int imported=0;
 
@@ -377,7 +378,7 @@ int CPartFileConvert::performConvertToeMule(CString folder)
 		file->gaplist.RemoveAt(file->gaplist.GetHeadPosition());
 	}
 
-	if (file->LoadPartFile(file->GetTempPath(), file->GetPartMetFileName()) != PLR_LOADSUCCESS) {
+	if (file->LoadPartFile(thePrefs.GetTempDir(), file->GetPartMetFileName()) != PLR_LOADSUCCESS) {
 		//delete file;
 		file->DeleteFile();
 		return CONV_BADFORMAT;

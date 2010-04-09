@@ -79,7 +79,7 @@ BOOL CFileDetailDialogInfo::OnInitDialog()
 	AddAnchor(IDC_FD_X6, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_FD_X8, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_FD_X11, TOP_LEFT, TOP_RIGHT);
-
+	
 	AddAnchor(IDC_FNAME, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_METFILE, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_FHASH, TOP_LEFT, TOP_RIGHT);
@@ -89,8 +89,11 @@ BOOL CFileDetailDialogInfo::OnInitDialog()
 	AddAnchor(IDC_HASHSET, TOP_LEFT, TOP_RIGHT);
 
 	AddAnchor(IDC_SOURCECOUNT, TOP_LEFT, TOP_RIGHT);
-	//AddAnchor(IDC_DATARATE, TOP_LEFT, TOP_RIGHT);
-	//AddAnchor(IDC_AVGDL, TOP_LEFT, TOP_RIGHT); // Average download speed - Stulle
+	// ==> Average download speed - Stulle
+	/*
+	AddAnchor(IDC_DATARATE, TOP_LEFT, TOP_RIGHT);
+	*/
+	// <== Average download speed - Stulle
 
 	AddAnchor(IDC_FILECREATED, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_DL_ACTIVE_TIME, TOP_LEFT, TOP_RIGHT);
@@ -152,7 +155,7 @@ void CFileDetailDialogInfo::RefreshData()
 		SetDlgItemText(IDC_PARTCOUNT, str);
 
 		// date created
-		if (file->GetCrFileDate() != 0){
+		if (file->GetCrFileDate() != 0) {
 			str.Format(_T("%s   ") + GetResString(IDS_TIMEBEFORE),
 						file->GetCrCFileDate().Format(thePrefs.GetDateTimeFormat()),
 						CastSecondsToLngHM(time(NULL) - file->GetCrFileDate()));
@@ -162,7 +165,12 @@ void CFileDetailDialogInfo::RefreshData()
 		SetDlgItemText(IDC_FILECREATED, str);
 
 		// active download time
-		time_t nDlActiveTime = file->GetDlActiveTime(); //vs2005
+		// ==> Drop Win95 support [MorphXT] - Stulle
+		/*
+		uint32 nDlActiveTime = file->GetDlActiveTime();
+		*/
+		time_t nDlActiveTime = file->GetDlActiveTime();
+		// <== Drop Win95 support [MorphXT] - Stulle
 		if (nDlActiveTime)
 			str = CastSecondsToLngHM(nDlActiveTime);
 		else
@@ -174,7 +182,7 @@ void CFileDetailDialogInfo::RefreshData()
 		struct tm* ptimLastSeenComplete = file->lastseencomplete.GetLocalTm(&tmTemp);
 		if (file->lastseencomplete == NULL || ptimLastSeenComplete == NULL)
 			str.Format(GetResString(IDS_NEVER));
-		else{
+		else {
 			str.Format(_T("%s   ") + GetResString(IDS_TIMEBEFORE),
 						file->lastseencomplete.Format(thePrefs.GetDateTimeFormat()),
 						CastSecondsToLngHM(time(NULL) - safe_mktime(ptimLastSeenComplete)));
@@ -188,7 +196,12 @@ void CFileDetailDialogInfo::RefreshData()
 			// If it's related to the FAT32 seconds time resolution the max. failure should still be only 1 sec.
 			// Happens at least on FAT32 with very high download speed.
 			uint32 tLastModified = file->GetFileDate();
-			time_t tNow = time(NULL); //vs2005
+			// ==> Drop Win95 support [MorphXT] - Stulle
+			/*
+			uint32 tNow = time(NULL);
+			*/
+			time_t tNow = time(NULL);
+			// <== Drop Win95 support [MorphXT] - Stulle
 			uint32 tAgo;
 			if (tNow >= tLastModified)
 				tAgo = tNow - tLastModified;
@@ -207,11 +220,11 @@ void CFileDetailDialogInfo::RefreshData()
 		SetDlgItemText(IDC_LASTRECEIVED, str);
 
 		// AICH Hash
-		switch(file->GetAICHHashset()->GetStatus()){
+		switch (file->GetAICHHashset()->GetStatus()) {
 			case AICH_TRUSTED:
 			case AICH_VERIFIED:
 			case AICH_HASHSETCOMPLETE:
-				if (file->GetAICHHashset()->HasValidMasterHash()){
+				if (file->GetAICHHashset()->HasValidMasterHash()) {
 					SetDlgItemText(IDC_FD_AICHHASH, file->GetAICHHashset()->GetMasterHash().GetString());
 					break;
 				}
@@ -221,21 +234,21 @@ void CFileDetailDialogInfo::RefreshData()
 
 		// file type
 		CString ext;
-		bool showwarning=false;
-		int pos=file->GetFileName().ReverseFind(_T('.'));
-		if (file->GetFileName().ReverseFind(_T('\\'))<pos){
-			ext=file->GetFileName().Mid(pos+1);
+		bool showwarning = false;
+		int pos = file->GetFileName().ReverseFind(_T('.'));
+		if (file->GetFileName().ReverseFind(_T('\\')) < pos) {
+			ext = file->GetFileName().Mid(pos + 1);
 			ext.MakeUpper();
 		}
 		
-		EFileType bycontent=GetFileTypeEx((CKnownFile*)file, false, true);
-		if (bycontent!=FILETYPE_UNKNOWN ) {
+		EFileType bycontent = GetFileTypeEx((CKnownFile *)file, false, true);
+		if (bycontent != FILETYPE_UNKNOWN) {
 			str = GetFileTypeName(bycontent) + _T("  (");
-			str.Append( GetResString(IDS_VERIFIED) + _T(')') );
+			str.Append(GetResString(IDS_VERIFIED) + _T(')'));
 
 			int extLevel = IsExtensionTypeOf(bycontent, ext);
-			if (extLevel==-1) {
-				showwarning=true;
+			if (extLevel == -1) {
+				showwarning = true;
 				str.Append(_T(" - "));
 				str.Append(GetResString(IDS_INVALIDFILEEXT) + _T(": "));
 				str.Append(ext);
@@ -248,14 +261,14 @@ void CFileDetailDialogInfo::RefreshData()
 		}
 		else {
 			// not verified
-			if (pos!=-1) {
-				str=file->GetFileName().Mid(pos+1);
+			if (pos != -1) {
+				str =file->GetFileName().Mid(pos + 1);
 				str.MakeUpper();
 				str.Append(_T("  (") );
-				str.Append( GetResString(IDS_UNVERIFIED) +_T(')') );
+				str.Append( GetResString(IDS_UNVERIFIED) + _T(')'));
 			}
 			else
-				str=GetResString(IDS_UNKNOWN);
+				str = GetResString(IDS_UNKNOWN);
 		}
 		m_bShowFileTypeWarning = showwarning;
 		SetDlgItemText(IDC_FD_X11,str);
@@ -301,9 +314,19 @@ void CFileDetailDialogInfo::RefreshData()
 		uCorrupted += file->GetCorruptionLoss();
 		uRecoveredParts += file->GetRecoveredPartsByICH();
 		uCompression += file->GetCompressionGain();
+		//Xman // Maella -Accurate measure of bandwidth
+		/*
 		uDataRate += file->GetDatarate();
+		*/
+		uDataRate += file->GetDownloadDatarate10();
+		//Xman end
 		uCompleted += (uint64)file->GetCompletedSize();
-		iHashsetAvailable += (file->GetHashCount() == file->GetED2KPartCount()) ? 1 : 0;	// SLUGFILLER: SafeHash - use GetED2KPartCount
+		//Xman // SLUGFILLER: SafeHash - use GetED2KPartCount
+		/*
+		iHashsetAvailable += (file->GetHashCount() == file->GetED2KPartHashCount()) ? 1 : 0;
+		*/
+		iHashsetAvailable += (file->GetHashCount() == file->GetED2KPartCount()) ? 1 : 0;
+		//Xman end
 
 		// ==> Average download speed - Stulle
 		if(file->GetDlActiveTime() > 0)
@@ -389,7 +412,7 @@ void CFileDetailDialogInfo::Localize()
 	GetDlgItem(IDC_FD_RECOV)->SetWindowText(GetResString(IDS_FD_RECOV)+_T(':'));
 	GetDlgItem(IDC_FD_COMPR)->SetWindowText(GetResString(IDS_FD_COMPR)+_T(':'));
 	GetDlgItem(IDC_FD_XAICH)->SetWindowText(GetResString(IDS_IACHHASH)+_T(':'));
-   	SetDlgItemText(IDC_REMAINING_TEXT, GetResString(IDS_DL_REMAINS)+_T(':'));
+	SetDlgItemText(IDC_REMAINING_TEXT, GetResString(IDS_DL_REMAINS)+_T(':'));
 	SetDlgItemText(IDC_FD_X10, GetResString(IDS_TYPE)+_T(':') );
 }
 

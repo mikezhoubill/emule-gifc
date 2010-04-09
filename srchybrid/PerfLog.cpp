@@ -26,6 +26,8 @@
 #include "emuledlg.h"
 #include "Log.h"
 #include "otherfunctions.h"
+//Xman
+#include "BandwidthControl.h"	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -156,6 +158,9 @@ void CPerfLog::LogSamples()
 		return;
 
 	// 'data counters' amount of transferred file data
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	UINT nCurDn = (UINT)(theStats.sessionReceivedBytes - m_nLastSessionRecvBytes);
 	UINT nCurUp = (UINT)(theStats.sessionSentBytes - m_nLastSessionSentBytes);
 
@@ -179,6 +184,20 @@ void CPerfLog::LogSamples()
 	m_nLastSessionSentBytes = theStats.sessionSentBytes;
 	m_nLastDnOH = nDnOHTotal;
 	m_nLastUpOH = nUpOHTotal;
+	*/
+	UINT nCurDn = (UINT)(theApp.pBandWidthControl->GeteMuleIn() - m_nLastSessionRecvBytes);
+	UINT nCurUp = (UINT)(theApp.pBandWidthControl->GeteMuleOut() - m_nLastSessionSentBytes);
+	UINT nCurDnOH = (UINT)(theApp.pBandWidthControl->GeteMuleInOverall() - m_nLastDnOH);
+	UINT nCurUpOH = (UINT)(theApp.pBandWidthControl->GeteMuleOutOverall() - m_nLastUpOH);
+
+
+	WriteSamples(nCurDn, nCurUp, nCurDnOH, nCurUpOH);
+
+	m_nLastSessionRecvBytes = theApp.pBandWidthControl->GeteMuleIn();
+	m_nLastSessionSentBytes = theApp.pBandWidthControl->GeteMuleOut();
+	m_nLastDnOH = theApp.pBandWidthControl->GeteMuleInOverall();
+	m_nLastUpOH = theApp.pBandWidthControl->GeteMuleOutOverall();
+	//Xman end
 	m_dwLastSampled = dwNow;
 }
 

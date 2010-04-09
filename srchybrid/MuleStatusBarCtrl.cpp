@@ -25,7 +25,8 @@
 #include "Sockets.h"
 #include "Server.h"
 #include "ServerList.h"
-#include "downloadqueue.h" //MORPH - Added by SiRoB, zzRatio activation reason
+#include "DownloadQueue.h" // Enforce Ratio [Stulle] - Stulle
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -39,7 +40,7 @@ IMPLEMENT_DYNAMIC(CMuleStatusBarCtrl, CStatusBarCtrl)
 
 BEGIN_MESSAGE_MAP(CMuleStatusBarCtrl, CStatusBarCtrl)
 	ON_WM_LBUTTONDBLCLK()
-	ON_NOTIFY_RANGE(TTN_GETDISPINFO, 0,SBarChatMsg, OnToolTipNotify)//MORPH - Added by SiRoB, Show zz ratio activation reason
+	ON_NOTIFY_RANGE(TTN_GETDISPINFO, 0,SBarChatMsg, OnToolTipNotify) // Enforce Ratio [Stulle] - Stulle
 END_MESSAGE_MAP()
 
 CMuleStatusBarCtrl::CMuleStatusBarCtrl()
@@ -114,45 +115,42 @@ CString CMuleStatusBarCtrl::GetPaneToolTipText(EStatusBarPane iPane) const
 			}
 		}
 		break;
-	//MORPH START - Added by SiRoB, Show zz ratio activation reason
+	// ==> Enforce Ratio [Stulle] - Stulle
 	case SBarUpDown:
 		{
-			// ==> ZZ Ratio Activation Changes - Stulle
-			// ==> Enforce Ratio - Stulle
-			/*
-			uint8 ActivatedRatioReason = thePrefs.IsZZRatioDoesWork();
-			strText.Format(GetResString(IDS_ZZRATIO)+_T(" %s:"),(ActivatedRatioReason)?GetResString(IDS_ZZRATIO_ENABLED):GetResString(IDS_ZZRATIO_DISABLED));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK1)+_T(": %s"),(theApp.downloadqueue->IsZZRatioInWork())?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK2)+_T(": %s"),(ActivatedRatioReason & 1)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK3)+_T(": %s"),(ActivatedRatioReason & 2)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK4)+_T(": %s"),(ActivatedRatioReason & 4)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK5)+_T(": %s"),(ActivatedRatioReason & 8)?GetResString(IDS_YES):GetResString(IDS_NO));
-			*/
-			uint8 uRatio = 3;
-			uint8 ActivatedRatioReason = thePrefs.IsZZRatioDoesWork();
-			bool bRatio = false;
-			if(ActivatedRatioReason)
+			uint8 uLimitState = theApp.downloadqueue->GetLimitState();
+			if(uLimitState < 2)
+				strText.Format(GetResString(IDS_RATIO_ACTIVATION)+_T(": %s"),GetResString(IDS_NO));
+			else if (uLimitState >= 2)
 			{
-				bRatio = true;
-				if(thePrefs.GetOnlyEnforce())
-					uRatio = thePrefs.GetRatioValue();
-				else if (uRatio > thePrefs.GetRatioValue())
-					uRatio = thePrefs.GetRatioValue();
+				CString strTemp = NULL;
+				switch(uLimitState)
+				{
+					case 2:
+						strTemp = GetResString(IDS_RATIO_REASON2);
+						break;
+					case 3:
+						strTemp = GetResString(IDS_RATIO_REASON3);
+						break;
+					case 4:
+						strTemp = GetResString(IDS_RATIO_REASON4);
+						break;
+					case 5:
+						strTemp = GetResString(IDS_RATIO_REASON5);
+						break;
+					default:
+						break;
+				}
+
+				strText.Format(GetResString(IDS_RATIO_ACTIVATION)+_T(": %s"),GetResString(IDS_YES));
+				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_RATIO_REASON)+_T(": %s"),strTemp);
 			}
-			strText.Format(GetResString(IDS_ZZRATIO)+_T(" %s:"),(bRatio)?GetResString(IDS_ZZRATIO_ENABLED):GetResString(IDS_ZZRATIO_DISABLED));
-			strText.AppendFormat(_T("\n\r\x2022 1/%u %s: %s"),uRatio,GetResString(IDS_ZZRATIO_CHECK1_NEW),(theApp.downloadqueue->IsZZRatioInWork())?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK6)+_T(": %s"),(ActivatedRatioReason & 32)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK2)+_T(": %s"),(ActivatedRatioReason & 1)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK3)+_T(": %s"),(ActivatedRatioReason & 2)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK4)+_T(": %s"),(ActivatedRatioReason & 4)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK5_NEW)+_T(": %s"),(ActivatedRatioReason & 8)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK8)+_T(": %s"),(ActivatedRatioReason & 16)?GetResString(IDS_YES):GetResString(IDS_NO));
-			strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_ZZRATIO_CHECK9)+_T(": %s"),(ActivatedRatioReason & 64)?GetResString(IDS_YES):GetResString(IDS_NO));
-			// <== Enforce Ratio - Stulle
-			// <== ZZ Ratio Activation Changes - Stulle
+
+			if(uLimitState > 0)
+				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_RATIO_LIMIT)+_T(":%i"),(thePrefs.GetEnforceRatio())?thePrefs.GetRatioValue():3);
 			break;
 		}
-	//MORPH END   - Added by SiRoB, Show zz ratio activation reason
+	// <== Enforce Ratio [Stulle] - Stulle
 	}
 	return strText;
 }
@@ -172,12 +170,12 @@ int CMuleStatusBarCtrl::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 				pTI->uId = (UINT_PTR)iPane;
 				pTI->uFlags &= ~TTF_IDISHWND;
 				pTI->uFlags |= TTF_NOTBUTTON|TTF_ALWAYSTIP;
-				//MORPH START - Added by SiRoB, Show zz ratio activation reason
+				// ==> Enforce Ratio [Stulle] - Stulle
 				/*
 				pTI->lpszText = _tcsdup(strToolTipText); // gets freed by MFC
 				*/
 				pTI->lpszText = LPSTR_TEXTCALLBACK;
-				//MORPH END   - Added by SiRoB, Show zz ratio activation reason
+				// <== Enforce Ratio [Stulle] - Stulle
 				GetRect(iPane, &pTI->rect);
 				iHit = iPane;
 			}
@@ -185,7 +183,8 @@ int CMuleStatusBarCtrl::OnToolHitTest(CPoint point, TOOLINFO* pTI) const
 	}
 	return iHit;
 }
-//MORPH START - Added by SiRoB, Show zz ratio activation reason
+
+// ==> Enforce Ratio [Stulle] - Stulle
 static TCHAR pzToolTipText[512];
 void CMuleStatusBarCtrl::OnToolTipNotify( UINT /*id*/, NMHDR * pNotifyStruct, LRESULT * /*result*/ )
 {
@@ -194,10 +193,9 @@ void CMuleStatusBarCtrl::OnToolTipNotify( UINT /*id*/, NMHDR * pNotifyStruct, LR
 	::SendMessage(pNotifyStruct->hwndFrom, TTM_SETMAXTIPWIDTH, 0, 300);
 	pTI->lpszText = pzToolTipText;
 }
-//MORPH END    - Added by SiRoB, Show zz ratio activation reason
+// <== Enforce Ratio [Stulle] - Stulle
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
 void CMuleStatusBarCtrl::UpdateColor()
 {
 	COLORREF crTempColor_stb = thePrefs.GetStyleBackColor(window_styles, style_w_statusbar);
@@ -207,5 +205,4 @@ void CMuleStatusBarCtrl::UpdateColor()
 
 	SetBkColor(crTempColor_stb);
 };
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max

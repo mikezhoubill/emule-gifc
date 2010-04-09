@@ -207,11 +207,12 @@ void CKademlia::Process()
 		RecheckFirewalled();
 	if (m_tNextUPnPCheck != 0 && m_tNextUPnPCheck <= tNow)
 	{
-#ifdef USE_OFFICIAL_UPNP
+		// ==> UPnP support [MoNKi] - leuk_he
+		/*
 		theApp.emuledlg->RefreshUPnP();
-#else
-		theApp.RebindUPnP(); //emulEspaa: Added by MoNKi [MoNKi: -UPnPNAT Support-]
-#endif
+		*/
+		theApp.RebindUPnP();
+		// <== UPnP support [MoNKi] - leuk_he
 		m_tNextUPnPCheck = 0; // will be reset on firewallcheck
 	}
 

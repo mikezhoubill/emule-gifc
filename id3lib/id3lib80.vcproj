@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="windows-1256"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="id3lib80"
 	ProjectGUID="{119FB498-E3AC-49A5-A310-20E8B466B413}"
 	RootNamespace="id3lib"
@@ -15,78 +15,6 @@
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)\build\$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)\build\$(ConfigurationName)\$(ProjectName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC60.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				EnableIntrinsicFunctions="false"
-				AdditionalIncludeDirectories=".;.\include;.\include\id3;..\zlib;..\cryptopp"
-				PreprocessorDefinitions="_DEBUG;WIN32;_LIB;_WINDOWS;HAVE_CONFIG_H;ID3LIB_LINKOPTION=1;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS"
-				MinimalRebuild="false"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="2057"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				SuppressStartupBanner="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\Debug/id3lib.bsc"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)\build\$(ConfigurationName)"
@@ -249,15 +177,6 @@
 				RelativePath="src\c_wrapper.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -279,15 +198,6 @@
 			<File
 				RelativePath="src\field.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -311,15 +221,6 @@
 				RelativePath="src\field_binary.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -341,15 +242,6 @@
 			<File
 				RelativePath="src\field_integer.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -373,15 +265,6 @@
 				RelativePath="src\field_string_ascii.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -403,15 +286,6 @@
 			<File
 				RelativePath="src\field_string_unicode.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -435,15 +309,6 @@
 				RelativePath="src\frame.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -465,15 +330,6 @@
 			<File
 				RelativePath="src\frame_impl.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -497,15 +353,6 @@
 				RelativePath="src\frame_parse.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -527,15 +374,6 @@
 			<File
 				RelativePath="src\frame_render.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -559,15 +397,6 @@
 				RelativePath="src\globals.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -589,15 +418,6 @@
 			<File
 				RelativePath="src\header.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -621,15 +441,6 @@
 				RelativePath="src\header_frame.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -651,15 +462,6 @@
 			<File
 				RelativePath="src\header_tag.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -683,15 +485,6 @@
 				RelativePath="src\helpers.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -713,15 +506,6 @@
 			<File
 				RelativePath="src\io.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -745,15 +529,6 @@
 				RelativePath="src\io_decorators.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -775,15 +550,6 @@
 			<File
 				RelativePath="src\io_helpers.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -807,15 +573,6 @@
 				RelativePath="src\misc_support.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -837,15 +594,6 @@
 			<File
 				RelativePath="src\mp3_parse.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -869,15 +617,6 @@
 				RelativePath="src\readers.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -899,15 +638,6 @@
 			<File
 				RelativePath="src\spec.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -931,15 +661,6 @@
 				RelativePath="src\tag.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -961,15 +682,6 @@
 			<File
 				RelativePath="src\tag_file.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -993,15 +705,6 @@
 				RelativePath="src\tag_find.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1023,15 +726,6 @@
 			<File
 				RelativePath="src\tag_impl.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1055,15 +749,6 @@
 				RelativePath="src\tag_parse.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1085,15 +770,6 @@
 			<File
 				RelativePath="src\tag_parse_lyrics3.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1117,15 +793,6 @@
 				RelativePath="src\tag_parse_musicmatch.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1147,15 +814,6 @@
 			<File
 				RelativePath="src\tag_parse_v1.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -1179,15 +837,6 @@
 				RelativePath="src\tag_render.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1210,15 +859,6 @@
 				RelativePath="src\utils.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -1240,15 +880,6 @@
 			<File
 				RelativePath="src\writers.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>

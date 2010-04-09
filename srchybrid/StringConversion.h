@@ -21,6 +21,8 @@
 bool IsValidEd2kString(LPCTSTR psz);
 bool IsValidEd2kStringA(LPCSTR psz);
 
+//Borschtsch - we always use Unicode
+/* 
 __inline bool NeedUTF8String(LPCWSTR pwsz)
 {
 	// This function is used for determining whether it is valid to convert an
@@ -34,12 +36,14 @@ __inline bool NeedUTF8String(LPCWSTR pwsz)
 	// character range must be 0x00-0x7F.
 	while (*pwsz != L'\0')
 	{
-		if (*pwsz > 0x007f/*ATL_ASCII*/)	// VS2008: ATL_ASCII(0x007f) is no longer defined
+		if (*pwsz > 0x007f/*ATL_ASCII*//*)	// VS2008: ATL_ASCII(0x007f) is no longer defined
 			return true;
 		pwsz++;
 	}
 	return false;
 }
+*/
+//Borschtsch - we always use Unicode
 
 //#define ED2KCODEPAGE	28591 // ISO 8859-1 Latin I
 //

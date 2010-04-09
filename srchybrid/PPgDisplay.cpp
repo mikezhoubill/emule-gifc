@@ -26,11 +26,13 @@
 #include "TransferWnd.h"
 #include "ServerWnd.h"
 #include "HelpIDs.h"
+//Xman
+#include "opcodes.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 #define MAX_TOOLTIP_DELAY_SEC	32
@@ -66,13 +68,7 @@ BEGIN_MESSAGE_MAP(CPPgDisplay, CPropertyPage)
 END_MESSAGE_MAP()
 
 CPPgDisplay::CPPgDisplay()
-
-//MORPH START leuk_he tooltipped
-	: CPPgtooltipped(CPPgDisplay::IDD)
-/* tooltipped
 	: CPropertyPage(CPPgDisplay::IDD)
-*/
-//MORPH END leuk_he tooltipped
 {
 	m_eSelectFont = sfServer;
 }
@@ -139,6 +135,8 @@ void CPPgDisplay::LoadSettings(void)
 	CheckDlgButton(IDC_DISABLEHIST, (uint8)thePrefs.GetUseAutocompletion());
 
 	SetDlgItemInt(IDC_TOOLTIPDELAY, thePrefs.m_iToolDelayTime, FALSE);
+
+	SetModified(FALSE); // show overhead on title - Stulle
 }
 
 BOOL CPPgDisplay::OnInitDialog()
@@ -158,13 +156,12 @@ BOOL CPPgDisplay::OnInitDialog()
 		pSpinCtrl->SetRange(0, MAX_TOOLTIP_DELAY_SEC);
 
 	LoadSettings();
-	InitTooltips(); //leuk_he tooltippedLocalize();
 	Localize();
 
 	OnEnChangeSREnabled(); // show overhead on title - Stulle
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 BOOL CPPgDisplay::OnApply()
@@ -172,105 +169,104 @@ BOOL CPPgDisplay::OnApply()
 	TCHAR buffer[510];
 	
 	if(m_bModified){ // show overhead on title - Stulle
+	bool mintotray_old = thePrefs.mintotray;
+	thePrefs.mintotray = IsDlgButtonChecked(IDC_MINTRAY)!=0;
+	thePrefs.transferDoubleclick = IsDlgButtonChecked(IDC_DBLCLICK)!=0;
+	thePrefs.depth3D = ((CSliderCtrl*)GetDlgItem(IDC_3DDEPTH))->GetPos();
+	thePrefs.dontRecreateGraphs = IsDlgButtonChecked(IDC_REPAINT)!=0;
+	thePrefs.m_bShowDwlPercentage = IsDlgButtonChecked(IDC_SHOWDWLPERCENT)!=0;
+	thePrefs.m_bRemoveFinishedDownloads = IsDlgButtonChecked(IDC_CLEARCOMPL)!=0;
+	thePrefs.m_bUseAutocompl = IsDlgButtonChecked(IDC_DISABLEHIST)!=0;
+	thePrefs.m_bStoreSearches = IsDlgButtonChecked(IDC_STORESEARCHES) != 0;
 
-		bool mintotray_old = thePrefs.mintotray;
-		thePrefs.mintotray = IsDlgButtonChecked(IDC_MINTRAY)!=0;
-		thePrefs.transferDoubleclick = IsDlgButtonChecked(IDC_DBLCLICK)!=0;
-		thePrefs.depth3D = ((CSliderCtrl*)GetDlgItem(IDC_3DDEPTH))->GetPos();
-		thePrefs.dontRecreateGraphs = IsDlgButtonChecked(IDC_REPAINT)!=0;
-		thePrefs.m_bShowDwlPercentage = IsDlgButtonChecked(IDC_SHOWDWLPERCENT)!=0;
-		thePrefs.m_bRemoveFinishedDownloads = IsDlgButtonChecked(IDC_CLEARCOMPL)!=0;
-		thePrefs.m_bUseAutocompl = IsDlgButtonChecked(IDC_DISABLEHIST)!=0;
-		thePrefs.m_bStoreSearches = IsDlgButtonChecked(IDC_STORESEARCHES) != 0;
+	if (IsDlgButtonChecked(IDC_UPDATEQUEUE))
+		thePrefs.m_bupdatequeuelist = false;
+	else
+		thePrefs.m_bupdatequeuelist = true;
 
-		if(IsDlgButtonChecked(IDC_UPDATEQUEUE))
-			thePrefs.m_bupdatequeuelist = false;
+	if (IsDlgButtonChecked(IDC_SHOWRATEONTITLE))
+		thePrefs.showRatesInTitle = true;
+	else
+		thePrefs.showRatesInTitle = false;
+
+	// ==> show overhead on title - Stulle
+	if(IsDlgButtonChecked(IDC_SHOWOVERHEADONTITLE))
+		thePrefs.showOverheadInTitle= true;
+	else
+		thePrefs.showOverheadInTitle= false;
+	// <== show overhead on title - Stulle
+
+	thePrefs.ShowCatTabInfos(IsDlgButtonChecked(IDC_SHOWCATINFO) != 0);
+	if (!thePrefs.ShowCatTabInfos())
+		theApp.emuledlg->transferwnd->UpdateCatTabTitles();
+
+	bool bListDisabled = false;
+	bool bResetToolbar = false;
+	if (thePrefs.m_bDisableKnownClientList != (IsDlgButtonChecked(IDC_DISABLEKNOWNLIST) != 0)) {
+		thePrefs.m_bDisableKnownClientList = (IsDlgButtonChecked(IDC_DISABLEKNOWNLIST) != 0);
+		if (thePrefs.m_bDisableKnownClientList)
+			bListDisabled = true;
 		else
-			thePrefs.m_bupdatequeuelist = true;
+			theApp.emuledlg->transferwnd->clientlistctrl.ShowKnownClients();
+		bResetToolbar = true;
+	}
 
-		if(IsDlgButtonChecked(IDC_SHOWRATEONTITLE))
-			thePrefs.showRatesInTitle= true;
-		else
-			thePrefs.showRatesInTitle= false;
-
-		// ==> show overhead on title - Stulle
-		if(IsDlgButtonChecked(IDC_SHOWOVERHEADONTITLE))
-			thePrefs.showOverheadInTitle= true;
-		else
-			thePrefs.showOverheadInTitle= false;
-		// <== show overhead on title - Stulle
-
-		thePrefs.ShowCatTabInfos(IsDlgButtonChecked(IDC_SHOWCATINFO) != 0);
-		if (!thePrefs.ShowCatTabInfos())
-			theApp.emuledlg->transferwnd->UpdateCatTabTitles();
-
-		bool bListDisabled = false;
-		bool bResetToolbar = false;
-		if (thePrefs.m_bDisableKnownClientList != (IsDlgButtonChecked(IDC_DISABLEKNOWNLIST) != 0)) {
-			thePrefs.m_bDisableKnownClientList = (IsDlgButtonChecked(IDC_DISABLEKNOWNLIST) != 0);
-    	    if (thePrefs.m_bDisableKnownClientList)
-    	        bListDisabled = true;
-    	    else
-    	        theApp.emuledlg->transferwnd->clientlistctrl.ShowKnownClients();
-			bResetToolbar = true;
-		}
-
-		if (thePrefs.m_bDisableQueueList != (IsDlgButtonChecked(IDC_DISABLEQUEUELIST) != 0)) {
-			thePrefs.m_bDisableQueueList = (IsDlgButtonChecked(IDC_DISABLEQUEUELIST) != 0);
+	if (thePrefs.m_bDisableQueueList != (IsDlgButtonChecked(IDC_DISABLEQUEUELIST) != 0)) {
+		thePrefs.m_bDisableQueueList = (IsDlgButtonChecked(IDC_DISABLEQUEUELIST) != 0);
 		if (thePrefs.m_bDisableQueueList)
 			bListDisabled = true;
-	        else
-	            theApp.emuledlg->transferwnd->queuelistctrl.ShowQueueClients();
-			bResetToolbar = true;
-		}
-
-		GetDlgItem(IDC_TOOLTIPDELAY)->GetWindowText(buffer,20);
-		if (_tstoi(buffer) > MAX_TOOLTIP_DELAY_SEC)
-			thePrefs.m_iToolDelayTime = MAX_TOOLTIP_DELAY_SEC;
 		else
-			thePrefs.m_iToolDelayTime = _tstoi(buffer);
-		theApp.emuledlg->SetToolTipsDelay(thePrefs.GetToolTipDelay()*1000);
+			theApp.emuledlg->transferwnd->queuelistctrl.ShowQueueClients();
+		bResetToolbar = true;
+	}
 
-		// MORPH START leuk_he tooltipped
-		m_Tip.SetDelayTime(TTDT_INITIAL,thePrefs.m_iToolDelayTime*1000);
-		// MORPH END leuk_he tooltipped
-	
-		theApp.emuledlg->transferwnd->downloadlistctrl.SetStyle();
+	GetDlgItem(IDC_TOOLTIPDELAY)->GetWindowText(buffer,20);
+	if (_tstoi(buffer) > MAX_TOOLTIP_DELAY_SEC)
+		thePrefs.m_iToolDelayTime = MAX_TOOLTIP_DELAY_SEC;
+	else
+		thePrefs.m_iToolDelayTime = _tstoi(buffer);
+	theApp.emuledlg->SetToolTipsDelay(thePrefs.GetToolTipDelay()*1000);
 
-		if (bListDisabled)
-			theApp.emuledlg->transferwnd->OnDisableList();
-		if ((IsDlgButtonChecked(IDC_SHOWTRANSTOOLBAR) != 0) != thePrefs.IsTransToolbarEnabled()){
-			thePrefs.m_bWinaTransToolbar = !thePrefs.m_bWinaTransToolbar;
-			theApp.emuledlg->transferwnd->ResetTransToolbar(thePrefs.m_bWinaTransToolbar);
-		}
-		else if ((IsDlgButtonChecked(IDC_SHOWTRANSTOOLBAR) != 0) && bResetToolbar){
-			theApp.emuledlg->transferwnd->ResetTransToolbar(thePrefs.m_bWinaTransToolbar);
-		}
+	theApp.emuledlg->transferwnd->downloadlistctrl.SetStyle();
 
-		LoadSettings();
+	if (bListDisabled)
+		theApp.emuledlg->transferwnd->OnDisableList();
+	if ((IsDlgButtonChecked(IDC_SHOWTRANSTOOLBAR) != 0) != thePrefs.IsTransToolbarEnabled()) {
+		thePrefs.m_bWinaTransToolbar = !thePrefs.m_bWinaTransToolbar;
+		theApp.emuledlg->transferwnd->ResetTransToolbar(thePrefs.m_bWinaTransToolbar);
+	}
+	else if ((IsDlgButtonChecked(IDC_SHOWTRANSTOOLBAR) != 0) && bResetToolbar) {
+		theApp.emuledlg->transferwnd->ResetTransToolbar(thePrefs.m_bWinaTransToolbar);
+	}
 
-		if (mintotray_old != thePrefs.mintotray)
-			theApp.emuledlg->TrayMinimizeToTrayChange();
-		// ==> Show sources on title - Stulle
+	LoadSettings();
+
+	if (mintotray_old != thePrefs.mintotray)
+		theApp.emuledlg->TrayMinimizeToTrayChange();
+	// ==> Show sources on title - Stulle
+	/*
+	if (!thePrefs.ShowRatesOnTitle())
+	*/
+	if (!thePrefs.ShowRatesOnTitle() && !thePrefs.ShowSrcOnTitle()) 
+	// <== Show sources on title - Stulle
+		// Xman // Maella -Support for tag ET_MOD_VERSION 0x55
 		/*
-		if (!thePrefs.ShowRatesOnTitle())
+		theApp.emuledlg->SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong);
 		*/
-		if (!thePrefs.ShowRatesOnTitle() && !thePrefs.ShowSrcOnTitle())
-		// <== Show sources on title - Stulle
-		//MORPH START - Changed by SiRoB, [itsonlyme: -modname-]
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		theApp.emuledlg->SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" ") + MOD_VERSION);
+		*/
 		{
-			/*
-			theApp.emuledlg->SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong);
-			*/
 			_stprintf(buffer,_T("eMule v%s [%s]"),theApp.m_strCurVersionLong,theApp.m_strModLongVersion);
 			theApp.emuledlg->SetWindowText(buffer);
 		}
-		//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-]
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		//Xman end
 
+	SetModified(FALSE);
 
-		SetModified(FALSE);
-
-	} // show overhead on title - Stulle
+	} //show overhead on title - Stulle
 
 	return CPropertyPage::OnApply();
 }
@@ -305,30 +301,6 @@ void CPPgDisplay::Localize(void)
 		GetDlgItem(IDC_DISABLEHIST)->SetWindowText(GetResString(IDS_ENABLED));
 
 		GetDlgItem(IDC_SHOWTRANSTOOLBAR)->SetWindowText(GetResString(IDS_PW_SHOWTRANSTOOLBAR));
-        // MORPH START leuk_he tooltipped
-		SetTool(IDC_MINTRAY,IDS_PW_TRAY_TIP);
-		SetTool(IDC_DBLCLICK,IDS_PW_DBLCLICK_TIP);
-		SetTool(IDC_TOOLTIPDELAY_LBL,IDS_PW_TOOL_TIP);
-		SetTool(IDC_TOOLTIPDELAY,IDS_PW_TOOL_TIP);
-		SetTool(IDC_3DDEP,IDS_3DDEP_TIP);
-		SetTool(IDC_3DDEPTH,IDS_3DDEP_TIP);
-		SetTool(IDC_FLAT,IDS_3DDEP_TIP);
-		SetTool(IDC_ROUND,IDS_3DDEP_TIP);
-		SetTool(IDC_UPDATEQUEUE,IDS_UPDATEQUEUE_TIP);
-		SetTool(IDC_SHOWRATEONTITLE,IDS_SHOWRATEONTITLE_TIP);
-		SetTool(IDC_DISABLEKNOWNLIST,IDS_DISABLEKNOWNLIST_TIP);
-		SetTool(IDC_DISABLEQUEUELIST,IDS_DISABLEQUEUELIST_TIP);
-		SetTool(IDC_SHOWCATINFO,IDS_SHOWCATINFO_TIP);
-		SetTool(IDC_REPAINT,IDS_REPAINTGRAPHS_TIP);
-		SetTool(IDC_SELECT_HYPERTEXT_FONT,IDC_SELECT_HYPERTEXT_FONT_TIP);
-		SetTool(IDC_CLEARCOMPL,IDS_AUTOREMOVEFD_TIP);
-		SetTool(IDC_RESETLABEL,IDS_RESETLABEL_TIP);
-		SetTool(IDC_RESETHIST,IDS_PW_RESET_TIP);
-		SetTool(IDC_DISABLEHIST,IDS_DISABLEHIST_TIP);
-		SetTool(IDC_SHOWTRANSTOOLBAR,IDS_PW_SHOWTRANSTOOLBAR_TIP);
-		SetTool(IDC_SHOWDWLPERCENT,IDC_SHOWDWLPERCENT_TIP);
-        // MORPH END   leuk_he tooltipped
-
 	}
 }
 
@@ -455,6 +427,7 @@ void CPPgDisplay::DrawPreview()
 	int dep=((CSliderCtrl*)GetDlgItem(IDC_3DDEPTH))->GetPos();
 	m_3DPreview.SetSliderPos( dep);
 }
+
 // ==> show overhead on title - Stulle
 void CPPgDisplay::OnEnChangeSREnabled()
 {

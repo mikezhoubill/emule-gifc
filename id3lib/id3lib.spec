@@ -1,4 +1,4 @@
-# $Id: id3lib.spec,v 1.1 2008/01/09 17:31:19 stulleamgym Exp $
+# $Id: id3lib.spec,v 1.1 2008/10/07 17:19:26 stulleamgym Exp $
 
 %define name    id3lib
 %define	version	3.8.3

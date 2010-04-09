@@ -16,7 +16,6 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
 #include "emule.h"
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 #include "PPGProxy.h"
 #include "opcodes.h"
 #include "OtherFunctions.h"
@@ -44,12 +43,7 @@ BEGIN_MESSAGE_MAP(CPPgProxy, CPropertyPage)
 END_MESSAGE_MAP()
 
 CPPgProxy::CPPgProxy()
-// MORPH START leuk_he tooltipped
-/*
-   : CPropertyPage(CPPgProxy::IDD)
-*/
-	: CPPgtooltipped(CPPgProxy::IDD)
-// MORPH END leuk_he tooltipped
+	: CPropertyPage(CPPgProxy::IDD)
 {
 }
 
@@ -69,7 +63,6 @@ BOOL CPPgProxy::OnInitDialog()
 
 	proxy = thePrefs.GetProxySettings();
 	LoadSettings();
-	InitTooltips(); //MORPH leuk_he tooltipped;
 	Localize();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -197,20 +190,6 @@ void CPPgProxy::Localize()
 		GetDlgItem(IDC_PASSWORD_LBL)->SetWindowText(GetResString(IDS_WS_PASS) + _T(":"));	
 		GetDlgItem(IDC_AUTH_LBL)->SetWindowText(GetResString(IDS_AUTH));	
 		GetDlgItem(IDC_AUTH_LBL2)->SetWindowText(GetResString(IDS_PW_GENERAL));	
-        // MORPH START leuk_he tooltipped
-        SetTool(IDC_ENABLEPROXY,IDC_ENABLEPROXY_TIP);
-        SetTool(IDC_PROXYTYPE_LBL,IDC_PROXYTYPE_TIP);
-        SetTool(IDC_PROXYTYPE,IDC_PROXYTYPE_TIP);
-        SetTool(IDC_PROXYNAME_LBL,IDC_PROXYNAME_TIP);
-        SetTool(IDC_PROXYNAME,IDC_PROXYNAME_TIP);
-        SetTool(IDC_PROXYPORT_LBL,IDC_PROXYPORT_TIP);
-        SetTool(IDC_PROXYPORT,IDC_PROXYPORT_TIP);
-        SetTool(IDC_ENABLEAUTH,IDC_ENABLEAUTH_TIP);
-        SetTool(IDC_USERNAME_LBL,IDC_USERNAME_A_TIP);
-        SetTool(IDC_USERNAME_A,IDC_USERNAME_A_TIP);
-        SetTool(IDC_PASSWORD_LBL,IDC_PASSWORD_TIP);
-        SetTool(IDC_PASSWORD,IDC_PASSWORD_TIP);
-        // MORPH END leuk_he tooltipped
 	}
 }
 

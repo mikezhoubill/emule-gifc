@@ -53,11 +53,13 @@ BOOL CAICHSyncThread::InitInstance()
 
 int CAICHSyncThread::Run()
 {
-	//MORPH START SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// MORPH END SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+
 	if ( !theApp.emuledlg->IsRunning() )
 		return 0;
 	// we need to keep a lock on this file while the thread is running
@@ -173,19 +175,19 @@ int CAICHSyncThread::Run()
 	sharelock.Unlock();
 
 	// removed all unused AICH hashsets from known2.met
+	//Xman remove unused AICH-hashes
+	/*
 	if (liUsedHashs.GetCount() != liKnown2Hashs.GetCount() && 
-		// EastShare START - Added by TAHO, .met file control
-		/*
 		(!thePrefs.IsRememberingDownloadedFiles() || thePrefs.DoPartiallyPurgeOldKnownFiles()))
-		*/
+	{
+	*/
+	if (liUsedHashs.GetCount() != liKnown2Hashs.GetCount() && 
 			(!thePrefs.IsRememberingDownloadedFiles() ||
 			  thePrefs.DoPartiallyPurgeOldKnownFiles() || 
-			  thePrefs.DoCompletlyPurgeOldKnownFiles() ||
-			  thePrefs.DoRemoveAichImmediatly()
+			  !thePrefs.GetRememberAICH())
 			)
-		)
-		// EastShare END   - Added by TAHO, .met file control
 	{
+	//Xman end
 		file.SeekToBegin();
 		try {
 			uint8 header = file.ReadUInt8();
@@ -205,7 +207,12 @@ int CAICHSyncThread::Run()
 				if (file.GetPosition() + nHashCount*CAICHHash::GetHashSize() > nExistingSize){
 					AfxThrowFileException(CFileException::endOfFile, 0, file.GetFileName());
 				}
+				//Xman remove unused AICH-hashes
+				/*
 				if (!thePrefs.IsRememberingDownloadedFiles() && liUsedHashs.Find(aichHash) == NULL)
+				*/
+				if ((!thePrefs.IsRememberingDownloadedFiles() || !thePrefs.GetRememberAICH()) && liUsedHashs.Find(aichHash) == NULL)
+				//Xman end
 				{
 					// unused hashset skip the rest of this hashset
 					file.Seek(nHashCount*CAICHHash::GetHashSize(), CFile::current);
@@ -213,12 +220,12 @@ int CAICHSyncThread::Run()
 				}
 				else if (thePrefs.IsRememberingDownloadedFiles() && theApp.knownfiles->ShouldPurgeAICHHashset(aichHash))
 				{
-					// EastShare START - Added by TAHO, .met file control
+					//Xman remove unused AICH-hashes
 					/*
 					ASSERT( thePrefs.DoPartiallyPurgeOldKnownFiles() );
 					*/
-					ASSERT( thePrefs.DoPartiallyPurgeOldKnownFiles() || thePrefs.DoRemoveAichImmediatly());
-					// EastShare END   - Added by TAHO, .met file control
+					ASSERT( thePrefs.DoPartiallyPurgeOldKnownFiles() || !thePrefs.GetRememberAICH());
+					//Xman end
 					// also unused (purged) hashset skip the rest of this hashset
 					file.Seek(nHashCount*CAICHHash::GetHashSize(), CFile::current);
 					nPurgeCount++;
@@ -265,6 +272,7 @@ int CAICHSyncThread::Run()
 			return false;
 		}
 	}
+
 	lockKnown2Met.Unlock();
 	// warn the user if he just upgraded
 	if (thePrefs.IsFirstStart() && !m_liToHash.IsEmpty() && !bJustCreated){
@@ -277,6 +285,11 @@ int CAICHSyncThread::Run()
 		CSingleLock sLock1(&theApp.hashing_mut); // only one filehash at a time
 		while (theApp.sharedfiles->GetHashingCount() != 0){
 			Sleep(100);
+			//Xman prevent crash when shutting down
+			if (theApp.emuledlg==NULL || !theApp.emuledlg->IsRunning()){ // in case of shutdown while still hashing
+				return 0;
+			}
+			//Xman end
 		}
 		sLock1.Lock();
 		uint32 cDone = 0;

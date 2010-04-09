@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include "EMSocket.h"
+#include "updownclient.h" //Xman
 
 class CUpDownClient;
 class CPacket;
@@ -35,10 +36,15 @@ class CClientReqSocket : public CEMSocket
 	DECLARE_DYNCREATE(CClientReqSocket)
 
 public:
-	CClientReqSocket(CUpDownClient* in_client = NULL);	
+	CClientReqSocket(CUpDownClient* in_client = NULL);
 
 	void	SetClient(CUpDownClient* pClient);
+	// Maella -Upload Stop Reason-
+	/*
 	void	Disconnect(LPCTSTR pszReason);
+	*/
+	void	Disconnect(LPCTSTR pszReason, CUpDownClient::UpStopReason reason = CUpDownClient::USR_NONE);
+	//Xman end
 	void	WaitForOnConnect();
 	void	ResetTimeOutTimer();
 	bool	CheckTimeOut();
@@ -47,18 +53,22 @@ public:
 	
 	bool	Create();
 	virtual void SendPacket(Packet* packet, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-    //MORPH START - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
-#if !defined DONT_USE_SEND_ARRAY_PACKET
-	virtual void SendPacket(Packet* packet[], uint32 npacket, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-#endif
-	//MORPH END   - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
-	virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend);
+    virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend);
     virtual SocketSentBytes SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 overchargeMaxBytesToSend);
 
 	void	DbgAppendClientInfo(CString& str);
 	CString DbgGetClientInfo();
 
+	//Xman Xtreme Upload
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	//declare this in emsocket
+	/*
 	CUpDownClient*	client;
+	*/
+	//Xman improved socket closing
+	void	CloseSocket();
+
+	uint32	GetTimeOutTimer()	const	{return timeout_timer;} //zz_fly :: Drop stalled downloads :: netfinity
 
 protected:
 	virtual ~CClientReqSocket();
@@ -77,12 +87,16 @@ protected:
 
 	bool	ProcessPacket(const BYTE* packet, uint32 size,UINT opcode);
 	bool	ProcessExtPacket(const BYTE* packet, uint32 size, UINT opcode, UINT uRawSize);
+	//Xman
+	// Maella -Dump information of unknown packet in debug tab-
+	/*
 	void	PacketToDebugLogLine(LPCTSTR protocol, const uchar* packet, uint32 size, UINT opcode);
+	*/
+	void    PacketToDebugLogLine(bool isOpcodeKnown, const uchar* packet, uint32 size, UINT opcode);
+	// Maella end
+
 	void	SetConState(SocketState val);
 
-	//MORPH START - Added by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
-	void  SmartUploadControl();
-	//MORPH END - Added by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
 	uint32	timeout_timer;
 	bool	deletethis;
 	uint32	deltimer;
@@ -127,6 +141,10 @@ public:
 	uint32	GetTotalHalfCon()			{ return m_nHalfOpen; }
 	uint32	GetTotalComp()				{ return m_nComp; }
 
+	//Xman NAFC
+	bool boundcheck;
+	//Xman end
+
 private:
 	bool bListening;
 	CTypedPtrList<CPtrList, CClientReqSocket*> socket_list;
@@ -141,8 +159,4 @@ private:
 	uint16  m_port;
 	uint32	m_nHalfOpen;
 	uint32	m_nComp;
-	//MORPH START - Added by Yun.SF3, Auto DynUp changing
-	void	SwitchSUC(bool bSetSUCOn = false);
-	int	per5average;
-	//MORPH END - Added by Yun.SF3, Auto DynUp changing
 };

@@ -33,7 +33,12 @@ there client on the eMule forum..
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(disable:4100) // unreferenced formal parameter
 #pragma warning(disable:4702) // unreachable code
+//Xman
+/*
+#include <crypto51/osrng.h>
+*/
 #include <cryptopp/osrng.h>
+//Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4244) // conversion from 'type1' to 'type2', possible loss of data
@@ -177,7 +182,7 @@ void CUInt128::ToHexString(CString *pstr) const
 	pstr->SetString(_T(""));
 	CString sElement;
 	for (int iIndex=0; iIndex<4; iIndex++)
-	{   
+	{
 		sElement.Format(_T("%08X"), m_uData[iIndex]);
 		pstr->Append(sElement);
 	}
@@ -198,15 +203,27 @@ CString CUInt128::ToHexString() const
 void CUInt128::ToBinaryString(CString *pstr, bool bTrim) const
 {
 	pstr->SetString(_T(""));
+	//Xman netfinity: Reduced CPU usage
+	/*
 	CString sElement;
+	*/
+	//Xman end
 	int iBit;
 	for (int iIndex=0; iIndex<128; iIndex++)
 	{
 		iBit = GetBitNumber(iIndex);
 		if ((!bTrim) || (iBit != 0))
 		{
+			//Xman netfinity: Reduced CPU usage
+			/*
 			sElement.Format(_T("%d"), iBit);
 			pstr->Append(sElement);
+			*/
+			if (iBit == 1)
+				pstr->Append(_T("1") /*element*/);
+			else
+				pstr->Append(_T("0"));
+			//Xman end
 			bTrim = false;
 		}
 	}

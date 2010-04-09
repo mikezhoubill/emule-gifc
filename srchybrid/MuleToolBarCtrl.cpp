@@ -78,7 +78,7 @@ END_MESSAGE_MAP()
 
 CMuleToolbarCtrl::CMuleToolbarCtrl()
 {
-	// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 	/*
 	m_sizBtnBmp.cx = thePrefs.GetToolbarIconSize().cx;
 	m_sizBtnBmp.cy = thePrefs.GetToolbarIconSize().cy;
@@ -94,7 +94,7 @@ CMuleToolbarCtrl::CMuleToolbarCtrl()
 		m_sizBtnBmp.cx = thePrefs.GetToolbarIconSize().cx;
 		m_sizBtnBmp.cy = thePrefs.GetToolbarIconSize().cy;
 	}
-	// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 	m_iPreviousHeight = 0;
 	m_iLastPressedButton = -1;
 	m_buttoncount = 0;
@@ -308,50 +308,13 @@ void CMuleToolbarCtrl::OnSize(UINT nType, int cx, int cy)
 {
 	CToolBarCtrl::OnSize(nType, cx, cy);
 
-	// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
-	theApp.emuledlg->Resize_TrafficGraph();
-	// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
+	theApp.emuledlg->Reposition_TrafficGraph();
+	// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
 	SetAllButtonsWidth();
 	AutoSize();
 }
-
-// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
-void CMuleToolbarCtrl::ShowSpeedMeter(bool bShow)
-{
-	if (bShow)
-	{
-		if (theApp.emuledlg->m_co_UpTrafficGraph.IsWindowVisible() == false ||
-			theApp.emuledlg->m_co_DownTrafficGraph.IsWindowVisible() == false)
-		{
-			theApp.emuledlg->m_co_UpTrafficGraph.EnableWindow(true);
-			theApp.emuledlg->m_co_UpTrafficGraph.ShowWindow(SW_SHOW);
-			theApp.emuledlg->m_co_DownTrafficGraph.EnableWindow(true);
-			theApp.emuledlg->m_co_DownTrafficGraph.ShowWindow(SW_SHOW);
-
-			CRect		r;
-
-			GetWindowRect(&r);
-			OnSize(0,r.Width(),r.Height());
-		}
-	}
-	else
-	{
-		theApp.emuledlg->m_co_UpTrafficGraph.EnableWindow(false);
-		theApp.emuledlg->m_co_UpTrafficGraph.ShowWindow(SW_HIDE);
-		theApp.emuledlg->m_co_DownTrafficGraph.EnableWindow(false);
-		theApp.emuledlg->m_co_DownTrafficGraph.ShowWindow(SW_HIDE);
-
-		CRect		rInvalidateUp, rInvalidateDown;
-		theApp.emuledlg->m_co_UpTrafficGraph.GetWindowRect(&rInvalidateUp);
-		ScreenToClient(rInvalidateUp);
-		InvalidateRect(rInvalidateUp);
-		theApp.emuledlg->m_co_DownTrafficGraph.GetWindowRect(&rInvalidateDown);
-		ScreenToClient(rInvalidateDown);
-		InvalidateRect(rInvalidateDown);
-	}
-}
-// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
 
 void CMuleToolbarCtrl::SetAllButtonsWidth()
 {
@@ -838,11 +801,14 @@ BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			break;
 
        	case MP_SMALLICONS:
-			// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+			// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 			// always show big icons when speedmeter enabled!
 			if(thePrefs.GetShowSpeedMeter())
+			{
+				thePrefs.SetToolbarIconSize(CSize(16,16));
 				break;
-			// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+			}
+			// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 			m_sizBtnBmp.cx = m_sizBtnBmp.cy = 16;
 			ForceRecalcLayout();
 			ChangeToolbarBitmap(thePrefs.GetToolbarBitmapSettings(), true);
@@ -920,11 +886,11 @@ BOOL CMuleToolbarCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 
 void CMuleToolbarCtrl::ChangeTextLabelStyle(EToolbarLabelType eLabelType, bool bRefresh, bool bForceUpdateButtons)
 {
-	// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 	// always show below when speedmeter enabled!
 	if(thePrefs.GetShowSpeedMeter())
 		eLabelType = LabelsBelow;
-	// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
 	if (m_eLabelType != eLabelType || bForceUpdateButtons)
 	{
@@ -1058,12 +1024,6 @@ void CMuleToolbarCtrl::OnTbnReset(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
 	
 	// set default configuration 
 	CString config = strDefaultToolbar;
-	// MORPH START show less controls
-	if (thePrefs.IsLessControls())
-		config=strDefaultLessControlsToolbar;
-	// MORPH END  show less controls
-
-
 	for (int i = 0; i <config.GetLength(); i += 2)
 	{
 		int index = _tstoi(config.Mid(i, 2));
@@ -1290,8 +1250,7 @@ void CMuleToolbarCtrl::UpdateBackground()
 	if (theApp.emuledlg->m_ctlMainTopReBar)
 	{
 		HBITMAP hbmp = theApp.LoadImage(_T("MainToolBarBk"), _T("BMP"));
-		// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+		// ==> Design Settings [eWombat/Stulle] - Max
 		COLORREF crTempColor = thePrefs.GetStyleBackColor(window_styles, style_w_toolbar);
 
 		if(crTempColor == CLR_DEFAULT)
@@ -1317,8 +1276,7 @@ void CMuleToolbarCtrl::UpdateBackground()
 			}
 		}
 		else
-#endif
-		// <== Design Settings [eWombat/Stulle] - Stulle
+		// <== Design Settings [eWombat/Stulle] - Max
 		if (hbmp)
 		{
 			REBARBANDINFO rbbi = {0};
@@ -1326,15 +1284,14 @@ void CMuleToolbarCtrl::UpdateBackground()
 			rbbi.fMask = RBBIM_STYLE;
 			if (theApp.emuledlg->m_ctlMainTopReBar.GetBandInfo(MULE_TOOLBAR_BAND_NR, &rbbi))
 			{
-				// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+				// ==> Design Settings [eWombat/Stulle] - Max
+				/*
 				rbbi.fMask = RBBIM_STYLE | RBBIM_BACKGROUND;
-#else
+				*/
 				rbbi.fMask = RBBIM_STYLE | RBBIM_BACKGROUND | RBBIM_COLORS;
 				rbbi.clrFore = GetSysColor(COLOR_BTNFACE);
 				rbbi.clrBack = GetSysColor(COLOR_BTNFACE);
-#endif
-				// <== Design Settings [eWombat/Stulle] - Stulle
+				// <== Design Settings [eWombat/Stulle] - Max
 				rbbi.fStyle |= RBBS_FIXEDBMP;
 				rbbi.hbmBack = hbmp;
 				if (theApp.emuledlg->m_ctlMainTopReBar.SetBandInfo(MULE_TOOLBAR_BAND_NR, &rbbi))
@@ -1355,15 +1312,14 @@ void CMuleToolbarCtrl::UpdateBackground()
 			rbbi.fMask = RBBIM_STYLE;
 			if (theApp.emuledlg->m_ctlMainTopReBar.GetBandInfo(MULE_TOOLBAR_BAND_NR, &rbbi))
 			{
-				// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+				// ==> Design Settings [eWombat/Stulle] - Max
+				/*
 				rbbi.fMask = RBBIM_STYLE | RBBIM_BACKGROUND;
-#else
+				*/
 				rbbi.fMask = RBBIM_STYLE | RBBIM_BACKGROUND | RBBIM_COLORS;
 				rbbi.clrFore = GetSysColor(COLOR_BTNFACE);
 				rbbi.clrBack = GetSysColor(COLOR_BTNFACE);
-#endif
-				// <== Design Settings [eWombat/Stulle] - Stulle
+				// <== Design Settings [eWombat/Stulle] - Max
 				rbbi.fStyle &= ~RBBS_FIXEDBMP;
 				rbbi.hbmBack = NULL;
 				if (theApp.emuledlg->m_ctlMainTopReBar.SetBandInfo(MULE_TOOLBAR_BAND_NR, &rbbi))
@@ -1375,3 +1331,40 @@ void CMuleToolbarCtrl::UpdateBackground()
 		}
 	}
 }
+
+// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
+void CMuleToolbarCtrl::ShowSpeedMeter(bool bShow)
+{
+	if (bShow)
+	{
+		if (theApp.emuledlg->m_co_UpTrafficGraph.IsWindowVisible() == false ||
+			theApp.emuledlg->m_co_DownTrafficGraph.IsWindowVisible() == false)
+		{
+			theApp.emuledlg->m_co_UpTrafficGraph.EnableWindow(true);
+			theApp.emuledlg->m_co_UpTrafficGraph.ShowWindow(SW_SHOW);
+			theApp.emuledlg->m_co_DownTrafficGraph.EnableWindow(true);
+			theApp.emuledlg->m_co_DownTrafficGraph.ShowWindow(SW_SHOW);
+
+			CRect		r;
+
+			GetWindowRect(&r);
+			OnSize(0,r.Width(),r.Height());
+		}
+	}
+	else
+	{
+		theApp.emuledlg->m_co_UpTrafficGraph.EnableWindow(false);
+		theApp.emuledlg->m_co_UpTrafficGraph.ShowWindow(SW_HIDE);
+		theApp.emuledlg->m_co_DownTrafficGraph.EnableWindow(false);
+		theApp.emuledlg->m_co_DownTrafficGraph.ShowWindow(SW_HIDE);
+
+		CRect		rInvalidateUp, rInvalidateDown;
+		theApp.emuledlg->m_co_UpTrafficGraph.GetWindowRect(&rInvalidateUp);
+		ScreenToClient(rInvalidateUp);
+		InvalidateRect(rInvalidateUp);
+		theApp.emuledlg->m_co_DownTrafficGraph.GetWindowRect(&rInvalidateDown);
+		ScreenToClient(rInvalidateDown);
+		InvalidateRect(rInvalidateDown);
+	}
+}
+// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88

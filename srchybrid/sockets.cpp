@@ -35,6 +35,7 @@
 #include "ServerWnd.h"
 #include "TaskbarNotifier.h"
 #include "Log.h"
+#include "IPFilter.h" //Xman filter ipfiltered servers //remark: need this for dynamic ipfilters
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,7 +53,7 @@ void CServerConnect::TryAnotherConnectionRequest()
 		{
 			if (connectionattemps.GetCount() == 0)
 			{
-				if (m_bTryObfuscated && !(thePrefs.IsClientCryptLayerRequired()||thePrefs.IsServerCryptLayerRequiredStrict())){ // MORPH lh require obfuscated server connection    
+				if (m_bTryObfuscated && !thePrefs.IsClientCryptLayerRequired()){
 					// try all servers on the non-obfuscated port next
 					m_bTryObfuscated = false;
 					ConnectToAnyServer(0, true, true, true);
@@ -61,12 +62,7 @@ void CServerConnect::TryAnotherConnectionRequest()
 				{
 					// 05-Nov-2003: If we have a very short server list, we could put serious load on those few servers
 					// if we start the next connection tries without waiting.
-							// MORPH START more specific error message
-			          	if (thePrefs.IsServerCryptLayerRequiredStrict())
-				       		LogWarning(LOG_STATUSBAR, GetResString(IDS_OUTOFSERVERS_O)); //"Failed to connect obfuscated to  servers with obfuscation key. Making another pass."
-		       		else
-				       //	MORPH END more specific error message 
-         					LogWarning(LOG_STATUSBAR, GetResString(IDS_OUTOFSERVERS));
+					LogWarning(LOG_STATUSBAR, GetResString(IDS_OUTOFSERVERS));
 					AddLogLine(false, GetResString(IDS_RECONNECT), CS_RETRYCONNECTTIME);
 					m_uStartAutoConnectPos = 0; // default: start at 0
 					VERIFY( (m_idRetryTimer = SetTimer(NULL, 0, 1000*CS_RETRYCONNECTTIME, RetryConnectTimer)) != NULL );
@@ -103,7 +99,7 @@ void CServerConnect::ConnectToAnyServer(UINT startAt, bool prioSort, bool isAuto
 		bool anystatic = false;
 		CServer *next_server;
 		theApp.serverlist->SetServerPosition(startAt);
-		while ((next_server = theApp.serverlist->GetNextServer(thePrefs.IsServerCryptLayerRequiredStrict())) != NULL) //MORPH lh require obfuscated server connection  ServerCryptrequired instead of false.
+		while ((next_server = theApp.serverlist->GetNextServer(false)) != NULL)
 		{
 			if (next_server->IsStaticMember()) {
 				anystatic = true;
@@ -112,7 +108,7 @@ void CServerConnect::ConnectToAnyServer(UINT startAt, bool prioSort, bool isAuto
 		}
 		if (!anystatic) {
 			connecting = false;
-			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_NOVALIDSTATICSERVERSFOUND)); // MORPH: more specific error message
+			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_NOVALIDSERVERSFOUND));
 			return;
 		}
 	}
@@ -122,18 +118,10 @@ void CServerConnect::ConnectToAnyServer(UINT startAt, bool prioSort, bool isAuto
 		theApp.serverlist->GetUserSortedServers();
 	if (thePrefs.GetUseServerPriorities() && prioSort)
 		theApp.serverlist->Sort();
-	//EastShare Start - PreferShareAll by AndCycle
-	if( thePrefs.ShareAll() && prioSort )
-		theApp.serverlist->PushBackNoShare();	// SLUGFILLER: preferShareAll
-	//EastShare End - PreferShareAll by AndCycle
+
 	if (theApp.serverlist->GetServerCount() == 0) {
 		connecting = false;
-		// MORPH START more specific error message
-		if (thePrefs.IsServerCryptLayerRequiredStrict())
-			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_NOVALIDOBFUSCATEDSERVERSFOUND));
-		else
-        //	MORPH END more specific error message 
-			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_NOVALIDSERVERSFOUND));
+		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_NOVALIDSERVERSFOUND));
 		return;
 	}
 	theApp.listensocket->Process();
@@ -143,26 +131,31 @@ void CServerConnect::ConnectToAnyServer(UINT startAt, bool prioSort, bool isAuto
 
 void CServerConnect::ConnectToServer(CServer* server, bool multiconnect, bool bNoCrypt)
 {
-	//START MORPH lh require obfuscated server connection  
-	if (thePrefs.IsServerCryptLayerRequiredStrict() && 
-		(bNoCrypt ||!(server->SupportsObfuscationTCP()))) {
-		LogWarning(LOG_STATUSBAR, GetResString(IDS_NO_OBFUSCATION_KEY));
-		ASSERT(thePrefs.IsServerCryptLayerRequiredStrict()==true); // IsServerCryptLayerRequiredStrict, obfuscation required for server should have been handled elsewere. stacktrace!
-		return;
-	}
-	//END MORPH lh require obfuscated server connection 
-
-
 	if (!multiconnect) {
 		StopConnectionTry();
 		Disconnect();
 	}
+
+	//Xman filter outgoing server connections
+	//it makes no sense to allow to connect to any ipfiltered server, because you'll only get lowID
+	if(theApp.ipfilter->IsFiltered(server->GetIP()))
+	{
+		AddLogLine(true,_T("you can't connect to filtered server: %s, %s"),ipstr(server->GetIP()), server->GetDescription() );
+		return;
+	}
+	//Xman end
+
 	connecting = true;
 	singleconnecting = !multiconnect;
 	theApp.emuledlg->ShowConnectionState();
 
 	CServerSocket* newsocket = new CServerSocket(this, !multiconnect);
+	//Xman
+	/*
 	m_lstOpenSockets.AddTail((void*&)newsocket);
+	*/
+	m_lstOpenSockets.AddTail(newsocket);
+	//Xman end
 	newsocket->Create(0, SOCK_STREAM, FD_READ | FD_WRITE | FD_CLOSE | FD_CONNECT, thePrefs.GetBindAddrA());
 	newsocket->ConnectTo(server, bNoCrypt);
 	connectionattemps.SetAt(GetTickCount(), newsocket);
@@ -184,15 +177,23 @@ void CServerConnect::StopConnectionTry()
 	// close all currenty opened sockets except the one which is connected to our current server
 	for( POSITION pos = m_lstOpenSockets.GetHeadPosition(); pos != NULL; )
 	{
+		//Xman
+		/*
 		CServerSocket* pSck = (CServerSocket*)m_lstOpenSockets.GetNext(pos);
+		*/
+		CServerSocket* pSck = /*(CServerSocket*)*/m_lstOpenSockets.GetNext(pos);
+		//Xman end
 		if (pSck == connectedsocket)		// don't destroy socket which is connected to server
 			continue;
 		if (pSck->m_bIsDeleting == false)	// don't destroy socket if it is going to destroy itself later on
 			DestroySocket(pSck);
 	}
-	//MORPH START - Added by SiRoB, SLUGFILLER: lowIdRetry
-	thePrefs.ResetLowIdRetried();
-	//MORPH END   - Added by SiRoB, SLUGFILLER: lowIdRetry
+	// Maella -Activate Smart Low ID check-
+	{
+		// Reset attempts counter
+		thePrefs.SetSmartIdState(0);
+	}
+	// Maella end
 }
 
 void CServerConnect::ConnectionEstablished(CServerSocket* sender)
@@ -237,12 +238,7 @@ void CServerConnect::ConnectionEstablished(CServerSocket* sender)
 		if (thePrefs.IsClientCryptLayerRequired())
 			dwCryptFlags |= SRVCAP_REQUIRECRYPT;
 
-		//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-		/*
 		CTag tagFlags(CT_SERVER_FLAGS, SRVCAP_ZLIB | SRVCAP_NEWTAGS | SRVCAP_LARGEFILES | SRVCAP_UNICODE | dwCryptFlags);
-		*/
-		CTag tagFlags(CT_SERVER_FLAGS, SRVCAP_ZLIB | SRVCAP_NEWTAGS | SRVCAP_LARGEFILES | SRVCAP_UNICODE | dwCryptFlags | SRVCAP_AUXPORT);
-		//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 		tagFlags.WriteTagToFile(&data);
 
 		// eMule Version (14-Mar-2004: requested by lugdunummaster (need for LowID clients which have no chance 
@@ -315,7 +311,7 @@ bool CServerConnect::SendPacket(Packet* packet,bool delpacket, CServerSocket* to
 }
 
 bool CServerConnect::SendUDPPacket(Packet* packet, CServer* host, bool delpacket, uint16 nSpecialPort, BYTE* pRawPacket, uint32 nLen){
-	if (theApp.IsConnected()||(theApp.IsWaitingForCryptPingConnect())){ // MORPH lh require obfuscated server connection  
+	if (theApp.IsConnected()){
 		if (udpsocket != NULL)
 			udpsocket->SendPacket(packet, host, nSpecialPort, pRawPacket, nLen);
 	}
@@ -416,8 +412,8 @@ void CServerConnect::ConnectionFailed(CServerSocket* sender)
 			if (!connecting)
 				break;
 			if (singleconnecting){
-				if (pServer != NULL && sender->IsServerCryptEnabledConnection() && !thePrefs.IsClientCryptLayerRequired()
-					 && (!thePrefs.IsServerCryptLayerRequiredStrict()) ){// MORPH lh require obfuscated server connection 
+				if (pServer != NULL && sender->IsServerCryptEnabledConnection() && !thePrefs.IsClientCryptLayerRequired()){
+					// try reconnecting without obfuscation
 					ConnectToServer(pServer, false, true);
 					break;
 				}
@@ -459,6 +455,16 @@ VOID CALLBACK CServerConnect::RetryConnectTimer(HWND /*hWnd*/, UINT /*nMsg*/, UI
 		}
 	}
 	CATCH_DFLT_EXCEPTIONS(_T("CServerConnect::RetryConnectTimer"))
+		// Maella -Code Improvement-
+		// Remark: The macro CATCH_DFLT_EXCEPTIONS will not catch all types of exception.
+		//         The exceptions thrown in callback function are not intercepted by the dbghelp.dll (e.g. eMule Dump, crashRpt, etc...)
+		catch(...) {
+			ASSERT( false ); //zz_fly :: uncover more bugs
+			if(theApp.emuledlg != NULL)
+				AddLogLine(true, _T("Unknown exception in %s"), __FUNCTION__);
+		}
+		// Maella end
+
 }
 
 void CServerConnect::CheckForTimeout()
@@ -482,7 +488,9 @@ void CServerConnect::CheckForTimeout()
 		}
 
 		if (dwCurTick - tmpkey > dwServerConnectTimeout){
-			LogWarning(GetResString(IDS_ERR_CONTIMEOUT), tmpsock->cur_server->GetListName(), tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
+			//Xman additional check:
+			if(tmpsock->cur_server!=NULL)
+				LogWarning(GetResString(IDS_ERR_CONTIMEOUT), tmpsock->cur_server->GetListName(), tmpsock->cur_server->GetAddress(), tmpsock->cur_server->GetPort());
 			connectionattemps.RemoveKey(tmpkey);
 			DestroySocket(tmpsock);
 			if (singleconnecting)
@@ -564,6 +572,11 @@ void CServerConnect::SetClientID(uint32 newid){
 	theApp.emuledlg->ShowConnectionState();
 }
 
+//Xman 
+// Maella -Code Fix-
+// Remark: One user had a crash here, so this method was rewritten.
+//         => A multiple calls of this method is safe now.
+/*
 void CServerConnect::DestroySocket(CServerSocket* pSck){
 	if (pSck == NULL)
 		return;
@@ -583,33 +596,42 @@ void CServerConnect::DestroySocket(CServerSocket* pSck){
 		pSck->Close();
 	}
 
-	 // netfinity START : Remove from connection attempt list if not already done
-    DWORD tmpkey;
-	CServerSocket* tmpsock;
-	POSITION pos2 = connectionattemps.GetStartPosition();
-	while (pos2) {
-
-    connectionattemps.GetNextAssoc(pos2, tmpkey, tmpsock);
-    if (tmpsock == pSck) {
-		//ASSERT(0); // TEST THAT THE CODE IS WORKING. 
-        connectionattemps.RemoveKey(tmpkey);
-        break;
-
-	}
-
-	}
-	// netfinity END : Make sure socket isn't used after deletion if it's the connected one
-if (connectedsocket == pSck)
-{
-
-    connectedsocket = NULL;
-    connected = false;
-
-}
-
-
 	delete pSck;
 }
+*/
+void CServerConnect::DestroySocket(CServerSocket* pSck){
+	if(pSck != NULL){
+		//Xman make sure this socket is also removed from connection-attemps
+		DWORD tmpkey;
+		CServerSocket* tmpsock;
+		POSITION pos1 = connectionattemps.GetStartPosition();
+		while (pos1) {
+			connectionattemps.GetNextAssoc(pos1, tmpkey, tmpsock);
+			if (tmpsock == pSck) {
+				connectionattemps.RemoveKey(tmpkey);
+				break;
+			}
+		}
+		//Xman end
+
+
+		// Remove from the list
+		POSITION pos = m_lstOpenSockets.Find(pSck);
+		if(pos != NULL){
+			m_lstOpenSockets.RemoveAt(pos);
+
+			// Close socket
+			if (pSck->m_SocketData.hSocket != INVALID_SOCKET){ // deadlake PROXYSUPPORT - changed to AsyncSocketEx
+				pSck->AsyncSelect(0);
+				pSck->Close();
+			}
+
+			// Finally delete socket
+			delete pSck;
+		}
+	}
+}
+// Maella end
 
 bool CServerConnect::IsLocalServer(uint32 dwIP, uint16 nPort){
 	if (IsConnected()){

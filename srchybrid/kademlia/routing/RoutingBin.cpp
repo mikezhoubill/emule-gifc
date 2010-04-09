@@ -206,8 +206,12 @@ void CRoutingBin::GetNumContacts(uint32& nInOutContacts, uint32& nInOutFilteredC
 
 UINT CRoutingBin::GetRemaining() const
 {
-  // NETF: cast
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	return (UINT)K - m_listEntries.size();
+	*/
 	return (UINT)K - (UINT)m_listEntries.size();
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 }
 
 void CRoutingBin::GetEntries(ContactList *plistResult, bool bEmptyFirst)

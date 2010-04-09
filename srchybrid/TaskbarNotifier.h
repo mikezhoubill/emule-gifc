@@ -18,8 +18,8 @@ enum TbnMsg {
 	TBN_IMPORTANTEVENT,
 	TBN_NEWVERSION,
 	TBN_DOWNLOADADDED,
-	TBN_NEWMVERSION, //MORPH - Added by SiRoB, New Version Check
-	TBN_NEWSVERSION // StulleMule Version Check - Stulle
+	TBN_NEWMVERSION, //Xman versions check
+	TBN_NEWSVERSION // ScarAngel Version Check - Stulle
 };
 //END - enkeyDEV(kei-kun) -TaskbarNotifier-
 
@@ -56,13 +56,13 @@ public:
 	int GetMessageType();
 	void Hide();
 
-	BOOL SetBitmap(UINT nBitmapID, int red=-1, int green=-1, int blue=-1);
+	BOOL SetBitmap(UINT nBitmapID, int red = -1, int green = -1, int blue = -1);
 	BOOL SetBitmap(LPCTSTR pszFileName,int red = -1, int green = -1, int blue = -1);
 	BOOL SetBitmap(CBitmap* pBitmap, int red, int green, int blue);
 	
 	void SetTextFont(LPCTSTR pszFont, int nSize, int nNormalStyle, int nSelectedStyle);
 	void SetTextDefaultFont();
-	void SetTextColor(COLORREF crNormalTextColor,COLORREF crSelectedTextColor);
+	void SetTextColor(COLORREF crNormalTextColor, COLORREF crSelectedTextColor);
 	void SetTextRect(RECT rcText);
 	void SetCloseBtnRect(RECT rcCloseBtn);
 	void SetHistoryBtnRect(RECT rcHistoryBtn);
@@ -85,9 +85,9 @@ protected:
 	bool m_bBitmapAlpha;
 	CString m_strCaption;
 	CString m_strLink;
-	CRect  m_rcText;
-	CRect  m_rcCloseBtn;
-	CRect  m_rcHistoryBtn;
+	CRect m_rcText;
+	CRect m_rcCloseBtn;
+	CRect m_rcHistoryBtn;
 	CPoint m_ptMousePosition;
 	UINT m_uTextFormat;
 	BOOL m_bMouseIsOver;
@@ -96,8 +96,7 @@ protected:
 	int m_nAnimStatus;
 	int m_nTaskbarPlacement;
 	DWORD m_dwTimerPrecision;
-	//DWORD m_dwTimeToStay;
-	UINT m_dwTimeToStay; //MORPH SetTime uses UINT. ( simulate permanent message becomes possible) 
+	DWORD m_dwTimeToStay;
 	DWORD m_dwShowEvents;
 	DWORD m_dwHideEvents;
 	DWORD m_dwTimeToShow;

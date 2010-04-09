@@ -136,69 +136,6 @@
 			<Tool
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
-		<Configuration
-			Name="releasewin98|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE"
-			CharacterSet="2">
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="1"
-				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="FALSE"
-				FavorSizeOrSpeed="2"
-				OmitFramePointers="TRUE"
-				EnableFiberSafeOptimizations="TRUE"
-				OptimizeForProcessor="0"
-				OptimizeForWindowsApplication="TRUE"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\ixml\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\inc&quot;;&quot;$(ProjectDir)\..\threadutil\inc&quot;;&quot;$(ProjectDir)\..\ixml\inc&quot;;..\..\pthreads\pthreads\inc"
-				PreprocessorDefinitions="UPNP_STATIC_LIB;INCLUDE_CLIENT_APIS;_WIN32;WIN32;PTW32_STATIC_LIB"
-				StringPooling="TRUE"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="FALSE"
-				EnableFunctionLevelLinking="FALSE"
-				PrecompiledHeaderFile="$(OutDir)/upnpLib.pch"
-				AssemblerListingLocation="$(OutDir)/"
-				ObjectFile="$(OutDir)/"
-				ProgramDataBaseFileName="$(OutDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				CompileAs="0"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="TRUE"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/upnpLib.tlb"
-				HeaderFileName=""/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -224,13 +161,6 @@
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
-				<FileConfiguration
-					Name="releasewin98|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories="$(ProjectDir)\..\ixml\src\inc"/>
-				</FileConfiguration>
 			</File>
 			<Filter
 				Name="ixml"
@@ -253,13 +183,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\ixml\src\document.c">
@@ -278,13 +201,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -305,13 +221,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\ixml\src\ixml.c">
@@ -330,13 +239,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -357,13 +259,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\ixml\src\ixmlparser.c">
@@ -382,13 +277,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -409,13 +297,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\ixml\src\node.c">
@@ -435,13 +316,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\ixml\src\nodeList.c">
@@ -460,13 +334,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 			</Filter>
@@ -491,13 +358,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\threadutil\src\iasnprintf.c">
@@ -516,13 +376,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 				<File
@@ -543,13 +396,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\threadutil\src\ThreadPool.c">
@@ -569,13 +415,6 @@
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
 					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\threadutil\src\TimerThread.c">
@@ -594,13 +433,6 @@
 							AdditionalIncludeDirectories=""
 							BasicRuntimeChecks="3"
 							BrowseInformation="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""/>
 					</FileConfiguration>
 				</File>
 			</Filter>
@@ -628,13 +460,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\api\upnpapi.c">
@@ -654,13 +479,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\api\upnptools.c">
@@ -679,13 +497,6 @@
 								AdditionalIncludeDirectories=""
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
 						</FileConfiguration>
 					</File>
 				</Filter>
@@ -710,13 +521,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\gena\gena_ctrlpt.c">
@@ -736,13 +540,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\gena\gena_device.c">
@@ -761,13 +558,6 @@
 								AdditionalIncludeDirectories=""
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
 						</FileConfiguration>
 					</File>
 				</Filter>
@@ -795,13 +585,6 @@
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
-							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -824,13 +607,6 @@
 									AdditionalIncludeDirectories=""
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
 							</FileConfiguration>
 						</File>
 					</Filter>
@@ -855,13 +631,6 @@
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
-							</FileConfiguration>
 						</File>
 						<Filter
 							Name="http"
@@ -884,13 +653,6 @@
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
 								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
-								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\upnp\src\genlib\net\http\httpreadwrite.c">
@@ -909,13 +671,6 @@
 										AdditionalIncludeDirectories=""
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
 								</FileConfiguration>
 							</File>
 							<File
@@ -936,13 +691,6 @@
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
 								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
-								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\upnp\src\genlib\net\http\statcodes.c">
@@ -962,13 +710,6 @@
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
 								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
-								</FileConfiguration>
 							</File>
 							<File
 								RelativePath="..\upnp\src\genlib\net\http\webserver.c">
@@ -987,13 +728,6 @@
 										AdditionalIncludeDirectories=""
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
 								</FileConfiguration>
 							</File>
 						</Filter>
@@ -1017,13 +751,6 @@
 										AdditionalIncludeDirectories=""
 										BasicRuntimeChecks="3"
 										BrowseInformation="1"/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32">
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""/>
 								</FileConfiguration>
 							</File>
 						</Filter>
@@ -1049,13 +776,6 @@
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
-							</FileConfiguration>
 						</File>
 					</Filter>
 					<Filter
@@ -1079,13 +799,6 @@
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\upnp\src\genlib\util\strintmap.c">
@@ -1104,13 +817,6 @@
 									AdditionalIncludeDirectories=""
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
 							</FileConfiguration>
 						</File>
 						<File
@@ -1131,13 +837,6 @@
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
 							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
-							</FileConfiguration>
 						</File>
 						<File
 							RelativePath="..\upnp\src\genlib\util\util.c">
@@ -1156,13 +855,6 @@
 									AdditionalIncludeDirectories=""
 									BasicRuntimeChecks="3"
 									BrowseInformation="1"/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32">
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""/>
 							</FileConfiguration>
 						</File>
 					</Filter>
@@ -1188,13 +880,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\soap\soap_device.c">
@@ -1213,13 +898,6 @@
 								AdditionalIncludeDirectories=""
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
 						</FileConfiguration>
 					</File>
 					<File
@@ -1247,13 +925,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\ssdp\ssdp_device.c">
@@ -1273,13 +944,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\ssdp\ssdp_server.c">
@@ -1298,13 +962,6 @@
 								AdditionalIncludeDirectories=""
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
 						</FileConfiguration>
 					</File>
 				</Filter>
@@ -1329,13 +986,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter
@@ -1359,13 +1009,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\uuid\sysdep.c">
@@ -1385,13 +1028,6 @@
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
 						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
-						</FileConfiguration>
 					</File>
 					<File
 						RelativePath="..\upnp\src\uuid\uuid.c">
@@ -1410,13 +1046,6 @@
 								AdditionalIncludeDirectories=""
 								BasicRuntimeChecks="3"
 								BrowseInformation="1"/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32">
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""/>
 						</FileConfiguration>
 					</File>
 				</Filter>

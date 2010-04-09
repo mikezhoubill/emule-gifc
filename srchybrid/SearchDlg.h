@@ -66,11 +66,7 @@ public:
 
 	void UpdateSearch(CSearchFile* pSearchFile);
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	void OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	void OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	// >> modified by Ken -- change attribute from protected to public
 	CSearchParamsWnd* m_pwndParams;

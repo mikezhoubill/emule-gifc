@@ -2,12 +2,7 @@
 
 class CCustomAutoComplete;
 
-// MORPH START leuk_he tooltipped
-/*
 class CPPgSecurity : public CPropertyPage
-*/
-class CPPgSecurity  : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgSecurity)
 

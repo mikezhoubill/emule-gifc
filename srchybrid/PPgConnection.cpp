@@ -17,7 +17,6 @@
 #include "stdafx.h"
 #include <math.h>
 #include "emule.h"
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 #include "PPgConnection.h"
 #include "wizard.h"
 #include "Scheduler.h"
@@ -32,13 +31,17 @@
 #include "Firewallopener.h"
 #include "ListenSocket.h"
 #include "ClientUDPSocket.h"
+//Xman
+/*
 #include "LastCommonRouteFinder.h"
-#include "downloadqueue.h" //MORPH -  zzRatio activation 
+*/
+#include "Log.h" //Xman
+#include "DownloadQueue.h" // Global Source Limit [Max/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -58,29 +61,34 @@ BEGIN_MESSAGE_MAP(CPPgConnection, CPropertyPage)
 	ON_BN_CLICKED(IDC_WIZARD, OnBnClickedWizard)
 	ON_BN_CLICKED(IDC_NETWORK_ED2K, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SHOWOVERHEAD, OnSettingsChange)
+	//Xman Xtreme Upload
+	/*
 	ON_BN_CLICKED(IDC_ULIMIT_LBL, OnLimiterChange)
 	ON_BN_CLICKED(IDC_DLIMIT_LBL, OnLimiterChange)
+	*/
+	ON_EN_CHANGE(IDC_MAXDOWN, OnSettingsChange)
+	ON_EN_CHANGE(IDC_MAXUP, OnSettingsChange)
+	ON_EN_KILLFOCUS(IDC_MAXUP, OnEnKillfocusMaxup)
+	//Xman end
+	//Xman GlobalMaxHarlimit for fairness
+	ON_BN_CLICKED(IDC_ACCEPTRATIO, OnSettingsChange)
+	ON_BN_CLICKED(IDC_ACCEPTSOURCES, OnSettingsChange)
+	//Xman end
 	ON_WM_HSCROLL()
 	ON_BN_CLICKED(IDC_NETWORK_KADEMLIA, OnSettingsChange)
 	ON_WM_HELPINFO()
 	ON_BN_CLICKED(IDC_OPENPORTS, OnBnClickedOpenports)
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	ON_BN_CLICKED(IDC_PREF_UPNPONSTART, OnSettingsChange)
-	//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-	ON_BN_CLICKED(IDC_RANDOMPORTS, OnRandomPortsChange)
-	//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
-
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 END_MESSAGE_MAP()
 
-
 CPPgConnection::CPPgConnection()
-// MORPRH START leuk_he tooltipped
-/*
-   : CPropertyPage(CPPgConnection::IDD)
-*/
-	: CPPgtooltipped(CPPgConnection::IDD)
-// MORPRH END leuk_he tooltipped
+	: CPropertyPage(CPPgConnection::IDD)
 {
-	guardian=false;
+	guardian = false;
 }
 
 CPPgConnection::~CPPgConnection()
@@ -90,31 +98,19 @@ CPPgConnection::~CPPgConnection()
 void CPPgConnection::DoDataExchange(CDataExchange* pDX)
 {
 	CPropertyPage::DoDataExchange(pDX);
+	//Xman
+	/*
 	DDX_Control(pDX, IDC_MAXDOWN_SLIDER, m_ctlMaxDown);
+	*/
+	//Xman end
 	DDX_Control(pDX, IDC_MAXUP_SLIDER, m_ctlMaxUp);
-	//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-	CString text;
 
-	DDX_Control(pDX, IDC_MINPORT, m_minRndPort);
-	m_minRndPort.GetWindowText(text);
-	DDV_MinMaxInt(pDX,_ttoi(text),1,0xFFFF);
-
-	DDX_Control(pDX, IDC_MAXPORT, m_maxRndPort);
-	m_maxRndPort.GetWindowText(text);
-	DDV_MinMaxInt(pDX,_ttoi(text),1,0xFFFF);
-
-	DDX_Control(pDX, IDC_SPIN_MIN, m_minRndPortSpin);
-	DDX_Control(pDX, IDC_SPIN_MAX, m_maxRndPortSpin);
-	//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
-	// MORPH START leuk_he zz ratio active warning
-	DDX_Control(pDX, IDC_ZZRATIOICON, m_ZZratioIcon);
-	if (theApp.downloadqueue->IsZZRatioInWork()){ 
-		GetDlgItem(IDC_ZZRATIOISACTIVTEXT )->SetWindowText(GetResString(IDS_ZZRATIO)+_T(" ")+GetResString(IDS_ZZRATIO_ENABLED ));
-	}
-	else {
-		GetDlgItem(IDC_ZZRATIOISACTIVTEXT )->SetWindowText(L" "); // clear text, not icon. 
-	}
-	// MORPH END leuk_he zz ratio active warning
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	DDX_Control(pDX, IDC_MAXUP, m_maxUpload);
+	DDX_Control(pDX, IDC_UPLOAD_CAP, m_maxUploadCapacity);
+	DDX_Control(pDX, IDC_MAXDOWN, m_maxDownload);
+	DDX_Control(pDX, IDC_DOWNLOAD_CAP, m_maxDownloadCapacity);
+	// Maella end
 
 }
 
@@ -138,13 +134,13 @@ void CPPgConnection::OnEnChangePorts(uint8 istcpport)
 	uint16 udp = (uint16)_tstoi(buffer);
 
 	GetDlgItem(IDC_STARTTEST)->EnableWindow( 
-		tcp==theApp.listensocket->GetConnectedPort() && 
-		udp==theApp.clientudp->GetConnectedPort() 
+		tcp == theApp.listensocket->GetConnectedPort() && 
+		udp == theApp.clientudp->GetConnectedPort() 
 	);
 
-	if (istcpport==0)
+	if (istcpport == 0)
 		OnEnChangeUDPDisable();
-	else if (istcpport==1)
+	else if (istcpport == 1)
 		OnSettingsChange();
 }
 
@@ -153,23 +149,18 @@ void CPPgConnection::OnEnChangeUDPDisable()
 	if (guardian)
 		return;
 
-		uint16 tempVal=0;
+	uint16 tempVal = 0;
 	CString strBuffer;
 	TCHAR buffer[510];
-
-	guardian=true;
+	
+	guardian = true;
 	SetModified();
 
-	//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-	/*
 	GetDlgItem(IDC_UDPPORT)->EnableWindow(!IsDlgButtonChecked(IDC_UDPDISABLE));
-	*/
-	GetDlgItem(IDC_UDPPORT)->EnableWindow(!IsDlgButtonChecked(IDC_UDPDISABLE) && !IsDlgButtonChecked(IDC_RANDOMPORTS));
-	//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
 
-	if(GetDlgItem(IDC_UDPPORT)->GetWindowTextLength())
+	if (GetDlgItem(IDC_UDPPORT)->GetWindowTextLength())
 	{
-		GetDlgItem(IDC_UDPPORT)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_UDPPORT)->GetWindowText(buffer, 20);
 		tempVal = (uint16)_tstoi(buffer);
 	}
 	else
@@ -178,8 +169,8 @@ void CPPgConnection::OnEnChangeUDPDisable()
 	if (IsDlgButtonChecked(IDC_UDPDISABLE) || (!IsDlgButtonChecked(IDC_UDPDISABLE) && tempVal == 0))
 	{
 		tempVal = (uint16)_tstoi(buffer) ? (uint16)(_tstoi(buffer)+10) : (uint16)(thePrefs.port+10);
-		if ( IsDlgButtonChecked(IDC_UDPDISABLE))
-			tempVal=0;
+		if (IsDlgButtonChecked(IDC_UDPDISABLE))
+			tempVal = 0;
 		strBuffer.Format(_T("%d"), tempVal);
 		GetDlgItem(IDC_UDPPORT)->SetWindowText(strBuffer);
 	}
@@ -190,7 +181,7 @@ void CPPgConnection::OnEnChangeUDPDisable()
 		CheckDlgButton(IDC_NETWORK_KADEMLIA, 0);
 	GetDlgItem(IDC_NETWORK_KADEMLIA)->EnableWindow(IsDlgButtonChecked(IDC_UDPDISABLE) == 0);
 
-	guardian=false;
+	guardian = false;
 }
 
 BOOL CPPgConnection::OnInitDialog()
@@ -198,53 +189,33 @@ BOOL CPPgConnection::OnInitDialog()
 	CPropertyPage::OnInitDialog();
 	InitWindowStyles(this);
 
-	//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-	m_minRndPortSpin.SetBuddy(&m_minRndPort);
-	m_minRndPortSpin.SetRange32(1,0xffff);
-	m_maxRndPortSpin.SetBuddy(&m_maxRndPort);
-	m_maxRndPortSpin.SetRange32(1,0xffff);
-	//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
-    // MORPH START  luek_he zzratio warning
-	if (theApp.downloadqueue->IsZZRatioInWork()){ 
-		// NEVER DISTRIBUTE a version with the ratio disabled. 
-		// you will hurt the network and your OWN download
-		// if you want faster downloads distribute a version
-		// that has a stricter (1:2.5 always) ratio that forces everyone to upload
-		// faster, so your and their download will get faster.
-		HICON h_zzratioicon= theApp.LoadIcon(_T("ZZRATIO"));
-        m_ZZratioIcon.SetIcon(h_zzratioicon);
-		GetDlgItem(IDC_ZZRATIOISACTIVTEXT )->SetWindowText(GetResString(IDS_ZZRATIO)+_T(" ")+GetResString(IDS_ZZRATIO_ENABLED ));
-	}
-	// MORPH END leuk_he zzratio warning
 	LoadSettings();
-	InitTooltips(); // MORPH leuk_he tooltipped
 	Localize();
 
 	OnEnChangePorts(2);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 void CPPgConnection::LoadSettings(void)
 {
-	if(m_hWnd)
+	if (m_hWnd)
 	{
-		if( thePrefs.maxupload != 0 )
-			thePrefs.maxdownload =thePrefs.GetMaxDownload();
+		if (thePrefs.maxupload != 0)
+			thePrefs.maxdownload = thePrefs.GetMaxDownload();
 
 		CString strBuffer;
 		
 		strBuffer.Format(_T("%d"), thePrefs.udpport);
 		GetDlgItem(IDC_UDPPORT)->SetWindowText(strBuffer);
-		CheckDlgButton(IDC_UDPDISABLE,(thePrefs.udpport==0));
+		CheckDlgButton(IDC_UDPDISABLE, (thePrefs.udpport == 0));
 
-		//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-		/*		
-		GetDlgItem(IDC_UDPPORT)->EnableWindow(thePrefs.udpport>0);
-		*/
-		//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
+		GetDlgItem(IDC_UDPPORT)->EnableWindow(thePrefs.udpport > 0);
 	
+		//Xman
+		// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+		/*
 		strBuffer.Format(_T("%d"), thePrefs.maxGraphDownloadRate);
 		GetDlgItem(IDC_DOWNLOAD_CAP)->SetWindowText(strBuffer);
 
@@ -252,7 +223,7 @@ void CPPgConnection::LoadSettings(void)
 		SetRateSliderTicks(m_ctlMaxDown);
 
 		if (thePrefs.maxGraphUploadRate != UNLIMITED)
-		strBuffer.Format(_T("%d"), thePrefs.maxGraphUploadRate);
+			strBuffer.Format(_T("%d"), thePrefs.maxGraphUploadRate);
 		else
 			strBuffer = _T("0");
 		GetDlgItem(IDC_UPLOAD_CAP)->SetWindowText(strBuffer);
@@ -260,11 +231,39 @@ void CPPgConnection::LoadSettings(void)
 		m_ctlMaxUp.SetRange(1, thePrefs.GetMaxGraphUploadRate(true));
 		SetRateSliderTicks(m_ctlMaxUp);
 
-		CheckDlgButton( IDC_DLIMIT_LBL, (thePrefs.maxdownload!=UNLIMITED) );
-		CheckDlgButton( IDC_ULIMIT_LBL, (thePrefs.maxupload!=UNLIMITED) );
+		CheckDlgButton( IDC_DLIMIT_LBL, (thePrefs.maxdownload != UNLIMITED));
+		CheckDlgButton( IDC_ULIMIT_LBL, (thePrefs.maxupload != UNLIMITED));
 
 		m_ctlMaxDown.SetPos((thePrefs.maxdownload != UNLIMITED) ? thePrefs.maxdownload : thePrefs.maxGraphDownloadRate);
 		m_ctlMaxUp.SetPos((thePrefs.maxupload != UNLIMITED) ? thePrefs.maxupload : thePrefs.GetMaxGraphUploadRate(true));
+		*/
+		strBuffer.Format(_T("%.1f"),(float) thePrefs.maxGraphDownloadRate);
+		GetDlgItem(IDC_DOWNLOAD_CAP)->SetWindowText(strBuffer);
+
+
+		strBuffer.Format(_T("%.1f"), (float)thePrefs.maxGraphUploadRate);
+		GetDlgItem(IDC_UPLOAD_CAP)->SetWindowText(strBuffer);
+
+		if(thePrefs.GetMaxDownload() >= UNLIMITED){
+			// Maybe a string "unlimited" would be better
+			strBuffer.Format(_T("%.1f"), 0.0f); // To have ',' or '.' (see french)
+			GetDlgItem(IDC_MAXDOWN)->SetWindowText(strBuffer); 
+		}
+		else {
+			strBuffer.Format(_T("%.1f"), (float)thePrefs.GetMaxDownload());
+			GetDlgItem(IDC_MAXDOWN)->SetWindowText(strBuffer);
+		}
+		
+		if(thePrefs.GetMaxUpload() >= UNLIMITED){
+			// Maybe a string "unlimited" would be better
+			strBuffer.Format(_T("%.1f"), 0.0f); // To have ',' or '.' (see french)
+			GetDlgItem(IDC_MAXUP)->SetWindowText(strBuffer); 
+		}
+		else {
+			strBuffer.Format(_T("%.1f"), (float)thePrefs.maxupload);
+			GetDlgItem(IDC_MAXUP)->SetWindowText(strBuffer);
+		}
+		//Xman end		
 
 		strBuffer.Format(_T("%d"), thePrefs.port);
 		GetDlgItem(IDC_PORT)->SetWindowText(strBuffer);
@@ -272,7 +271,7 @@ void CPPgConnection::LoadSettings(void)
 		strBuffer.Format(_T("%d"), thePrefs.maxconnections);
 		GetDlgItem(IDC_MAXCON)->SetWindowText(strBuffer);
 
-		if(thePrefs.maxsourceperfile == 0xFFFF)
+		if (thePrefs.maxsourceperfile == 0xFFFF)
 			GetDlgItem(IDC_MAXSOURCEPERFILE)->SetWindowText(_T("0"));
 		else{
 			strBuffer.Format(_T("%d"), thePrefs.maxsourceperfile);
@@ -280,94 +279,107 @@ void CPPgConnection::LoadSettings(void)
 		}
 
 		if (thePrefs.reconnect)
-			CheckDlgButton(IDC_RECONN,1);
+			CheckDlgButton(IDC_RECONN, 1);
 		else
-			CheckDlgButton(IDC_RECONN,0);
+			CheckDlgButton(IDC_RECONN, 0);
 		
 		if (thePrefs.m_bshowoverhead)
-			CheckDlgButton(IDC_SHOWOVERHEAD,1);
+			CheckDlgButton(IDC_SHOWOVERHEAD, 1);
 		else
-			CheckDlgButton(IDC_SHOWOVERHEAD,0);
+			CheckDlgButton(IDC_SHOWOVERHEAD, 0);
 
 		if (thePrefs.autoconnect)
-			CheckDlgButton(IDC_AUTOCONNECT,1);
+			CheckDlgButton(IDC_AUTOCONNECT, 1);
 		else
-			CheckDlgButton(IDC_AUTOCONNECT,0);
+			CheckDlgButton(IDC_AUTOCONNECT, 0);
 
 		if (thePrefs.GetNetworkKademlia())
-			CheckDlgButton(IDC_NETWORK_KADEMLIA,1);
+			CheckDlgButton(IDC_NETWORK_KADEMLIA, 1);
 		else
-			CheckDlgButton(IDC_NETWORK_KADEMLIA,0);
+			CheckDlgButton(IDC_NETWORK_KADEMLIA, 0);
 		GetDlgItem(IDC_NETWORK_KADEMLIA)->EnableWindow(thePrefs.GetUDPPort() > 0);
 
 		if (thePrefs.networked2k)
-			CheckDlgButton(IDC_NETWORK_ED2K,1);
+			CheckDlgButton(IDC_NETWORK_ED2K, 1);
 		else
-			CheckDlgButton(IDC_NETWORK_ED2K,0);
+			CheckDlgButton(IDC_NETWORK_ED2K, 0);
 
 		// don't try on XP SP2 or higher, not needed there anymore
+		// ==> UPnP support [MoNKi] - leuk_he
+		/*
 		if (thePrefs.GetWindowsVersion() == _WINVER_XP_ && IsRunningXPSP2() == 0 && theApp.m_pFirewallOpener->DoesFWConnectionExist())
+		{//zz_fly
 			GetDlgItem(IDC_OPENPORTS)->ShowWindow(SW_SHOW);
+			GetDlgItem(IDC_PREF_UPNPONSTART)->ShowWindow(SW_HIDE); //zz_fly :: show upnp option when there is enough place
+		}//zz_fly
 		else
+		{//zz_fly
 			GetDlgItem(IDC_OPENPORTS)->ShowWindow(SW_HIDE);
-
-		//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-		CString rndText;
-
-		CheckDlgButton(IDC_RANDOMPORTS,thePrefs.GetUseRandomPorts());
-		rndText.Format(_T("%u"), thePrefs.GetMinRandomPort());
-		m_minRndPort.SetWindowText(rndText);
-		rndText.Format(_T("%u"), thePrefs.GetMaxRandomPort());
-		m_maxRndPort.SetWindowText(rndText);
-
-		GetDlgItem(IDC_PORT)->EnableWindow(!thePrefs.GetUseRandomPorts());
-		GetDlgItem(IDC_UDPPORT)->EnableWindow(!thePrefs.GetUseRandomPorts() && thePrefs.udpport>0);
+			GetDlgItem(IDC_PREF_UPNPONSTART)->ShowWindow(SW_SHOW); //zz_fly :: show upnp option when there is enough place
 		
-		m_minRndPort.EnableWindow(thePrefs.GetUseRandomPorts());
-		m_maxRndPort.EnableWindow(thePrefs.GetUseRandomPorts());
-		m_minRndPortSpin.EnableWindow(thePrefs.GetUseRandomPorts());
-		m_maxRndPortSpin.EnableWindow(thePrefs.GetUseRandomPorts());
-		//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
-   /* upnp would work on win95 on morph... if morph did work on win95 ;) 
+
 		if (thePrefs.GetWindowsVersion() != _WINVER_95_ && thePrefs.GetWindowsVersion() != _WINVER_98_ && thePrefs.GetWindowsVersion() != _WINVER_NT4_)
 			GetDlgItem(IDC_PREF_UPNPONSTART)->EnableWindow(true);
 		else
 			GetDlgItem(IDC_PREF_UPNPONSTART)->EnableWindow(false);
-    */
+		}//zz_fly
 
-#ifdef USE_OFFICIAL_UPNP
 		if (thePrefs.IsUPnPEnabled())
-#else
-		if (thePrefs.IsUPnPNat())
-#endif
 			CheckDlgButton(IDC_PREF_UPNPONSTART, 1);
 		else
 			CheckDlgButton(IDC_PREF_UPNPONSTART, 0);
+		*/
+		if (thePrefs.GetWindowsVersion() == _WINVER_XP_ && IsRunningXPSP2() == 0 && theApp.m_pFirewallOpener->DoesFWConnectionExist())
+			GetDlgItem(IDC_OPENPORTS)->ShowWindow(SW_SHOW);
+		else
+			GetDlgItem(IDC_OPENPORTS)->ShowWindow(SW_HIDE);
+		// <== UPnP support [MoNKi] - leuk_he
 
+		//Xman Xtreme Upload
+		CalculateMaxUpSlotSpeed();
+		m_ctlMaxUp.SetPos((int)(thePrefs.m_slotspeed*10.0f +0.5f));		
 		ShowLimitValues();
+		//Xman end
+
+		//Xman Xtreme Upload
+		/*
 		OnLimiterChange();
+		*/
+		//Xman end
+		
+		//Xman GlobalMaxHarlimit for fairness
+		strBuffer.Format(_T("%u"),thePrefs.m_uMaxGlobalSources);
+		GetDlgItem(IDC_MAXGLOBALSOURCES)->SetWindowText(strBuffer);
+		if(thePrefs.m_bAcceptsourcelimit==true)
+			CheckDlgButton(IDC_ACCEPTSOURCES,TRUE);
+		else
+			CheckDlgButton(IDC_ACCEPTRATIO,TRUE);
+		//Xman end
 	}
 }
 
 BOOL CPPgConnection::OnApply()
 {
 	TCHAR buffer[510];
+	//Xman
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	/*
 	int lastmaxgu = thePrefs.maxGraphUploadRate;
 	int lastmaxgd = thePrefs.maxGraphDownloadRate;
 	bool bRestartApp = false;
 
-	if(GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowTextLength())
+	if (GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowTextLength())
 	{ 
-		GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowText(buffer, 20);
 		thePrefs.SetMaxGraphDownloadRate(_tstoi(buffer));
 	}
 
 	m_ctlMaxDown.SetRange(1, thePrefs.GetMaxGraphDownloadRate(), TRUE);
 	SetRateSliderTicks(m_ctlMaxDown);
 
-	if(GetDlgItem(IDC_UPLOAD_CAP)->GetWindowTextLength())
+	if (GetDlgItem(IDC_UPLOAD_CAP)->GetWindowTextLength())
 	{
-		GetDlgItem(IDC_UPLOAD_CAP)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_UPLOAD_CAP)->GetWindowText(buffer, 20);
 		thePrefs.SetMaxGraphUploadRate(_tstoi(buffer));
 	}
 
@@ -375,15 +387,15 @@ BOOL CPPgConnection::OnApply()
 	SetRateSliderTicks(m_ctlMaxUp);
 
     {
-        UINT ulSpeed;   //MORPH uint16 is not enough
+        uint16 ulSpeed;
 
-		if (!IsDlgButtonChecked(IDC_ULIMIT_LBL))
+	    if (!IsDlgButtonChecked(IDC_ULIMIT_LBL))
 		    ulSpeed = UNLIMITED;
-		else
-		    ulSpeed = m_ctlMaxUp.GetPos(); //MORPH uint16 is not enough
+	    else
+		    ulSpeed = (uint16)m_ctlMaxUp.GetPos();
 
 	    if (thePrefs.GetMaxGraphUploadRate(true) < ulSpeed && ulSpeed != UNLIMITED)
-		    ulSpeed = ((thePrefs.GetMaxGraphUploadRate(true) * 4)  /5); //MORPH uint16 is not enough  
+		    ulSpeed = (uint16)(thePrefs.GetMaxGraphUploadRate(true) * 0.8);
 
         if(ulSpeed > thePrefs.GetMaxUpload()) {
             // make USS go up to higher ul limit faster
@@ -393,7 +405,7 @@ BOOL CPPgConnection::OnApply()
         thePrefs.SetMaxUpload(ulSpeed);
     }
 
-	if (thePrefs.GetMaxUpload()!=UNLIMITED)
+	if (thePrefs.GetMaxUpload() != UNLIMITED)
 		m_ctlMaxUp.SetPos(thePrefs.GetMaxUpload());
 	
 	if (!IsDlgButtonChecked(IDC_DLIMIT_LBL))
@@ -401,15 +413,86 @@ BOOL CPPgConnection::OnApply()
 	else
 		thePrefs.SetMaxDownload(m_ctlMaxDown.GetPos());
 
-	if( thePrefs.GetMaxGraphDownloadRate() < thePrefs.GetMaxDownload() && thePrefs.GetMaxDownload()!=UNLIMITED )
-		thePrefs.SetMaxDownload((thePrefs.GetMaxGraphDownloadRate() * 4 / 5));	//MORPH uint16 is not enough.
+	if (thePrefs.GetMaxGraphDownloadRate() < thePrefs.GetMaxDownload() && thePrefs.GetMaxDownload() != UNLIMITED)
+		thePrefs.SetMaxDownload((uint16)(thePrefs.GetMaxGraphDownloadRate() * 0.8));
 
-	if (thePrefs.GetMaxDownload()!=UNLIMITED)
+	if (thePrefs.GetMaxDownload() != UNLIMITED)
 		m_ctlMaxDown.SetPos(thePrefs.GetMaxDownload());
+	*/
+	bool bRestartApp = false;
 
-	if(GetDlgItem(IDC_PORT)->GetWindowTextLength())
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	float lastMaxGraphUploadRate = thePrefs.GetMaxGraphUploadRate();
+	float lastMaxGraphDownloadRate = thePrefs.GetMaxGraphDownloadRate();
+
+	//Xman after changing capacity the sysmenu must be updated
+	bool caphaschanged = false;
+	//Xman end
+
+	// Upload rate max, Upload rate graph
+	if(GetDlgItem(IDC_UPLOAD_CAP)->GetWindowTextLength() > 0)
+	{ 
+		GetDlgItem(IDC_UPLOAD_CAP)->GetWindowText(buffer, 20);
+		float upload = (float)_tstof(buffer);
+		//Xman after changing capacity the sysmenu must be updated
+		if(upload != lastMaxGraphUploadRate)
+			caphaschanged = true;
+		//Xman end
+		if(upload<= 0.0f || upload >= UNLIMITED)
+			thePrefs.SetMaxGraphUploadRate(16.0f);
+		else if(upload<5.0f)
+			thePrefs.SetMaxGraphUploadRate(5.0f);
+		else
+			thePrefs.SetMaxGraphUploadRate(upload);
+	}
+	// Download rate max, Download rate graph
+	if(GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowTextLength() > 0)
 	{
-		GetDlgItem(IDC_PORT)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_DOWNLOAD_CAP)->GetWindowText(buffer, 20);
+		float download = (float)_tstof(buffer);
+		//Xman after changing capacity the sysmenu must be updated
+		if(download != lastMaxGraphDownloadRate)
+			caphaschanged = true;
+		//Xman end
+		thePrefs.SetMaxGraphDownloadRate((download <= 0) ? 96.0f : download);
+	}
+
+	//Xman after changing capacity the sysmenu must be updated
+	if(caphaschanged==true)
+		theApp.emuledlg->Localize(); //dirty hack which updated the sysmenu
+	//Xman end
+
+	// Upload rate
+	if(GetDlgItem(IDC_MAXUP)->GetWindowTextLength())
+	{
+		GetDlgItem(IDC_MAXUP)->GetWindowText(buffer,20);
+		float upload = (float)_tstof(buffer);
+		if(upload<= 0.0f || upload >= UNLIMITED)
+			thePrefs.SetMaxUpload(11.0f);
+		else if(upload<3.0f)
+			thePrefs.SetMaxUpload(3.0f);
+		else
+			thePrefs.SetMaxUpload(upload);
+		
+	}
+	// Download rate
+	if(GetDlgItem(IDC_MAXDOWN)->GetWindowTextLength())
+	{
+		GetDlgItem(IDC_MAXDOWN)->GetWindowText(buffer,20);
+		double download = (float)_tstof(buffer);
+		thePrefs.SetMaxDownload((download <= 0.0f || download >= UNLIMITED) ? UNLIMITED : (float)download);
+	}
+
+	if (thePrefs.GetMaxGraphUploadRate() < thePrefs.GetMaxUpload() && thePrefs.GetMaxUpload() != UNLIMITED)
+		thePrefs.SetMaxUpload(thePrefs.GetMaxGraphUploadRate() * 0.8f);
+
+	if (thePrefs.GetMaxGraphDownloadRate() < thePrefs.GetMaxDownload() && thePrefs.GetMaxDownload() != UNLIMITED)
+		thePrefs.SetMaxDownload(thePrefs.GetMaxGraphDownloadRate() * 0.8f);
+	//Xman end
+
+	if (GetDlgItem(IDC_PORT)->GetWindowTextLength())
+	{
+		GetDlgItem(IDC_PORT)->GetWindowText(buffer, 20);
 		uint16 nNewPort = ((uint16)_tstoi(buffer)) ? (uint16)_tstoi(buffer) : (uint16)thePrefs.port;
 		if (nNewPort != thePrefs.port){
 			thePrefs.port = nNewPort;
@@ -417,21 +500,22 @@ BOOL CPPgConnection::OnApply()
 				theApp.listensocket->Rebind();
 			else
 				bRestartApp = true;
-			//MORPH START - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+
+			// ==> Improved ICS-Firewall support [MoNKi] - Max
 			theApp.m_pFirewallOpener->ClearMappingsAtEnd();
-			//MORPH END   - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+			// <== Improved ICS-Firewall support [MoNKi] - Max
 		}
 	}
 	
-	if(GetDlgItem(IDC_MAXSOURCEPERFILE)->GetWindowTextLength())
+	if (GetDlgItem(IDC_MAXSOURCEPERFILE)->GetWindowTextLength())
 	{
-		GetDlgItem(IDC_MAXSOURCEPERFILE)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_MAXSOURCEPERFILE)->GetWindowText(buffer, 20);
 		thePrefs.maxsourceperfile = (_tstoi(buffer)) ? _tstoi(buffer) : 1;
 	}
 
-	if(GetDlgItem(IDC_UDPPORT)->GetWindowTextLength())
+	if (GetDlgItem(IDC_UDPPORT)->GetWindowTextLength())
 	{
-		GetDlgItem(IDC_UDPPORT)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_UDPPORT)->GetWindowText(buffer, 20);
 		uint16 nNewPort = ((uint16)_tstoi(buffer) && !IsDlgButtonChecked(IDC_UDPDISABLE)) ? (uint16)_tstoi(buffer) : (uint16)0;
 		if (nNewPort != thePrefs.udpport){
 			thePrefs.udpport = nNewPort;
@@ -439,35 +523,44 @@ BOOL CPPgConnection::OnApply()
 				theApp.clientudp->Rebind();
 			else 
 				bRestartApp = true;
-			//MORPH START - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+
+			// ==> Improved ICS-Firewall support [MoNKi] - Max
 			theApp.m_pFirewallOpener->ClearMappingsAtEnd();
-			//MORPH START - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+			// <== Improved ICS-Firewall support [MoNKi] - Max
 		}
 	}
 
-	if(IsDlgButtonChecked(IDC_SHOWOVERHEAD)){
+	if (IsDlgButtonChecked(IDC_SHOWOVERHEAD)){
+		//Xman
+		/*
 		if (!thePrefs.m_bshowoverhead){
 			// reset overhead data counters before starting to meassure!
 			theStats.ResetDownDatarateOverhead();
 			theStats.ResetUpDatarateOverhead();
 		}
+		*/
+		//Xman end
 		thePrefs.m_bshowoverhead = true;
 	}
 	else{
+		//Xman
+		/*
 		if (thePrefs.m_bshowoverhead){
 			// free memory used by overhead computations
 			theStats.ResetDownDatarateOverhead();
 			theStats.ResetUpDatarateOverhead();
 		}
+		*/
+		//Xman end
 		thePrefs.m_bshowoverhead = false;
 	}
 
-	if(IsDlgButtonChecked(IDC_NETWORK_KADEMLIA))
+	if (IsDlgButtonChecked(IDC_NETWORK_KADEMLIA))
 		thePrefs.SetNetworkKademlia(true);
 	else
 		thePrefs.SetNetworkKademlia(false);
 
-	if(IsDlgButtonChecked(IDC_NETWORK_ED2K))
+	if (IsDlgButtonChecked(IDC_NETWORK_ED2K))
 		thePrefs.SetNetworkED2K(true);
 	else
 		thePrefs.SetNetworkED2K(false);
@@ -477,24 +570,61 @@ BOOL CPPgConnection::OnApply()
 	thePrefs.autoconnect = IsDlgButtonChecked(IDC_AUTOCONNECT)!=0;
 	thePrefs.reconnect = IsDlgButtonChecked(IDC_RECONN)!=0;
 		
-	if(lastmaxgu != thePrefs.maxGraphUploadRate) 
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	/*
+	if (lastmaxgu != thePrefs.maxGraphUploadRate) 
 		theApp.emuledlg->statisticswnd->SetARange(false, thePrefs.GetMaxGraphUploadRate(true));
-	if(lastmaxgd!=thePrefs.maxGraphDownloadRate)
-		theApp.emuledlg->statisticswnd->SetARange(true,thePrefs.maxGraphDownloadRate);
+	if (lastmaxgd!=thePrefs.maxGraphDownloadRate)
+		theApp.emuledlg->statisticswnd->SetARange(true, thePrefs.maxGraphDownloadRate);
+	*/
+	if(lastMaxGraphUploadRate != thePrefs.GetMaxGraphUploadRate()) 
+		theApp.emuledlg->statisticswnd->SetARange(false, (int)thePrefs.GetMaxGraphUploadRate());
+	if(lastMaxGraphDownloadRate != thePrefs.GetMaxGraphDownloadRate())
+		theApp.emuledlg->statisticswnd->SetARange(true, (int)thePrefs.GetMaxGraphDownloadRate());
+	// Maella end
+
+
+	//Xman Xtreme Upload
+	CalculateMaxUpSlotSpeed();
+	thePrefs.m_slotspeed=(float)m_ctlMaxUp.GetPos()/10.0f;
+	thePrefs.CheckSlotSpeed(); // Alwasy maximize slot speed [Stulle] - Stulle
+
+	//Xman GlobalMaxHarlimit for fairness
+	GetDlgItem(IDC_MAXGLOBALSOURCES)->GetWindowText(buffer,20);
+	// ==> Global Source Limit [Max/Stulle] - Stulle
+	/*
+	thePrefs.m_uMaxGlobalSources=(_tstoi(buffer)) ? _tstoi(buffer) : 1000;
+	thePrefs.m_bAcceptsourcelimit=IsDlgButtonChecked(IDC_ACCEPTSOURCES)!=0;
+	//Xman end
+	*/
+	UINT temp = (_tstoi(buffer)) ? _tstoi(buffer) : 1000;
+	thePrefs.m_bAcceptsourcelimit=IsDlgButtonChecked(IDC_ACCEPTSOURCES)!=0;
+
+	if(thePrefs.m_uMaxGlobalSources != temp &&
+		thePrefs.m_bAcceptsourcelimit == false &&
+		thePrefs.IsUseGlobalHL() &&
+		theApp.downloadqueue->GetPassiveMode())
+	{
+		theApp.downloadqueue->SetPassiveMode(false);
+		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
+		AddDebugLogLine(true,_T("{GSL} Global Max Hardlimit changed! Disabled PassiveMode!"));
+	}
+	thePrefs.m_uMaxGlobalSources = temp;
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
 	UINT tempcon = thePrefs.maxconnections;
-	if(GetDlgItem(IDC_MAXCON)->GetWindowTextLength())
+	if (GetDlgItem(IDC_MAXCON)->GetWindowTextLength())
 	{
-		GetDlgItem(IDC_MAXCON)->GetWindowText(buffer,20);
+		GetDlgItem(IDC_MAXCON)->GetWindowText(buffer, 20);
 		tempcon = (_tstoi(buffer)) ? _tstoi(buffer) : CPreferences::GetRecommendedMaxConnections();
 	}
 
-	if(tempcon > (unsigned)::GetMaxWindowsTCPConnections())
+	if (tempcon > (unsigned)::GetMaxWindowsTCPConnections())
 	{
 		CString strMessage;
 		strMessage.Format(GetResString(IDS_PW_WARNING), GetResString(IDS_PW_MAXC), ::GetMaxWindowsTCPConnections());
 		int iResult = AfxMessageBox(strMessage, MB_ICONWARNING | MB_YESNO);
-		if(iResult != IDYES)
+		if (iResult != IDYES)
 		{
 			//TODO: set focus to max connection?
 			strMessage.Format(_T("%d"), thePrefs.maxconnections);
@@ -504,7 +634,8 @@ BOOL CPPgConnection::OnApply()
 	}
 	thePrefs.maxconnections = tempcon;
 
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	if (IsDlgButtonChecked(IDC_PREF_UPNPONSTART) != 0){
 		if (!thePrefs.IsUPnPEnabled()){
 			thePrefs.m_bEnableUPnP = true;
@@ -513,79 +644,15 @@ BOOL CPPgConnection::OnApply()
 	}
 	else
 		thePrefs.m_bEnableUPnP = false;
-#else /* MORPH START unpnp */
-	if((BOOL)thePrefs.IsUPnPNat() != (IsDlgButtonChecked(IDC_PREF_UPNPONSTART) != 0) )
-	{
-  		theApp.m_UPnP_IGDControlPoint->SetUPnPNat((IsDlgButtonChecked(IDC_PREF_UPNPONSTART) != 0)); // and start/stop nat. 
-	}
-#endif /* MORPH END unpnp */
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 
-	//MORPH START - Added by SiRoB, [MoNKi: [MoNKi: -Random Ports-]
-	bool oldUseRandom = thePrefs.GetUseRandomPorts();
-	thePrefs.SetUseRandomPorts(IsDlgButtonChecked(IDC_RANDOMPORTS)!=0);
+	theApp.scheduler->SaveOriginals();
 
-	unsigned long rndValue1, rndValue2, oldRndMin, oldRndMax;
-	CString rndText;
-	m_minRndPort.GetWindowText(rndText);
-	rndValue1 = _tstoi(rndText);
-	m_maxRndPort.GetWindowText(rndText);
-	rndValue2 = _tstoi(rndText);
-
-	if (rndValue1 > 0xFFFF) rndValue1 = 0xFFFF;
-	if (rndValue1 < 1) rndValue1 = 1;
-	if (rndValue2 > 0xFFFF) rndValue2 = 0xFFFF;
-	if (rndValue2 < 1) rndValue2 = 1;
-	if (rndValue1 > rndValue2){
-		int tmp = rndValue2;
-		rndValue2 = rndValue1;
-		rndValue1 = tmp;
-	}
-
-	oldRndMin = thePrefs.GetMinRandomPort();
-	oldRndMax = thePrefs.GetMaxRandomPort();
-
-	if(rndValue1 != oldRndMin || rndValue2 != oldRndMax){
-		thePrefs.SetMinRandomPort((uint16)rndValue1);
-		thePrefs.SetMaxRandomPort((uint16)rndValue2);
-	}
-
-	if((IsDlgButtonChecked(IDC_RANDOMPORTS)!=0) != oldUseRandom){
-		if (theApp.IsPortchangeAllowed()){
-			theApp.listensocket->Rebind();
-			theApp.clientudp->Rebind();
-		}
-		else{
-			bRestartApp = true;
-			thePrefs.SetRandomPortsResetOnRestart(true);
-		}
-		// Added by MoNKi [MoNKi: -Improved ICS-Firewall support-]
-		theApp.m_pFirewallOpener->ClearMappingsAtEnd();
-		// End -Improved ICS-Firewall support-
-	}
-	else if(oldUseRandom){
-		if(rndValue1 != oldRndMin || rndValue2 != oldRndMax){
-			if (theApp.IsPortchangeAllowed()){
-				theApp.listensocket->Rebind();
-				theApp.clientudp->Rebind();
-			}
-			else {
-				bRestartApp = true;
-				thePrefs.SetRandomPortsResetOnRestart(true);
-			}
-
-			// Added by MoNKi [MoNKi: -Improved ICS-Firewall support-]
-			theApp.m_pFirewallOpener->ClearMappingsAtEnd();
-			// End -Improved ICS-Firewall support-
-		}
-	}
-	// End emulEspaña
-  
-  theApp.scheduler->SaveOriginals();
-
-	// ==> TBH: minimule - Stulle
-	int iMaxRange = thePrefs.GetMaxGraphDownloadRate();
-	if(thePrefs.GetMaxGraphUploadRate(false) > iMaxRange)
-		iMaxRange = thePrefs.GetMaxGraphUploadRate(false);
+	// ==> TBH: minimule - Max
+	int iMaxRange = (int)thePrefs.GetMaxGraphDownloadRate();
+	if(thePrefs.GetMaxGraphUploadRate() > iMaxRange)
+		iMaxRange = (int)thePrefs.GetMaxGraphUploadRate();
 	UINT nLastMaxRange, nLastMinRange;
 	nLastMaxRange = thePrefs.GetSpeedMeterMax();
 	nLastMinRange = thePrefs.GetSpeedMeterMin();
@@ -595,12 +662,12 @@ BOOL CPPgConnection::OnApply()
 		if (thePrefs.IsMiniMuleEnabled() && theApp.minimule->IsWindowVisible())
 			theApp.minimule->SetSpeedMeterRange(iMaxRange, nLastMinRange);
 	}
-	// <== TBH: minimule - Stulle
+	// <== TBH: minimule - Max
 
-	// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
-	theApp.emuledlg->m_co_UpTrafficGraph.Init_Graph(_T("Up"),thePrefs.GetMaxGraphUploadRate(true));
-	theApp.emuledlg->m_co_DownTrafficGraph.Init_Graph(_T("Down"),thePrefs.GetMaxGraphDownloadRate());
-	// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
+	theApp.emuledlg->m_co_UpTrafficGraph.Init_Graph(_T("Up"),(UINT)thePrefs.GetMaxGraphUploadRate());
+	theApp.emuledlg->m_co_DownTrafficGraph.Init_Graph(_T("Down"),(UINT)thePrefs.GetMaxGraphDownloadRate());
+	// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
 	SetModified(FALSE);
 	LoadSettings();
@@ -617,20 +684,32 @@ BOOL CPPgConnection::OnApply()
 
 void CPPgConnection::Localize(void)
 {	
-	if(m_hWnd)
+	if (m_hWnd)
 	{
 		SetWindowText(GetResString(IDS_PW_CONNECTION));
 		GetDlgItem(IDC_CAPACITIES_FRM)->SetWindowText(GetResString(IDS_PW_CON_CAPFRM));
 		GetDlgItem(IDC_DCAP_LBL)->SetWindowText(GetResString(IDS_PW_CON_DOWNLBL));
 		GetDlgItem(IDC_UCAP_LBL)->SetWindowText(GetResString(IDS_PW_CON_UPLBL));
 		GetDlgItem(IDC_LIMITS_FRM)->SetWindowText(GetResString(IDS_PW_CON_LIMITFRM));
-		GetDlgItem(IDC_DLIMIT_LBL)->SetWindowText(GetResString(IDS_PW_DOWNL));
+		//Xman Xtreme upload
+		/*
+		GetDlgItem(IDC_DLIMIT_LBL)->SetWindowText(GetResString(IDS_PW_DOWNL)); 
 		GetDlgItem(IDC_ULIMIT_LBL)->SetWindowText(GetResString(IDS_PW_UPL));
+		*/
+		GetDlgItem(IDC_DCAP_LBL2)->SetWindowText(GetResString(IDS_PW_CON_DOWNLBL));
+		GetDlgItem(IDC_UCAP_LBL2)->SetWindowText(GetResString(IDS_PW_CON_UPLBL));
+		GetDlgItem(IDC_UCAP_LBL3)->SetWindowText(GetResString(IDS_UPLOADSLOTSPEED_LABEL));
+		GetDlgItem(IDC_STATIC_DOWNINFO)->SetWindowText(GetResString(IDS_STATIC_DOWNINFO));
+		//Xman end
 		GetDlgItem(IDC_CONNECTION_NETWORK)->SetWindowText(GetResString(IDS_NETWORK));
 		GetDlgItem(IDC_KBS2)->SetWindowText(GetResString(IDS_KBYTESPERSEC));
 		GetDlgItem(IDC_KBS3)->SetWindowText(GetResString(IDS_KBYTESPERSEC));
 		ShowLimitValues();
+		//Xman removed:
+		/*
 		GetDlgItem(IDC_MAXCONN_FRM)->SetWindowText(GetResString(IDS_PW_CONLIMITS));
+		*/
+		//Xman end
 		GetDlgItem(IDC_MAXCONLABEL)->SetWindowText(GetResString(IDS_PW_MAXC));
 		GetDlgItem(IDC_SHOWOVERHEAD)->SetWindowText(GetResString(IDS_SHOWOVERHEAD));
 		GetDlgItem(IDC_CLIENTPORT_FRM)->SetWindowText(GetResString(IDS_PW_CLIENTPORT));
@@ -642,52 +721,17 @@ void CPPgConnection::Localize(void)
 		GetDlgItem(IDC_UDPDISABLE)->SetWindowText(GetResString(IDS_UDPDISABLED));
 		GetDlgItem(IDC_OPENPORTS)->SetWindowText(GetResString(IDS_FO_PREFBUTTON));
 		SetDlgItemText(IDC_STARTTEST, GetResString(IDS_STARTTEST) );
+		// ==> UPnP support [MoNKi] - leuk_he
+		/*
 		GetDlgItem(IDC_PREF_UPNPONSTART)->SetWindowText(GetResString(IDS_UPNPSTART));
-		//MORPH START - Added by SiRoB, [MoNKi: [MoNKi: -Random Ports-]
-		GetDlgItem(IDC_RANDOMPORTS)->SetWindowText(GetResString(IDS_RANDOMPORTS));
-		GetDlgItem(IDC_LBL_MIN)->SetWindowText(GetResString(IDS_MINPORT));
-		GetDlgItem(IDC_LBL_MAX)->SetWindowText(GetResString(IDS_MAXPORT));
-		//MORPH END   - Added by SiRoB, [MoNKi: [MoNKi: -Random Ports-]
-        //MORPH START leuk_he tooltipped
-		SetTool(IDC_CAPACITIES_FRM,IDS_PW_CON_CAPFRM_TIP);
-		if (theApp.downloadqueue->IsZZRatioInWork()){ 
-			SetTool(IDC_ZZRATIOICON,IDS_ZZRATIO_TIP    );
-			SetTool(IDC_ZZRATIOISACTIVTEXT,IDS_ZZRATIO_TIP);
-		}
-		SetTool(IDC_DCAP_LBL,IDS_PW_CON_DOWNLBL_TIP);
-		SetTool(IDC_UCAP_LBL,IDS_PW_CON_UPLBL_TIP);
-		SetTool(IDC_LIMITS_FRM,IDS_PW_CON_LIMITFRM_TIP);
-		SetTool(IDC_DLIMIT_LBL,IDS_PW_DOWNL_TIP);
-		SetTool(IDC_ULIMIT_LBL,IDS_PW_UPL_TIP);
-		SetTool(IDC_CONNECTION_NETWORK,IDS_NETWORK_TIP);
-		SetTool(IDC_KBS2,IDS_KBYTESPERSEC2_TIP);
-		SetTool(IDC_KBS3,IDS_KBYTESPERSEC3_TIP);
-		SetTool(IDC_SHOWOVERHEAD,IDS_SHOWOVERHEAD_TIP);
-		SetTool(IDC_CLIENTPORT_FRM,IDS_PW_CLIENTPORT_TIP);
-		SetTool(IDC_MAXSRC_FRM,IDC_MAXSOURCEPERFILE_TIP );
-		SetTool(IDC_AUTOCONNECT,IDS_PW_AUTOCON_TIP);
-		SetTool(IDC_RECONN,IDS_PW_RECON_TIP);
-		SetTool(IDC_WIZARD,IDS_WIZARD_TIP);
-		SetTool(IDC_UDPDISABLE,IDS_UDPDISABLED_TIP);
-		SetTool(IDC_STARTTEST, IDS_STARTTEST_TIP) ;
-		SetTool(IDC_RANDOMPORTS,IDS_RANDOMPORTS_TIP);
-		SetTool(IDC_LBL_MIN,IDS_MINPORT_TIP);
-		SetTool(IDC_LBL_MAX,IDS_MAXPORT_TIP);
-		SetTool(IDC_DOWNLOAD_CAP,IDC_DOWNLOAD_CAP_TIP);
-		SetTool(IDC_UPLOAD_CAP,IDC_UPLOAD_CAP_TIP);
-		SetTool(IDC_MAXDOWN_SLIDER,IDS_PW_DOWNL_TIP);
-		SetTool(IDC_MAXUP_SLIDER,IDS_PW_UPL_TIP);
-		SetTool(IDC_PORT,IDC_PORT_TIP);
-		SetTool(IDC_UDPPORT,IDC_UDPPORT_TIP);
-		SetTool(IDC_MAXSOURCEPERFILE,IDC_MAXSOURCEPERFILE_TIP );
-		SetTool(IDC_MAXCON,IDC_MAXCON_TIP);
-		SetTool(IDC_MINPORT,IDS_MINPORT_TIP);
-		SetTool(IDC_MAXPORT,IDS_MAXPORT_TIP);
-		SetTool(IDC_NETWORK_KADEMLIA,IDC_NETWORK_KADEMLIA_TIP);
-		SetTool(IDC_NETWORK_ED2K,IDC_NETWORK_ED2K_TIP);
-		SetTool(IDC_PREF_UPNPONSTART,IDS_UPNP_ENABLE_TIP);
-		//MORPH END leuk_he tooltipped
-
+		*/
+		// <== UPnP support [MoNKi] - leuk_he
+		
+		//Xman GlobalMaxHarlimit for fairness
+		GetDlgItem(IDC_STATIC_MAXGLOBALSOURCES)->SetWindowText(GetResString(IDS_MAXGLOBALSOURCES));
+		GetDlgItem(IDC_ACCEPTSOURCES)->SetWindowText(GetResString(IDS_ACCEPTSOURCES));
+		GetDlgItem(IDC_ACCEPTRATIO)->SetWindowText(GetResString(IDS_ACCEPTRATIO));
+		//Xman end
 	}
 }
 
@@ -700,16 +744,17 @@ void CPPgConnection::OnBnClickedWizard()
 void CPPgConnection::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar) 
 {
 	SetModified(TRUE);
-
+//Xman
+/*
 	if (pScrollBar->GetSafeHwnd() == m_ctlMaxUp.m_hWnd)
 	{
 		uint32 maxup = m_ctlMaxUp.GetPos();
 		uint32 maxdown = m_ctlMaxDown.GetPos();
-		if( maxup < 4 && maxup*3 < maxdown)
+		if (maxup < 4 && maxup*3 < maxdown)
 		{
 			m_ctlMaxDown.SetPos(maxup*3);
 		}
-		if( maxup < 10 && maxup*4 < maxdown)
+		if (maxup < 10 && maxup*4 < maxdown)
 		{
 			m_ctlMaxDown.SetPos(maxup*4);
 		}
@@ -718,39 +763,47 @@ void CPPgConnection::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 	{
 		uint32 maxup = m_ctlMaxUp.GetPos();
 		uint32 maxdown = m_ctlMaxDown.GetPos();
-		if( maxdown < 13 && maxup*3 < maxdown)
+		if (maxdown < 13 && maxup*3 < maxdown)
 		{
 			m_ctlMaxUp.SetPos((int)ceil((double)maxdown/3));
 		}
-		if( maxdown < 41 && maxup*4 < maxdown)
+		if (maxdown < 41 && maxup*4 < maxdown)
 		{
 			m_ctlMaxUp.SetPos((int)ceil((double)maxdown/4));
 		}
 	}
-
+*/
+//Xman end
 	ShowLimitValues();
 
 	UpdateData(false); 
 	CPropertyPage::OnHScroll(nSBCode, nPos, pScrollBar);
 }
-
 void CPPgConnection::ShowLimitValues()
 {
 	CString buffer;
 
+	//Xman Xtreme Upload
+	/*
 	if (!IsDlgButtonChecked(IDC_ULIMIT_LBL))
-		buffer=_T("");
+		buffer = _T("");
 	else
 		buffer.Format(_T("%u %s"), m_ctlMaxUp.GetPos(), GetResString(IDS_KBYTESPERSEC));
 	GetDlgItem(IDC_KBS4)->SetWindowText(buffer);
 	
 	if (!IsDlgButtonChecked(IDC_DLIMIT_LBL))
-		buffer=_T("");
+		buffer = _T("");
 	else
 		buffer.Format(_T("%u %s"), m_ctlMaxDown.GetPos(), GetResString(IDS_KBYTESPERSEC));
 	GetDlgItem(IDC_KBS1)->SetWindowText(buffer);
+	*/
+	buffer.Format(_T("%.1f %s"),(float) m_ctlMaxUp.GetPos()/10, GetResString(IDS_KBYTESPERSEC));
+	GetDlgItem(IDC_SLOTSPEED_LBL)->SetWindowText(buffer);
+	//Xman end
 }
 
+//Xman
+/*
 void CPPgConnection::OnLimiterChange()
 {
 	m_ctlMaxDown.ShowWindow(IsDlgButtonChecked(IDC_DLIMIT_LBL) ? SW_SHOW : SW_HIDE);
@@ -759,6 +812,8 @@ void CPPgConnection::OnLimiterChange()
 	ShowLimitValues();
 	SetModified(TRUE);	
 }
+*/
+//Xman end
 
 void CPPgConnection::OnHelp()
 {
@@ -783,11 +838,11 @@ BOOL CPPgConnection::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 
 void CPPgConnection::OnBnClickedOpenports()
 {
-	//MORPH START - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+	// ==> Improved ICS-Firewall support [MoNKi] - Max
 	thePrefs.SetICFSupport(true);
 	thePrefs.m_bICFSupportStatusChanged = true;
-	//MORPH END   - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
-
+	// <== Improved ICS-Firewall support [MoNKi] - Max
+	
 	OnApply();
 	theApp.m_pFirewallOpener->RemoveRule(EMULE_DEFAULTRULENAME_UDP);
 	theApp.m_pFirewallOpener->RemoveRule(EMULE_DEFAULTRULENAME_TCP);
@@ -819,9 +874,11 @@ void CPPgConnection::OnStartPortTest()
 	GetDlgItem(IDC_UDPPORT)->GetWindowText(buffer);
 	uint16 udp = (uint16)_tstoi(buffer);
 
-	TriggerPortTest(tcp,udp);
+	TriggerPortTest(tcp, udp);
 }
 
+//Xman
+/*
 void CPPgConnection::SetRateSliderTicks(CSliderCtrl& rRate)
 {
 	rRate.ClearTics();
@@ -846,7 +903,7 @@ void CPPgConnection::SetRateSliderTicks(CSliderCtrl& rRate)
 			}
 			if (iTic)
 			{
-				for (int i = ((iMin+(iTic-1))/iTic)*iTic; i < iMax; /**/)
+				for (int i = ((iMin+(iTic-1))/iTic)*iTic; i < iMax; )
 				{
 					rRate.SetTic(i);
 					i += iTic;
@@ -856,22 +913,44 @@ void CPPgConnection::SetRateSliderTicks(CSliderCtrl& rRate)
 		}
 	}
 }
+*/
+//Xman end
 
-//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-void CPPgConnection::OnRandomPortsChange() {
-	CString udpStr;
-	unsigned int udp;
+//Xman Xtreme Upload
+void CPPgConnection::CalculateMaxUpSlotSpeed()
+{
+	TCHAR buffer[21];
+	float maxUp=10;
+	if(GetDlgItem(IDC_MAXUP)->GetWindowText(buffer, 20)>0)
+		maxUp=(float)_tstof(buffer);
+	float maxSlotSpeed=3.0f;
+	if (maxUp<6) maxSlotSpeed=2.0f;
+	if (maxUp>=10)
+		maxSlotSpeed=maxUp/(3+(maxUp-10)/20.0f);
+	maxSlotSpeed*=1.25f; // Increase Slotspeed [Stulle] - Stulle
+	if (maxSlotSpeed>XTREME_MAX_SLOTSPEED)
+		maxSlotSpeed=XTREME_MAX_SLOTSPEED;
+	float a=ceil(maxSlotSpeed*10.0f);
+	int b=(int)a;
+	if((float)m_ctlMaxUp.GetPos()>a)
+	{
+		m_ctlMaxUp.SetPos(b);
+	}
+	m_ctlMaxUp.SetRange(15,b,true);
 
-	GetDlgItem(IDC_UDPPORT)->GetWindowText(udpStr);
-	udp = _tstoi(udpStr);
+	//Xman GlobalMaxHarlimit for fairness
+	CString strbuffer;
+	strbuffer.Format(_T("%u"),(uint32)(maxUp*400 - (maxUp-10.0f)*100));
+	GetDlgItem(IDC_MAXGLOBALSOURCES)->SetWindowText(strbuffer);
 
-	GetDlgItem(IDC_UDPPORT)->EnableWindow(!IsDlgButtonChecked(IDC_RANDOMPORTS) && udp>0);
-	GetDlgItem(IDC_PORT)->EnableWindow(!IsDlgButtonChecked(IDC_RANDOMPORTS));
-	m_minRndPort.EnableWindow(IsDlgButtonChecked(IDC_RANDOMPORTS));
-	m_maxRndPort.EnableWindow(IsDlgButtonChecked(IDC_RANDOMPORTS));
-	m_minRndPortSpin.EnableWindow(IsDlgButtonChecked(IDC_RANDOMPORTS));
-	m_maxRndPortSpin.EnableWindow(IsDlgButtonChecked(IDC_RANDOMPORTS));
-
-	SetModified(TRUE);	
 }
-//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
+
+
+
+
+void CPPgConnection::OnEnKillfocusMaxup()
+{
+		CalculateMaxUpSlotSpeed();
+		ShowLimitValues();
+}
+//Xman end

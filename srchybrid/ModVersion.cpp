@@ -29,8 +29,3 @@ const UINT CemuleApp::m_nMVersionMin = MOD_VERSION_MIN;
 const UINT CemuleApp::m_nMVersionBld = MOD_VERSION_BUILD;
 const TCHAR CemuleApp::m_szMVersionLong[] = MOD_VERSION_LONG;
 const TCHAR CemuleApp::m_szMVersion[] = MOD_VERSION;
-// ==> Morph-Version-Check Changes for StulleMule - Stulle
-const UINT CemuleApp::m_nMVersionMjrMorph = MOD_MORPH_VERSION_MJR;
-const UINT CemuleApp::m_nMVersionMinMorph = MOD_MORPH_VERSION_MIN;
-const UINT CemuleApp::m_nMVersionBldMorph = MOD_MORPH_VERSION_BUILD;
-// <== Morph-Version-Check Changes for StulleMule - Stulle

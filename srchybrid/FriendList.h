@@ -40,16 +40,16 @@ public:
 	void		RemoveFriend(CFriend* todel);
 	void		RemoveAllFriendSlots();
 	void		Process();
-	int		GetCount()		{ return m_listFriends.GetCount(); }
-	bool		IsFriendSlot(); //MORPH - Added by SiRoB
+	int			GetCount()		{ return m_listFriends.GetCount(); }
+
 private:
 	CTypedPtrList<CPtrList, CFriend*>	m_listFriends;
 	CFriendListCtrl*					m_wndOutput;
 	uint32								m_nLastSaved;
 
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 public:
 	bool		IsAlreadyFriend(uchar userHash[]) const;
 	bool		AddEmfriendsMetToList(const CString& strFile);
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 };

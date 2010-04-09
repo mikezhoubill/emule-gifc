@@ -156,9 +156,9 @@ void CFileDetailDialogName::OnDestroy()
 
 void CFileDetailDialogName::Localize()
 {
-	    GetDlgItem(IDC_TAKEOVER)->SetWindowText(GetResString(IDS_TAKEOVER));
-	    GetDlgItem(IDC_BUTTONSTRIP)->SetWindowText(GetResString(IDS_CLEANUP));
-	    GetDlgItem(IDC_FD_SN)->SetWindowText(GetResString(IDS_SOURCENAMES));
+    GetDlgItem(IDC_TAKEOVER)->SetWindowText(GetResString(IDS_TAKEOVER));
+    GetDlgItem(IDC_BUTTONSTRIP)->SetWindowText(GetResString(IDS_CLEANUP));
+    GetDlgItem(IDC_FD_SN)->SetWindowText(GetResString(IDS_SOURCENAMES));
 }
 
 void CFileDetailDialogName::FillSourcenameList()
@@ -198,7 +198,7 @@ void CFileDetailDialogName::FillSourcenameList()
 				m_bAppliedSystemImageList = true;
 			}
 
-			int ix=m_listFileNames.InsertItem(LVIF_TEXT|LVIF_PARAM|LVIF_IMAGE, m_listFileNames.GetItemCount() ,cur_src->GetClientFilename(),0,0,iSystemIconIdx,(LPARAM)newitem);
+			int ix = m_listFileNames.InsertItem(LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE, m_listFileNames.GetItemCount() ,cur_src->GetClientFilename(), 0, 0, iSystemIconIdx, (LPARAM)newitem);
 			m_listFileNames.SetItemText(ix, 1, _T("1")); 
 		}
 		else
@@ -264,6 +264,8 @@ void CFileDetailDialogName::OnLvnColumnClick(NMHDR *pNMHDR, LRESULT *pResult)
 	}
 	else
 		sortAscending = !m_listFileNames.GetSortAscending();
+
+	m_listFileNames.UpdateSortHistory(pNMListView->iSubItem + (sortAscending ? 0 : 10), 10); // SLUGFILLER: multiSort - forgot something?
 
 	m_listFileNames.SetSortArrow(pNMListView->iSubItem, sortAscending);
 	m_listFileNames.SortItems(&CompareListNameItems, pNMListView->iSubItem + (sortAscending ? 0 : 10));
@@ -361,8 +363,8 @@ void CFileDetailDialogName::RenameFile()
 		if (strNewFileName.IsEmpty() || !IsValidEd2kString(strNewFileName))
 			return;
 		CPartFile* file = STATIC_DOWNCAST(CPartFile, (*m_paFiles)[0]);
-		file->SetFollowTheMajority(false); // EastShare       - FollowTheMajority by AndCycle
 		file->SetFileName(strNewFileName, true);
+		file->SetFollowTheMajority(false); // Follow The Majority [AndCycle/Stulle] - Stulle
 		file->UpdateDisplayedInfo();
 		file->SavePartFile();
 	}

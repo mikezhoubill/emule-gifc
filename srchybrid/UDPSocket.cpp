@@ -34,7 +34,10 @@
 #include "SearchDlg.h"
 #include "Log.h"
 #include "Sockets.h"
-#include "FirewallOpener.h" //MORPH - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+#include "FirewallOpener.h" // Improved ICS-Firewall support [MoNKi] - Max
+
+//Xman
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -112,18 +115,29 @@ CUDPSocket::CUDPSocket()
 CUDPSocket::~CUDPSocket()
 {
     theApp.uploadBandwidthThrottler->RemoveFromAllQueues(this); // ZZ:UploadBandWithThrottler (UDP)
-	sendLocker.Lock(); //MORPH - Added by SiRoB, Wait before starting to free packet
 
+	//Xman Code Improvement
+	/*
 	POSITION pos = controlpacket_queue.GetHeadPosition();
 	while (pos) {
 		SServerUDPPacket* p = controlpacket_queue.GetNext(pos);
 		delete[] p->packet;
 		delete p;
 	}
-	sendLocker.Unlock(); //MORPH - Added by SiRoB, Wait before starting to free packet
 	m_udpwnd.DestroyWindow();
 
 	pos = m_aDNSReqs.GetHeadPosition();
+	*/
+	while (!controlpacket_queue.IsEmpty())
+	{
+		SServerUDPPacket* p = controlpacket_queue.RemoveHead();
+		delete[] p->packet;
+		delete p;
+	}
+	m_udpwnd.DestroyWindow();
+
+	POSITION pos = m_aDNSReqs.GetHeadPosition();
+	//Xman end
 	while (pos)
 		delete m_aDNSReqs.GetNext(pos);
 }
@@ -139,8 +153,7 @@ bool CUDPSocket::Create()
 			LogError(LOG_STATUSBAR, _T("Error: Server UDP socket: Failed to create server UDP socket - %s"), GetErrorMessage(GetLastError()));
 			return false;
 		}
-
-		// emulEspaña: Added by MoNKi [MoNKi: -UPnPNAT Support-]
+		// ==> UPnP support [MoNKi] - leuk_he
 		// Don't add UPnP port mapping if is a random port and we don't want
 		// to clear mappings on close
 		if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts() &&
@@ -149,21 +162,21 @@ bool CUDPSocket::Create()
 			CString client;
 			UINT port;
 			GetSockName(client, port);
-			
-			//MORPH START -, Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+
+			// ==> Improved ICS-Firewall support [MoNKi] - Max
 			if(thePrefs.GetICFSupport() && thePrefs.GetICFSupportServerUDP()){
 				if (theApp.m_pFirewallOpener->OpenPort((uint16)port, NAT_PROTOCOL_UDP, EMULE_DEFAULTRULENAME_SERVERUDP, thePrefs.IsOpenPortsOnStartupEnabled() || thePrefs.GetServerUDPPort()==0xFFFF))
 					Log(GetResString(IDS_FO_TEMPUDP_S), port);
 				else
 					Log(GetResString(IDS_FO_TEMPUDP_F), port);
 			}
-			//MORPH END   - Added by SiRoB, [MoNKi: -Improved ICS-Firewall support-]
+			// <== Improved ICS-Firewall support [MoNKi] - Max
 
 			theApp.m_UPnP_IGDControlPoint->AddPortMapping((uint16)port,
 				CUPnP_IGDControlPoint::UNAT_UDP,
 				_T("Server UDP Port"));
 		}
-		// End -UPnPNAT Support-
+		// <== UPnP support [MoNKi] - leuk_he
 
 		return true;
 	}
@@ -180,7 +193,6 @@ void CUDPSocket::OnReceive(int nErrorCode)
 			DebugLogError(_T("Error: Server UDP socket: Receive failed - %s"), GetErrorMessage(nErrorCode, 1));
 	}
 
-	bool IsEncrypted=false; // MORPH lh require obfuscated server connection 
 	BYTE buffer[5000];
 	BYTE* pBuffer = buffer;
 	SOCKADDR_IN sockAddr = {0};
@@ -188,6 +200,13 @@ void CUDPSocket::OnReceive(int nErrorCode)
 	int length = ReceiveFrom(buffer, sizeof buffer, (SOCKADDR*)&sockAddr, &iSockAddrLen);
 	if (length != SOCKET_ERROR)
 	{
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		if(length > 0){ 		
+			theApp.pBandWidthControl->AddeMuleInUDPOverall(length);
+		}
+		// Maella end
+
 		int nPayLoadLen = length;
 		CServer* pServer = theApp.serverlist->GetServerByIPUDP(sockAddr.sin_addr.S_un.S_addr, ntohs(sockAddr.sin_port), true);
 		if (pServer != NULL && thePrefs.IsServerCryptLayerUDPEnabled() &&
@@ -202,19 +221,11 @@ void CUDPSocket::OnReceive(int nErrorCode)
 
 			ASSERT( dwKey != 0 );
 			nPayLoadLen = DecryptReceivedServer(buffer, length, &pBuffer, dwKey,sockAddr.sin_addr.S_un.S_addr);
-			
-			if (nPayLoadLen < length) IsEncrypted=true; // MORPH lh require obfuscated server connection 
 			if (nPayLoadLen == length)
 				DebugLogWarning(_T("Expected encrypted packet, but received unencrytped from server %s, UDPKey %u, Challenge: %u"), pServer->GetListName(), pServer->GetServerKeyUDP(), pServer->GetChallenge());
 			else if (thePrefs.GetDebugServerUDPLevel() > 0)
 				DEBUG_ONLY(DebugLog(_T("Received encrypted packet from server %s, UDPKey %u, Challenge: %u"), pServer->GetListName(), pServer->GetServerKeyUDP(), pServer->GetChallenge()));
 		}
-		// START MORPH lh require obfuscated server connection  
-		if (IsEncrypted== false &&thePrefs.IsServerCryptLayerRequiredStrict()) {
-				DebugLogWarning(_T("server %s obfuscation required, Ignored udp packet lenght=%d"), ipstr(sockAddr.sin_addr),length );
-		}
-		else
-		// END MORPH lh require obfuscated server connection  
 
 		if (pBuffer[0] == OP_EDONKEYPROT)
 			ProcessPacket(pBuffer+2, nPayLoadLen-2, pBuffer[1], sockAddr.sin_addr.S_un.S_addr, ntohs(sockAddr.sin_port));
@@ -705,6 +716,10 @@ void CUDPSocket::DnsLookupDone(WPARAM wp, LPARAM lp)
 			delete pDNSReq;
 			return;
 		}
+		//zz_fly :: support dynamic ip servers :: DolphinX :: Start
+		if (pServer)
+			pServer->ResetIP2Country(); //EastShare - added by AndCycle, IP to Country
+		//zz_fly :: End
 
 		// Send all of the queued packets for this server.
 		POSITION posPacket = pDNSReq->m_aPackets.GetHeadPosition();
@@ -732,11 +747,10 @@ void CUDPSocket::OnSend(int nErrorCode)
 			DebugLogError(_T("Error: Server UDP socket: Failed to send packet - %s"), GetErrorMessage(nErrorCode, 1));
 		return;
 	}
-	//m_bWouldBlock = false; //MORPH - Removed by SiRoB, moved after the lock -Fix-
+	m_bWouldBlock = false;
 
 // ZZ:UploadBandWithThrottler (UDP) -->
     sendLocker.Lock();
-	m_bWouldBlock = false; //MORPH - Added by SiRoB, moved after the lock -Fix-
     if (!controlpacket_queue.IsEmpty()) {
         theApp.uploadBandwidthThrottler->QueueForSendingControlPacket(this);
     }
@@ -744,7 +758,8 @@ void CUDPSocket::OnSend(int nErrorCode)
 // <-- ZZ:UploadBandWithThrottler (UDP)
 }
 
-SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { // ZZ:UploadBandWithThrottler (UDP)
+SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint32 /*minFragSize*/) // ZZ:UploadBandWithThrottler (UDP)
+{
 // ZZ:UploadBandWithThrottler (UDP) -->
 	// NOTE: *** This function is invoked from a *different* thread!
     sendLocker.Lock();
@@ -758,13 +773,12 @@ SocketSentBytes CUDPSocket::SendControlData(uint32 maxNumberOfBytesToSend, uint3
 		if (sendSuccess >= 0)
 		{
             if (sendSuccess > 0) {
-                //MORPH - Changed by SiRoB, Take into account IP+TCP Header
-				/*
                 sentBytes += packet->size; // ZZ:UploadBandWithThrottler (UDP)
-				*/
-				sentBytes += packet->size  + ((packet->size/1480)+(packet->size<1480)?1:0) * 20; // ZZ:UploadBandWithThrottler (UDP)
-
             }
+			//Xman
+			// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+			sentBytes += (20+8); //Header
+			//Xman end
 
 			controlpacket_queue.RemoveHead();
 			delete[] packet->packet;

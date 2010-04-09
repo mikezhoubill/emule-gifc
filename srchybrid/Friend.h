@@ -39,12 +39,6 @@ enum EFriendConnectReport{
 
 #define	FF_NAME		0x01
 #define	FF_KADID	0x02
-//MORPH START - Modified by SiRoB, Added by Yun.SF3, ZZ Upload System
-#define FF_FRIENDSLOT 0x03
-//MORPH END - Modified by SiRoB, Added by Yun.SF3, ZZ Upload System
-// MORPH (CB) Friendnote
-#define FF_FRIENDNOTE 0x77
-// MORPH (CB) Friendnote END
 
 ///////////////////////////////////////////////////////////////////////////////
 // CFriendConnectionListener
@@ -69,19 +63,20 @@ public:
 	~CFriend();
 
 	uchar	m_abyUserhash[16];
-
-	time_t	m_dwLastSeen;
+	
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	m_dwLastSeen;
+	*/
+	time_t m_dwLastSeen;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	uint32	m_dwLastUsedIP;
 	uint16	m_nLastUsedPort;
 	uint32	m_dwLastChatted;
 	CString m_strName;
 
-	// MORPH (CB) Friendnote
-	CString m_frNote;
-	// MORPH (CB) Friendnote END
-
-    CUpDownClient* GetLinkedClient(bool bValidCheck = false) const;
-    void SetLinkedClient(CUpDownClient* linkedClient);
+    CUpDownClient*	GetLinkedClient(bool bValidCheck = false) const;
+    void			SetLinkedClient(CUpDownClient* linkedClient);
 	CUpDownClient*	GetClientForChatSession();
 
 	void	LoadFromFile(CFileDataIO* file);
@@ -97,18 +92,18 @@ public:
 
 	void	SendMessage(CString strMessage);
 
-    void SetFriendSlot(bool newValue);
-    bool GetFriendSlot() const;
+    void	SetFriendSlot(bool newValue);
+    bool	GetFriendSlot() const;
 	
-	bool HasUserhash() const;
+	bool	HasUserhash() const;
 	bool	HasKadID() const;
 
 private:
 	uchar	m_abyKadID[16];
-    bool m_friendSlot;
+    bool	m_friendSlot;
 	uint32	m_dwLastKadSearch;
-
+	
 	EFriendConnectState			m_FriendConnectState;
 	CTypedPtrList<CPtrList, CFriendConnectionListener*> m_liConnectionReport;
-	CUpDownClient* m_LinkedClient;
+	CUpDownClient*				m_LinkedClient;
 };

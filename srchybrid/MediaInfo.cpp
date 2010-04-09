@@ -344,6 +344,20 @@ CString GetVideoFormatDisplayName(DWORD biCompression)
 	else if (IsEqualFOURCC(biCompression, MAKEFOURCC('F','M','P','4')))	strFormat = CStringA((LPCSTR)&biCompression, 4) + " (MPEG-4)";
 	else if (IsEqualFOURCC(biCompression, MAKEFOURCC('C','V','I','D')))	strFormat = CStringA((LPCSTR)&biCompression, 4) + " (Cinepack)";
 	else if (IsEqualFOURCC(biCompression, MAKEFOURCC('C','R','A','M')))	strFormat = CStringA((LPCSTR)&biCompression, 4) + " (Microsoft Video 1)";
+	// X-Ray :: MoreFourCCCodes :: Start - added by zz_fly
+	else if (IsEqualFOURCC(biCompression, MAKEFOURCC('A','V','C','1'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('D','A','V','C'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('V','S','S','H'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('V','S','S','W')))
+		strFormat = CStringA((LPCSTR)&biCompression, 4) + " (H.264/MPEG-4 AVC)";
+	else if (IsEqualFOURCC(biCompression, MAKEFOURCC('3','I','V','0'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('3','I','V','1'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('3','I','V','2'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('3','I','V','D'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('3','I','V','X'))
+		||	 IsEqualFOURCC(biCompression, MAKEFOURCC('3','V','I','D')))
+		strFormat = CStringA((LPCSTR)&biCompression, 4) + " (3ivX)";
+	// X-Ray :: MoreFourCCCodes :: End
 	return strFormat;
 }
 

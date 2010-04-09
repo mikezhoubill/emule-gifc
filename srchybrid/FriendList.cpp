@@ -188,20 +188,6 @@ bool CFriendList::AddFriend(const uchar* abyUserhash, uint32 dwLastSeen, uint32 
 	m_listFriends.AddTail(Record);
 	ShowFriends();
 	SaveList();
-
-	// Mighty Knife: log friend activities
-	if (thePrefs.GetLogFriendlistActivities ()) {
-		#ifdef MIGHTY_TWEAKS
- 	    AddLogLine(false, GetResString(IDS_NEWFRIEND)+_T(" '%s', ip %i.%i.%i.%i:%i, ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									Record->m_strName, (uint8)Record->m_dwLastUsedIP, (uint8)(Record->m_dwLastUsedIP>>8), 
-									(uint8)(Record->m_dwLastUsedIP>>16),(uint8)(Record->m_dwLastUsedIP>>24), 
-									Record->m_nLastUsedPort, md4str(Record->m_abyUserhash));
-		#else
-		AddLogLine(false, GetResString(IDS_NEWFRIEND)+_T(" '%s', ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									Record->m_strName, md4str(Record->m_abyUserhash));
-		#endif
-	}
-	// [end] Mighty Knife
 	return true;
 }
 
@@ -222,7 +208,12 @@ bool CFriendList::AddFriend(CUpDownClient* toadd){
 	// client must have an IP (HighID) or a hash
 	if (toadd->HasLowID() && !toadd->HasValidHash())
 		return false;
+	//zz_fly :: minor issue with friends handling :: WiZaRd :: start
+	/*
 	if (SearchFriend(toadd->GetUserHash(), toadd->GetIP(), toadd->GetUserPort()) != NULL)
+	*/
+	if (SearchFriend(toadd->GetUserHash(), toadd->GetConnectIP(), toadd->GetUserPort()) != NULL)
+	//zz_fly :: end
 		return false;
 
 	CFriend* NewFriend = new CFriend(toadd);
@@ -234,21 +225,6 @@ bool CFriendList::AddFriend(CUpDownClient* toadd){
 	}
 	SaveList();
 	NewFriend->FindKadID(); // fetch the kadid of this friend if we don't have it already
-	// Mighty Knife: log friend activities
-	if (thePrefs.GetLogFriendlistActivities ()) {
-		#ifdef MIGHTY_TWEAKS
-		AddLogLine(false, GetResString(IDS_NEWFRIEND)+_T(" '%s', ip %i.%i.%i.%i:%i, ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									NewFriend->m_strName, (uint8)NewFriend->m_dwLastUsedIP, 
-									(uint8)(NewFriend->m_dwLastUsedIP>>8), 
-									(uint8)(NewFriend->m_dwLastUsedIP>>16),(uint8)(NewFriend->m_dwLastUsedIP>>24), 
-									NewFriend->m_nLastUsedPort, md4str(NewFriend->m_abyUserhash));
-		#else
-		AddLogLine(false, GetResString(IDS_NEWFRIEND)+_T(" '%s', ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									NewFriend->m_strName, md4str(NewFriend->m_abyUserhash));
-		#endif
-	}
-	// [end] Mighty Knife
-
 	return true;
 }
 
@@ -258,21 +234,6 @@ void CFriendList::RemoveFriend(CFriend* todel){
 		ASSERT ( false );
 		return;
 	}
-
-	// Mighty Knife: log friend activities
-	if (thePrefs.GetLogFriendlistActivities ()) {
-		#ifdef MIGHTY_TWEAKS
-		AddLogLine(false, GetResString(IDS_REMOVEDFRIEND)+_T(" '%s', ip %i.%i.%i.%i:%i, ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									todel->m_strName, (uint8)todel->m_dwLastUsedIP, 
-									(uint8)(todel->m_dwLastUsedIP>>8), 
-									(uint8)(todel->m_dwLastUsedIP>>16),(uint8)(todel->m_dwLastUsedIP>>24), 
-									todel->m_nLastUsedPort, md4str(todel->m_abyUserhash));
-		#else
-		AddLogLine(false, GetResString(IDS_REMOVEDFRIEND)+_T(" '%s', ")+GetResString(IDS_CD_UHASH)+_T(" %s"),
-									todel->m_strName, md4str(todel->m_abyUserhash));
-		#endif
-	}
-	// [end] Mighty Knife
 
     todel->SetLinkedClient(NULL);
 
@@ -288,10 +249,13 @@ void CFriendList::RemoveFriend(CFriend* todel){
 void CFriendList::RemoveAllFriendSlots(){
 	for (POSITION pos = m_listFriends.GetHeadPosition();pos != 0;){
 		CFriend* cur_friend = m_listFriends.GetNext(pos);
-        cur_friend->SetFriendSlot(false);
-		//MORPH - Added by SiRoB, Friend Addon
-		RefreshFriend(cur_friend);
-		//MORPH - Added by SiRoB, Friend Addon
+		//Xman friend visualization
+		if(cur_friend->GetFriendSlot()==true)
+		{
+			cur_friend->SetFriendSlot(false);
+			RefreshFriend(cur_friend);
+		}
+		//Xman end
 	}
 }
 
@@ -310,18 +274,7 @@ bool CFriendList::IsValid(CFriend* pToCheck) const
 	}
 	return false;
 }
-
-//MORPH - Added by SiRoB, There is one slot friend or more
-bool CFriendList::IsFriendSlot(){
-	for (POSITION pos = m_listFriends.GetHeadPosition();pos != 0; ){
-		CFriend* cur_friend = m_listFriends.GetNext(pos);
-		if (cur_friend->GetFriendSlot())
-			return true;
-	}
-	return false;
-}
-//MORPH - Added by SiRoB, There is one slot friend or more
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 bool CFriendList::IsAlreadyFriend(uchar userHash[]) const
 {
 	CFriend* cur_friend;
@@ -390,4 +343,4 @@ bool CFriendList::AddEmfriendsMetToList(const CString& strFile)
 
 	return true;
 }
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]

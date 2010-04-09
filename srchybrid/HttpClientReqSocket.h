@@ -37,11 +37,6 @@ public:
 	virtual CUpDownClient* GetClient() const { return client; }
 
 	virtual void SendPacket(Packet* packet, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-	//MORPH START - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
-#if !defined DONT_USE_SEND_ARRAY_PACKET
-	virtual void SendPacket(Packet* packet[], uint32 npacket, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-#endif
-	//MORPH END   - Added by SiRoB, Send Array Packet to prevent uploadbandwiththrottler lock
 	virtual bool IsRawDataMode() const { return true; }
 
 	EHttpSocketState GetHttpState() const { return m_eHttpState; }

@@ -84,10 +84,19 @@ Basic Obfuscated Handshake Protocol Client <-> Server:
 #include "opcodes.h"
 #include "clientlist.h"
 #include "sockets.h"
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+
 // cryptoPP used for DH integer calculations
 #pragma warning(disable:4516) // access-declarations are deprecated; member using-declarations provide a better alternative
 #pragma warning(disable:4100) // unreferenced formal parameter
+//Xman
+/*
+#include <crypto51/osrng.h>
+*/
+#pragma warning(disable:4702) // unreachable code
 #include <cryptopp/osrng.h>
+#pragma warning(default:4702) // unreachable code
+//Xman end
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4516) // access-declarations are deprecated; member using-declarations provide a better alternative
 
@@ -175,6 +184,8 @@ int CEncryptedStreamSocket::Send(const void* lpBuf, int nBufLen, int nFlags){
 		int nRes = SendNegotiatingData(lpBuf, nBufLen, nBufLen);
 		ASSERT( nRes != SOCKET_ERROR );
 		(void)nRes;
+		//Xman remark: this calculation is not correct, but we must keep this way
+		//otherwise we loose the server-connection
 		return nBufLen;	// report a full send, even if we didn't for some reason - the data is know in our buffer and will be handled later
 	}
 	else if (m_NegotiatingState == ONS_BASIC_SERVER_DELAYEDSENDING)
@@ -475,7 +486,12 @@ int CEncryptedStreamSocket::Negotiate(const uchar* pBuffer, uint32 nLen){
 						m_nReceiveBytesWanted = 3;	
 					}
 					else{
+						// ==> Proper English [ginger] - Stulle
+						/*
 						DebugLogError(_T("CEncryptedStreamSocket: Received wrong magic value from clientIP %s on a supposly encrytped stream / Wrong Header"), DbgGetIPString());
+						*/
+						DebugLogError(_T("CEncryptedStreamSocket: Received wrong magic value from clientIP %s on a supposedly encrypted stream / Wrong Header"), DbgGetIPString());
+						// <== Proper English [ginger] - Stulle
 						OnError(ERR_ENCRYPTION);
 						return (-1);
 					}
@@ -641,6 +657,12 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void* lpBuf, uint32 nBufLe
 	ASSERT( nStartCryptFromByte <= nBufLen );
 	ASSERT( m_NegotiatingState == ONS_BASIC_SERVER_DELAYEDSENDING || !bDelaySend );
 
+	//Xman counting obfuscation data
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	ENegotiatingState oldState = m_NegotiatingState; 
+	uint32 initiatedBufLen = nBufLen; 
+	//Xman end
+
 	BYTE* pBuffer = NULL;
 	bool bProcess = false;
 	if (lpBuf != NULL){
@@ -687,6 +709,23 @@ int CEncryptedStreamSocket::SendNegotiatingData(const void* lpBuf, uint32 nBufLe
 		return result;
     }
 	else {
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		if(oldState==ONS_BASIC_SERVER_DELAYEDSENDING && m_NegotiatingState==ONS_COMPLETE)
+		{
+			//here we have normal payload + obfuscation data
+			if(result > initiatedBufLen)
+				theApp.pBandWidthControl->AddeMuleOutObfuscation(result-initiatedBufLen);
+
+			//remark: we are not very accurate at this pint
+			// if the socket block, the next time we process this method we don't know anymore
+			// which data was payload and which was obfuscation data. In this case we would add it all to obfuscation
+			// because this can only happen at the obfuscated server-handshake I ignore such seldom cases
+		}
+		else
+			theApp.pBandWidthControl->AddeMuleOutObfuscationTCP(result);
+		//Xman end
+
 		if (result < nBufLen){
 			m_pfiSendBuffer = new CSafeMemFile(128);
 			m_pfiSendBuffer->Write(pBuffer + result, nBufLen - result);			

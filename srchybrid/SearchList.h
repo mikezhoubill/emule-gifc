@@ -127,9 +127,4 @@ private:
 	CArray<uint32, uint32>					m_aCurED2KSentReceivedIPs;
 	bool									m_bSpamFilterLoaded;
 	CMap<uint32, uint32, UDPServerRecord*, UDPServerRecord*>	m_aUDPServerRecords;
-
-public:
-	//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-	CString GetWapList(CString linePattern,int sortby,bool asc, int start, int max, bool &more) const;
-	//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]
 };

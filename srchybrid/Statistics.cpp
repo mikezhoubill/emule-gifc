@@ -17,42 +17,49 @@
 #include "stdafx.h"
 #include "emule.h"
 #include "Statistics.h"
+#include "BandWidthControl.h" // Xman
 #include "Preferences.h"
 #include "Opcodes.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 #ifdef _DEBUG
 extern _CRT_ALLOC_HOOK g_pfnPrevCrtAllocHook;
 #endif
 
-//MORPH START - Removed by SiRoB, Changed by SiRoB, Better datarate mesurement for low and high speed
-/*
+// // Xman Maella TPT rework
+
 #define MAXAVERAGETIME			SEC2MS(40) //millisecs
-*/
-//MORPH END   - Changed by SiRoB, Changed by SiRoB, Better datarate mesurement for low and high speed
 
 ///////////////////////////////////////////////////////////////////////////////
 // CStatistics
 
 CStatistics theStats;
 
+// Xman
+/*
 float	CStatistics::maxDown;
 float	CStatistics::maxDownavg;
+*/
+//Xman end
 float	CStatistics::cumDownavg;
 float	CStatistics::maxcumDownavg;
 float	CStatistics::maxcumDown;
 float	CStatistics::cumUpavg;
 float	CStatistics::maxcumUpavg;
 float	CStatistics::maxcumUp;
+// Xman
+/*
 float	CStatistics::maxUp;
 float	CStatistics::maxUpavg;
 float	CStatistics::rateDown;
 float	CStatistics::rateUp;
+*/
+//Xman end
 uint32	CStatistics::timeTransfers;
 uint32	CStatistics::timeDownloads;
 uint32	CStatistics::timeUploads;
@@ -64,8 +71,12 @@ uint32	CStatistics::time_thisDownload;
 uint32	CStatistics::time_thisUpload;
 uint32	CStatistics::timeServerDuration;
 uint32	CStatistics::time_thisServerDuration;
+// Xman
+/*
 uint32	CStatistics::m_nDownDatarateOverhead;
 uint32	CStatistics::m_nDownDataRateMSOverhead;
+*/
+//Xman end
 uint64	CStatistics::m_nDownDataOverheadSourceExchange;
 uint64	CStatistics::m_nDownDataOverheadSourceExchangePackets;
 uint64	CStatistics::m_nDownDataOverheadFileRequest;
@@ -76,8 +87,12 @@ uint64	CStatistics::m_nDownDataOverheadKad;
 uint64	CStatistics::m_nDownDataOverheadKadPackets;
 uint64	CStatistics::m_nDownDataOverheadOther;
 uint64	CStatistics::m_nDownDataOverheadOtherPackets;
+// Xman
+/*
 uint32	CStatistics::m_nUpDatarateOverhead;
 uint32	CStatistics::m_nUpDataRateMSOverhead;
+*/
+//Xman end
 uint64	CStatistics::m_nUpDataOverheadSourceExchange;
 uint64	CStatistics::m_nUpDataOverheadSourceExchangePackets;
 uint64	CStatistics::m_nUpDataOverheadFileRequest;
@@ -88,12 +103,12 @@ uint64	CStatistics::m_nUpDataOverheadKad;
 uint64	CStatistics::m_nUpDataOverheadKadPackets;
 uint64	CStatistics::m_nUpDataOverheadOther;
 uint64	CStatistics::m_nUpDataOverheadOtherPackets;
+// Xman
+/*
 uint32	CStatistics::m_sumavgDDRO;
 uint32	CStatistics::m_sumavgUDRO;
-//MORPH START - Added by SiRoB, Changed by SiRoB, Better datarate mesurement for low and high speed
-DWORD	CStatistics::m_AvarageDDRO_listLastRemovedTimestamp;
-DWORD	CStatistics::m_AvarageUDRO_listLastRemovedTimestamp;
-//MORPH END   - Added by SiRoB, Changed by SiRoB, Better datarate mesurement for low and high speed
+*/
+//Xman end
 
 uint64	CStatistics::sessionReceivedBytes;
 uint64	CStatistics::sessionSentBytes;
@@ -103,22 +118,40 @@ DWORD	CStatistics::transferStarttime;
 DWORD	CStatistics::serverConnectTime;
 uint32	CStatistics::filteredclients;
 DWORD	CStatistics::starttime;
-uint32	CStatistics::leecherclients; //Added by SiRoB
+// Xman Maella TPT
+float	CStatistics::currentUploadRate;
+float	CStatistics::currentMaxUploadRate;
+float	CStatistics::sessionUploadRate;
+float	CStatistics::sessionMaxUploadRate;
+float	CStatistics::currentDownloadRate;
+float	CStatistics::currentMaxDownloadRate;
+float	CStatistics::sessionDownloadRate;
+float	CStatistics::sessionMaxDownloadRate;
+uint32	CStatistics::leecherclients; //Xman Anti-Leecher
+
 
 CStatistics::CStatistics()
 {
-	maxDown =				0;
-	maxDownavg =			0;
+	// Xman Maella TPT 
+	/*
+	//maxDown =				0;
+	//maxDownavg =			0;
+	*/
+	//Xman end
 	maxcumDown =			0;
 	cumUpavg =				0;
 	maxcumDownavg =			0;
 	cumDownavg =			0;
 	maxcumUpavg =			0;
 	maxcumUp =				0;
-	maxUp =					0;
-	maxUpavg =				0;
-	rateDown =				0;
-	rateUp =				0;
+	// Xman Maella TPT 
+	/*
+	//maxUp =					0;
+	//maxUpavg =				0;
+	//rateDown =				0;
+	//rateUp =				0;
+	*/
+	//Xman end
 	timeTransfers =			0;
 	timeDownloads =			0;
 	timeUploads =			0;
@@ -138,12 +171,15 @@ CStatistics::CStatistics()
 	transferStarttime=0;
 	serverConnectTime=0;
 	filteredclients=0;
-	leecherclients=0; //MORPH - Added by SiRoB
 	starttime=0;
 	
 
+	// Xman Maella TPT 
+	/*
 	m_nDownDataRateMSOverhead = 0;
 	m_nDownDatarateOverhead = 0;
+	*/
+	//Xman end
 	m_nDownDataOverheadSourceExchange = 0;
 	m_nDownDataOverheadSourceExchangePackets = 0;
 	m_nDownDataOverheadFileRequest = 0;
@@ -154,10 +190,14 @@ CStatistics::CStatistics()
 	m_nDownDataOverheadKadPackets = 0;
 	m_nDownDataOverheadOther = 0;
 	m_nDownDataOverheadOtherPackets = 0;
+	// Xman Maella TPT 
+	/*
 	m_sumavgDDRO = 0;
 
 	m_nUpDataRateMSOverhead = 0;
 	m_nUpDatarateOverhead = 0;
+	*/
+	//Xman end
 	m_nUpDataOverheadSourceExchange = 0;
 	m_nUpDataOverheadSourceExchangePackets = 0;
 	m_nUpDataOverheadFileRequest = 0;
@@ -168,11 +208,24 @@ CStatistics::CStatistics()
 	m_nUpDataOverheadKadPackets = 0;
 	m_nUpDataOverheadOther = 0;
 	m_nUpDataOverheadOtherPackets = 0;
+	// Xman Maella TPT 
+	/*
 	m_sumavgUDRO = 0;
-	m_AvarageUDRO_listLastRemovedTimestamp = GetTickCount(); //MORPH - Added by SiRoB, Better Upload rate calcul
-	m_AvarageDDRO_listLastRemovedTimestamp = GetTickCount(); //MORPH - Added by SiRoB, Better Upload rate calcul
+	*/
+	//Xman end
+	
+	// - Maella Bandwidth
+	currentUploadRate = 0;
+	currentMaxUploadRate = 0;
+	sessionUploadRate = 0;
+	sessionMaxUploadRate = 0;
 
-    /*ZZ*/m_nTotalCompletedBytes = 0;
+	currentDownloadRate = 0;
+	currentMaxDownloadRate = 0;
+	sessionDownloadRate = 0;
+	sessionMaxDownloadRate = 0;
+
+	leecherclients=0; //Xman Anti-Leecher
 }
 
 void CStatistics::Init()
@@ -188,6 +241,8 @@ void CStatistics::Init()
 // This function is going to basically calculate and save a bunch of averages.
 //				I made a seperate funtion so that it would always run instead of having
 //				the averages not be calculated if the graphs are disabled (Which is bad!).
+// Maella -Graph: code Improvement for rate display-
+/*
 void CStatistics::UpdateConnectionStats(float uploadrate, float downloadrate)
 {
 	rateUp = uploadrate;
@@ -275,50 +330,39 @@ void CStatistics::RecordRate()
 	uint32 stick = GetTickCount();
 	TransferredData newitemUP = {(UINT)theStats.sessionSentBytes, stick};
 	TransferredData newitemDN = {(UINT)theStats.sessionReceivedBytes, stick};
-	//MORPH START - Added by SiRoB, ZZ Upload system 20030818-1923
-	TransferredData newitemFriends = {(UINT)theStats.sessionSentBytesToFriend, stick};
-	//MORPH END   - Added by SiRoB, ZZ Upload system 20030818-1923
 
 	downrateHistory.push_front(newitemDN);
 	uprateHistory.push_front(newitemUP);
 
-	//MORPH START - Added by SiRoB, ZZ Upload system 20030818-1923
-	uprateHistoryFriends.push_front(newitemFriends);
-	//MORPH END   - Added by SiRoB, ZZ Upload system 20030818-1923
-
 	// limit to maxmins
-	UINT uAverageMilliseconds = thePrefs.GetStatsAverageMinutes() * (UINT)60000;
+	UINT uAverageMilliseconds = thePrefs.GetStatsAverageMinutes() * 60000;
 	while (downrateHistory.front().timestamp - downrateHistory.back().timestamp > uAverageMilliseconds)
 		downrateHistory.pop_back();
 	while (uprateHistory.front().timestamp - uprateHistory.back().timestamp > uAverageMilliseconds)
 		uprateHistory.pop_back();
-	//MORPH START - Added by SiRoB, ZZ Upload system 20030818-1923
-	while (uprateHistoryFriends.front().timestamp - uprateHistoryFriends.back().timestamp > uAverageMilliseconds)
-		uprateHistoryFriends.pop_back();
-	//MORPH END   - Added by SiRoB, ZZ Upload system 20030818-1923
 }
 
 // Changed these two functions (khaos)...
 float CStatistics::GetAvgDownloadRate(int averageType)
 {
-	float running; // Morph: leuk_he: DWORD to  float cast. to prevent overflow. 
+	DWORD running;
 	switch (averageType)
 	{
 		case AVG_SESSION:
 			if (theStats.transferStarttime == 0)
 				return 0.0F;
-			running = (GetTickCount() - theStats.transferStarttime) / 1000.0f;// Morph: leuk_he: DWORD to  float cast
+			running = (GetTickCount() - theStats.transferStarttime) / 1000;
 			if (running < 5)
 				return 0.0F;
-			return (float)(theStats.sessionReceivedBytes / 1024.0f ) / running; // Morph: leuk_he: DWORD to  float cast
+			return (float)(theStats.sessionReceivedBytes / 1024) / running;
 
 		case AVG_TOTAL:
 			if (theStats.transferStarttime == 0)
 				return thePrefs.GetConnAvgDownRate();
-			running = (GetTickCount() - theStats.transferStarttime) / 1000.0f;// Morph: leuk_he: DWORD to  float cast
+			running = (GetTickCount() - theStats.transferStarttime) / 1000;
 			if (running < 5)
 				return thePrefs.GetConnAvgDownRate();
-			return (((float)(theStats.sessionReceivedBytes / 1024.0f) / running) + thePrefs.GetConnAvgDownRate()) / 2.0F;// Morph: leuk_he: DWORD to  float cast
+			return (((float)(theStats.sessionReceivedBytes / 1024) / running) + thePrefs.GetConnAvgDownRate()) / 2.0F;
 
 		default:
 			if (downrateHistory.size() == 0)
@@ -332,24 +376,24 @@ float CStatistics::GetAvgDownloadRate(int averageType)
 
 float CStatistics::GetAvgUploadRate(int averageType)
 {
-	double running; // morph
+	DWORD running;
 	switch (averageType)
 	{
 		case AVG_SESSION:
 			if (theStats.transferStarttime == 0)
 				return 0.0F;
-			running = (GetTickCount() - theStats.transferStarttime) / 1000.0f;// Morph: leuk_he: DWORD to  float cast
+			running = (GetTickCount() - theStats.transferStarttime) / 1000;
 			if (running < 5)
 				return 0.0F;
-			return (float)((theStats.sessionSentBytes / 1024.0) / running);// Morph: leuk_he: DWORD to  float cast
+			return (float)(theStats.sessionSentBytes / 1024) / running;
 
 		case AVG_TOTAL:
 			if (theStats.transferStarttime == 0)
 				return thePrefs.GetConnAvgUpRate();
-			running = (GetTickCount() - theStats.transferStarttime) / 1000.0f;// Morph: leuk_he: DWORD to  float cast
+			running = (GetTickCount() - theStats.transferStarttime) / 1000;
 			if (running < 5)
 				return thePrefs.GetConnAvgUpRate();
-			return (float)(((theStats.sessionSentBytes / 1024) / running) + thePrefs.GetConnAvgUpRate()) / 2.0F; // Morph: leuk_he: DWORD to  float cast
+			return (((float)(theStats.sessionSentBytes / 1024) / running) + thePrefs.GetConnAvgUpRate()) / 2.0F;
 
 		default:
 			if (uprateHistory.size() == 0)
@@ -363,69 +407,42 @@ float CStatistics::GetAvgUploadRate(int averageType)
 
 void CStatistics::CompDownDatarateOverhead()
 {
-	//MORPH START - Changed by SiRoB, Better datarate measurement for low and high speed
-	DWORD curTick = GetTickCount();
-	if (m_nDownDataRateMSOverhead > 0) {
-		TransferredData newitem = {m_nDownDataRateMSOverhead, curTick};
-			m_AvarageDDRO_list.AddTail(newitem);
-		m_sumavgDDRO += m_nDownDataRateMSOverhead;
-		m_nDownDataRateMSOverhead = 0;
-	}
-	while ((UINT)m_AvarageDDRO_list.GetCount() > 1 && (curTick - m_AvarageDDRO_list.GetHead().timestamp) > MAXAVERAGETIMEDOWNLOAD) {
-		m_AvarageDDRO_listLastRemovedTimestamp = m_AvarageDDRO_list.GetHead().timestamp;
-		m_sumavgDDRO -= m_AvarageDDRO_list.RemoveHead().datalen;
-	}
+	TransferredData newitem = {m_nDownDataRateMSOverhead, GetTickCount()};
+	m_AvarageDDRO_list.AddTail(newitem);
+	m_sumavgDDRO += m_nDownDataRateMSOverhead;
+	m_nDownDataRateMSOverhead = 0;
 
-	if (m_AvarageDDRO_list.GetCount() > 1) {
-		DWORD dwDuration = m_AvarageDDRO_list.GetTail().timestamp - m_AvarageDDRO_listLastRemovedTimestamp;
-		if(dwDuration < 100) dwDuration = 100;
-		DWORD dwAvgTickDuration = dwDuration / m_AvarageDDRO_list.GetCount();
-		if ((curTick - m_AvarageDDRO_list.GetTail().timestamp) > dwAvgTickDuration)
-			dwDuration += curTick - m_AvarageDDRO_list.GetTail().timestamp - dwAvgTickDuration;
-		m_nDownDatarateOverhead = (UINT)(1000U * (ULONGLONG)m_sumavgDDRO / dwDuration);
-	} else if (m_AvarageDDRO_list.GetCount() == 1) {
-		DWORD dwDuration = m_AvarageDDRO_list.GetTail().timestamp - m_AvarageDDRO_listLastRemovedTimestamp;
-		if(dwDuration < 100) dwDuration = 100;
-		if ((curTick - m_AvarageDDRO_list.GetTail().timestamp) > dwDuration)
-			dwDuration = curTick - m_AvarageDDRO_list.GetTail().timestamp;
-		m_nDownDatarateOverhead = (UINT)(1000U * (ULONGLONG)m_sumavgDDRO / dwDuration);
-	} else
+	while (m_AvarageDDRO_list.GetTail().timestamp - m_AvarageDDRO_list.GetHead().timestamp > MAXAVERAGETIME)
+		m_sumavgDDRO -= m_AvarageDDRO_list.RemoveHead().datalen;
+
+	if (m_AvarageDDRO_list.GetCount() > 10)
+	{
+		DWORD dwDuration = m_AvarageDDRO_list.GetTail().timestamp - m_AvarageDDRO_list.GetHead().timestamp;
+		if (dwDuration)
+			m_nDownDatarateOverhead = 1000 * (m_sumavgDDRO - m_AvarageDDRO_list.GetHead().datalen) / dwDuration;
+	}
+	else
 		m_nDownDatarateOverhead = 0;
-	//MORPH END  - Changed by SiRoB, Better datarate mesurement for low and high speed
 }
 
 void CStatistics::CompUpDatarateOverhead()
 {
-	//MORPH START - Changed by SiRoB, Better datarate mesurement for low and high speed
-	DWORD curTick = GetTickCount();
-	if (m_nUpDataRateMSOverhead > 0) {
-		TransferredData newitem = {m_nUpDataRateMSOverhead, curTick};
-		m_AvarageUDRO_list.AddTail(newitem);
-		m_sumavgUDRO += m_nUpDataRateMSOverhead;
-		m_nUpDataRateMSOverhead = 0;
-	}
+	TransferredData newitem = {m_nUpDataRateMSOverhead, GetTickCount()};
+	m_AvarageUDRO_list.AddTail(newitem);
+	m_sumavgUDRO += m_nUpDataRateMSOverhead;
+	m_nUpDataRateMSOverhead = 0;
 
-	while ((UINT)m_AvarageUDRO_list.GetCount() > 1 && (curTick - m_AvarageUDRO_list.GetHead().timestamp) > MAXAVERAGETIMEUPLOAD) {
-		m_AvarageUDRO_listLastRemovedTimestamp = m_AvarageUDRO_list.GetHead().timestamp;
+	while (m_AvarageUDRO_list.GetTail().timestamp - m_AvarageUDRO_list.GetHead().timestamp > MAXAVERAGETIME)
 		m_sumavgUDRO -= m_AvarageUDRO_list.RemoveHead().datalen;
-	}
 
-	if (m_AvarageUDRO_list.GetCount() > 1) {
-		DWORD dwDuration = m_AvarageUDRO_list.GetTail().timestamp - m_AvarageUDRO_listLastRemovedTimestamp;
-		if(dwDuration < 100) dwDuration = 100;
-		DWORD dwAvgTickDuration = dwDuration / m_AvarageUDRO_list.GetCount();
-		if ((curTick - m_AvarageUDRO_list.GetTail().timestamp) > dwAvgTickDuration)
-			dwDuration += curTick - m_AvarageUDRO_list.GetTail().timestamp - dwAvgTickDuration;
-		m_nUpDatarateOverhead = (UINT)(1000U * (ULONGLONG)m_sumavgUDRO / dwDuration);
-	} else if (m_AvarageUDRO_list.GetCount() == 1) {
-		DWORD dwDuration = m_AvarageUDRO_list.GetTail().timestamp - m_AvarageUDRO_listLastRemovedTimestamp;
-		if(dwDuration < 100) dwDuration = 100;
-		if ((curTick - m_AvarageUDRO_list.GetTail().timestamp) > dwDuration)
-			dwDuration = curTick - m_AvarageUDRO_list.GetTail().timestamp;
-		m_nUpDatarateOverhead = (UINT)(1000U * (ULONGLONG)m_sumavgUDRO / dwDuration);
-	} else
+	if (m_AvarageUDRO_list.GetCount() > 10)
+	{
+		DWORD dwDuration = m_AvarageUDRO_list.GetTail().timestamp - m_AvarageUDRO_list.GetHead().timestamp;
+		if (dwDuration)
+			m_nUpDatarateOverhead = 1000 * (m_sumavgUDRO - m_AvarageUDRO_list.GetHead().datalen) / dwDuration;
+	}
+	else
 		m_nUpDatarateOverhead = 0;
-	//MORPH END  - Changed by SiRoB, Better datarate mesurement for low and high speed
 }
 
 void CStatistics::ResetDownDatarateOverhead()
@@ -443,6 +460,135 @@ void CStatistics::ResetUpDatarateOverhead()
 	m_AvarageUDRO_list.RemoveAll();
 	m_nUpDatarateOverhead = 0;
 }
+*/
+void CStatistics::UpdateConnectionStats(void)
+{
+	// Wait at least 5 seconds
+	if(::GetTickCount() - theApp.pBandWidthControl->GetStartTick() + 5000)
+	{
+
+		// Maella -Graph: code Improvement for rate display-
+		uint32 plotOutData[ADAPTER+1];
+		uint32 plotinData[ADAPTER+1];
+		theApp.pBandWidthControl->GetDatarates(10,	//Xman: to avoid peeks use avg over 10 seconds
+											plotinData[CURRENT], plotinData[OVERALL],
+											plotOutData[CURRENT], plotOutData[OVERALL],
+											plotinData[ADAPTER], plotOutData[ADAPTER]);
+
+		theApp.pBandWidthControl->GetFullHistoryDatarates(plotinData[MINUTE], plotOutData[MINUTE],
+														  plotinData[SESSION], plotOutData[SESSION]);
+
+		currentDownloadRate = (float)plotinData[CURRENT]/1024.0f;
+		sessionDownloadRate = (float)plotinData[SESSION]/1024.0f;
+		currentUploadRate   = (float)plotOutData[CURRENT]/1024.0f;
+		sessionUploadRate   = (float)plotOutData[SESSION]/1024.0f;
+		// Maella end
+
+		//Xman Patch: be realistic:
+		if (currentDownloadRate> thePrefs.GetMaxGraphDownloadRate())
+			currentDownloadRate=thePrefs.GetMaxGraphDownloadRate();
+		if (currentUploadRate> thePrefs.GetMaxGraphUploadRate())
+			currentUploadRate=thePrefs.GetMaxGraphUploadRate();
+		//Xman end
+
+		// Max Current rates (graph refresh)
+		if(currentMaxUploadRate < currentUploadRate) 
+			currentMaxUploadRate = currentUploadRate;
+		if(currentMaxDownloadRate < currentDownloadRate) 
+			currentMaxDownloadRate = currentDownloadRate;
+
+		// Session Max rates
+		if(sessionMaxUploadRate < sessionUploadRate) 
+			sessionMaxUploadRate = sessionUploadRate;
+		if(sessionMaxDownloadRate < sessionDownloadRate) 
+			sessionMaxDownloadRate = sessionDownloadRate;
+
+		// Cumulative Max Current rates (graph refresh)
+		if(maxcumUp < currentMaxUploadRate) 
+		{
+			maxcumUp = currentMaxUploadRate;
+			thePrefs.SetConnMaxUpRate(maxcumUp);
+		}
+
+		if(maxcumDown < currentMaxDownloadRate) 
+		{
+			maxcumDown = currentMaxDownloadRate;
+			thePrefs.SetConnMaxDownRate(maxcumDown);
+		}
+
+		// Cumulative Max Average rates
+		//official doesn't use this anymore
+		//cumDownavg = (sessionDownloadRate + thePrefs.GetConnAvgDownRate()) / 2;
+		//cumUpavg = (sessionUploadRate + thePrefs.GetConnAvgUpRate()) / 2;
+		cumDownavg = sessionDownloadRate;
+		cumUpavg = sessionUploadRate;
+		if(maxcumDownavg < cumDownavg) 
+		{
+			maxcumDownavg = cumDownavg;
+			thePrefs.SetConnMaxAvgDownRate(maxcumDownavg);
+		}
+
+		if(maxcumUpavg < cumUpavg) 
+		{
+			maxcumUpavg = cumUpavg;
+			thePrefs.SetConnMaxAvgUpRate(maxcumUpavg);
+		}
+		
+		// Transfer Times (Increment Session)
+		if (sessionUploadRate > 0.0f || sessionDownloadRate > 0.0f) 
+		{
+			if (start_timeTransfers == 0)
+				start_timeTransfers = GetTickCount();
+			else
+				time_thisTransfer = (GetTickCount() - start_timeTransfers) / 1000;
+
+			if (sessionUploadRate > 0.0f) 
+			{
+				if (start_timeUploads == 0)
+					start_timeUploads = GetTickCount();
+				else
+					time_thisUpload = (GetTickCount() - start_timeUploads) / 1000;
+			}
+			
+			if (sessionDownloadRate > 0.0f) 
+			{
+				if (start_timeDownloads == 0)
+					start_timeDownloads = GetTickCount();
+				else
+					time_thisDownload = (GetTickCount() - start_timeDownloads) / 1000;
+			}
+		}
+
+		if (sessionUploadRate == 0.0f && sessionDownloadRate == 0.0f && (time_thisTransfer > 0 || start_timeTransfers > 0)) 
+		{
+			timeTransfers += time_thisTransfer;
+			time_thisTransfer = 0;
+			start_timeTransfers = 0;
+		}
+
+		if (sessionUploadRate == 0.0f && (time_thisUpload > 0 || start_timeUploads > 0)) 
+		{
+			timeUploads += time_thisUpload;
+			time_thisUpload = 0;
+			start_timeUploads = 0;
+		}
+
+		if (sessionDownloadRate == 0.0f && (time_thisDownload > 0 || start_timeDownloads > 0)) 
+		{
+			timeDownloads += time_thisDownload;
+			time_thisDownload = 0;
+			start_timeDownloads = 0;
+		}
+
+		// Server Durations
+	if (theStats.serverConnectTime == 0) 
+			time_thisServerDuration = 0;
+		else
+			time_thisServerDuration = (GetTickCount() - theStats.serverConnectTime) / 1000;
+	}
+}
+// <-----khaos-
+//Xman end
 
 #ifdef USE_MEM_STATS
 

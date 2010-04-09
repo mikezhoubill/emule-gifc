@@ -27,92 +27,107 @@
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(disable:4100) // unreferenced formal parameter
 #pragma warning(disable:4702) // unreachable code
+//Xman
+/*
+#include <crypto51/base64.h>
+#include <crypto51/osrng.h>
+#include <crypto51/files.h>
+#include <crypto51/sha.h>
+*/
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/files.h>
 #include <cryptopp/sha.h>
+//Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(default:4516) // access-declarations are deprecated; member using-declarations provide a better alternative
 #include "emuledlg.h"
 #include "Log.h"
-//MORPH START - new includes
-#include "ClientList.h"
-#include "UpDownClient.h"
-//MORPH END   - new includes
-// ==> new credit system - Stulle
+//Xman
+#include "updownclient.h"
+#include "ClientList.h" //Xman Extened credit- table-arragement
+// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+#include "KnownFile.h"
 #include "SharedFileList.h"
-// <== new credit system - Stulle
+// <== CreditSystems [EastShare/ MorphXT] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 #define CLIENTS_MET_FILENAME	_T("clients.met")
 
 CClientCredits::CClientCredits(CreditStruct* in_credits)
 {
-	// Moonlight: Dynamic ClientStruct - adjust structure element offsets.//Morph - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 	m_pCredits = in_credits;
 	InitalizeIdent();
 	m_dwUnSecureWaitTime = 0;
 	m_dwSecureWaitTime = 0;
 	m_dwWaitTimeIP = 0;
-
-	//Morph Start - Added by AndCycle, reduce a little CPU usage for ratio count
-	m_bCheckScoreRatio = true;
-	//Removed by SiRoB , for speedup creditfile load
+	//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
 	/*
-	m_fLastScoreRatio = 0;
+	m_bmarktodelete=false; //Xman Extened credit- table-arragement
 	*/
-	//Morph End - Added by AndCycle, reduce a little CPU usage for ratio count
-	//Moved by SiRoB , for speedup creditfile load, now in AddClientToQueue
-	//InitPayBackFirstStatus();//EastShare - added by AndCycle, Pay Back First
+	m_nReferredTimes = 0; //Xman Extened credit- table-arragement
+	//zz_fly :: End
+
+	m_bCheckScoreRatio = true; // CreditSystems [EastShare/ MorphXT] - Stulle
 }
 
+//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+/*
 CClientCredits::CClientCredits(const uchar* key)
 {
 	m_pCredits = new CreditStruct;
+*/
+CClientCredits::CClientCredits(const uchar* key, CreditStruct* in_credits)
+{
+	m_pCredits = in_credits;
+//zz_fly :: Optimized :: Enig123, DolphinX :: End
 	memset(m_pCredits, 0, sizeof(CreditStruct));
 	md4cpy(m_pCredits->abyKey, key);
 	InitalizeIdent();
 
-	// EastShare START - Modified by TAHO, modified SUQWT
-	//m_dwUnSecureWaitTime = ::GetTickCount();
-	//m_dwSecureWaitTime = ::GetTickCount();
+	// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+	/*
+	m_dwUnSecureWaitTime = ::GetTickCount();
+	m_dwSecureWaitTime = ::GetTickCount();
+	*/
 	m_dwUnSecureWaitTime = 0;
 	m_dwSecureWaitTime = 0;
-	// EastShare END - Modified by TAHO, modified SUQWT
+	// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 	m_dwWaitTimeIP = 0;
-
-	//Morph Start - Added by AndCycle, reduce a little CPU usage for ratio count
-	m_bCheckScoreRatio = true;
-	//Removed by SiRoB , for speedup creditfile load
+	//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
 	/*
-	m_fLastScoreRatio = 0;
+	m_bmarktodelete=false; //Xman Extened credit- table-arragement
 	*/
-	//Morph End - Added by AndCycle, reduce a little CPU usage for ratio count
+	m_nReferredTimes = 0; //Xman Extened credit- table-arragement
+	//zz_fly :: End
 
-	//Moved by SiRoB , for speedup creditfile load, now in AddClientToQueue
-	//InitPayBackFirstStatus();//EastShare - added by AndCycle, Pay Back First
+	m_bCheckScoreRatio = true; // CreditSystems [EastShare/ MorphXT] - Stulle
 }
 
 CClientCredits::~CClientCredits()
 {
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
 	delete m_pCredits;
+	*/
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
 }
 
 void CClientCredits::AddDownloaded(uint32 bytes, uint32 dwForIP) {
-	//MORPH START - Changed by SIRoB, Code Optimization 
+	// ==> Code Optimization [SiRoB] - Stulle
 	/*
-	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
+	if ((GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable()) {
 	*/
 	if ( GetCurrentIdentState(dwForIP) != IS_IDENTIFIED  && GetCurrentIdentState(dwForIP) != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-	//MORPH END   - Changed by SIRoB, Code Optimization 
+	// <== Code Optimization [SiRoB] - Stulle
 		return;
 	}
 
@@ -120,22 +135,21 @@ void CClientCredits::AddDownloaded(uint32 bytes, uint32 dwForIP) {
 	uint64 current = (((uint64)m_pCredits->nDownloadedHi << 32) | m_pCredits->nDownloadedLo) + bytes;
 
 	//recode
-	m_pCredits->nDownloadedLo=(uint32)current;
-	m_pCredits->nDownloadedHi=(uint32)(current>>32);
+	m_pCredits->nDownloadedLo = (uint32)current;
+	m_pCredits->nDownloadedHi = (uint32)(current >> 32);
 
-	//is it good to refresh PayBackFirst status here?
-	TestPayBackFirstStatus();//EastShare - added by AndCycle, Pay Back First
+	TestPayBackFirstStatus(); // Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 
-	m_bCheckScoreRatio = true;//Morph - Added by AndCycle, reduce a little CPU usage for ratio count
+	m_bCheckScoreRatio = true; // CreditSystems [EastShare/ MorphXT] - Stulle
 }
 
 void CClientCredits::AddUploaded(uint32 bytes, uint32 dwForIP) {
-	//MORPH START - Changed by SIRoB, Code Optimization 
+	// ==> Code Optimization [SiRoB] - Stulle
 	/*
-	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
+	if ((GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable()) {
 	*/
 	if ( GetCurrentIdentState(dwForIP) != IS_IDENTIFIED  && GetCurrentIdentState(dwForIP) != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-	//MORPH END   - Changed by SIRoB, Code Optimization 
+	// <== Code Optimization [SiRoB] - Stulle
 		return;
 	}
 
@@ -143,86 +157,113 @@ void CClientCredits::AddUploaded(uint32 bytes, uint32 dwForIP) {
 	uint64 current = (((uint64)m_pCredits->nUploadedHi << 32) | m_pCredits->nUploadedLo) + bytes;
 
 	//recode
-	m_pCredits->nUploadedLo=(uint32)current;
-	m_pCredits->nUploadedHi=(uint32)(current>>32);
+	m_pCredits->nUploadedLo = (uint32)current;
+	m_pCredits->nUploadedHi = (uint32)(current >> 32);
 
-	//is it good to refresh PayBackFirst status here?
-	TestPayBackFirstStatus();//EastShare - added by AndCycle, Pay Back First
+	TestPayBackFirstStatus(); // Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 
-	m_bCheckScoreRatio = true;//Morph - Added by AndCycle, reduce a little CPU usage for ratio count
+	m_bCheckScoreRatio = true; // CreditSystems [EastShare/ MorphXT] - Stulle
 }
 
-uint64	CClientCredits::GetUploadedTotal() const{
+uint64 CClientCredits::GetUploadedTotal() const {
 	return ((uint64)m_pCredits->nUploadedHi << 32) | m_pCredits->nUploadedLo;
 }
 
-uint64	CClientCredits::GetDownloadedTotal() const{
+uint64 CClientCredits::GetDownloadedTotal() const {
 	return ((uint64)m_pCredits->nDownloadedHi << 32) | m_pCredits->nDownloadedLo;
 }
 
-float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
+//Xman Credit System
+/*
+float CClientCredits::GetScoreRatio(uint32 dwForIP) const
 {
-// ==> moved into switch for new credit systems - Stulle
-//	// check the client ident status
-//	//MORPH START - Changed by SIRoB, Code Optimization 
-//	/*
-//	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
-//	*/
-//	if ( GetCurrentIdentState(dwForIP) != IS_IDENTIFIED  && GetCurrentIdentState(dwForIP) != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-//	//MORPH END   - Changed by SIRoB, Code Optimization 
-//		// bad guy - no credits for you
-//		return 1.0F;
-//	}
-	EIdentState currentIDstate =  GetCurrentIdentState(dwForIP);
-	bool bBadGuy = false;
-// <== moved into switch for new credit systems - Stulle
+	// check the client ident status
+	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
+		// bad guy - no credits for you
+		return 1.0F;
+	}
 
-	//Morph Start - Added by AndCycle, reduce a little CPU usage for ratio count
+	if (GetDownloadedTotal() < 1048576)
+		return 1.0F;
+	float result = 0.0F;
+	if (!GetUploadedTotal())
+		result = 10.0F;
+	else
+		result = (float)(((double)GetDownloadedTotal()*2.0)/(double)GetUploadedTotal());
+	
+	// exponential calcualtion of the max multiplicator based on uploaded data (9.2MB = 3.34, 100MB = 10.0)
+	float result2 = 0.0F;
+	result2 = (float)(GetDownloadedTotal()/1048576.0);
+	result2 += 2.0F;
+	result2 = (float)sqrt(result2);
+
+	// linear calcualtion of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
+	float result3 = 10.0F;
+	if (GetDownloadedTotal() < 9646899){
+		result3 = (((float)(GetDownloadedTotal() - 1048576) / 8598323.0F) * 2.34F) + 1.0F;
+	}
+
+	// take the smallest result
+	result = min(result, min(result2, result3));
+
+	if (result < 1.0F)
+		return 1.0F;
+	else if (result > 10.0F)
+		return 10.0F;
+	return result;
+}
+*/
+// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+/*
+const float CClientCredits::GetScoreRatio(const CUpDownClient* client) const
+*/
+float CClientCredits::GetScoreRatio(const CUpDownClient* client)
+{
+	bool bBadGuy = false;
 	if(m_bCheckScoreRatio == false){//only refresh ScoreRatio when really need
 		return m_fLastScoreRatio;
 	}
 	m_bCheckScoreRatio = false;
-	//Morph End - Added by AndCycle, reduce a little CPU usage for ratio count
 
-	//Morph Start - Modified by AndCycle, reduce a little CPU usage for ratio count
+	uint32 dwForIP=client->GetIP();
+	EIdentState currentIDstate =  GetCurrentIdentState(dwForIP);
+	float result = 1.0F;//everybody share one result.
 
-	double result = 0.0;//everybody share one result. leuk_he:doublw to prevent underflow in CS_LOVELACE.
-    //EastShare START - Added by linekin, CreditSystem 
 	switch (thePrefs.GetCreditSystem())	{
 
-		// EastShare - Added by linekin, lovelace Credit
 		case CS_LOVELACE:{
 			if ( currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-				result = 0.984290578f; // use the CS' default value
+				result = 0.8f;
 				bBadGuy = true;
 				break;
 			}
 
-			// new creditsystem by [lovelace]
 			double cl_up,cl_down; 
 
 			cl_up = GetUploadedTotal()/(double)1048576;
 			cl_down = GetDownloadedTotal()/(double)1048576;
 			result=(float)(3.0 * cl_down * cl_down - cl_up * cl_up);
 			if (fabs(result)>20000.0f) 
-				result*=20000.0/fabs(result);
-			result=100.0*pow((1-1/(1.0f+exp(result*0.001))),6.6667);
-			if (result<0.1) 
-				result=0.1;
-			if (result>10.0 && IdentState == IS_NOTAVAILABLE)
-				result=10.0;
-			// end new creditsystem by [lovelace]
+				result*=20000.0f/fabs(result);
+			// ==> avoid float overrun and underrun - Stulle
+			/*
+			result=100.0f*powf((float)(1-1/(1.0f+expf(result*0.001))),6.6667f);
+			*/
+			result=(float)(100.0f*powf((float)(1-1/(1.0f+expf(result*0.001f))),6.6667f));
+			// <== avoid float overrun and underrun - Stulle
+			if (result<0.1f) 
+				result=0.1f;
+			if (result>10.0f && IdentState == IS_NOTAVAILABLE)
+				result=10.0f;
 		}break;
 
-		//EastShare Start - added by AndCycle, Pawcio credit
 		case CS_PAWCIO:{	
 			if ( currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-				result = 1.0f;
 				bBadGuy = true;
+				result = 0.8f;
 				break;
 			}
 
-			//Pawcio: Credits
 			if ((GetDownloadedTotal() < 1000000)&&(GetUploadedTotal() > 1000000)){
 				result = 1.0f;
 				break;
@@ -249,19 +290,18 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 				break;
 			}
 		}break;
-		//EastShare End - added by AndCycle, Pawcio credit
 
-		case CS_RATIO: // RT.10a mod Credit
+		case CS_RATIO:
 		{
 			if ( currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-				result = 1.0f;
 				bBadGuy = true;
+				result = 0.8f;
 				break;
 			}
 
 			// check the client ident status
-			double UploadedTotalMB = (double)GetUploadedTotal() / 1048576.0;
-			double DownloadedTotalMB = (double)GetDownloadedTotal() / 1048576.0;
+			float UploadedTotalMB = (float)(GetUploadedTotal() / 1048576.0);
+			float DownloadedTotalMB = (float)(GetDownloadedTotal() / 1048576.0);
 			if (DownloadedTotalMB <= 1){
 				if (UploadedTotalMB <= 1)
 					result = 1;
@@ -271,28 +311,23 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 			}
 
 			if (UploadedTotalMB > 1){
-				double Basic = (double)sqrt( (double)(DownloadedTotalMB + 1) );
+				float Basic = (float)sqrt( (double)(DownloadedTotalMB + 1) );
 				if (DownloadedTotalMB > UploadedTotalMB){
-					result = ( Basic + (double)sqrt((double)(DownloadedTotalMB - UploadedTotalMB)) );
+					result = ( Basic + (float)sqrt((double)(DownloadedTotalMB - UploadedTotalMB)) );
 				}
 				else{
 					if ( (UploadedTotalMB - DownloadedTotalMB) <= 1 ){
 						result = Basic;
 						break;
 					}
-					double Result = ( Basic / (double)sqrt((double)(UploadedTotalMB - DownloadedTotalMB)) );
+					float Result = ( Basic / (float)sqrt((double)(UploadedTotalMB - DownloadedTotalMB)) );
 					if (DownloadedTotalMB >= 9){
-						double Lowest = 0.7f + (Basic / 10);
+						float Lowest = 0.7f + (Basic / 10);
 						if (Result < Lowest)   Result = Lowest;
 					}
 					else{
 						if (Result < 1)   Result = DownloadedTotalMB / 9;
 					}
-/* RT only
-					if ( (thePrefs.GetMaxCredit1Slot() > 0) && (Result > 1) ){
-						if ( (UploadedTotalMB - DownloadedTotalMB) > (Basic * 2) )   Result = 1;
-					}
-*/
 					result = Result;
 				}
 				break;
@@ -301,10 +336,9 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 				result = DownloadedTotalMB;
 		}break;
 
-		// EastShare START - Added by TAHO, new Credit System //Modified by Pretender
 		case CS_EASTSHARE:{
-			result = (IdentState == IS_NOTAVAILABLE) ? 80 : 100; // stay with the original - Stulle
-			
+			result = (IdentState == IS_NOTAVAILABLE) ? 80.0f : 100.0f;
+
 			result += (float)((double)GetDownloadedTotal()/174762.67 - (double)GetUploadedTotal()/524288); //Modefied by Pretender - 20040120
 			
 			if ((double)GetDownloadedTotal() > 1048576) {
@@ -320,25 +354,23 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 			result = result / 100;
 
 		}break;
-		// EastShare END - Added by TAHO, new Credit System
 
-		// ==> new credit system ~ Sivka Credit - Stulle
 		case CS_SIVKA:{
 			switch(currentIDstate){
 				case IS_IDNEEDED: if(theApp.clientcredits->CryptoAvailable()) {
-										result = 0.75f;
 										bBadGuy = true;
+										result = 0.75f;
 										break;
 							  }
 				case IS_IDFAILED: {
-									result = 0.5f;
 									bBadGuy = true;
+									result = 0.5f;
 									break;
 								  }
 				case IS_IDBADGUY:
 					default: {
-						result = 0.0f;
 						bBadGuy = true;
+						result = 0.0f;
 						break;
 							 }
 			}
@@ -358,18 +390,14 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 			else
 				result = 1.0f;
 		}break;
-		// <== new credit system ~ Sivka Credit - Stulle
 
-		// ==> new credit system ~ S.W.A.T. Credit - Stulle
 		case CS_SWAT:{
-			// new creditsystem by [Jmijie]
 			if ( currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-				result = 1.0f;
 				bBadGuy = true;
+				result = 0.8f;
 				break;
 			}
 
-			//	if (GetDownloadedTotal() < 1000000)
 				if (GetDownloadedTotal() < 1048576) { //pcsl999
 					/*return*/ result = 1;
 				break;
@@ -378,14 +406,13 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 				if (!GetUploadedTotal())
 					result = 10;
 				else
-//					result = (float)(((double)GetDownloadedTotal()*2.0)/(double)GetUploadedTotal());
 					result = (float)(((double)GetDownloadedTotal()*2.2)/(double)GetUploadedTotal()); //pcsl999
 
 				float result2 = 0;
 
 				result2 = (float)(GetDownloadedTotal()/1048576.0);
 				result2 += 2;
-				result2 = (float)sqrt((double)result2);
+				result2 = sqrt(result2);
 
 				if (result > result2)
 					result = result2;
@@ -395,12 +422,9 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 				else if (result > 100) //pcsl999
 					result = 100; //pcsl999
 		}break;
-		// <== new credit system ~ S.W.A.T. Credit - Stulle
 
-		// ==> new credit system ~ Tk4 Creditsystem [BlueSonicBoy] - Stulle
 		case CS_TK4:
 		{
-			CUpDownClient* client = theApp.clientlist->FindClientByIP(dwForIP);
 
 			result = 10.0F;
 			//if SUI failed then credit starts at 10 as for everyone else but will not go up
@@ -449,110 +473,7 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 					result+=log(2.72F+(float)(dOwnloadedTotal-uPloadedTotal)/262144.0F)+(float)(dOwnloadedTotal/12582912.0F);
 				}
 		}break;
-		// <== new credit system ~ Tk4 Creditsystem [BlueSonicBoy] - Stulle
 
-		// ==> new credit system ~ Xtreme Creditsystem [Xman] - Stulle
-		case CS_XTREME:
-		{
-			if((currentIDstate == IS_IDFAILED || currentIDstate == IS_IDBADGUY || currentIDstate == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() == true){
-				// bad guy - no credits for you
-				//return 1.0f;
-				result = 0.8f; //Xman 80% for non SUI-clients.. (and also bad guys)
-				bBadGuy = true;
-				break;
-			}
-
-			CUpDownClient* client = theApp.clientlist->FindClientByIP(dwForIP);
-
-			#define PENALTY_UPSIZE 8388608 //8 MB
-			// Cache value
-			const uint64 downloadTotal = GetDownloadedTotal();
-
-			float m_bonusfaktor = 0.0F;
-			// Check if this client has any credit (sent >1.65MB)
-			const float difference2=(float)client->GetTransferredUp() - client->GetTransferredDown();	
-			if(downloadTotal < 1650000)
-			{	
-				if ( difference2 > (2*PENALTY_UPSIZE))
-					m_bonusfaktor=(-0.2f);
-				else if (difference2 > PENALTY_UPSIZE)
-					m_bonusfaktor=(-0.1f);
-				else
-					m_bonusfaktor=0;
-
-				result = (1.0f + m_bonusfaktor);
-				break;
-			}
-
-			// Cache value
-			const uint64 uploadTotal = GetUploadedTotal();
-
-			// Bonus Faktor calculation
-			float difference = (float)downloadTotal - uploadTotal;
-			if (difference>=0)
-			{
-				m_bonusfaktor=difference/10485760.0f - (1.5f/(downloadTotal/10485760.0f));  //pro MB difference 0.1 - pro MB download 0.1
-				if (m_bonusfaktor<0)
-					m_bonusfaktor=0;
-			}
-			else 
-			{
-				difference=abs(difference);
-				if (difference> (2*PENALTY_UPSIZE) && difference2 > (2*PENALTY_UPSIZE))
-					m_bonusfaktor=(-0.2f);
-				else if (difference>PENALTY_UPSIZE && difference2 > PENALTY_UPSIZE)
-					m_bonusfaktor=(-0.1f);
-				else
-					m_bonusfaktor=0;
-			}
-			// Factor 1
-			result = (uploadTotal == 0) ?
-				10.0f : (float)(2*downloadTotal)/(float)uploadTotal;
-
-			// Factor 2
-			//Xman slightly changed to use linear function until half of chunk is transferred
-			float trunk;
-			if(downloadTotal < 4718592)  //half of a chunk and a good point to keep the function consistent
-				trunk = (float)(1.0 + (double)downloadTotal/(1048576.0*3.0));
-			else
-				trunk = (float)sqrt(2.0 + (double)downloadTotal/1048576.0);
-			//Xman end
-
-
-			if(result>10.0f)
-			{
-				result=10.0f;
-				m_bonusfaktor=0;
-			}
-			else
-				result += m_bonusfaktor;
-			if(result>10.0f)
-			{
-				m_bonusfaktor -= (float)(result-10.0f);
-				result=10.0f;
-			}
-
-			if(result > trunk)
-			{
-				result = trunk;
-				m_bonusfaktor=0;
-			}
-
-			// Trunk final result 1..10
-			if(result < 1.0f)
-			{
-				result = (1.0f + m_bonusfaktor );
-				break;
-			}
-			if (result > 10.0f)
-			{
-				result = 10.0f;
-				break;
-			}
-		}break;
-		// <== new credit system ~ Xtreme Creditsystem [Xman] - Stulle
-
-		// ==> new credit system ~ ZZUL [ZZ] - Stulle
 		case CS_ZZUL:
 		{
 			if(currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable())
@@ -591,13 +512,105 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 				break;
 			}
 		}break;
-		// <== new credit system ~ ZZUL [ZZ] - Stulle
+
+		case CS_XMAN:{
+			#define PENALTY_UPSIZE 8388608 //8 MB
+
+			float m_bonusfaktor=0;
+
+			// Check the client ident status
+			if((currentIDstate == IS_IDFAILED || currentIDstate == IS_IDBADGUY || currentIDstate == IS_IDNEEDED) && 
+				theApp.clientcredits->CryptoAvailable() == true){
+				// bad guy - no credits for you
+				//return 1.0f;
+				result = 0.8f; //Xman 80% for non SUI-clients.. (and also bad guys)
+				break;
+			}
+
+			// Cache value
+			const uint64 downloadTotal = GetDownloadedTotal();
+
+			// Check if this client has any credit (sent >1.65MB)
+			const float difference2=(float)client->GetTransferredUp() - client->GetTransferredDown();	
+			if(downloadTotal < 1650000)
+			{	
+				if ( difference2 > (2*PENALTY_UPSIZE))
+					m_bonusfaktor=(-0.2f);
+				else if (difference2 > PENALTY_UPSIZE)
+					m_bonusfaktor=(-0.1f);
+				else
+					m_bonusfaktor=0;
+
+				result = (1.0f + m_bonusfaktor);
+				break;
+			}
+
+			// Cache value
+			const uint64 uploadTotal = GetUploadedTotal();
+
+
+			// Bonus Faktor calculation
+			float difference = (float)downloadTotal - uploadTotal;
+			if (difference>=0)
+			{
+				m_bonusfaktor=difference/10485760.0f - (1.5f/(downloadTotal/10485760.0f));  //pro MB difference 0.1 - pro MB download 0.1
+				if (m_bonusfaktor<0)
+					m_bonusfaktor=0;
+			}
+			else 
+			{
+				difference=abs(difference);
+				if (difference> (2*PENALTY_UPSIZE) && difference2 > (2*PENALTY_UPSIZE))
+					m_bonusfaktor=(-0.2f);
+				else if (difference>PENALTY_UPSIZE && difference2 > PENALTY_UPSIZE)
+					m_bonusfaktor=(-0.1f);
+				else
+					m_bonusfaktor=0;
+			}
+			// Factor 1
+			result = (uploadTotal == 0) ?
+			10.0f : (float)(2*downloadTotal)/(float)uploadTotal;
+
+			// Factor 2
+			// linear calcualtion of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
+			float trunk;
+			if(downloadTotal < 9646899) 
+				trunk = (((float)(downloadTotal - 1048576) / 8598323.0F) * 2.34F) + 1.0F;
+			else
+				trunk = (float)sqrt(2.0 + (double)downloadTotal/1048576.0);
+
+
+			if(result>10.0f)
+			{
+				result=10.0f;
+				m_bonusfaktor=0;
+			}
+			else
+				result += m_bonusfaktor;
+			if(result>10.0f)
+			{
+				m_bonusfaktor -= (result-10.0f);
+				result=10.0f;
+			}
+	
+			if(result > trunk)
+			{
+				result = trunk;
+				m_bonusfaktor=0;
+			}
+
+			// Trunk final result 1..10
+			if(result < 1.0f)
+					result = (1.0f + m_bonusfaktor );
+			else if (result > 10.0f)
+					result = 10.0f;
+		 }break;
 
 		case CS_OFFICIAL:
 		default:{
 			if ( currentIDstate != IS_IDENTIFIED  && currentIDstate != IS_NOTAVAILABLE && theApp.clientcredits->CryptoAvailable() ){
-				result = 1.0f;
 				bBadGuy = true;
+				result = 0.8f;
 				break;
 			}
 
@@ -634,155 +647,206 @@ float CClientCredits::GetScoreRatio(uint32 dwForIP) /*const*/
 			}
 		}break;
 	}
-
-	// ==> moved into switch for new credit systems - Stulle
 	if(bBadGuy)
 		m_bCheckScoreRatio = true;
-	// <== moved into switch for new credit systems - Stulle
 
-	return m_fLastScoreRatio = (float)result;
-	//EastShare END - Added by linekin, CreditSystem 
-
-	//EastShare END - Added by linekin, CreditSystem 
+	return m_fLastScoreRatio = result;
 }
 
-//MORPH START - Added by Stulle, fix score display
-bool CClientCredits::GetHasScore(uint32 dwForIP)
+bool CClientCredits::GetHasScore(const CUpDownClient* client)
 {
-	float modif = GetScoreRatio(dwForIP);
+	float modif = GetScoreRatio(client);
 	float m_fDefault;
 
-	// ==> new credit system - Stulle
-	/*
 	if (thePrefs.GetCreditSystem() == CS_LOVELACE)
 		m_fDefault = 0.985f; // this might be a bit more than the result... who care's!?!?!
 	else if (thePrefs.GetCreditSystem() == CS_PAWCIO)
 		m_fDefault = 3.0f;
 	else
 		m_fDefault = 1.0f;
-	*/
-	switch (thePrefs.GetCreditSystem())	{
-		case CS_LOVELACE:
-		{
-			m_fDefault = 0.985f; // this might be a bit more than the result... who care's!?!?!
-		}break;
-		case CS_PAWCIO:
-		{
-			m_fDefault = 3.0f;
-		}break;
-		case CS_TK4:
-		{
-			m_fDefault = 10.0f;
-		}break;
-		case CS_OFFICIAL:
-		case CS_RATIO:
-		case CS_EASTSHARE:
-		case CS_SIVKA:
-		case CS_SWAT:
-		case CS_XTREME:
-		case CS_ZZUL:
-		default:
-		{
-			m_fDefault = 1.0f;
-		}break;
-	}
-	// <== new credit system - Stulle
 
 	return (modif > m_fDefault);
 }
-//MORPH END - Added by Stulle, fix score display
+// <== CreditSystems [EastShare/ MorphXT] - Stulle
 
-//MORPH START - Added by IceCream, VQB: ownCredits
-float CClientCredits::GetMyScoreRatio(uint32 dwForIP) const
+//because the bonusfactor is only used for displaying client-details, it's cheaper to recalculate it than saving it
+const float CClientCredits::GetBonusFaktor(const CUpDownClient* client) const
 {
-	// check the client ident status
-	//MORPH START - Changed by SIRoB, Code Optimization 
-	/*
-	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED  || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
-	*/
-	if ( GetCurrentIdentState(dwForIP) != IS_IDENTIFIED  && GetCurrentIdentState(dwForIP) != IS_NOTAVAILABLE && GetCurrentIdentState(dwForIP) != IS_IDBADGUY && theApp.clientcredits->CryptoAvailable() ){
-	//MORPH END   - Changed by SIRoB, Code Optimization 
-		// bad guy - no credits for... me?
-		return 1.0F;
-	}
+	uint32 dwForIP=client->GetIP();
+#define PENALTY_UPSIZE 8388608 //8 MB
 
-	CUpDownClient* client = theApp.clientlist->FindClientByIP(dwForIP);
-	uint64 uUploadedTotalMin = 1000000;
-	bool bNewCredits = false;
-	if(client->GetClientSoft() == SO_EMULE && client->GetVersion() >= MAKE_CLIENT_VERSION(0, 48, 0))
-	{
-		uUploadedTotalMin = 1048576;
-		bNewCredits = true;
-	}
+	float m_bonusfaktor=0;
 
-	if (GetUploadedTotal() < uUploadedTotalMin)
-		return 1.0F;
-	float result = 0.0F;
-	if (!GetDownloadedTotal())
-		result = 10.0F;
-	else
-		result = (float)(((double)GetUploadedTotal()*2.0)/(double)GetDownloadedTotal());
-	float result2 = 0.0F;
-	result2 = (float)(GetUploadedTotal()/1048576.0);
-	result2 += 2.0F;
-	result2 = (float)sqrt(result2);
-
-	if(!bNewCredits)
-	{
-		if (result > result2)
-			result = result2;
-	}
-	else
-	{
-		// linear calcualtion of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
-		float result3 = 10.0F;
-		if (GetUploadedTotal() < 9646899){
-			result3 = (((float)(GetUploadedTotal() - 1048576) / 8598323.0F) * 2.34F) + 1.0F;
+	// Check the client ident status
+	if((GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && 
+		theApp.clientcredits->CryptoAvailable() == true){
+			// bad guy - no credits for you
+			//return 1.0f;
+			return m_bonusfaktor; //Xman 80% for non SUI-clients.. (and also bad guys)
 		}
 
-		// take the smallest result
-		result = min(result, min(result2, result3));
+		// Cache value
+		const uint64 downloadTotal = GetDownloadedTotal();
+
+		// Check if this client has any credit (sent >1.65MB)
+		const float difference2=(float)client->GetTransferredUp() - client->GetTransferredDown();	
+		if(downloadTotal < 1650000)
+		{	
+			if ( difference2 > (2*PENALTY_UPSIZE))
+				m_bonusfaktor=(-0.2f);
+			else if (difference2 > PENALTY_UPSIZE)
+				m_bonusfaktor=(-0.1f);
+			else
+				m_bonusfaktor=0;
+
+			return (m_bonusfaktor);
+		}
+
+		// Cache value
+		const uint64 uploadTotal = GetUploadedTotal();
+
+
+		// Bonus Faktor calculation
+		float difference = (float)downloadTotal - uploadTotal;
+		if (difference>=0)
+		{
+			m_bonusfaktor=difference/10485760.0f - (1.5f/(downloadTotal/10485760.0f));  //pro MB difference 0.1 - pro MB download 0.1
+			if (m_bonusfaktor<0)
+				m_bonusfaktor=0;
+		}
+		else 
+		{
+			difference=abs(difference);
+			if (difference> (2*PENALTY_UPSIZE) && difference2 > (2*PENALTY_UPSIZE))
+				m_bonusfaktor=(-0.2f);
+			else if (difference>PENALTY_UPSIZE && difference2 > PENALTY_UPSIZE)
+				m_bonusfaktor=(-0.1f);
+			else
+				m_bonusfaktor=0;
+		}
+		// Factor 1
+		float result = (uploadTotal == 0) ?
+			10.0f : (float)(2*downloadTotal)/(float)uploadTotal;
+
+		// Factor 2
+		// linear calcualtion of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
+		float trunk;
+		if(downloadTotal < 9646899) 
+			trunk = (((float)(downloadTotal - 1048576) / 8598323.0F) * 2.34F) + 1.0F;
+		else
+			trunk = (float)sqrt(2.0 + (double)downloadTotal/1048576.0);
+
+		if(result>10.0f)
+		{
+			result=10.0f;
+			m_bonusfaktor=0;
+		}
+		else
+			result += m_bonusfaktor;
+		if(result>10.0f)
+		{
+			m_bonusfaktor -= (result-10.0f);
+			result=10.0f;;
+		}
+
+		if(result > trunk)
+		{
+			result = trunk;
+			m_bonusfaktor=0;
+		}
+
+		return m_bonusfaktor;
+}
+
+// Xman Credit System end
+
+
+//Xman
+// See own credits - VQB
+const float CClientCredits::GetMyScoreRatio(uint32 dwForIP) const
+{
+	// check the client ident status
+	// ==> Code Optimization [SiRoB] - Stulle
+	/*
+	if ( ( GetCurrentIdentState(dwForIP) == IS_IDFAILED || GetCurrentIdentState(dwForIP) == IS_IDBADGUY || GetCurrentIdentState(dwForIP) == IS_IDNEEDED) && theApp.clientcredits->CryptoAvailable() ){
+	*/
+	if ( GetCurrentIdentState(dwForIP) != IS_IDENTIFIED  && GetCurrentIdentState(dwForIP) != IS_NOTAVAILABLE && GetCurrentIdentState(dwForIP) != IS_IDBADGUY && theApp.clientcredits->CryptoAvailable() ){
+	// <== Code Optimization [SiRoB] - Stulle
+		// bad guy - no credits for... me?
+		return 1.0f;
 	}
 
-	if (result < 1.0F)
-		return 1.0F;
-	else if (result > 10.0F)
-		return 10.0F;
+	if (GetUploadedTotal() < 1048576)
+		return 1.0f;
+	float result = 0;
+	if (!GetDownloadedTotal())
+		result = 10.0f;
+	else
+		result = (float)(((double)GetUploadedTotal()*2.0)/(double)GetDownloadedTotal());
+	float result2 = 0;
+	result2 = (float)(GetUploadedTotal()/1048576.0);
+	result2 += 2.0f;
+	result2 = (float)sqrt(result2);
+
+	// linear calcualtion of the max multiplicator based on uploaded data for the first chunk (1MB = 1.01, 9.2MB = 3.34)
+	float result3 = 10.0F;
+	if (GetUploadedTotal() < 9646899){
+		result3 = (((float)(GetUploadedTotal() - 1048576) / 8598323.0F) * 2.34F) + 1.0F;
+	}
+
+	// take the smallest result
+	result = min(result, min(result2, result3));
+
+	if (result < 1.0f)
+		return 1.0f;
+	else if (result > 10.0f)
+		return 10.0f;
 	return result;
 }
-//MORPH END   - Added by IceCream, VQB: ownCredits
+// See own credits - VQB END
+//Xman end
 
-//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 // Moonlight: SUQWT - Conditions to determine an active record.
 // Returns true if the client has been seen recently
-bool CClientCredits::IsActive(time_t dwExpired) { //vs2005 (NOTE: some chashdumps on exit with sqyt.met corruption  point here??? 
+bool CClientCredits::IsActive(time_t dwExpired) {
 	return (GetUploadedTotal() || GetDownloadedTotal() || m_pCredits->nSecuredWaitTime || m_pCredits->nUnSecuredWaitTime) &&
 			(m_pCredits->nLastSeen >= dwExpired);
 }
-//Morph End - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 CClientCreditsList::CClientCreditsList()
 {
 	m_nLastSaved = ::GetTickCount();
 	LoadList();
-	
+
 	InitalizeCrypting();
 }
 
 CClientCreditsList::~CClientCreditsList()
 {
 	SaveList();
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
 	CClientCredits* cur_credit;
+	*/
+	ClientCreditContainer* cur_credit;
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
 	CCKey tmpkey(0);
 	POSITION pos = m_mapClients.GetStartPosition();
 	while (pos){
 		m_mapClients.GetNextAssoc(pos, tmpkey, cur_credit);
+		//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+		if(cur_credit->clientCredit)
+			delete cur_credit->clientCredit;
+		//zz_fly :: Optimized :: Enig123, DolphinX :: End
 		delete cur_credit;
 	}
-		delete m_pSignkey;
+	delete m_pSignkey;
 }
 
-// Moonlight: SUQWT: Change the file import 0.30c format.//Morph - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+// Moonlight: SUQWT: Change the file import 0.30c format.
 void CClientCreditsList::LoadList()
 {
 	CString strFileName = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + CLIENTS_MET_FILENAME;
@@ -790,7 +854,7 @@ void CClientCreditsList::LoadList()
 	CSafeBufferedFile file;
 	CFileException fexp;
 
-	m_bSaveUploadQueueWaitTime = thePrefs.SaveUploadQueueWaitTime();//Morph - added by AndCycle, Save Upload Queue Wait Time (SUQWT)
+	m_bSaveUploadQueueWaitTime = thePrefs.SaveUploadQueueWaitTime();
 	//Morph Start - added by AndCycle, choose .met to load
 
 	CSafeBufferedFile	loadFile;
@@ -827,7 +891,7 @@ void CClientCreditsList::LoadList()
 		}
 	}
 	uint8 tmpprioOrderfile;
-	uint8 maxavailablefile =(uint8) index;
+	uint8 maxavailablefile = (uint8)index;
 	for (;index>0;index--){
 		for (uint8 i=1; i<index;i++)
 		{
@@ -856,27 +920,19 @@ void CClientCreditsList::LoadList()
 					strError += _T(" - ");
 					strError += szError;
 				}
-			LogError(LOG_STATUSBAR, _T("%s"), strError);
+				LogError(LOG_STATUSBAR, _T("%s"), strError);
 			}
 			//MORPH START - Changed by SiRoB, Allternative choose .met to load
 			/*
-            return;
+			return;
 			*/
 			continue;
 			//MORPH END  - Changed by SiRoB, Allternative choose .met to load
 		}
 		setvbuf(file.m_pStream, NULL, _IOFBF, 16384);
-		
+
 		try{
 			uint8 version = file.ReadUInt8();
-			//Morph Start - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
-			/*
-			if (version != CREDITFILE_VERSION && version != CREDITFILE_VERSION_29){
-				LogWarning(GetResString(IDS_ERR_CREDITFILEOLD));
-				file.Close();
-				return;
-			}
-			*/
 			// Moonlight: SUQWT - Import CreditStruct from 0.30c and SUQWTv1
 			if (version != CREDITFILE_VERSION_30_SUQWTv1 && version != CREDITFILE_VERSION_30_SUQWTv2 &&
 				version != CREDITFILE_VERSION_30 && version != CREDITFILE_VERSION_29){
@@ -889,7 +945,6 @@ void CClientCreditsList::LoadList()
 				continue;
 				//MORPH END  - Changed by SiRoB, Allternative choose .met to load
 			}
-			//Morph End - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 
 			// everything is ok, lets see if the backup exist...
 			CString strBakFileName;
@@ -919,12 +974,17 @@ void CClientCreditsList::LoadList()
 			}
 			//else: the backup doesn't exist, create it
 
-			if (bCreateBackup)
+			if (bCreateBackup ) 
 			{
 				file.Close(); // close the file before copying
 
-				if (!::CopyFile(strFileName, strBakFileName, FALSE))
-					LogError(GetResString(IDS_ERR_MAKEBAKCREDITFILE));
+				//Xman don't overwrite bak files if last sessions crashed
+				if(thePrefs.eMuleChrashedLastSession())
+					::CopyFile(strFileName, strBakFileName, TRUE); //allow one copy
+				else
+				//Xman end
+					if (!::CopyFile(strFileName, strBakFileName, FALSE))
+						LogError(GetResString(IDS_ERR_MAKEBAKCREDITFILE));
 
 				// reopen file
 				CFileException fexp;
@@ -936,14 +996,19 @@ void CClientCreditsList::LoadList()
 						strError += szError;
 					}
 					LogError(LOG_STATUSBAR, _T("%s"), strError);
-					continue; //MORPH - Continue loading files
+						continue; //MORPH - Continue loading files
 				}
 				setvbuf(file.m_pStream, NULL, _IOFBF, 16384);
 				file.Seek(1, CFile::begin); //set filepointer behind file version byte
 			}
 
 			if (m_mapClients.GetCount() > 0) {
+				//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+				/*
 				CClientCredits* cur_credit;
+				*/
+				ClientCreditContainer* cur_credit;
+				//zz_fly :: Optimized :: Enig123, DolphinX :: End
 				CCKey tmpkey(0);
 				POSITION pos = m_mapClients.GetStartPosition();
 				while (pos){
@@ -953,73 +1018,155 @@ void CClientCreditsList::LoadList()
 				m_mapClients.RemoveAll();
 			}
 			UINT count = file.ReadUInt32();
-			//Morph Start - added by AndCycle, minor tweak - prime
+			//Xman Extened credit- table-arragement
 			/*
 			m_mapClients.InitHashTable(count+5000); // TODO: should be prime number... and 20% larger
 			*/
-			m_mapClients.InitHashTable((int)(count*1.5) > 5003?getPrime((int)(count*1.5)):5003);
-			//Morph End - added by AndCycle, minor tweak - prime
+			UINT calc=UINT(count*1.2f);
+			//zz_fly :: prime table :: start
+			/*
+			calc = calc + calc%2 + 1;
+			m_mapClients.InitHashTable(calc + 20000); //optimized for 20 000 new contacts
+			*/
+			m_mapClients.InitHashTable(GetPrime(calc + 19000)); //GetPrime will increase the number about 1k in average
+			//zz_fly :: prime table :: end
+			//Xman end
 
-			const time_t dwExpired = time(NULL) - 12960000; // today - 150 day vs2005
+			// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+			/*
+			const uint32 dwExpired = time(NULL) - 12960000; // today - 150 day
+			*/
+			const time_t dwExpired = time(NULL) - 12960000; // today - 150 day
+			// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 			uint32 cDeleted = 0;
 			
 			//MORPH START - Changed by SiRoB, Optimization
-			//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 			if (version == CREDITFILE_VERSION) {
 				for (UINT i = 0; i < count; i++){
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CreditStruct* newcstruct = new CreditStruct;
+					*/
+					ClientCreditContainer* newcstruct_parent = new ClientCreditContainer;
+					CreditStruct* newcstruct = &newcstruct_parent->theCredit;
+					memset(newcstruct, 0, sizeof(CreditStruct_30c_SUQWTv2));
+					newcstruct_parent->clientCredit = NULL;
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 					file.Read(newcstruct, sizeof(CreditStruct_30c_SUQWTv2));
 					if (newcstruct->nLastSeen < dwExpired){
 						++cDeleted;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+						/*
 						delete newcstruct;
+						*/
+						delete newcstruct_parent;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: End
 						continue;
 					}
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CClientCredits* newcredits = new CClientCredits(newcstruct);
 					m_mapClients.SetAt(CCKey(newcredits->GetKey()), newcredits);
+					*/
+					m_mapClients.SetAt(CCKey(newcstruct->abyKey), newcstruct_parent);
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 				}		
 			} else if (version == CREDITFILE_VERSION_30) {
 				for (UINT i = 0; i < count; i++){
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CreditStruct* newcstruct = new CreditStruct;
+					*/
+					ClientCreditContainer* newcstruct_parent = new ClientCreditContainer;
+					CreditStruct* newcstruct = &newcstruct_parent->theCredit;
+					memset(newcstruct, 0, sizeof(CreditStruct_30c));
+					newcstruct_parent->clientCredit = NULL;
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 					newcstruct->nSecuredWaitTime = 0;
 					newcstruct->nUnSecuredWaitTime = 0;
 					file.Read(((uint8*)newcstruct) + 8, sizeof(CreditStruct_30c));
 					if (newcstruct->nLastSeen < dwExpired){
 						++cDeleted;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+						/*
 						delete newcstruct;
+						*/
+						delete newcstruct_parent;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: End
 						continue;
 					}
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CClientCredits* newcredits = new CClientCredits(newcstruct);
 					m_mapClients.SetAt(CCKey(newcredits->GetKey()), newcredits);
+					*/
+					m_mapClients.SetAt(CCKey(newcstruct->abyKey), newcstruct_parent);
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 				}		
 			} else if (version == CREDITFILE_VERSION_30_SUQWTv1) {
 				for (UINT i = 0; i < count; i++){
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CreditStruct* newcstruct = new CreditStruct;
+					*/
+					ClientCreditContainer* newcstruct_parent = new ClientCreditContainer;
+					CreditStruct* newcstruct = &newcstruct_parent->theCredit;
+					memset(newcstruct, 0, sizeof(CreditStruct_30c_SUQWTv1));
+					newcstruct_parent->clientCredit = NULL;
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 					file.Read(((uint8*)newcstruct) + 8, sizeof(CreditStruct_30c_SUQWTv1) - 8);
 					file.Read(((uint8*)newcstruct), 8);
 					if (newcstruct->nLastSeen < dwExpired){
 						++cDeleted;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+						/*
 						delete newcstruct;
+						*/
+						delete newcstruct_parent;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: End
 						continue;
 					}
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CClientCredits* newcredits = new CClientCredits(newcstruct);
 					m_mapClients.SetAt(CCKey(newcredits->GetKey()), newcredits);
-				}		
+					*/
+					m_mapClients.SetAt(CCKey(newcstruct->abyKey), newcstruct_parent);
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
+				}
 			} else {
 				for (UINT i = 0; i < count; i++){
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CreditStruct* newcstruct = new CreditStruct;
 					memset(newcstruct, 0, sizeof(CreditStruct));
+					*/
+					ClientCreditContainer* newcstruct_parent = new ClientCreditContainer;
+					CreditStruct* newcstruct = &newcstruct_parent->theCredit;
+					memset(newcstruct, 0, sizeof(CreditStruct_29a));
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
+					newcstruct_parent->clientCredit = NULL; //zz_fly :: Optimized :: Enig123, DolphinX
 					file.Read(((uint8*)newcstruct) + 8, sizeof(CreditStruct_29a));
 					if (newcstruct->nLastSeen < dwExpired){
 						cDeleted++;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+						/*
 						delete newcstruct;
+						*/
+						delete newcstruct_parent;
+						//zz_fly :: Optimized :: Enig123, DolphinX :: End
 						continue;
 					}
 
+					//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+					/*
 					CClientCredits* newcredits = new CClientCredits(newcstruct);
 					m_mapClients.SetAt(CCKey(newcredits->GetKey()), newcredits);
+					*/
+					m_mapClients.SetAt(CCKey(newcstruct->abyKey), newcstruct_parent);
+					//zz_fly :: Optimized :: Enig123, DolphinX :: End
 				}
 			}
-			//Morph End   - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 			//MORPH START - Changed by SiRoB, Optimization
 			file.Close();
 
@@ -1033,32 +1180,34 @@ void CClientCreditsList::LoadList()
 		}
 		catch(CFileException* error){
 			if (error->m_cause == CFileException::endOfFile)
-			LogError(LOG_STATUSBAR, GetResString(IDS_CREDITFILECORRUPT));
+				LogError(LOG_STATUSBAR, GetResString(IDS_CREDITFILECORRUPT));
 			else{
 				TCHAR buffer[MAX_CFEXP_ERRORMSG];
 				error->GetErrorMessage(buffer, ARRSIZE(buffer));
-			LogError(LOG_STATUSBAR, GetResString(IDS_ERR_CREDITFILEREAD), buffer);
+				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_CREDITFILEREAD), buffer);
 			}
 			error->Delete();
 			file.Close();
 		}
-		//MORPH START - Added by SiRoB, Catch oversized public key in credit.met file
 		catch(CString error)
 		{
 			if (!error.IsEmpty())
 				LogWarning(_T("%s - while loading %s"), error, strFileName);
 			file.Close();
 		}
-		//MORPH END   - Added by SiRoB, Catch oversized public key in credit.met file
 	}//MORPH - Added by SiRoB, Alternative choose .met to load
 }
 
-// Moonlight: SUQWT - Save the wait times before saving the list.//Morph - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// Moonlight: SUQWT - Save the wait times before saving the list.
 void CClientCreditsList::SaveList()
 {
 	if (thePrefs.GetLogFileSaving())
 		AddDebugLogLine(false, _T("Saving clients credit list file \"%s\""), CLIENTS_MET_FILENAME);
+	//Enig123 :: moved to Process()
+	/*
 	m_nLastSaved = ::GetTickCount();
+	*/
+	//Enig123 :: end
 
 	CString name = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + CLIENTS_MET_FILENAME;
 	CFile file;// no buffering needed here since we swap out the entire array
@@ -1077,20 +1226,29 @@ void CClientCreditsList::SaveList()
 	uint32 count = m_mapClients.GetCount();
 	BYTE* pBuffer = NULL;
 	pBuffer = new BYTE[count*sizeof(CreditStruct_30c)]; //Morph - modified by AndCycle, original 30c file format
-	//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 	BYTE* pBufferSUQWT=NULL;
 	if (m_bSaveUploadQueueWaitTime)
 		pBufferSUQWT = new BYTE[count*sizeof(CreditStruct)];
-	const time_t dwExpired = time(NULL) - 12960000; // today - 150 day vs2005
-	//Morph End   - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	const uint32 dwExpired = time(NULL) - 12960000; // today - 150 day
+	*/
+	const time_t dwExpired = time(NULL) - 12960000; // today - 150 day
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
 	CClientCredits* cur_credit;
+	*/
+	ClientCreditContainer* cur_credit;
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
 	CCKey tempkey(0);
 	POSITION pos = m_mapClients.GetStartPosition();
 	count = 0;
 	while (pos)
 	{
 		m_mapClients.GetNextAssoc(pos, tempkey, cur_credit);
-		//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+		//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+		/*		
 		if(m_bSaveUploadQueueWaitTime){
 			if (cur_credit->IsActive(dwExpired))	// Moonlight: SUQWT - Also save records if there is wait time.
 			{
@@ -1100,13 +1258,41 @@ void CClientCreditsList::SaveList()
 				count++; 
 			}
 		}else 
-		//Morph End   - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 		if (cur_credit->GetUploadedTotal() || cur_credit->GetDownloadedTotal())
+		*/
+		CreditStruct* credit = &cur_credit->theCredit;
+		if(m_bSaveUploadQueueWaitTime){
+			bool bRemoveClientCredit = false;
+			if (cur_credit->clientCredit == NULL)
+			{
+				bRemoveClientCredit = true;
+				cur_credit->clientCredit = new CClientCredits(&cur_credit->theCredit);
+			}
+			if (cur_credit->clientCredit->IsActive(dwExpired))	// Moonlight: SUQWT - Also save records if there is wait time.
+			{
+				cur_credit->clientCredit->SaveUploadQueueWaitTime();	// Moonlight: SUQWT
+				memcpy(pBufferSUQWT+(count*sizeof(CreditStruct)), credit, sizeof(CreditStruct));
+				memcpy(pBuffer+(count*sizeof(CreditStruct_30c)), (uint8 *)credit + 8, sizeof(CreditStruct_30c));	// Moonlight: SUQWT - Save 0.30c CreditStruct
+				count++; 
+			}
+			if (bRemoveClientCredit)
+			{
+				delete cur_credit->clientCredit;
+				cur_credit->clientCredit = NULL;
+			}
+		}else 
+		if (credit->nUploadedHi || credit->nUploadedLo || credit->nDownloadedHi || credit->nDownloadedLo)
+		//zz_fly :: Optimized :: Enig123, DolphinX :: End 
 		{
 			/*// Moonlight: SUQWT - Save 0.30c CreditStruct
 			memcpy(pBuffer+(count*sizeof(CreditStruct)), cur_credit->GetDataStruct(), sizeof(CreditStruct));
 			*/
+			//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+			/*		
 			memcpy(pBuffer+(count*sizeof(CreditStruct_30c)), (uint8 *)cur_credit->GetDataStruct() + 8, sizeof(CreditStruct_30c));
+			*/
+			memcpy(pBuffer+(count*sizeof(CreditStruct_30c)), (uint8 *)credit + 8, sizeof(CreditStruct_30c));
+			//zz_fly :: Optimized :: Enig123, DolphinX :: End 
 			count++; 
 		}
 	}
@@ -1120,7 +1306,6 @@ void CClientCreditsList::SaveList()
 			file.Flush();
 		file.Close();
 
-		//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 		if (m_bSaveUploadQueueWaitTime)
 		{
 			CString nameSUQWT = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + CString(CLIENTS_MET_FILENAME) + _T(".SUQWTv2.met"); 
@@ -1142,7 +1327,6 @@ void CClientCreditsList::SaveList()
 				file.Flush();
 			file.Close();
 		}
-		//Morph End - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 	}
 	catch(CFileException* error){
 		CString strError(GetResString(IDS_ERR_FAILED_CREDITSAVE));
@@ -1156,28 +1340,155 @@ void CClientCreditsList::SaveList()
 	}
 	delete[] pBuffer;
 
-	//Morph Start - added by SiRoB, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 	if(m_bSaveUploadQueueWaitTime)
 		delete[] pBufferSUQWT;
-	//Morph End   - added by SiRoB, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 }
+// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 CClientCredits* CClientCreditsList::GetCredit(const uchar* key)
 {
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
 	CClientCredits* result;
+	*/
+	ClientCreditContainer* result;
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
 	CCKey tkey(key);
 	if (!m_mapClients.Lookup(tkey, result)){
+		//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+		/*
 		result = new CClientCredits(key);
 		m_mapClients.SetAt(CCKey(result->GetKey()), result);
+		*/
+		result = new ClientCreditContainer;
+		result->clientCredit = new CClientCredits(key, &result->theCredit);
+		m_mapClients.SetAt(CCKey(result->clientCredit->GetKey()), result);
+		//zz_fly :: Optimized :: Enig123, DolphinX :: End
 	}
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	else if(!result->clientCredit)
+		result->clientCredit = new CClientCredits(&result->theCredit);
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
+
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
 	result->SetLastSeen();
+
+	result->UnMarkToDelete(); //Xman Extened credit- table-arragement
 	return result;
+	*/
+	result->clientCredit->SetLastSeen();
+	//zz_fly :: Optimized on table-arragement ::Enig123 :: Start
+	/*
+	result->clientCredit->UnMarkToDelete(); //Xman Extened credit- table-arragement
+	*/
+	result->clientCredit->IncReferredTimes();
+	//zz_fly :: End
+	return result->clientCredit;
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
 }
 
 void CClientCreditsList::Process()
 {
+
+#define HOURS_KEEP_IN_MEMORY 6	//Xman Extened credit- table-arragement
+
 	if (::GetTickCount() - m_nLastSaved > MIN2MS(13))
+	//Xman Extened credit- table-arragement
+	{
+		m_nLastSaved = ::GetTickCount(); //Enig123 :: moved from SaveList()
+		//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+		/*
+		CClientCredits* cur_credit;
+		*/
+		ClientCreditContainer* result;
+		//zz_fly :: Optimized :: Enig123, DolphinX :: End
+		CCKey tmpkey(0);
+		//zz_fly :: show statistics :: Start
+		int credit_count = 0;
+		int unused_count = 0;
+		//zz_fly :: show statistics :: End
+		POSITION pos = m_mapClients.GetStartPosition();
+		while (pos){
+			//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+			/*
+			m_mapClients.GetNextAssoc(pos, tmpkey, cur_credit);
+			*/
+			m_mapClients.GetNextAssoc(pos, tmpkey, result);
+			CClientCredits* cur_credit = result->clientCredit;
+			//zz_fly :: Optimized :: Enig123, DolphinX :: End
+
+			if(cur_credit) credit_count++; //zz_fly :: show statistics
+
+			//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+			/*
+			if(cur_credit->GetMarkToDelete() && (time(NULL) - cur_credit->GetLastSeen() > (3600 * HOURS_KEEP_IN_MEMORY))) //not seen for > 3 hours
+			*/			
+			if(cur_credit && cur_credit->isDeletable() && (time(NULL) - cur_credit->GetLastSeen() > (3600 * HOURS_KEEP_IN_MEMORY))) //not seen for > 6 hours
+			//zz_fly :: End
+			{
+				//two security-checks, it can happen that there is a second user using this hash
+				//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+				/*
+				if(cur_credit->GetUploadedTotal()==0 && cur_credit->GetDownloadedTotal()==0
+					&& theApp.clientlist->FindClientByUserHash(cur_credit->GetKey())==NULL)
+				*/
+				if(theApp.clientlist->FindClientByUserHash(cur_credit->GetKey())==NULL)
+				//zz_fly :: End
+				{
+					//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+					CreditStruct* credit = &result->theCredit;
+					uint64 ul = (((uint64)credit->nUploadedHi << 32) | credit->nUploadedLo);
+					uint64 dl = (((uint64)credit->nDownloadedHi << 32) | credit->nDownloadedLo);
+					//zz_fly :: End
+					//this key isn't longer used
+					//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+					/*
+					m_mapClients.RemoveKey(CCKey(cur_credit->GetKey()));
+					*/
+					//zz_fly :: End
+					// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+					bool bCanRemoveStruct = !m_bSaveUploadQueueWaitTime || !(credit->nSecuredWaitTime || credit->nUnSecuredWaitTime);
+					// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+					unused_count++; //zz_fly :: debug only
+					if(cur_credit){
+						delete cur_credit;
+						//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+						/*
+						delete result;
+						*/
+						cur_credit = NULL;
+						result->clientCredit = NULL; //fix crash
+					}
+					// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+					/*
+					if(ul==0 && dl==0)
+					*/
+					if(ul==0 && dl==0 && bCanRemoveStruct)
+					// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+					{
+						m_mapClients.RemoveKey(tmpkey);
+						delete result;
+					}
+					//zz_fly :: End
+					
+				}
+				//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+				/*
+				else
+					cur_credit->UnMarkToDelete();
+				*/
+				//zz_fly :: End
+			}
+		}
+	//Xman end
+		//zz_fly :: show statistics :: Start
+		AddDebugLogLine( false, _T("%i ClientCredits in memory(Total:%i)"), credit_count, m_mapClients.GetSize());
+		if (unused_count)
+			AddDebugLogLine( false, _T("%i unused credits cleared"), unused_count);
+		//zz_fly :: show statistics :: End
 		SaveList();
+	} //Xman
 }
 
 void CClientCredits::InitalizeIdent()
@@ -1189,10 +1500,10 @@ void CClientCredits::InitalizeIdent()
 	}
 	else{
 		m_nPublicKeyLen = m_pCredits->nKeySize;
-		//MORPH START - Added by SiRoB, Catch oversized public key in credit.met file
+		// ==> Catch oversized public key in credit.met file [SiRoB] - Stulle
 		if (m_nPublicKeyLen > MAXPUBKEYSIZE)
 			throw CString(_T("Public Key of one client is larger than MAXPUBKEYSIZE"));
-		//MORPH END   - Added by SiRoB, Catch oversized public key in credit.met file
+		// <== Catch oversized public key in credit.met file [SiRoB] - Stulle
 		memcpy(m_abyPublicKey, m_pCredits->abySecureIdent, m_nPublicKeyLen);
 		IdentState = IS_IDNEEDED;
 	}
@@ -1240,8 +1551,8 @@ EIdentState	CClientCredits::GetCurrentIdentState(uint32 dwForIP) const
 			return IS_IDENTIFIED;
 		else
 			return IS_IDBADGUY; 
-			// mod note: clients which just reconnected after an IP change and have to ident yet will also have this state for 1-2 seconds
-			//		 so don't try to spam such clients with "bad guy" messages (besides: spam messages are always bad)
+		// mod note: clients which just reconnected after an IP change and have to ident yet will also have this state for 1-2 seconds
+		//		 so don't try to spam such clients with "bad guy" messages (besides: spam messages are always bad)
 	}
 }
 
@@ -1257,7 +1568,7 @@ void CClientCreditsList::InitalizeCrypting()
 	// check if keyfile is there
 	bool bCreateNewKey = false;
 	HANDLE hKeyFile = ::CreateFile(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + _T("cryptkey.dat"), GENERIC_READ, FILE_SHARE_READ, NULL,
-										OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hKeyFile != INVALID_HANDLE_VALUE)
 	{
 		if (::GetFileSize(hKeyFile, NULL) == 0)
@@ -1268,7 +1579,7 @@ void CClientCreditsList::InitalizeCrypting()
 		bCreateNewKey = true;
 	if (bCreateNewKey)
 		CreateKeyPair();
-	
+
 	// load key
 	try{
 		// load private key
@@ -1297,7 +1608,7 @@ bool CClientCreditsList::CreateKeyPair()
 		AutoSeededRandomPool rng;
 		InvertibleRSAFunction privkey;
 		privkey.Initialize(rng,RSAKEYSIZE);
- 
+
 		Base64Encoder privkeysink(new FileSink(CStringA(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + _T("cryptkey.dat"))));
 		privkey.DEREncode(privkeysink);
 		privkeysink.MessageEnd();
@@ -1307,9 +1618,6 @@ bool CClientCreditsList::CreateKeyPair()
 	}
 	catch(...)
 	{
-		// morphend: more logging if config dir is redonly (vista!)
-		theApp.QueueLogLineEx(LOG_ERROR, _T("rsa create failed, fialed to create 'cryptkey.dat' in directory %s. Make sure 'Users' has write permmissions." ),thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)); 
-		// morphend: more logging if config dir is redonly (vista!)
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(false, _T("Failed to create new RSA keypair"));
 		ASSERT ( false );
@@ -1333,7 +1641,7 @@ uint8 CClientCreditsList::CreateSignature(CClientCredits* pTarget, uchar* pachOu
 	if ( !CryptoAvailable() )
 		return 0;
 	try{
-		
+
 		SecByteBlock sbbSignature(sigkey->SignatureLength());
 		AutoSeededRandomPool rng;
 		byte abyBuffer[MAXPUBKEYSIZE+9];
@@ -1381,7 +1689,7 @@ bool CClientCreditsList::VerifyIdent(CClientCredits* pTarget, const uchar* pachS
 		uint32 challenge = pTarget->m_dwCryptRndChallengeFor;
 		ASSERT ( challenge != 0 );
 		PokeUInt32(abyBuffer+m_nMyPublicKeyLen, challenge);
-		
+
 		// v2 security improvments (not supported by 29b, not used as default by 29c)
 		uint8 nChIpSize = 0;
 		if (byChaIPKind != 0){
@@ -1450,6 +1758,8 @@ bool CClientCreditsList::Debug_CheckCrypting()
 	asink.MessageEnd();
 	uint32 challenge = rand();
 	// create fake client which pretends to be this emule
+	//zz_fly start
+	/*
 	CreditStruct* newcstruct = new CreditStruct;
 	memset(newcstruct, 0, sizeof(CreditStruct));
 	CClientCredits* newcredits = new CClientCredits(newcstruct);
@@ -1479,17 +1789,59 @@ bool CClientCreditsList::Debug_CheckCrypting()
 
 	delete newcredits;
 	delete newcredits2;
+	*/
+	ClientCreditContainer* newContainer = new ClientCreditContainer;
+	CreditStruct* newcstruct = &newContainer->theCredit;
+
+	memset(newcstruct, 0, sizeof(CreditStruct));
+
+	newContainer->clientCredit = new CClientCredits(newcstruct);
+	newContainer->clientCredit->SetSecureIdent(m_abyMyPublicKey,m_nMyPublicKeyLen);
+	newContainer->clientCredit->m_dwCryptRndChallengeFrom = challenge;
+
+	// create signature with fake priv key
+	uchar pachSignature[200];
+	memset(pachSignature,0,200);
+
+	uint8 sigsize = CreateSignature(newContainer->clientCredit,pachSignature,200,0,false, &priv);
+
+	// next fake client uses the random created public key
+	ClientCreditContainer* newContainer2 = new ClientCreditContainer;
+	CreditStruct* newcstruct2 = &newContainer2->theCredit;
+
+	memset(newcstruct2, 0, sizeof(CreditStruct));
+
+	newContainer2->clientCredit = new CClientCredits(newcstruct2);
+	newContainer2->clientCredit->m_dwCryptRndChallengeFor = challenge;
+
+	// if you uncomment one of the following lines the check has to fail
+	//abyPublicKey[5] = 34;
+	//m_abyMyPublicKey[5] = 22;
+	//pachSignature[5] = 232;
+
+	newContainer2->clientCredit->SetSecureIdent(abyPublicKey,PublicKeyLen);
+
+	//now verify this signature - if it's true everything is fine
+	bool bResult = VerifyIdent(newContainer2->clientCredit,pachSignature,sigsize,0,0);
+
+	if(newContainer->clientCredit) 
+		delete newContainer->clientCredit;
+	delete newContainer;
+	if(newContainer2->clientCredit) 
+		delete newContainer2->clientCredit;
+	delete newContainer2;
+	//zz_fly end
 
 	return bResult;
 }
 #endif
 
-//EastShare START - Modified by TAHO, modified SUQWT
+// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 /*
 uint32 CClientCredits::GetSecureWaitStartTime(uint32 dwForIP)
 */
 sint64 CClientCredits::GetSecureWaitStartTime(uint32 dwForIP)
-//EastShare END - Modified by TAHO, modified SUQWT
+// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 {
 	if (m_dwUnSecureWaitTime == 0 || m_dwSecureWaitTime == 0)
 		SetSecWaitStartTime(dwForIP);
@@ -1510,16 +1862,20 @@ sint64 CClientCredits::GetSecureWaitStartTime(uint32 dwForIP)
 					buffer+=buffer2;
 				}
 				if (thePrefs.GetLogSecureIdent())
-					AddDebugLogLine(false,"Warning: WaitTime resetted due to Invalid Ident for Userhash %s", buffer);*/
+					AddDebugLogLine(false,"Warning: WaitTime resetted due to Invalid Ident for Userhash %s",buffer);*/
+
+				// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+				/*
+				m_dwUnSecureWaitTime = ::GetTickCount();
+				*/
 				if(theApp.clientcredits->IsSaveUploadQueueWaitTime()){
-						//EastShare START - Modified by TAHO, modified SUQWT
-						//m_dwUnSecureWaitTime = ::GetTickCount() - m_pCredits->nUnSecuredWaitTime;	// Moonlight: SUQWT//Morph - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
-						m_dwUnSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nUnSecuredWaitTime);
-						//EastShare END - Modified by TAHO, modified SUQWT
+					m_dwUnSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nUnSecuredWaitTime);
 				}
 				else{
 					m_dwUnSecureWaitTime = ::GetTickCount();//original
 				}
+				// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+
 				m_dwWaitTimeIP = dwForIP;
 				return m_dwUnSecureWaitTime;
 			}	
@@ -1530,49 +1886,55 @@ sint64 CClientCredits::GetSecureWaitStartTime(uint32 dwForIP)
 	}
 }
 
-//Morph Start - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 // Moonlight: SUQWT - Save the wait times.
 void CClientCredits::SaveUploadQueueWaitTime(int iKeepPct) {
 	if (m_dwUnSecureWaitTime) m_pCredits->nUnSecuredWaitTime = (uint32)((GetTickCount() - m_dwUnSecureWaitTime) / 100) * iKeepPct;
 	if (m_dwSecureWaitTime) m_pCredits->nSecuredWaitTime = (uint32)((GetTickCount() - m_dwSecureWaitTime) / 100) * iKeepPct;
-	// EastShare START - Marked by TAHO, modified SUQWT
-	// SetSecWaitStartTime(m_dwWaitTimeIP);
-	// EastShare END - Marked by TAHO, modified SUQWT
 }
+
 // Moonlight: SUQWT - Clear the wait times.
 void CClientCredits::ClearUploadQueueWaitTime() {
 	m_pCredits->nUnSecuredWaitTime = 0;
 	m_pCredits->nSecuredWaitTime = 0;
 	// Doing SaveUploadQueueWaitTime(0) should be reduced to something equivalent during compile.
 }
-//Morph End - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
 
-//EastShare START - Added by TAHO, modified SUQWT
-void CClientCredits::SetSecWaitStartTime() {
-	SetSecWaitStartTime(m_dwWaitTimeIP);
+void CClientCredits::SetSecWaitStartTime(int iKeepPct) {
+	SetSecWaitStartTime(m_dwWaitTimeIP, iKeepPct);
 }
-//EastShare END - Added by TAHO, modified SUQWT
-
-// Moonlight: SUQWT: Adjust to take previous wait time into account.//Morph - added by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// Moonlight: SUQWT: Adjust to take previous wait time into account.
+/*
 void CClientCredits::SetSecWaitStartTime(uint32 dwForIP)
 {
-	//Morph Start - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
-	if(theApp.clientcredits->IsSaveUploadQueueWaitTime()){
-		//EastShare START - Added by TAHO, modified SUQWT
-		//m_dwUnSecureWaitTime = ::GetTickCount() - m_pCredits->nUnSecuredWaitTime - 1;	// Moonlight: SUQWT
-		//m_dwSecureWaitTime = ::GetTickCount() - m_pCredits->nSecuredWaitTime - 1;		// Moonlight: SUQWT
-		m_dwUnSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nUnSecuredWaitTime) - 1;
-		m_dwSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nSecuredWaitTime) - 1;
-		//EastShare END - Added by TAHO, modified SUQWT
-	}
-	else{
-		//original
-		m_dwUnSecureWaitTime = ::GetTickCount()-1;
-		m_dwSecureWaitTime = ::GetTickCount()-1;
-	}
-	//Morph End - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+	m_dwUnSecureWaitTime = ::GetTickCount()-1;
+	m_dwSecureWaitTime = ::GetTickCount()-1;
 	m_dwWaitTimeIP = dwForIP;
 }
+*/
+void CClientCredits::SetSecWaitStartTime(uint32 dwForIP, int iKeepPct)
+{
+	if(theApp.clientcredits->IsSaveUploadQueueWaitTime()){
+		m_dwUnSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nUnSecuredWaitTime) - 1;
+		m_dwSecureWaitTime = ::GetTickCount() - ((sint64) m_pCredits->nSecuredWaitTime) - 1;
+	}
+	else{
+		if(iKeepPct != 0) // give time back for non SUQWT
+		{
+			DWORD curTick = ::GetTickCount();
+			m_dwUnSecureWaitTime = curTick - ((sint64)((curTick - m_dwUnSecureWaitTime) / 100) * iKeepPct) - 1;
+			m_dwSecureWaitTime = curTick - ((sint64)((curTick - m_dwSecureWaitTime) / 100) * iKeepPct) - 1;
+		}
+		else
+		{
+			//original
+			m_dwUnSecureWaitTime = ::GetTickCount()-1;
+			m_dwSecureWaitTime = ::GetTickCount()-1;
+		}
+	}
+	m_dwWaitTimeIP = dwForIP;
+}
+// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
 void CClientCredits::ClearWaitStartTime()
 {
@@ -1580,60 +1942,112 @@ void CClientCredits::ClearWaitStartTime()
 	m_dwSecureWaitTime = 0;
 }
 
-//EastShare Start - added by AndCycle, Pay Back First
+//Xman Xtreme Full Chunk
+void CClientCredits::SetWaitStartTimeBonus(uint32 dwForIP, uint32 timestamp)
+{
+	m_dwUnSecureWaitTime = timestamp-1;
+	m_dwSecureWaitTime = timestamp-1;
+	m_dwWaitTimeIP = dwForIP;
+}
+//Xman end
 
+//Xman Extened credit- table-arragement
+#ifdef PRINT_STATISTIC
+void	CClientCreditsList::PrintStatistic()
+{
+	AddLogLine(false,_T("used Credit-Objects: %u"), m_mapClients.GetSize());
+}
+#endif
+//Xman end
+
+//zz_fly :: prime table :: start
+UINT CClientCreditsList::GetPrime(UINT calc) const
+{
+	//prime table from primes.utm.edu
+	//Table1 300k+, 20k per prime
+	static const UINT primeTable1[] = {
+			320009, 340007, 360007, 380041, 400009,	420001, 440009, 460013, 480013, 500009, 
+			520019, 540041, 560017, 580001,	600011, 620003, 640007, 660001, 680003, 700001, 
+			720007, 740011, 760007,	780029, 800011, 820037, 840023, 860009, 880001, 900001, 
+			920011, 940001,	960017, 980027, 1000003};
+	//Table2 120k~300k, 5k per prime
+	static const UINT primeTable2[] = {
+			125003,	130003, 135007, 140009, 145007, 150001, 155003, 160001,	165001, 170003,	
+			175003, 180001, 185021, 190027, 195023, 200003, 205019, 210011, 215051,	220009,
+			225023, 230003, 235003, 240007, 245023, 250007, 255007, 260003,	265003, 270001,
+			275003, 280001, 285007, 290011, 295007, 300007};
+	//Table3 20k~120k, 2k per prime
+	static const UINT primeTable3[] = {
+			 22003,  24001,  26003,  28001,  30011,  32003,  34019,  36007,  38011,  40009,
+			 42013,  44017,  46021,  48017,  50021,  52009,  54001,  56003,  58013,  60013,
+			 62003,  64007,  66029,  68023,  70001,  72019,  74017,  76001,  78007,  80021,
+			 82003,  84011,  86011,  88001,  90001,  92003,  94007,  96001,  98009, 100003,
+			102001, 104003, 106013, 108007, 110017, 112019, 114001, 116009, 118033, 120011};
+	if(calc>1000000)//1M contacts? let them eat cake...
+		return (calc + calc%2 + 1);
+	else if(calc>300000)
+		return primeTable1[(calc-300000)/20000];
+	else if(calc>120000)
+		return primeTable2[(calc-120000)/5000];
+	else if(calc>20000)
+		return primeTable3[(calc-20000)/2000];
+	else 
+		return 20011;
+}
+//zz_fly :: prime table :: end
+
+// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+void CClientCreditsList::ResetCheckScoreRatio(){
+	//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+	/*
+	CClientCredits* cur_credit;
+	*/
+	ClientCreditContainer* cstruct_parent;
+	//zz_fly :: Optimized :: Enig123, DolphinX :: End
+	CCKey tempkey(0);
+	POSITION pos = m_mapClients.GetStartPosition();
+	while (pos)
+	{
+		//zz_fly :: Optimized :: Enig123, DolphinX :: Start
+		/*
+		m_mapClients.GetNextAssoc(pos, tempkey, cur_credit);
+		*/
+		m_mapClients.GetNextAssoc(pos, tempkey, cstruct_parent);
+		CClientCredits* cur_credit = cstruct_parent->clientCredit;
+		if(cur_credit)
+		//zz_fly :: Optimized :: Enig123, DolphinX :: End
+			cur_credit->m_bCheckScoreRatio = true;
+	}
+}
+// <== CreditSystems [EastShare/ MorphXT] - Stulle
+
+// ==> Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 //init will be triggered at 
 //1. client credit create, 
 //2. when reach 10MB Transferred, between first time remove check and second time remove check
 //anyway, this just make a check at "check point" :p
 
 void CClientCredits::InitPayBackFirstStatus(){
-	m_bPayBackFirst2 = false; // Pay Back First for insecure clients - Stulle
-	//MORPH START - Changed by SiRoB, Pay Back First Tweak
+	m_bPayBackFirst2 = false;
 	m_bPayBackFirst = false;
 	TestPayBackFirstStatus();
-	//MORPH END   - Changed by SiRoB, Pay Back First Tweak
 }
 
 //test will be triggered at client have up/down Transferred
 void CClientCredits::TestPayBackFirstStatus(){
 
-//	if(GetDownloadedTotal() < 9728000){
-//		m_bPayBackFirst = false;
-//	}else
-//	{
-		uint64 clientUpload = GetDownloadedTotal();
-		uint64 clientDownload = GetUploadedTotal();
-		//MORPH START - Changed by SiRoB, Pay Back First Tweak
-		if(clientUpload > clientDownload+((uint64)thePrefs.GetPayBackFirstLimit()<<20)){
-		//MORPH END   - Changed by SiRoB, Pay Back First Tweak
-			m_bPayBackFirst = true;
-		}
-		else if(clientUpload < clientDownload){
-			m_bPayBackFirst = false;
-		}
-
-		// ==> Pay Back First for insecure clients - Stulle
-		if(clientUpload > clientDownload+((uint64)thePrefs.GetPayBackFirstLimit2()<<20))
-			m_bPayBackFirst2 = true;
-		else if(clientUpload < clientDownload)
-			m_bPayBackFirst2 = false;
-		// <== Pay Back First for insecure clients - Stulle
-
-//	}
-}
-//EastShare End - added by AndCycle, Pay Back First Tweak
-//Modified by Pretender
-
-//MORPH START - Added by SiRoB, reduce a little CPU usage for ratio count
-void CClientCreditsList::ResetCheckScoreRatio(){
-	CClientCredits* cur_credit;
-	CCKey tempkey(0);
-	POSITION pos = m_mapClients.GetStartPosition();
-	while (pos)
-	{
-		m_mapClients.GetNextAssoc(pos, tempkey, cur_credit);
-		cur_credit->m_bCheckScoreRatio = true;
+	uint64 clientUpload = GetDownloadedTotal();
+	uint64 clientDownload = GetUploadedTotal();
+	if(clientUpload > clientDownload+((uint64)thePrefs.GetPayBackFirstLimit()<<20)){
+		m_bPayBackFirst = true;
 	}
+	else if(clientUpload < clientDownload){
+		m_bPayBackFirst = false;
+	}
+
+	if(clientUpload > clientDownload+((uint64)thePrefs.GetPayBackFirstLimit2()<<20))
+		m_bPayBackFirst2 = true;
+	else if(clientUpload < clientDownload)
+		m_bPayBackFirst2 = false;
 }
-//MORPH END   - Added by SiRoB, reduce a little CPU usage for ratio count
+// <== Pay Back First [AndCycle/SiRoB/Stulle] - Stulle

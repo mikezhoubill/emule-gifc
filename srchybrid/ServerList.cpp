@@ -23,7 +23,11 @@
 #include "Exceptions.h"
 #include "OtherFunctions.h"
 #include "IPFilter.h"
+//Xman
+/*
 #include "LastCommonRouteFinder.h"
+*/
+//Xman end
 #include "Statistics.h"
 #include "DownloadQueue.h"
 #include "Preferences.h"
@@ -35,10 +39,7 @@
 #include "HttpDownloadDlg.h"
 #include "ServerWnd.h"
 #include "Log.h"
-
-#include "Fakecheck.h" //MORPH - Added by SiRoB
-#include "ip2country.h" //MORPH - Added by SiRoB
-#include "SharedFileList.h" //MORPH - Added by SiRoB
+#include "ip2country.h" //MORPH - Added by SiRoB IP to Country
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -114,8 +115,11 @@ bool CServerList::Init()
 {
 	// auto update the list by using an url
 	if (thePrefs.GetAutoUpdateServerList())
+	{
+		if(theApp.IsSplash()) theApp.DestroySplash(); //Xman new slpash-screen arrangement
 		AutoUpdate();
-	
+	} //Xman
+
 	// Load Metfile
 	CString strPath;
 	strPath.Format(_T("%s") SERVER_MET_FILENAME, thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
@@ -131,25 +135,44 @@ bool CServerList::Init()
 	// insert static servers from textfile
 	strPath.Format(_T("%sstaticservers.dat"), thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
 	AddServersFromTextFile(strPath);
-	//MORPH START added by Yun.SF3: Ipfilter.dat update
-	if (thePrefs.IsAutoUPdateIPFilterEnabled())
-		//MORPH START - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-		/*
-		theApp.ipfilter->UpdateIPFilterURL();
-		*/
-		theApp.emuledlg->CheckIPFilter();
-		//MORPH END   - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-	//MORPH END added by Yun.SF3: Ipfilter.dat update
 
-	//MORPH START - Added by milobac, FakeCheck, FakeReport, Auto-updating
-	if (thePrefs.IsUpdateFakeStartupEnabled())
-		theApp.FakeCheck->DownloadFakeList();
-	//MORPH END - Added by milobac, FakeCheck, FakeReport, Auto-updating
-    
-    //Commander - Added: IP2Country auto-updating - Start
-	if (thePrefs.IsAutoUPdateIP2CountryEnabled())
+	//Xman auto update IPFilter
+	if(thePrefs.AutoUpdateIPFilter())
+	{
+		// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+		/*
+		bool update=false;
+		if (thePrefs.m_last_ipfilter_check!=0) {
+			CTime last(thePrefs.m_last_ipfilter_check);
+			struct tm tmTemp;
+			time_t tLast=safe_mktime(last.GetLocalTm(&tmTemp));
+			time_t tNow=safe_mktime(CTime::GetCurrentTime().GetLocalTm(&tmTemp));
+			if ( (difftime(tNow,tLast) / 86400)>=thePrefs.GetUpdateDays() )
+			{
+				update=true;
+			}
+		}
+		else
+			update=true;
+		if(update)
+		{
+			if(theApp.IsSplash()) theApp.DestroySplash(); //Xman new slpash-screen arrangement
+			theApp.ipfilter->UpdateIPFilterURL();
+		}
+		*/
+		if(theApp.IsSplash())
+			theApp.DestroySplash(); //Xman new slpash-screen arrangement
+		theApp.emuledlg->CheckIPFilter();
+		// <== Advanced Updates [MorphXT/Stulle] - Stulle
+	}
+	//Xman end
+
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	if(thePrefs.IsAutoUpdateAntiLeech())
+		theApp.emuledlg->DoDLPVersioncheck();
+	if(thePrefs.IsAutoUPdateIP2CountryEnabled())
 		theApp.ip2country->UpdateIP2CountryURL();
-	//Commander - Added: IP2Country auto-updating - End
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
     theApp.serverlist->GiveServersForTraceRoute();
     
@@ -292,7 +315,12 @@ bool CServerList::AddServer(const CServer* pServer, bool bAddTail)
 
 bool CServerList::GiveServersForTraceRoute()
 {
+	//Xman
+	/*
     return theApp.lastCommonRouteFinder->AddHostsToCheck(list);
+	*/
+	return false;
+	//Xman end
 }
 
 void CServerList::ServerStats()
@@ -300,14 +328,7 @@ void CServerList::ServerStats()
 	// Update the server list even if we are connected to Kademlia only. The idea is for both networks to keep 
 	// each other up to date.. Kad network can get you back into the ED2K network.. And the ED2K network can get 
 	// you back into the Kad network..
-	
-    // MORPH START obfuscated server require: Also send cryptpings when we are trying to connect. 
-	/*
 	if (theApp.IsConnected() && theApp.serverconnect->IsUDPSocketAvailable() && list.GetCount() > 0)
-	*/
-	if ((theApp.IsConnected()||theApp.IsWaitingForCryptPingConnect()) && 
-		theApp.serverconnect->IsUDPSocketAvailable() && list.GetCount() > 0)	
-    // MORPH END obfuscated server require
 	{
 		CServer* ping_server = GetNextStatServer();
 		if (!ping_server)
@@ -324,22 +345,17 @@ void CServerList::ServerStats()
 		// IP-filter: We do not need to IP-filter any servers here, even dynIP-servers are not
 		// needed to get filtered here. See also comments in 'CServerSocket::ConnectTo'.
 		if (ping_server->GetFailedCount() >= thePrefs.GetDeadServerRetries()) {
+			//Xman
 			// Mighty Knife: Static server handling
 			// Static servers can be prevented from being removed from the list.
 			if ((!ping_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers())) {
 				theApp.emuledlg->serverwnd->serverlistctrl.RemoveServer(ping_server);
 				return;
-			}
-			// [end] Mighty Knife
+			} //Xman end
 		}
 		srand(tNow);
 		ping_server->SetRealLastPingedTime(tNow); // this is not used to calcualte the next ping, but only to ensure a minimum delay for premature pings
-		// MORPH START lh require obfuscated server connection
-		/*
 		if (!ping_server->GetCryptPingReplyPending() && (tNow - ping_server->GetLastPingedTime()) >= UDPSERVSTATREASKTIME && theApp.GetPublicIP() != 0 && thePrefs.IsServerCryptLayerUDPEnabled()){
-		*/
-		if (!ping_server->GetCryptPingReplyPending() && (tNow - ping_server->GetLastPingedTime()) >= UDPSERVSTATREASKTIME && ((theApp.GetPublicIP() != 0)||(theApp.IsWaitingForCryptPingConnect())) && thePrefs.IsServerCryptLayerUDPEnabled()){
-		// MORPH END lh require obfuscated server connection 
 			// we try a obfsucation ping first and wait 20 seconds for an answer
 			// if it doesn'T get responsed, we don't count it as error but continue with a normal ping
 			ping_server->SetCryptPingReplyPending(true);
@@ -541,28 +557,6 @@ void CServerList::Sort()
 	}
 }
 
-//EastShare Start - PreferShareAll by AndCycle
-// SLUGFILLER: preferShareAll
-void CServerList::PushBackNoShare(){
-	uint32 files = theApp.sharedfiles->GetCount()+theApp.sharedfiles->GetHashingCount();	// SLUGFILLER: SafeHash - use estimate
-	POSITION pos1, pos2;
-	uint16 i = 0;
-	for( pos1 = list.GetHeadPosition(); ( pos2 = pos1 ) != NULL; ){
-		list.GetNext(pos1);
-		CServer* cur_server = list.GetAt(pos2);
-		if ((cur_server->GetSoftFiles() && cur_server->GetSoftFiles() < files) ||
-			(cur_server->GetHardFiles() && cur_server->GetHardFiles() < files)){
-			list.AddTail(cur_server);
-			list.RemoveAt(pos2);
-		}
-		i++;
-		if (i == list.GetCount())
-			break;
-	}
-}
-// SLUGFILLER: preferShareAll
-//EastShare End - PreferShareAll by AndCycle
-
 void CServerList::GetUserSortedServers()
 {
 	CServerListCtrl& serverListCtrl = theApp.emuledlg->serverwnd->serverlistctrl;
@@ -747,12 +741,7 @@ bool CServerList::SaveServermetToFile()
 
 			// don't write potential out-dated IPs of dynIP-servers
 			servermet.WriteUInt32(nextserver->HasDynIP() ? 0 : nextserver->GetIP());
-			//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-			/*
 			servermet.WriteUInt16(nextserver->GetPort());
-			*/
-			servermet.WriteUInt16(nextserver->GetConnPort());
-			//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 			
 			UINT uTagCount = 0;
 			ULONG uTagCountFilePos = (ULONG)servermet.GetPosition();
@@ -799,16 +788,6 @@ bool CServerList::SaveServermetToFile()
 				serverfiles.WriteTagToFile(&servermet);
 				uTagCount++;
 			}
-
-			//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-			if (nextserver->GetPort() != nextserver->GetConnPort()) {
-				TCHAR temp[64] ;
-				_stprintf(temp, _T("%d"), nextserver->GetPort()) ;
-				CTag auxportslist("auxportslist", temp);
-				auxportslist.WriteTagToFile(&servermet);
-				uTagCount++;
-			}
-			//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 			
 			if (nextserver->GetPing()){
 				CTag serverping(ST_PING, nextserver->GetPing());
@@ -987,7 +966,7 @@ void CServerList::AddServersFromTextFile(const CString& strFilename)
 				if (srvexisting) {
 					srvexisting->SetListName(strName);
 					srvexisting->SetIsStaticMember(true);
-					//srvexisting->SetPreference(priority); leuk_he priority is not so static. 
+					srvexisting->SetPreference(priority); 
 					if (theApp.emuledlg->serverwnd)
 						theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(srvexisting);
 				}

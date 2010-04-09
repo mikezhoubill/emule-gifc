@@ -27,14 +27,14 @@ class CFileDataIO;
 class CAICHHashTree;
 class CAICHHashSet;
 class CCollection;
-class CSafeMemFile;	// SLUGFILLER: hideOS
+class CSafeMemFile;		//Xman PowerRelease
 
 typedef CTypedPtrList<CPtrList, CUpDownClient*> CUpDownClientPtrList;
 
 class CKnownFile : public CShareableFile
 {
 	DECLARE_DYNAMIC(CKnownFile)
-	friend class CImportPartsFileThread; //MORPH - Added by SiRoB, ImportParts
+
 public:
 	CKnownFile();
 	virtual ~CKnownFile();
@@ -44,19 +44,20 @@ public:
 	bool	CreateFromFile(LPCTSTR directory, LPCTSTR filename, LPVOID pvProgressParam); // create date, hashset and tags from a file
 	bool	LoadFromFile(CFileDataIO* file);	//load date, hashset and tags from a .met file
 	bool	WriteToFile(CFileDataIO* file);
-	//MORPH START - Added by SiRoB, Import Parts [SR13]
-	bool	SR13_ImportParts();
-	//MORPH END   - Added by SiRoB, Import Parts [SR13]
 	bool	CreateAICHHashSetOnly();
 
 	// last file modification time in (DST corrected, if NTFS) real UTC format
 	// NOTE: this value can *not* be compared with NT's version of the UTC time
 	CTime	GetUtcCFileDate() const										{ return CTime(m_tUtcLastModified); }
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	GetUtcFileDate() const										{ return m_tUtcLastModified; }
+	*/
 	time_t	GetUtcFileDate() const										{ return m_tUtcLastModified; }
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 
 	// Did we not see this file for a long time so that some information should be purged?
 	bool	ShouldPartiallyPurgeFile() const;
-	bool	ShouldCompletlyPurgeFile() const; //EastShare - Added by TAHO, .met control
 	void	SetLastSeen()												{ m_timeLastSeen = time(NULL); }
 
 	virtual void	SetFileSize(EMFileSize nFileSize);
@@ -67,11 +68,13 @@ public:
 	const CArray<uchar*, uchar*>& GetHashset() const					{ return hashlist; }
 	bool	SetHashset(const CArray<uchar*, uchar*>& aHashset);
 
+	//Xman
 	// SLUGFILLER: SafeHash remove - removed unnececery hash counter
 	/*
 	// nr. of part hashs according the file size wrt ED2K protocol
 	uint16	GetED2KPartHashCount() const								{ return m_iED2KPartHashCount; }
 	*/
+	//Xman end
 
 	// nr. of 9MB parts (file data)
 	__inline uint16 GetPartCount() const								{ return m_iPartCount; }
@@ -81,6 +84,7 @@ public:
 
 	// file upload priority
 	uint8	GetUpPriority(void) const									{ return m_iUpPriority; }
+	uint8	GetUpPriorityEx(void) const {return  m_iUpPriority+1 == 5 ? 0 : m_iUpPriority+1;} //Xman Close Backdoor v2
 	void	SetUpPriority(uint8 iNewUpPriority, bool bSave = true);
 	bool	IsAutoUpPriority(void) const								{ return m_bAutoUpPriority; }
 	void	SetAutoUpPriority(bool NewAutoUpPriority)					{ m_bAutoUpPriority = NewAutoUpPriority; }
@@ -89,16 +93,42 @@ public:
 	// This has lost it's meaning here.. This is the total clients we know that want this file..
 	// Right now this number is used for auto priorities..
 	// This may be replaced with total complete source known in the network..
+	//Xman see on uploadqueue don't need it:
+	/*
 	uint32	GetQueuedCount() { return m_ClientUploadList.GetCount();}
+	*/
+	//Xman end
 
 	bool	LoadHashsetFromFile(CFileDataIO* file, bool checkhash);
 
-	bool	HideOvershares(CSafeMemFile* file, CUpDownClient* client);	// SLUGFILLER: hideOS
-
 	void	AddUploadingClient(CUpDownClient* client);
 	void	RemoveUploadingClient(CUpDownClient* client);
+	
+	bool	HideOvershares(CSafeMemFile* file, CUpDownClient* client); //Xman PowerRelease
+
+	//Xman advanced upload-priority
+	double CalculateUploadPriorityPercent();
+	void CalculateAndSetUploadPriority();
+	void CalculateAndSetUploadPriority2(); //Xman the debug version
+	uint64 GetWantedUpload();
+	float pushfaktor;
+	void UpdateVirtualUploadSources();
+	UINT m_nVirtualUploadSources;
+	uint32 GetVirtualSourceIndicator() const;
+	void CheckAUPFilestats(bool allowUpdatePrio);
+	//Xman end
+
+	//Xman show virtual sources (morph)
+	UINT m_nVirtualCompleteSourcesCount;
+
+	//Xman see OnUploadqueue
+	void AddOnUploadqueue()				{onuploadqueue++;UpdateAutoUpPriority();}
+	void RemoveOnUploadqueue()			{if(onuploadqueue!=0) onuploadqueue--;UpdateAutoUpPriority();}
+	uint16 GetOnUploadqueue() const		{return onuploadqueue;}
+	//Xman end
+
 	virtual void	UpdatePartsInfo();
-	virtual	void	DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool bFlat) /*const*/;
+	virtual	void	DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool bFlat) const;
 
 	// comment
 	void	SetFileComment(LPCTSTR pszComment);
@@ -131,7 +161,6 @@ public:
 
 	// preview
 	bool	IsMovie() const;
-	bool	IsMusic() const; //MORPH - Added by IceCream, added preview also for music files
 	virtual bool GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void* pSender);
 	virtual void GrabbingFinished(CxImage** imgResults, uint8 nFramesGrabbed, void* pSender);
 
@@ -147,7 +176,12 @@ public:
 
 	// last file modification time in (DST corrected, if NTFS) real UTC format
 	// NOTE: this value can *not* be compared with NT's version of the UTC time
-	time_t	m_tUtcLastModified; // vs2005 ?
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	m_tUtcLastModified;
+	*/
+	time_t	m_tUtcLastModified;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 
 	CStatisticFile statistic;
 	time_t m_nCompleteSourcesTime;
@@ -157,11 +191,6 @@ public:
 	CUpDownClientPtrList m_ClientUploadList;
 	CArray<uint16, uint16> m_AvailPartFrequency;
 	CCollection* m_pCollection;
-	//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-	UINT m_nVirtualCompleteSourcesCount;
-	//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-
-	CArray<uint64> m_PartSentCount;	// SLUGFILLER: hideOS
 
 #ifdef _DEBUG
 	// Diagnostic Support
@@ -169,80 +198,58 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
-	//MORPH START - Added by SiRoB, Show Permissions
-	// shared file view permissions (all, only friends, no one)
-	int		GetPermissions(void) const	{ return m_iPermissions; }
-	void	SetPermissions(int iNewPermissions);
-	//MORPH END   - Added by SiRoB, Show Permissions
-	//MORPH START - Changed by SiRoB, Avoid misusing of powersharing
-	void    SetPowerShared(int newValue);
-	bool    GetPowerShared() const;
-	//MORPH END   - Changed by SiRoB, Avoid misusing of powersharing
-	//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	void	SetSpreadbarSetStatus(int newValue) {m_iSpreadbarSetStatus = newValue;}
-	int		GetSpreadbarSetStatus() const {return m_iSpreadbarSetStatus;}
-	//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	//MORPH START - Added by SiRoB, HIDEOS
-	void	SetHideOS(int newValue) {m_iHideOS = newValue;}
-	int		GetHideOS() const {return m_iHideOS;}
-	void	SetSelectiveChunk(int newValue) {m_iSelectiveChunk = newValue;}
-	int		GetSelectiveChunk() const {return m_iSelectiveChunk;}
-	//MORPH END   - Added by SiRoB, HIDEOS
-	//MORPH START - Added by SiRoB, Avoid misusing of hideOS
-	void	SetHideOSAuthorized(bool newValue) {m_bHideOSAuthorized = newValue;}
-	UINT	HideOSInWork() const;
-	//MORPH END   - Added by SiRoB, Avoid misusing of hideOS
-	//MORPH START - Added by SiRoB, SHARE_ONLY_THE_NEED Wistily idea
-	void	SetShareOnlyTheNeed(int newValue) {m_iShareOnlyTheNeed = newValue;}
-	int		GetShareOnlyTheNeed() const {return m_iShareOnlyTheNeed;}
-	//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED Wistily idea
-	//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-	int		GetPowerSharedMode() const {return m_powershared;}
-	bool	GetPowerShareAuthorized() const {return m_bPowerShareAuthorized;}
-	bool	GetPowerShareAuto() const {return m_bPowerShareAuto;}
-	//MORPH START - Added by SiRoB, POWERSHARE Limit
-	void	SetPowerShareLimit(int newValue) {m_iPowerShareLimit = newValue;}
-	int		GetPowerShareLimit() const {return m_iPowerShareLimit;}
-	bool	GetPowerShareLimited() const {return m_bPowerShareLimited;}
-	//MORPH END   - Added by SiRoB, POWERSHARE Limit
-	void	UpdatePowerShareLimit(bool authorizepowershare,bool autopowershare, bool limitedpowershare);
-	//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-
-	// Mighty Knife: CRC32-Tag
-	bool    IsCRC32Calculated () const			{return m_sCRC32[0]!='\0';}
-	CString GetLastCalculatedCRC32 () const		{return m_sCRC32;}
-	// The CRC32 is not created within this object but written to this object:
-	void    SetLastCalculatedCRC32 (const LPCTSTR _CRC) {_tcscpy (m_sCRC32,_CRC);}
-
-	// [end] Mighty Knife
-	//
-	//MORPH START - Added by SiRoB, copy feedback feature
-	CString GetFeedback(bool isUS = false);
-	//MORPH END   - Added by SiRoB, copy feedback feature
 	//MORPH START - Added by SiRoB, Import Parts [SR13]
-	bool	CreateHash(const uchar* pucData, uint32 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL) const;
+	bool	SR13_ImportParts();
+	bool	CreateHash(const uchar* pucData, uint32 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL, bool slowdown=false) const; //Xman Nice Hash //moved from protected area
 	//MORPH END   - Added by SiRoB, Import Parts [SR13]
-	
+
 protected:
 	//preview
 	bool	GrabImage(CString strFileName, uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void* pSender);
 	bool	LoadTagsFromFile(CFileDataIO* file);
 	bool	LoadDateFromFile(CFileDataIO* file);
+	//Xman Nice Hash
+	/*
 	void	CreateHash(CFile* pFile, uint64 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL) const;
 	bool	CreateHash(FILE* fp, uint64 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL) const;
-	//MORPH - Removed by SiRoB, moved up in public area, Import Parts [SR13]
-	/*
 	bool	CreateHash(const uchar* pucData, uint32 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL) const;
 	*/
+	void	CreateHash(CFile* pFile, uint64 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL, bool slowdown=false) const;
+	bool	CreateHash(FILE* fp, uint64 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL, bool slowdown=false) const;
+	//MORPH - Removed by SiRoB, moved up in public area, Import Parts [SR13]
+	/*
+	bool	CreateHash(const uchar* pucData, uint32 uSize, uchar* pucHash, CAICHHashTree* pShaHashOut = NULL, bool slowdown=false) const;
+	*/
+	//MOPRH END
+	//Xman end
 	virtual void	UpdateFileRatingCommentAvail(bool bForceUpdate = false);
-	//MORPH START - Revisited , we only get static Client PartCount now
-	void	CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* client);	// SLUGFILLER: hideOS
-	//MORPH END   - Revisited , we only get static Client PartCount now
+
+	// ==> Removed Dynamic Hide OS [SlugFiller/Xman] - Stulle
+	/*
+	uint32	*CalcPartSpread();	//Xman PowerRelease
+	*/
+	// <== Removed Dynamic Hide OS [SlugFiller/Xman] - Stulle
 
 	CArray<uchar*, uchar*>	hashlist;
 	CAICHHashSet*			m_pAICHHashSet;
 
+// Maella -One-queue-per-file- (idea bloodymad)
+public:
+	uint32 GetFileScore(uint32 downloadingTime);
+	uint32 GetStartUploadTime() const {return m_startUploadTime;}
+	void   UpdateStartUploadTime() {m_startUploadTime = GetTickCount();}
+
 private:
+	uint32 m_startUploadTime;
+// Maella end
+
+private:
+	uint16 onuploadqueue;	//Xman see OnUploadqueue
+	// ==> Removed Dynamic Hide OS [SlugFiller/Xman] - Stulle
+	/*
+	uint16 hideos;			//Xman PowerRelease
+	*/
+	// <== Removed Dynamic Hide OS [SlugFiller/Xman] - Stulle
 	static CBarShader s_ShareStatusBar;
 	uint16	m_iPartCount;
 	uint16	m_iED2KPartCount;
@@ -258,69 +265,57 @@ private:
 	UINT	m_uMetaDataVer;
 	time_t	m_timeLastSeen; // we only "see" files when they are in a shared directory
 
-	//MORPH START - Added by SiRoB,  SharedStatusBar CPU Optimisation
-	bool	InChangedSharedStatusBar;
-	CBitmap m_bitmapSharedStatusBar;
-	int	lastSize;
-	bool	lastonlygreyrect;
-	bool	lastbFlat;
-	//MORPH END - Added by SiRoB,  SharedStatusBar CPU Optimisation
+public:
+	float	GetFileRatio() /*const*/; // push rare file - Stulle
 
-	//MORPH START - Added by SiRoB, Show Permission
-	int		m_iPermissions;
-	//MORPH END   - Added by SiRoB, Show Permission
+	bool	IsPushSmallFile(); // push small files [sivka] - Stulle
 
-	//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	int		m_iSpreadbarSetStatus;
-	//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	//MORPH START - Added by SiRoB, HIDEOS
+	CString GetFeedback(bool isUS = false); // Copy feedback feature [MorphXT] - Stulle
+
+	// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+	CArray<uint64> m_PartSentCount;
+	void	SetHideOS(int newValue) {m_iHideOS = newValue;}
+	int		GetHideOS() const {return m_iHideOS;}
+	void	SetSelectiveChunk(int newValue) {m_iSelectiveChunk = newValue;}
+	int		GetSelectiveChunk() const {return m_iSelectiveChunk;}
+	UINT	HideOSInWork() const;
+	void	SetShareOnlyTheNeed(int newValue) {m_iShareOnlyTheNeed = newValue;}
+	int		GetShareOnlyTheNeed() const {return m_iShareOnlyTheNeed;}
+protected:
+	void	CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* client);	// SLUGFILLER: hideOS
+private:
 	int		m_iHideOS;
 	int		m_iSelectiveChunk;
-	//MORPH END   - Added by SiRoB, HIDEOS
-	//MORPH START - Added by SiRoB, Avoid misusing of hideOS
-	bool	m_bHideOSAuthorized;
-	//MORPH END   - Added by SiRoB, Avoid misusing of hideOS
-	
-	//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED Wistily idea
 	int		m_iShareOnlyTheNeed;
-	//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED Wistily idea
-	
-	//MORPH START - Added by SiRoB, Avoid misusing of powersharing
+	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+
+	// ==> PowerShare [ZZ/MorphXT] - Stulle
 	int		m_powershared;
 	bool	m_bPowerShareAuthorized;
 	bool	m_bPowerShareAuto;
 	bool	m_bpowershared;
-	//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-	//MORPH START - Added by SiRoB, POWERSHARE Limit
 	int		m_iPowerShareLimit;
 	bool	m_bPowerShareLimited;
-	//MORPH END   - Added by SiRoB, POWERSHARE Limit
-
-	// Mighty Knife: CRC32-Tag
-	TCHAR    m_sCRC32 [16];
-	// [end] Mighty Knife
-
 public:
-	float	GetFileRatio(void) ; // push rare file - Stulle
+	int		GetPowerSharedMode() const {return m_powershared;}
+	bool	GetPowerShareAuthorized() const {return m_bPowerShareAuthorized;}
+	bool	GetPowerShareAuto() const {return m_bPowerShareAuto;}
+	void	SetPowerShareLimit(int newValue) {m_iPowerShareLimit = newValue;}
+	int		GetPowerShareLimit() const {return m_iPowerShareLimit;}
+	bool	GetPowerShareLimited() const {return m_bPowerShareLimited;}
+	void	UpdatePowerShareLimit(bool authorizepowershare,bool autopowershare, bool limitedpowershare);
+	void    SetPowerShared(int newValue);
+	bool    GetPowerShared() const;
+	// <== PowerShare [ZZ/MorphXT] - Stulle
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 	int		GetKnownStyle() const;
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
-	// ==> Limit PS by amount of data uploaded - Stulle
+	// ==> Limit PS by amount of data uploaded [Stulle] - Stulle
 	void	SetPsAmountLimit(int newValue) {m_iPsAmountLimit = newValue;}
 	int		GetPsAmountLimit() const {return m_iPsAmountLimit;}
 protected:
 	int		m_iPsAmountLimit;
-	// <== Limit PS by amount of data uploaded - Stulle
+	// <== Limit PS by amount of data uploaded [Stulle] - Stulle
 };
-
-// permission values for shared files
-#define PERM_ALL		0
-#define PERM_FRIENDS	1
-#define PERM_NOONE		2
-// MightyKnife: Community visible files
-#define PERM_COMMUNITY  3
-// [end] Mighty Knife

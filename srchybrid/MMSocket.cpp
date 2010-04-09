@@ -20,11 +20,13 @@
 #include "MMServer.h"
 #include "Preferences.h"
 #include "Log.h"
+//Xman
+#include "Bandwidthcontrol.h"  // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -79,6 +81,12 @@ void CMMSocket::OnReceive(int nErrorCode){
 	if(dwSize == SOCKET_ERROR || dwSize == 0){
 		return;
 	}
+	//Xman
+	// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	if (dwSize > 0)
+		theApp.pBandWidthControl->AddeMuleInTCPOverall(dwSize);
+	// Maella end
+
 	if (m_dwBufSize < dwSize + m_dwRecv)
 	{
 		// reallocate
@@ -200,6 +208,11 @@ bool CMMSocket::SendPacket(CMMPacket* packet, bool bQueueFirst){
 			return false;
 		}
 		else{
+			//Xman
+			// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+			theApp.pBandWidthControl->AddeMuleOutTCPOverall(m_nSent);		
+			//Xman end
+
 			if (m_nSent == m_nSendLen){
 				delete[] m_pSendBuffer;
 				m_pSendBuffer = NULL;
@@ -335,15 +348,15 @@ CListenMMSocket::~CListenMMSocket(void)
 	while(!m_socket_list.IsEmpty())
 		delete m_socket_list.RemoveHead();
 
-	//MORPH START - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
+	//==> UPnP support [MoNKi] - leuk_he
 	theApp.m_UPnP_IGDControlPoint->DeletePortMapping(thePrefs.GetMMPort(),
 		CUPnP_IGDControlPoint::UNAT_TCP,
 		_T("MobileMule"));
-	//MORPH END   - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
+	//<== UPnP support [MoNKi] - leuk_he
 }
 
 bool  CListenMMSocket::Create(){
-	//MORPH START - Changed by SIRoB [MoNKi: -UPnPNAT Support-]
+	//==> UPnP support [MoNKi] - leuk_he
 	/*
 	return CAsyncSocket::Create(thePrefs.GetMMPort(),SOCK_STREAM,FD_ACCEPT) && Listen();;
 	*/
@@ -357,7 +370,7 @@ bool  CListenMMSocket::Create(){
 	}
 	else
 		return false;
-	//MORPH END  - Changed by SIRoB [MoNKi: -UPnPNAT Support-]
+	//<== UPnP support [MoNKi] - leuk_he
 }
 
 

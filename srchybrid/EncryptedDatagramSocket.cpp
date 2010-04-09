@@ -111,12 +111,19 @@
 #include "safefile.h"
 #include "./kademlia/kademlia/prefs.h"
 #include "./kademlia/kademlia/kademlia.h"
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+
 // random generator
 #pragma warning(disable:4516) // access-declarations are deprecated; member using-declarations provide a better alternative
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(disable:4100) // unreferenced formal parameter
 #pragma warning(disable:4702) // unreachable code
+//Xman
+/*
+#include <crypto51/osrng.h>
+*/
 #include <cryptopp/osrng.h>
+//Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4244) // conversion from 'type1' to 'type2', possible loss of data
@@ -264,7 +271,13 @@ int CEncryptedDatagramSocket::DecryptReceivedClient(BYTE* pbyBufIn, int nBufLen,
 		}
 		*ppbyBufOut = pbyBufIn + (nBufLen - nResult);
 		RC4Crypt((uchar*)*ppbyBufOut, (uchar*)*ppbyBufOut, nResult, &keyReceiveKey);
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		/*
 		theStats.AddDownDataOverheadCrypt(nBufLen - nResult);
+		*/
+		theApp.pBandWidthControl->AddeMuleInObfuscation(nBufLen - nResult);
+		//Xman end
 		//DEBUG_ONLY( DebugLog(_T("Received obfuscated UDP packet from clientIP: %s, Key: %s, RKey: %u, SKey: %u"), ipstr(dwIP), bKad ? (bKadRecvKeyUsed ? _T("ReceiverKey") : _T("NodeID")) : _T("UserHash")
 		//	, nReceiverVerifyKey != 0 ? *nReceiverVerifyKey : 0, nSenderVerifyKey != 0 ? *nSenderVerifyKey : 0) );
 		return nResult; // done
@@ -380,7 +393,14 @@ int CEncryptedDatagramSocket::EncryptSendClient(uchar** ppbyBuf, int nBufLen, co
 	delete[] *ppbyBuf;
 	*ppbyBuf = pachCryptedBuffer;
 
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	theStats.AddUpDataOverheadCrypt(nCryptedLen - nBufLen);
+	*/
+	theApp.pBandWidthControl->AddeMuleOutObfuscationUDP(nCryptedLen - nBufLen);
+	//Xman end
+
 	return nCryptedLen;
 }
 
@@ -423,7 +443,13 @@ int CEncryptedDatagramSocket::DecryptReceivedServer(BYTE* pbyBufIn, int nBufLen,
 		*ppbyBufOut = pbyBufIn + (nBufLen - nResult);
 		RC4Crypt((uchar*)*ppbyBufOut, (uchar*)*ppbyBufOut, nResult, &keyReceiveKey);
 		
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		/*
 		theStats.AddDownDataOverheadCrypt(nBufLen - nResult);
+		*/
+		theApp.pBandWidthControl->AddeMuleInObfuscation(nBufLen - nResult);
+		//Xman end
 		return nResult; // done
 	}
 	else{
@@ -478,6 +504,12 @@ int CEncryptedDatagramSocket::EncryptSendServer(uchar** ppbyBuf, int nBufLen, ui
 	delete[] *ppbyBuf;
 	*ppbyBuf = pachCryptedBuffer;
 
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	theStats.AddUpDataOverheadCrypt(nCryptedLen - nBufLen);
+	*/
+	theApp.pBandWidthControl->AddeMuleOutObfuscationUDP(nCryptedLen - nBufLen);
+	//Xman end
 	return nCryptedLen;
 }

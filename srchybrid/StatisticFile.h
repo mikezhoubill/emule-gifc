@@ -15,7 +15,20 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
-#include "BarShader.h" //Spreadbars
+
+#include "BarShader.h" // Spread bars [Slugfiller/MorphXT] - Stulle
+
+// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+/*
+//Xman PowerRelease
+struct Spread_Struct{
+	uint64 start;
+	uint64 end;
+	uint32 count;
+};
+//Xman end
+*/
+// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
 
 class CStatisticFile
 {
@@ -30,42 +43,37 @@ public:
 		alltimerequested = 0;
 		alltimetransferred = 0;
 		alltimeaccepted = 0;
-		//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
+		// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 		InChangedSpreadSortValue = false;
 		InChangedFullSpreadCount = false;
 		InChangedSpreadBar = false;
 		lastSpreadSortValue = 0;;
 		lastFullSpreadCount = 0;
-		//MORPH END   - Added by SiRoB, Reduce SpreadBar CPU consumption
-		//Morph Start - Added by AndCycle, Equal Chance For Each File
-		m_bInChangedEqualChanceValue = false;
-		lastCheckEqualChanceSemiValue = time(NULL);
-		m_dLastEqualChanceBiasValue = 1;
-		m_dLastEqualChanceSemiValue = 0;
-		m_dwSessionShareTime = time(NULL);
-		//Morph End - Added by AndCycle, Equal Chance For Each File
+		// <== Spread bars [Slugfiller/MorphXT] - Stulle
+		m_uFileupdatetime = 0; //Xman Code Improvement -> don't update to often
+		
+		//Xman advanced upload-priority
+		m_unotcountedtransferred = 0;
+		m_tlastdataupdate = 0;
+		//Xman end
 	}
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
-	~CStatisticFile()
-	{
-		m_bitmapSpreadBar.DeleteObject();
-	}
-	//MORPH END   - Added by SiRoB, Reduce SpreadBar CPU consumption
 
 	void	MergeFileStats( CStatisticFile* toMerge );
 	void	AddRequest();
 	void	AddAccepted();
-	//MORPH START - Added by IceCream SLUGFILLER: Spreadbars
+	//Xman PowerRelease
 	/*
 	void	AddTransferred(uint64 bytes);
 	*/
-	void	AddTransferred(uint64 start, uint64 bytes);
-	void	AddBlockTransferred(uint64 start, uint64 end, uint64 count);
-	void	DrawSpreadBar(CDC* dc, RECT* rect, bool bFlat) /*const*/;
-	float	GetSpreadSortValue() /*const*/;
-	float	GetFullSpreadCount() /*const*/;
-	void	ResetSpreadBar(); //MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	//MORPH END - Added by IceCream SLUGFILLER: Spreadbars
+	// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+	/*
+	~CStatisticFile();	
+	void	AddTransferred(uint64 start, uint32 bytes);
+	void	AddBlockTransferred(uint64 start, uint64 end, uint32 count);
+	*/
+	// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+	//Xman end
+
 
 	UINT	GetRequests() const				{return requested;}
 	UINT	GetAccepts() const				{return accepted;}
@@ -73,22 +81,34 @@ public:
 	UINT	GetAllTimeRequests() const		{return alltimerequested;}
 	UINT	GetAllTimeAccepts() const		{return alltimeaccepted;}
 	uint64	GetAllTimeTransferred() const	{return alltimetransferred;}
+
+	//Xman advanced upload-priority
+	uint64	GetCountedTransferred() const	{return alltimetransferred - m_unotcountedtransferred;}
+	void  UpdateCountedTransferred();
+	uint64 m_unotcountedtransferred;
+	uint32 m_tlastdataupdate;
+	//Xman end
+
 	
 	CKnownFile* fileParent;
-	//Morph Start - Added by AndCycle, Equal Chance For Each File
-	double	GetEqualChanceValue();
-	CString	GetEqualChanceValueString(bool detail = true) const;
-	time_t	GetSessionShareTime() const	{ return time(NULL) - m_dwSessionShareTime; }
-	void	SetSessionShareTime()		{ m_dwSessionShareTime = time(NULL); }
-	//Morph End - Added by AndCycle, Equal Chance For Each File
-	//EastShare	Start - FairPlay by AndCycle
-	bool	GetFairPlay() const;
-	//EastShare	End   - FairPlay by AndCycle
+
 private:
-	//MORPH START - Added by IceCream SLUGFILLER: Spreadbars
+	// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+	/*
+	CTypedPtrList<CPtrList, Spread_Struct*> spreadlist; //Xman PowerRelease
+	*/
+	// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+	uint32 requested;
+	uint32 accepted;
+	uint64 transferred;
+	uint32 alltimerequested;
+	uint64 alltimetransferred;
+	uint32 alltimeaccepted;
+	uint32 m_uFileupdatetime; //Xman Code Improvement -> don't update to often
+
+	// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 	CRBMap<uint64, uint64> spreadlist;
 	static CBarShader s_SpreadBar;
-	//MORPH - Added by SiRoB, Reduce SpreadBar CPU consumption
 	bool	InChangedSpreadSortValue;
 	bool	InChangedFullSpreadCount;
 	bool	InChangedSpreadBar;
@@ -97,21 +117,19 @@ private:
 	bool	lastbFlat;
 	float	lastSpreadSortValue;
 	float	lastFullSpreadCount;
-	//MORPH - Added by SiRoB, Reduce SpreadBar CPU consumption
-	//MORPH END   - Added by IceCream, SLUGFILLER: Spreadbars
 
-private:
-	uint32 requested;
-	uint32 accepted;
-	uint64 transferred;
-	uint32 alltimerequested;
-	uint64 alltimetransferred;
-	uint32 alltimeaccepted;
-	//Morph Start - Added by AndCycle, Equal Chance For Each File
-	bool	m_bInChangedEqualChanceValue;
-	time_t	lastCheckEqualChanceSemiValue; //vs2005
-	double	m_dLastEqualChanceBiasValue;
-	double	m_dLastEqualChanceSemiValue;
-	time_t  m_dwSessionShareTime; //vs2005
-	//Morph End - Added by AndCycle, Equal Chance For Each File
+public:
+	~CStatisticFile()
+	{
+		m_bitmapSpreadBar.DeleteObject();
+	}
+	void	AddTransferred(uint64 start, uint64 bytes);
+	void	AddBlockTransferred(uint64 start, uint64 end, uint64 count);
+	void	DrawSpreadBar(CDC* dc, RECT* rect, bool bFlat) /*const*/;
+	float	GetSpreadSortValue() /*const*/;
+	float	GetFullSpreadCount() /*const*/;
+	void	ResetSpreadBar(); //MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
+	// <== Spread bars [Slugfiller/MorphXT] - Stulle
+
+	bool	GetFairPlay() const; // Fair Play [AndCycle/Stulle] - Stulle
 };

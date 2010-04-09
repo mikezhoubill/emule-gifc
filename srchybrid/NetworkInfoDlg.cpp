@@ -13,11 +13,17 @@
 #include "kademlia/kademlia/indexed.h"
 #include "WebServer.h"
 #include "clientlist.h"
+// ==> UPnP support [MoNKi] - leuk_he
+/*
+#include "UPnPImpl.h" //zz_fly :: show UPnP status
+#include "UPnPImplWrapper.h" //zz_fly :: show UPnP status
+*/
+// <== UPnP support [MoNKi] - leuk_he
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -110,6 +116,7 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 		rCtrl << _T("\r\n");
 	}
 
+
 	///////////////////////////////////////////////////////////////////////////
 	// ED2K
 	///////////////////////////////////////////////////////////////////////////
@@ -171,10 +178,6 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 			rCtrl << GetResString(IDS_SW_NAME) << _T(":\t") << srv->GetListName() << _T("\r\n");
 			rCtrl << GetResString(IDS_DESCRIPTION) << _T(":\t") << srv->GetDescription() << _T("\r\n");
 			rCtrl << GetResString(IDS_IP) << _T(":") << GetResString(IDS_PORT) << _T(":\t") << srv->GetAddress() << _T(":") << srv->GetPort() << _T("\r\n");
-			//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-//			if (srv->GetConnPort() != srv->GetPort())  
-			rCtrl << GetResString(IDS_AUXPORTS) << _T(":\t") << srv->GetConnPort() << _T("\r\n"); 
-			//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 			rCtrl << GetResString(IDS_VERSION) << _T(":\t") << srv->GetVersion() << _T("\r\n");
 			rCtrl << GetResString(IDS_UUSERS) << _T(":\t") << GetFormatedUInt(srv->GetUsers()) << _T("\r\n");
 			rCtrl << GetResString(IDS_PW_FILES) << _T(":\t") << GetFormatedUInt(srv->GetFiles()) << _T("\r\n");
@@ -301,20 +304,17 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 		}
 		rCtrl << _T("\r\n");
 
-		// ==> Inform Clients after IP Change - Stulle
-		// this is a dirty little trick... every time something changes around the
-		// network info it could be a change in KAD IP address so we check if this is true
-		// anyways, if the server is connected we don't need to call an explicit KAD check
-		if (theApp.serverconnect->IsConnected()==false)
-			theApp.CheckIdChange();
-		// <== Inform Clients after IP Change - Stulle
-
 		CString IP;
 		IP = ipstr(ntohl(Kademlia::CKademlia::GetPrefs()->GetIPAddress()));
 		buffer.Format(_T("%s:%i"), IP, thePrefs.GetUDPPort());
 		rCtrl << GetResString(IDS_IP) << _T(":") << GetResString(IDS_PORT) << _T(":\t") << buffer << _T("\r\n");
 
+		//Xman Bugfix
+		/*
 		buffer.Format(_T("%u"),Kademlia::CKademlia::GetPrefs()->GetIPAddress());
+		*/
+		buffer.Format(_T("%u"),ntohl(Kademlia::CKademlia::GetPrefs()->GetIPAddress()));
+		//Xman end
 		rCtrl << GetResString(IDS_ID) << _T(":\t") << buffer << _T("\r\n");
 		if (Kademlia::CKademlia::GetPrefs()->GetUseExternKadPort() && Kademlia::CKademlia::GetPrefs()->GetExternalKadPort() != 0
 			&& Kademlia::CKademlia::GetPrefs()->GetInternKadPort() != Kademlia::CKademlia::GetPrefs()->GetExternalKadPort())
@@ -322,7 +322,7 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 			buffer.Format(_T("%u"), Kademlia::CKademlia::GetPrefs()->GetExternalKadPort());
 			rCtrl << GetResString(IDS_EXTERNUDPPORT) << _T(":\t") << buffer << _T("\r\n");
 		}
-
+		
 		if (Kademlia::CUDPFirewallTester::IsFirewalledUDP(true)) {
 			rCtrl << GetResString(IDS_BUDDY) << _T(":\t");
 			switch ( theApp.clientlist->GetBuddyStatus() )
@@ -377,7 +377,7 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 	rCtrl << (thePrefs.GetWSIsEnabled() ? GetResString(IDS_ENABLED) : GetResString(IDS_DISABLED)) << _T("\r\n");
 	if (thePrefs.GetWSIsEnabled()){
 		CString count;
-		count.Format(_T("%i %s"),theApp.webserver->GetSessionCount(),GetResString(IDS_ACTSESSIONS));
+		count.Format(_T("%i %s"), theApp.webserver->GetSessionCount(), GetResString(IDS_ACTSESSIONS));
 		rCtrl << _T("\t") << count << _T("\r\n");
 		CString strHostname;
 		if (!thePrefs.GetYourHostname().IsEmpty() && thePrefs.GetYourHostname().Find(_T('.')) != -1)
@@ -386,44 +386,23 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 			strHostname = ipstr(theApp.serverconnect->GetLocalIP());
 		rCtrl << _T("URL:\t") << _T("http://") << strHostname << _T(":") << thePrefs.GetWSPort() << _T("/\r\n");
 	}
-	
-    //MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-	///////////////////////////////////////////////////////////////////////////
-	// Wap Interface
-	///////////////////////////////////////////////////////////////////////////
-	rCtrl << _T("\r\n");
-	rCtrl.SetSelectionCharFormat(rcfBold);
-	rCtrl << GetResString(IDS_WAPSRV) << _T("\r\n");
-	rCtrl.SetSelectionCharFormat(rcfDef);
-	rCtrl << GetResString(IDS_STATUS) << _T(":\t");
-	rCtrl << (theApp.wapserver->IsRunning() ? GetResString(IDS_ENABLED) : GetResString(IDS_DISABLED)) << _T("\r\n");
-	if (thePrefs.GetWapServerEnabled()){
-		CString count;
-		count.Format(_T("%i %s"),theApp.wapserver->GetSessionCount(),GetResString(IDS_ACTSESSIONS));
-		rCtrl << _T("\t") << count << _T("\r\n");
-
-		CString strHostname;
-		if (!thePrefs.GetYourHostname().IsEmpty() && thePrefs.GetYourHostname().Find(_T('.')) != -1)
-			strHostname = thePrefs.GetYourHostname();
-		else{
-			if(Kademlia::CKademlia::IsConnected()){
-				strHostname = ipstr(ntohl(Kademlia::CKademlia::GetPrefs()->GetIPAddress()));
-			}
-			else if (theApp.serverconnect->IsConnected()){
-				if (theApp.serverconnect->IsLowID())
-					strHostname = GetResString(IDS_UNKNOWN);
-		else
-					strHostname = ipstr(theApp.serverconnect->GetClientID());
-			}
-			else{
-				strHostname = GetResString(IDS_UNKNOWN);
-			}
-		}
-		rCtrl << _T("URL:\t") << _T("http://") << strHostname << _T(":") << thePrefs.GetWapPort() << _T("/\r\n");
-	}
-	//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]
 
 	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+	//zz_fly :: show UPnP status :: start
+	//if(thePrefs.GetUPnPNat())
+	if(thePrefs.IsUPnPEnabled() && theApp.m_pUPnPFinder)
+	{
+		rCtrl << _T("\r\n");
+		rCtrl.SetSelectionCharFormat(rcfBold);
+		rCtrl << GetResString(IDS_UPNPSTATUS) << _T("\r\n");
+		rCtrl.SetSelectionCharFormat(rcfDef);
+		//CString upnpinfo = theApp.m_UPnPNat.GetLastError(); //ACAT UPnP
+		CString upnpinfo = theApp.m_pUPnPFinder->GetImplementation() ? theApp.m_pUPnPFinder->GetImplementation()->GetStatusString() : _T(""); //Official UPNP
+		rCtrl << (upnpinfo.IsEmpty() ? _T("Unknown") : upnpinfo) << _T("\r\n");
+	}
+	//zz_fly :: show UPnP status :: end
+	*/
 	rCtrl << _T("\r\n");
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// upnp																								//
@@ -432,18 +411,28 @@ void CreateNetworkInfo(CRichEditCtrlX& rCtrl, CHARFORMAT& rcfDef, CHARFORMAT& rc
 	rCtrl << GetResString(IDS_UPNP_NETSTATUS) << _T("\r\n");
 	rCtrl.SetSelectionCharFormat(rcfDef);
 	rCtrl << GetResString(IDS_STATUS) << _T(":\t");
-	if (thePrefs.IsUPnPNat())
+	if (thePrefs.IsUPnPEnabled())
 	{
 		CString upnpStatusString;
 		theApp.m_UPnP_IGDControlPoint-> GetStatusString(upnpStatusString,bFullInfo);
-		rCtrl  << upnpStatusString;
+		rCtrl  << upnpStatusString << _T("\r\n");
 	}
 	else
 		rCtrl << GetResString(IDS_DISABLED) << _T("\r\n");
 	// <== UPnP support [MoNKi] - leuk_he
 
+	//Xman show Hash always at end
+	if (!bFullInfo)
+	{
+		///////////////////////////////////////////////////////////////////////////
+		// Hash Info
+		///////////////////////////////////////////////////////////////////////////
+		rCtrl << _T("\r\n");
+		rCtrl.SetSelectionCharFormat(rcfBold);
+		rCtrl << GetResString(IDS_CD_UHASH) << _T("\r\n");
+		rCtrl.SetSelectionCharFormat(rcfDef);
 
-
-
-
+		buffer.Format(_T("%s"),(LPCTSTR)(md4str((uchar*)thePrefs.GetUserHash())));
+		rCtrl << buffer << _T("\r\n");
+	}
 }

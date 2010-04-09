@@ -34,7 +34,11 @@
 #include "kademlia/net/KademliaUDPListener.h"
 #include "UploadQueue.h"
 #include "ToolTipCtrlX.h"
-#include "Ntservice.h" //Morph
+#include "ThrottledSocket.h" //Xman Xtreme Upload
+#include "UploadBandwidthThrottler.h" //Xman Xtreme Upload
+//#include "EMsocket.h"
+#include "ListenSocket.h" //Xman changed: display the obfuscation icon for all clients which enabled it
+#include "PartFile.h" //Xman PowerRelease
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -57,14 +61,26 @@ END_MESSAGE_MAP()
 CUploadListCtrl::CUploadListCtrl()
 	: CListCtrlItemWalk(this)
 {
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	/*
 	m_tooltip = new CToolTipCtrlX;
+	*/
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+		m_tooltip = new CToolTipCtrlX;
+	else
+		m_tooltip = NULL;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	SetGeneralPurposeFind(true);
 	SetSkinKey(L"UploadsLv");
 }
 
 CUploadListCtrl::~CUploadListCtrl()
 {
-	if (!theApp.IsRunningAsService(SVC_LIST_OPT)) // MORPH leuk_he:run as ntservice v1.. (worksaround for MFC as a service) 
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 		delete m_tooltip;
 }
 
@@ -73,13 +89,19 @@ void CUploadListCtrl::Init()
 	SetPrefsKey(_T("UploadListCtrl"));
 	SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_INFOTIP);
 
-	CToolTipCtrl* tooltip = GetToolTips();
-	if (tooltip) {
-		m_tooltip->SubclassWindow(tooltip->m_hWnd);
-		tooltip->ModifyStyle(0, TTS_NOPREFIX);
-		tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
-		tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
-	}
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	{
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+		CToolTipCtrl* tooltip = GetToolTips();
+		if (tooltip) {
+			m_tooltip->SubclassWindow(tooltip->m_hWnd);
+			tooltip->ModifyStyle(0, TTS_NOPREFIX);
+			tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
+			tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
+		}
+	} // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	InsertColumn(0, GetResString(IDS_QL_USERNAME),	LVCFMT_LEFT,  DFLT_CLIENTNAME_COL_WIDTH);
 	InsertColumn(1, GetResString(IDS_FILE),			LVCFMT_LEFT,  DFLT_FILENAME_COL_WIDTH);
@@ -89,43 +111,22 @@ void CUploadListCtrl::Init()
 	InsertColumn(5, GetResString(IDS_UPLOADTIME),	LVCFMT_LEFT,   80);
 	InsertColumn(6, GetResString(IDS_STATUS),		LVCFMT_LEFT,  100);
 	InsertColumn(7, GetResString(IDS_UPSTATUS),		LVCFMT_LEFT,  DFLT_PARTSTATUS_COL_WIDTH);
-	//MORPH START - Added by SiRoB, Client Software
-	InsertColumn(8,GetResString(IDS_CD_CSOFT),LVCFMT_LEFT,100);
-	//MORPH END - Added by SiRoB, Client Software
-	InsertColumn(9,GetResString(IDS_UPL_DL),LVCFMT_LEFT,100); //Total up down
-	InsertColumn(10,GetResString(IDS_CL_DOWNLSTATUS),LVCFMT_LEFT,100); //Yun.SF3 Remote Queue Status
-	//MORPH START - Added by SiRoB, ZZ Upload System 20030724-0336
-	InsertColumn(11,GetResString(IDS_UPSLOTNUMBER),LVCFMT_LEFT,100);
-	//MORPH END - Added by SiRoB, ZZ Upload System 20030724-0336
-	//MORPH START - Added by SiRoB, Show Compression by Tarod
-	InsertColumn(12,GetResString(IDS_COMPRESSIONGAIN),LVCFMT_LEFT,50);
-	//MORPH END - Added by SiRoB, Show Compression by Tarod
-
-	// Mighty Knife: Community affiliation
-	if (thePrefs.IsCommunityEnabled())
-		InsertColumn(13,GetResString(IDS_COMMUNITY),LVCFMT_LEFT,100);
-	else
-		InsertColumn(13,GetResString(IDS_COMMUNITY),LVCFMT_LEFT,100,-1,true);
-	// [end] Mighty Knife
-
-	// EastShare - Added by Pretender, Friend Tab
-	InsertColumn(14,GetResString(IDS_FRIENDLIST),LVCFMT_LEFT,75);
-	// EastShare - Added by Pretender, Friend Tab
-
-	// Commander - Added: IP2Country column - Start
-	if (thePrefs.GetIP2CountryNameMode() == IP2CountryName_DISABLE)
-		InsertColumn(15,GetResString(IDS_COUNTRY),LVCFMT_LEFT,100,-1,true);
-	else
-		InsertColumn(15,GetResString(IDS_COUNTRY),LVCFMT_LEFT,100);
-	// Commander - Added: IP2Country column - End
+	InsertColumn(8,	GetResString(IDS_CD_CSOFT),		LVCFMT_LEFT, 90); //Xman version see clientversion in every window
+	InsertColumn(9, GetResString(IDS_UPDOWNUPLOADLIST),	LVCFMT_LEFT, 90); //Xman show complete up/down in uploadlist
 	
-	//MORPH START - Added by SiRoB, Display current uploading chunk
-	InsertColumn(16,GetResString(IDS_CHUNK),LVCFMT_LEFT,100);
-	//MORPH END   - Added by SiRoB, Display current uploading chunk
-		
+
 	SetAllIcons();
 	Localize();
 	LoadSettings();
+
+	//Xman client percentage
+	CFont* pFont = GetFont();
+	LOGFONT lfFont = {0};
+	pFont->GetLogFont(&lfFont);
+	lfFont.lfHeight = 11;
+	m_fontBoldSmaller.CreateFontIndirect(&lfFont);
+	//Xman end
+
 	SetSortArrow();
 	SortItems(SortProc, GetSortItem() + (GetSortAscending() ? 0 : 100));
 }
@@ -168,65 +169,21 @@ void CUploadListCtrl::Localize()
 	strRes = GetResString(IDS_UPSTATUS);
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(7, &hdi);
-		
-	//MORPH START - Modified by SiRoB, Client Software
+
+	//Xman version see clientversion in every window
 	strRes = GetResString(IDS_CD_CSOFT);
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(8, &hdi);
-	//MORPH END - Modified by SiRoB, Client Software
+	//Xman end
 
-	//MORPH START - Modified by IceCream, Total up down
-	strRes = GetResString(IDS_UPL_DL);
+	//Xman show complete up/down in uploadlist
+	strRes = GetResString(IDS_UPDOWNUPLOADLIST);
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(9, &hdi);
-	//MORPH END - Modified by IceCream, Total up down
-
-	//MORPH START - Modified by IceCream, Remote Status
-	strRes = GetResString(IDS_CL_DOWNLSTATUS);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(10, &hdi);
-	//MORPH END - Modified by IceCream, Remote Status
-
-	//MORPH START - Added by SiRoB, ZZ Missing
-	strRes = GetResString(IDS_UPSLOTNUMBER);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(11, &hdi);
-	//MORPH END - Added by SiRoB, ZZ Missing
-
-	//MORPH START - Added by SiRoB, Show Compression by Tarod
-	strRes = GetResString(IDS_COMPRESSIONGAIN);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(12, &hdi);
-	//MORPH END - Added by SiRoB, Show Compression by Tarod
-
-	// Mighty Knife: Community affiliation
-	strRes = GetResString(IDS_COMMUNITY);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(13, &hdi);
-	// [end] Mighty Knife
-
-	// EastShare - Added by Pretender, Friend Tab
-	strRes = GetResString(IDS_FRIENDLIST);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(14, &hdi);
-	// EastShare - Added by Pretender, Friend Tab
-
-	// Commander - Added: IP2Country column - Start
-	strRes = GetResString(IDS_COUNTRY);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(15, &hdi);
-	// Commander - Added: IP2Country column - End
-		
-	//MORPH START - Added by SiRoB, Display current uploading chunk
-	strRes = GetResString(IDS_CHUNK);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(16, &hdi);
-	//MORPH START - Added by SiRoB, Display current uploading chunk
+	//Xman end
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 	theApp.emuledlg->transferwnd->SetBackgroundColor(style_b_uploadlist);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 }
 
@@ -241,53 +198,72 @@ void CUploadListCtrl::SetAllIcons()
 	ApplyImageList(NULL);
 	m_ImageList.DeleteImageList();
 	m_ImageList.Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1);
+	//Xman Show correct Icons	
+	/*
 	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkey")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientCompatible")));
-	//MORPH START - Modified by SiRoB, More client
-	//m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyPlus")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientCompatiblePlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyPlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientCompatiblePlus")));
 	m_ImageList.Add(CTempIconLoader(_T("Friend")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkey")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkeyPlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkeyPlus")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybrid")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybridPlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybridPlus")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientShareaza")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientShareazaPlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientShareazaPlus")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientAMule")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientAMulePlus")));
+	m_ImageList.Add(CTempIconLoader(_T("ClientAMulePlus")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientLPhant")));
-	//m_ImageList.Add(CTempIconLoader(_T("ClientLPhantPlus")));
-	m_ImageList.Add(CTempIconLoader(_T("ClientRightEdonkey")));
-	m_ImageList.Add(CTempIconLoader(_T("Morph")));
-	m_ImageList.Add(CTempIconLoader(_T("SCARANGEL")));
-	m_ImageList.Add(CTempIconLoader(_T("STULLE")));
-	m_ImageList.Add(CTempIconLoader(_T("XTREME")));
-	m_ImageList.Add(CTempIconLoader(_T("EASTSHARE")));
-	m_ImageList.Add(CTempIconLoader(_T("EMF")));
-	m_ImageList.Add(CTempIconLoader(_T("NEO")));
-	m_ImageList.Add(CTempIconLoader(_T("MEPHISTO")));
-	m_ImageList.Add(CTempIconLoader(_T("XRAY")));
-	m_ImageList.Add(CTempIconLoader(_T("MAGIC")));
-	m_ImageList.Add(CTempIconLoader(_T("RATING_FAKE"))); // Reduce Score for leecher - Stulle
+	m_ImageList.Add(CTempIconLoader(_T("ClientLPhantPlus")));
+	*/
+	m_ImageList.Add(CTempIconLoader(_T("ClientDefault")));		//0
+	m_ImageList.Add(CTempIconLoader(_T("ClientDefaultPlus")));	//1
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkey")));		//2
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyPlus")));	//3
+	m_ImageList.Add(CTempIconLoader(_T("ClientCompatible")));		//4
+	m_ImageList.Add(CTempIconLoader(_T("ClientCompatiblePlus")));	//5
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriend")));			//6
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriendPlus")));		//7
+	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkey")));		//8
+	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkeyPlus")));	//9
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybrid")));	//10
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybridPlus")));//11
+	m_ImageList.Add(CTempIconLoader(_T("ClientShareaza")));		//12
+	m_ImageList.Add(CTempIconLoader(_T("ClientShareazaPlus")));	//13
+	m_ImageList.Add(CTempIconLoader(_T("ClientAMule")));			//14
+	m_ImageList.Add(CTempIconLoader(_T("ClientAMulePlus")));		//15
+	m_ImageList.Add(CTempIconLoader(_T("ClientLPhant")));			//16
+	m_ImageList.Add(CTempIconLoader(_T("ClientLPhantPlus")));		//17
+	m_ImageList.Add(CTempIconLoader(_T("LEECHER")));				//18 //Xman Anti-Leecher
+
+	//Xman friend visualization
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriendSlotOvl"))); //19
+	//Xman end
+
+
+	//Xman end
+	// ==> Mod Icons - Stulle
+	m_ImageList.Add(CTempIconLoader(_T("AAAEMULEAPP"))); //20
+	m_ImageList.Add(CTempIconLoader(_T("STULLE"))); //21
+	m_ImageList.Add(CTempIconLoader(_T("XTREME"))); //22
+	m_ImageList.Add(CTempIconLoader(_T("MORPH"))); //23
+	m_ImageList.Add(CTempIconLoader(_T("EASTSHARE"))); //24
+	m_ImageList.Add(CTempIconLoader(_T("EMF"))); //25
+	m_ImageList.Add(CTempIconLoader(_T("NEO"))); //26
+	m_ImageList.Add(CTempIconLoader(_T("MEPHISTO"))); //27
+	m_ImageList.Add(CTempIconLoader(_T("XRAY"))); //28
+	m_ImageList.Add(CTempIconLoader(_T("MAGIC"))); //29
+	// <== Mod Icons - Stulle
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("ClientSecureOvl"))), 1);
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("OverlayObfu"))), 2);
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("OverlaySecureObfu"))), 3);
-	//MORPH END   - Modified by SiRoB, More client
-
-	// Mighty Knife: Community icon
-	m_overlayimages.DeleteImageList();
+	// ==> Mod Icons - Stulle
+	m_overlayimages.DeleteImageList ();
 	m_overlayimages.Create(16,16,theApp.m_iDfltImageListColorFlags|ILC_MASK,0,1);
 	m_overlayimages.SetBkColor(CLR_NONE);
-	m_overlayimages.Add(CTempIconLoader(_T("Community")));
-	// [end] Mighty Knife
-	//MORPH START - Addded by SiRoB, Friend Addon
-	m_overlayimages.Add(CTempIconLoader(_T("ClientFriendOvl")));
-	m_overlayimages.Add(CTempIconLoader(_T("ClientFriendSlotOvl")));
-	//MORPH END   - Addded by SiRoB, Friend Addon
-	//MORPH START - Credit Overlay Icon
 	m_overlayimages.Add(CTempIconLoader(_T("ClientCreditOvl")));
 	m_overlayimages.Add(CTempIconLoader(_T("ClientCreditSecureOvl")));
-	//MORPH END   - Credit Overlay Icon
+	// <== Mod Icons - Stulle
 	// Apply the image list also to the listview control, even if we use our own 'DrawItem'.
 	// This is needed to give the listview control a chance to initialize the row height.
 	ASSERT( (GetStyle() & LVS_SHAREIMAGELISTS) != 0 );
@@ -304,36 +280,56 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
 	BOOL bCtrlFocused;
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+	/*
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
-#else
+	*/
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused, style_b_uploadlist);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 	CRect cur_rec(lpDrawItemStruct->rcItem);
 	CRect rcClient;
 	GetClientRect(&rcClient);
 	const CUpDownClient *client = (CUpDownClient *)lpDrawItemStruct->itemData;
-
-	//MORPH START - Upload code
+	//Xman Xtreme Upload 
 	/*
     if (client->GetSlotNumber() > theApp.uploadqueue->GetActiveUploadsCount())
-	*/
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	if(thePrefs.GetAutoTextColors()){
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
-	if(client->IsScheduledForRemoval())
-		dc.SetTextColor(RGB(255,50,50));
-	else if(client->GetSlotNumber() > theApp.uploadqueue->GetActiveUploadsCount(client->GetClassID())) //MORPH - Upload Splitting Class
-	//MORPH END   - Upload code
         dc.SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	*/
+	const ThrottledFileSocket* socket=(client->GetFileUploadSocket());
+	if( socket!=NULL)
+	{
+		// ==> Design Settings [eWombat/Stulle] - Stulle
+		/*
+		if (socket->IsFull())
+			dc.SetTextColor(RGB(0,0,0));
+		else if (socket->IsTrickle())
+			dc.SetTextColor(::GetSysColor(COLOR_GRAYTEXT));
+		*/
+#define MLC_BLEND(A, B, X) ((A + B * (X-1) + ((X+1)/2)) / X)
+
+#define MLC_RGBBLEND(A, B, X) (                   \
+	RGB(MLC_BLEND(GetRValue(A), GetRValue(B), X), \
+	MLC_BLEND(GetGValue(A), GetGValue(B), X),     \
+	MLC_BLEND(GetBValue(A), GetBValue(B), X))     \
+)
+		if (socket->IsFull())
+			;
+		else if (socket->IsTrickle())
+			dc.SetTextColor(MLC_RGBBLEND(dc.GetTextColor(), dc.GetBkColor(), 2));
+		// <== Design Settings [eWombat/Stulle] - Stulle
+		//Xman this is used for testing purpose
+		else
+		{
+			if(socket->isready)
+				dc.SetTextColor(RGB(0,0,255));
+			else
+				dc.SetTextColor(RGB(0,128,128));
+
+		}
 	}
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	//Xman this is used for testing purpose
+	else
+		dc.SetTextColor(RGB(255,0,0));
+	//Xman end
 
 	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
 	int iCount = pHeaderCtrl->GetItemCount();
@@ -354,74 +350,148 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				switch (iColumn)
 				{
 					case 0:{
-						//MORPH START - Modified by SiRoB, More client & Credit overlay icon
 						int iImage;
-						//MORPH - Removed by SiRoB, Friend Addon
+						//Xman Show correct Icons
 						/*
 						if (client->IsFriend())
-							iImage = 2;
-						else*/ if (client->GetClientSoft() == SO_MLDONKEY )
-							iImage = 3;
-						else if (client->GetClientSoft() == SO_EDONKEYHYBRID )
 							iImage = 4;
-						else if (client->GetClientSoft() == SO_SHAREAZA )
-							iImage = 5;
-						else if (client->GetClientSoft() == SO_AMULE)
-							iImage = 6;
-						else if (client->GetClientSoft() == SO_LPHANT)
-							iImage = 7;
-						else if (client->GetClientSoft() == SO_EDONKEY )
-							iImage = 8;
-						// ==> Reduce Score for leecher - Stulle
-						else if (client->GetScoreReduce())
-							iImage = 19;
-						// <== Reduce Score for leecher - Stulle
-						else if (client->ExtProtocolAvailable())
-						//MORPH START - Added by SiRoB, More client icon
-						{
-							if(client->GetModClient() == MOD_NONE)
-								iImage = 1;
+						else if (client->GetClientSoft() == SO_EDONKEYHYBRID) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 8;
 							else
-								iImage = (uint8)(client->GetModClient() + 8);
+								iImage = 7;
 						}
-						//MORPH END   - Added by SiRoB, More client icon
-						else
+						else if (client->GetClientSoft() == SO_MLDONKEY) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 6;
+							else
+								iImage = 5;
+						}
+						else if (client->GetClientSoft() == SO_SHAREAZA) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 10;
+							else
+								iImage = 9;
+						}
+						else if (client->GetClientSoft() == SO_AMULE) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 12;
+							else
+								iImage = 11;
+						}
+						else if (client->GetClientSoft() == SO_LPHANT) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 14;
+							else
+								iImage = 13;
+						}
+						else if (client->ExtProtocolAvailable()) {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 3;
+							else
+								iImage = 1;
+						}
+						else {
+							if (client->credits->GetScoreRatio(client->GetIP()) > 1)
+								iImage = 2;
+							else
+								iImage = 0;
+						}
+						*/
+						if (client->IsFriend())
+							iImage = 6;
+						else if (client->GetClientSoft() == SO_EDONKEYHYBRID){
+							iImage = 10;
+						}
+						else if (client->GetClientSoft() == SO_EDONKEY){
+							iImage = 2;
+						}
+						else if (client->GetClientSoft() == SO_MLDONKEY){
+							iImage = 8;
+						}
+						else if (client->GetClientSoft() == SO_SHAREAZA){
+							iImage = 12;
+						}
+						else if (client->GetClientSoft() == SO_AMULE){
+							iImage = 14;
+						}
+						else if (client->GetClientSoft() == SO_LPHANT){
+							iImage = 16;
+						}
+						else if (client->ExtProtocolAvailable()){
+							// ==> Mod Icons - Stulle
+							/*
+							iImage = 4;
+							*/
+							if(client->GetModClient() == MOD_NONE)
+								iImage = 4;
+							else
+								iImage = (uint8)(client->GetModClient() + 19);
+							// <== Mod Icons - Stulle
+						}
+						else{
 							iImage = 0;
+						}
+						//Xman Anti-Leecher
+						if(client->IsLeecher()>0)
+							iImage=18;
+						else
+						//Xman end
+						// ==> Mod Icons - Stulle
+						// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+						/*
+						if (((client->credits)?client->credits->GetScoreRatio(client):0) > 1)
+							iImage++;
+						*/
+						if (client->GetModClient() == MOD_NONE){
+							if(client->credits && client->credits->GetHasScore(client))
+								iImage++;
+						}
+						// <== CreditSystems [EastShare/ MorphXT] - Stulle
+						// <== Mod Icons - Stulle
+						//Xman end
 
 						UINT nOverlayImage = 0;
 						if ((client->Credits() && client->Credits()->GetCurrentIdentState(client->GetIP()) == IS_IDENTIFIED))
 							nOverlayImage |= 1;
+						//Xman changed: display the obfuscation icon for all clients which enabled it
+						/*
 						if (client->IsObfuscatedConnectionEstablished())
+						*/
+						if(client->IsObfuscatedConnectionEstablished() 
+							|| (!(client->socket != NULL && client->socket->IsConnected())
+							&& (client->SupportsCryptLayer() && thePrefs.IsClientCryptLayerSupported() && (client->RequestsCryptLayer() || thePrefs.IsClientCryptLayerRequested()))))
+						//Xman end
 							nOverlayImage |= 2;
 						int iIconPosY = (cur_rec.Height() > 16) ? ((cur_rec.Height() - 16) / 2) : 1;
 						POINT point = { cur_rec.left, cur_rec.top + iIconPosY };
-						m_ImageList.Draw(dc, iImage, point, ILD_NORMAL | INDEXTOOVERLAYMASK(nOverlayImage));
 
-						//MORPH START - Credit Overlay Icon
-						if (client->Credits() && client->Credits()->GetHasScore(client->GetIP())) {
-							if (nOverlayImage & 1)
-								m_overlayimages.Draw(dc, 4, point, ILD_TRANSPARENT);
-							else
-								m_overlayimages.Draw(dc, 3, point, ILD_TRANSPARENT);
-						}
-						// Mighty Knife: Community visualization
-						if (client->IsCommunity())
-							m_overlayimages.Draw(dc,0, point, ILD_TRANSPARENT);
-						// [end] Mighty Knife
+						//Xman friend visualization
+						if (client->IsFriend() && client->GetFriendSlot())
+							m_ImageList.Draw(dc,19, point, ILD_NORMAL);
+						//Xman end
 
-						//MORPH START - Added by SiRoB, Friend Addon
-						if (client->IsFriend())
-							m_overlayimages.Draw(dc,client->GetFriendSlot()?2:1, point, ILD_TRANSPARENT);
-						//MORPH END   - Added by SiRoB, Friend Addon
-
-						//EastShare Start - added by AndCycle, IP to Country, modified by Commander
-						if(theApp.ip2country->ShowCountryFlag() && IsColumnHidden(15)){
-							cur_rec.left += 20;
+						//EastShare Start - added by AndCycle, IP to Country 
+						if(theApp.ip2country->ShowCountryFlag() )
+						{
+							cur_rec.left+=20;
 							POINT point2= {cur_rec.left,cur_rec.top+1};
-							theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, client->GetCountryFlagIndex(), point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
+							theApp.ip2country->GetFlagImageList()->Draw(dc, client->GetCountryFlagIndex(), point2, ILD_NORMAL);
 							cur_rec.left += sm_iLabelOffset;
 						}
 						//EastShare End - added by AndCycle, IP to Country
+
+						m_ImageList.Draw(dc, iImage, point, ILD_NORMAL | INDEXTOOVERLAYMASK(nOverlayImage));
+
+						// ==> Mod Icons - Stulle
+						if(client->Credits() && client->credits->GetHasScore(client) && client->GetModClient() != MOD_NONE)
+						{
+							if(nOverlayImage & 1)
+								m_overlayimages.Draw(dc,1, point, ILD_TRANSPARENT);
+							else
+								m_overlayimages.Draw(dc,0, point, ILD_TRANSPARENT);
+						}
+						// <== Mod Icons - Stulle
 
 						cur_rec.left += 16 + sm_iLabelOffset;
 						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
@@ -429,58 +499,98 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 						cur_rec.right -= sm_iSubItemInset;
 
 						//EastShare Start - added by AndCycle, IP to Country
-						if(theApp.ip2country->ShowCountryFlag() && IsColumnHidden(15)){
-							cur_rec.left -= 20;
-							cur_rec.left -= sm_iLabelOffset;
+						if(theApp.ip2country->ShowCountryFlag() )
+						{
+							cur_rec.left-=20;
 						}
 						//EastShare End - added by AndCycle, IP to Country
 
 						break;
 					}
 
-					case 7:
+					// ==> Design Settings [eWombat/Stulle] - Stulle
+					/*
+					//Xman PowerRelease
+					case 1:
+					{
+						const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+						if(file)
 						{
-							cur_rec.bottom--;
-							cur_rec.top++;
-							client->DrawUpStatusBar(dc, &cur_rec, false, thePrefs.UseFlatBar());
-							// MORPH START
-							// Stullemon: I don't actually like this...
-							//MORPH START - Adde by SiRoB, Optimization requpfile
-							/*
-							const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-							*/
-							const CKnownFile* file = client->CheckAndGetReqUpFile();
-							//MORPH END   - Adde by SiRoB, Optimization requpfile
-							if (file)  // protect against deleted file
-								client->DrawCompletedPercent(dc,&cur_rec); //Fafner: client percentage - 080325
-							// MORPH END
-							cur_rec.bottom++;
-							cur_rec.top--;
+							COLORREF crOldTxtColor = dc->GetTextColor();
+							if(file->GetUpPriority()==PR_POWER)
+								dc.SetBkColor(RGB(255,225,225));
+							dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
+							dc->SetTextColor(crOldTxtColor);
 						}
+						else
+							dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
 						break;
-					// Commander - Added: IP2Country column - Start
-					case 15:
-						if(theApp.ip2country->ShowCountryFlag()){
-							POINT point2= {cur_rec.left,cur_rec.top+1};
-							theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, client->GetCountryFlagIndex(), point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
-							cur_rec.left+=20;
+					}
+					//Xman end
+					*/
+					// <== Design Settings [eWombat/Stulle] - Stulle
+
+					case 7:
+					{
+						cur_rec.bottom--;
+						cur_rec.top++;
+						COLORREF crOldBackColor = dc->GetBkColor(); //Xman Code Improvement: FillSolidRect
+						client->DrawUpStatusBar(dc, &cur_rec, false, thePrefs.UseFlatBar());
+						dc.SetBkColor(crOldBackColor); //Xman Code Improvement: FillSolidRect
+						//Xman client percentage (font idea by morph)
+						CString buffer;
+						// ==> Show Client Percentage optional [Stulle] - Stulle
+						/*
+						if (thePrefs.GetUseDwlPercentage())
+						*/
+						if (thePrefs.GetShowClientPercentage())
+						// <== Show Client Percentage optional [Stulle] - Stulle
+						{
+							if(client->GetHisCompletedPartsPercent_UP() >=0)
+							{
+								COLORREF oldclr = dc.SetTextColor(RGB(0,0,0));
+								int iOMode = dc.SetBkMode(TRANSPARENT);
+								buffer.Format(_T("%i%%"), client->GetHisCompletedPartsPercent_UP());
+								CFont *pOldFont = dc.SelectObject(&m_fontBoldSmaller);
+#define	DrawClientPercentText	dc.DrawText(buffer, buffer.GetLength(),&cur_rec, ((MLC_DT_TEXT | DT_RIGHT) & ~DT_LEFT) | DT_CENTER)
+								cur_rec.top-=1;cur_rec.bottom-=1;
+								DrawClientPercentText;cur_rec.left+=1;cur_rec.right+=1;
+								DrawClientPercentText;cur_rec.left+=1;cur_rec.right+=1;
+								DrawClientPercentText;cur_rec.top+=1;cur_rec.bottom+=1;
+								DrawClientPercentText;cur_rec.top+=1;cur_rec.bottom+=1;
+								DrawClientPercentText;cur_rec.left-=1;cur_rec.right-=1;
+								DrawClientPercentText;cur_rec.left-=1;cur_rec.right-=1;
+								DrawClientPercentText;cur_rec.top-=1;cur_rec.bottom-=1;
+								DrawClientPercentText;cur_rec.left++;cur_rec.right++;
+								dc.SetTextColor(RGB(255,255,255));
+								DrawClientPercentText;
+								dc.SelectObject(pOldFont);
+								dc.SetBkMode(iOMode);
+								dc.SetTextColor(oldclr);
+							}
 						}
+						//Xman end
+
+						cur_rec.bottom++;
+						cur_rec.top--;
+						break;
+					}
+
+					// ==> Design Settings [eWombat/Stulle] - Stulle
+					/*
+					//Xman show LowIDs
+					case 8:
+					{
+						COLORREF crOldTxtColor = dc->GetTextColor();
+						if(client->HasLowID())
+							dc.SetBkColor(RGB(255,250,200));
 						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
-						if(theApp.ip2country->ShowCountryFlag()){
-							cur_rec.left-=20;
-						}
+						dc->SetTextColor(crOldTxtColor);
 						break;
-					// Commander - Added: IP2Country column - End
-					//MORPH START - Added by SiRoB, Display current uploading chunk
-					case 16:
-							cur_rec.bottom--;
-							cur_rec.top++;
-							client->DrawUpStatusBarChunk(dc,&cur_rec,false,thePrefs.UseFlatBar());
-							client->DrawUpStatusBarChunkText(dc,&cur_rec); //Fafner: part number - 080317
-							cur_rec.bottom++;
-							cur_rec.top--;
-						break;
-					//MORPH END   - Added by SiRoB, Display current uploading chunk
+					}
+					//Xman end
+					*/
+					// <== Design Settings [eWombat/Stulle] - Stulle
 
 					default:
 						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
@@ -492,8 +602,6 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	}
 
 	DrawFocusRect(dc, lpDrawItemStruct->rcItem, lpDrawItemStruct->itemState & ODS_FOCUS, bCtrlFocused, lpDrawItemStruct->itemState & ODS_SELECTED);
-	if (!theApp.IsRunningAsService(SVC_LIST_OPT)) // MORPH leuk_he:run as ntservice v1..
-		m_updatethread->AddItemUpdated((LPARAM)client); //MORPH - UpdateItemThread
 }
 
 void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubItem, LPTSTR pszText, int cchTextMax)
@@ -513,243 +621,103 @@ void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 			break;
 
 		case 1: {
-			//MORPH START - Adde by SiRoB, Optimization requpfile
-			/*
 			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-			*/
-			const CKnownFile *file = client->CheckAndGetReqUpFile();
-			//MORPH END - Adde by SiRoB, Optimization requpfile
-			//Morph Start - added by AndCycle, Equal Chance For Each File
-			//Morph - added by AndCycle, more detail...for debug?
-			if(thePrefs.IsEqualChanceEnable())
-				_sntprintf(pszText, cchTextMax, _T("%s :%s"), file->statistic.GetEqualChanceValueString(false),(file != NULL) ? file->GetFileName() : _T("?"));
-			else
-			//Morph - added by AndCycle, more detail...for debug?
-			//Morph End - added by AndCycle, Equal Chance For Each File
 			_tcsncpy(pszText, file != NULL ? file->GetFileName() : _T(""), cchTextMax);
 			break;
 		}
 
 		case 2:
+			//Xman count block/success send
+			//Xman // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+			/*
 			_tcsncpy(pszText, CastItoXBytes(client->GetDatarate(), false, true), cchTextMax);
+			*/
+			if(thePrefs.ShowBlockRatio())
+				_sntprintf(pszText, cchTextMax, _T("%s, %0.0f%%"),CastItoXBytes(client->GetUploadDatarate(), false, true), client->GetFileUploadSocket()->GetBlockRatio());
+			else
+				_tcsncpy(pszText, CastItoXBytes(client->GetUploadDatarate(), false, true), cchTextMax);
+			//Xman end
 			break;
 
 		case 3:
 			// NOTE: If you change (add/remove) anything which is displayed here, update also the sorting part..
-			//Morph - modified by AndCycle, more uploading session info to show full chunk transfer
+			//Xman
 			/*
 			if (thePrefs.m_bExtControls)
 				_sntprintf(pszText, cchTextMax, _T("%s (%s)"), CastItoXBytes(client->GetSessionUp(), false, false), CastItoXBytes(client->GetQueueSessionPayloadUp(), false, false));
 			else
 				_tcsncpy(pszText, CastItoXBytes(client->GetSessionUp(), false, false), cchTextMax);
 			*/
-			if(client->GetSessionUp() == client->GetQueueSessionUp())
-				_sntprintf(pszText, cchTextMax, _T("%s (%s)"), CastItoXBytes(client->GetQueueSessionPayloadUp(), false, false), CastItoXBytes(client->GetQueueSessionUp(), false, false));
-			else
-				_sntprintf(pszText, cchTextMax, _T("%s=%s+%s (%s=%s+%s)"), CastItoXBytes(client->GetQueueSessionPayloadUp()), CastItoXBytes(client->GetSessionPayloadUp()), CastItoXBytes(client->GetQueueSessionPayloadUp()-client->GetSessionPayloadUp()), CastItoXBytes(client->GetQueueSessionUp()), CastItoXBytes(client->GetSessionUp()), CastItoXBytes(client->GetQueueSessionUp()-client->GetSessionUp()));
-			//Morph - modified by AndCycle, more uploading session info to show full chunk transfer
+			//Xman only intern
+			//if(client->GetFileUploadSocket())
+			//	Sbuffer.Format(_T("%s, ready:%u b:%u %u"),CastItoXBytes(client->GetSessionUp(), false, false), client->GetFileUploadSocket()->isready, !client->GetFileUploadSocket()->StandardPacketQueueIsEmpty(),client->GetFileUploadSocket()->blockedsendcount);
+			//else
+				_tcsncpy(pszText, CastItoXBytes(client->GetSessionUp(), false, false), cchTextMax);
+			//Xman end
 			break;
 
 		case 4:
 			if (client->HasLowID())
-				//MORPH START - ZZ LowID handling
-				/*
 				_sntprintf(pszText, cchTextMax, _T("%s (%s)"), CastSecondsToHM(client->GetWaitTime() / 1000), GetResString(IDS_IDLOW));
-				*/
-				if(client->m_dwWouldHaveGottenUploadSlotIfNotLowIdTick)
-					_sntprintf(pszText, cchTextMax, GetResString(IDS_UP_LOWID_DELAYED),CastSecondsToHM(client->GetWaitTime()/1000), CastSecondsToHM((::GetTickCount()-client->GetUpStartTimeDelay()-client->m_dwWouldHaveGottenUploadSlotIfNotLowIdTick)/1000));
-				else
-					_sntprintf(pszText, cchTextMax, GetResString(IDS_UP_LOWID),CastSecondsToHM(client->GetWaitTime()/1000));
-				//MORPH END   - ZZ LowID handling
 			else
 				_tcsncpy(pszText, CastSecondsToHM(client->GetWaitTime() / 1000), cchTextMax);
 			break;
 
 		case 5:
-			//MORPH START - modified by AndCycle, upRemain
-			/*
 			_tcsncpy(pszText, CastSecondsToHM(client->GetUpStartTimeDelay() / 1000), cchTextMax);
-			*/
-			{
-				//MORPH START - Adde by SiRoB, Optimization requpfile
-				/*
-				const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-				*/
-				const CKnownFile *file = client->CheckAndGetReqUpFile();
-				//MORPH END - Adde by SiRoB, Optimization requpfile
-				sint32 timeleft = -1;
-				uint32 UpDatarate = client->GetDatarate();
-				// Mighty Knife: Check for credits!=NULL
-				if ((UpDatarate == 0) || (client->Credits()==NULL))
-					timeleft = -1;
-				else if(file)
-					if(client->IsMoreUpThanDown(file) && client->GetQueueSessionUp() > SESSIONMAXTRANS)
-						timeleft = (sint32)((client->Credits()->GetDownloadedTotal() - client->Credits()->GetUploadedTotal())/UpDatarate);
-				// [end] Mighty Knife
-					else if(file->GetPowerShared() && client->GetQueueSessionUp() > SESSIONMAXTRANS)
-						timeleft = -1;
-					else if (file->GetFileSize() > (uint64)SESSIONMAXTRANS)
-						timeleft = (sint32)((SESSIONMAXTRANS - client->GetQueueSessionUp())/UpDatarate);
-					else
-						timeleft = (sint32)(((uint64)file->GetFileSize() - client->GetQueueSessionUp())/UpDatarate);
-				_sntprintf(pszText, cchTextMax, _T("%s (+%s)"), CastSecondsToHM((client->GetUpStartTimeDelay())/1000), (timeleft>=0)?CastSecondsToHM(timeleft):_T("?"));
-			}
-			//MORPH END   - modified by AndCycle, upRemain
 			break;
 
 		case 6:
+			// ==> PowerShare [ZZ/MorphXT] - Stulle
+			/*
 			_tcsncpy(pszText, client->GetUploadStateDisplayString(), cchTextMax);
+			*/
+		{
+			CString Sbuffer;
+			Sbuffer.Format(client->GetUploadStateDisplayString());
+			// ==> Display friendslot [Stulle] - Stulle
+			if (client->IsFriend() && client->GetFriendSlot())
+				Sbuffer.Append(_T(",FS"));
+			// <== Display friendslot [Stulle] - Stulle
+			if (client->GetPowerShared())
+				Sbuffer.Append(_T(",PS"));
+			// ==> Fair Play [AndCycle/Stulle] - Stulle
+			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			if (file && file->statistic.GetFairPlay()) {
+				Sbuffer.Append(_T(",FairPlay"));
+			}
+			// <== Fair Play [AndCycle/Stulle] - Stulle
+			// ==> Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
+			if(client->IsPBFClient()) // client->credits != NULL here
+			{
+				if (client->IsSecure())
+					Sbuffer.Append(_T(",PBF"));
+				else
+					Sbuffer.Append(_T(",PBF II"));
+
+				Sbuffer.AppendFormat(_T(" (%s)"),CastItoXBytes(client->credits->GetDownloadedTotal()-client->credits->GetUploadedTotal()));
+			}
+			// <== Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
+			_tcsncpy(pszText, Sbuffer, cchTextMax);
+		}
+			// <== PowerShare [ZZ/MorphXT] - Stulle
 			break;
 
 		case 7:
 			_tcsncpy(pszText, GetResString(IDS_UPSTATUS), cchTextMax);
 			break;
-		//MORPH START - Added by SiRoB, Client Software
-		case 8:			
-			_tcsncpy(pszText, client->GetClientSoftVer(), cchTextMax);
+		//Xman version see clientversion in every window
+		case 8:
+			_tcsncpy(pszText, client->DbgGetFullClientSoftVer(), cchTextMax);
 			break;
-		//MORPH END - Added by SiRoB, Client Software
-
-		//MORPH START - Added By Yun.SF3, Upload/Download
-		case 9: //LSD Total UP/DL
-			{
-				if (client->Credits()){
-					_sntprintf(pszText, cchTextMax, _T("%s/%s"),
-					CastItoXBytes(client->Credits()->GetUploadedTotal(),false,false),
-					CastItoXBytes(client->Credits()->GetDownloadedTotal(),false,false));
-					//(float)client->Credits()->GetScoreRatio() );
-				}
-				else
-					_sntprintf(pszText, cchTextMax, _T("%s/%s"),
-						_T("?"),_T("?"));//,"?" );
-				break;	
-			}
-		//MORPH END - Added By Yun.SF3, Upload/Download
-
-		//MORPH START - Added By Yun.SF3, Remote Status
-		case 10: //Yun.SF3 remote queue status
-			{	
-				int qr = client->GetRemoteQueueRank();
-				if (client->GetDownloadDatarate() > 0){
-					_tcsncpy(pszText, CastItoXBytes(client->GetDownloadDatarate(),false,true), cchTextMax);
-				}
-				else if (qr)
-					_sntprintf(pszText, cchTextMax, _T("QR: %u"),qr);
-				//Dia+ Show NoNeededParts
-				else if (client->GetDownloadState()==DS_NONEEDEDPARTS)
-					_tcsncpy(pszText, GetResString(IDS_NONEEDEDPARTS), cchTextMax);
-				//Dia- Show NoNeededParts							
-				else if(client->IsRemoteQueueFull())
-					_tcsncpy(pszText, GetResString(IDS_QUEUEFULL), cchTextMax);
-				else
-					_tcsncpy(pszText, GetResString(IDS_UNKNOWN), cchTextMax);
-				break;	
-			}
-		//MORPH END - Added By Yun.SF3, Remote Status
-
-		//MORPH START - Added by SiRoB, Upload Bandwidth Splited by class
-		case 11:{
-				CString Sbuffer;
-				//MORPH START - Adde by SiRoB, Optimization requpfile
-				/*
-				const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-				*/
-				const CKnownFile *file = client->CheckAndGetReqUpFile();
-				//MORPH END - Adde by SiRoB, Optimization requpfile
-				Sbuffer.Format(_T("%i"), client->GetSlotNumber());
-				if (client->GetClassID()==0){
-					Sbuffer.Append(_T(" FS"));
-				} else
-				//Morph - modified by AndCycle, take PayBackFirst have same class with PowerShare
-				if (file && client->GetClassID()==1){
-					if (client->IsMoreUpThanDown(file))
-					{
-						// ==> Pay Back First for insecure clients - Stulle
-						/*
-						Sbuffer.Append(_T(",PBF"));
-						*/
-						if (client->IsSecure())
-							Sbuffer.Append(_T(",PBF"));
-						else
-							Sbuffer.Append(_T(",PBF II"));
-						// <== Pay Back First for insecure clients - Stulle
-						if (client->Credits() && client->Credits()->GetDownloadedTotal() > client->Credits()->GetUploadedTotal())
-							Sbuffer.AppendFormat( _T("(%s)"),
-							CastItoXBytes((float)client->Credits()->GetDownloadedTotal()-
-										(float)client->Credits()->GetUploadedTotal(),false,false));
-					}
-					//EastShare	Start - FairPlay by AndCycle
-					if (!file->IsPartFile() && file->statistic.GetFairPlay()) {
-						Sbuffer.Append(_T(",FairPlay"));
-					}
-					//EastShare	End   - FairPlay by AndCycle
-					if (file->GetPowerShared())
-						Sbuffer.Append(_T(",PS"));
-
-					CString tempFilePrio;
-					switch (file->GetUpPriority()) {
-						case PR_VERYLOW : {
-							tempFilePrio = GetResString(IDS_PRIOVERYLOW);
-							break; }
-						case PR_LOW : {
-							if( file->IsAutoUpPriority() )
-								tempFilePrio = GetResString(IDS_PRIOAUTOLOW);
-							else
-								tempFilePrio = GetResString(IDS_PRIOLOW);
-							break; }
-						case PR_NORMAL : {
-							if( file->IsAutoUpPriority() )
-								tempFilePrio = GetResString(IDS_PRIOAUTONORMAL);
-							else
-								tempFilePrio = GetResString(IDS_PRIONORMAL);
-							break; }
-						case PR_HIGH : {
-							if( file->IsAutoUpPriority() )
-								tempFilePrio = GetResString(IDS_PRIOAUTOHIGH);
-							else
-								tempFilePrio = GetResString(IDS_PRIOHIGH);
-							break; }
-						case PR_VERYHIGH : {
-							tempFilePrio = GetResString(IDS_PRIORELEASE);
-							break; }
-						default:
-							tempFilePrio.Empty();
-					}
-					Sbuffer.Append(_T(",") + tempFilePrio);
-				}
-				_tcsncpy(pszText, Sbuffer, cchTextMax);
-				break;
-			}
-			//MORPH END   - Added by SiRoB, Upload Bandwidth Splited by class
-
-			//MORPH START - Added by SiRoB, Show Compression by Tarod
-			case 12:
-				if (client->GetCompression() < 0.1f)
-					_tcsncpy(pszText, _T("-"), cchTextMax);
-				else
-					_sntprintf(pszText, cchTextMax, _T("%.1f%%"), client->GetCompression());
-				break;
-			//MORPH END - Added by SiRoB, Show Compression by Tarod
-
-			// Mighty Knife: Community affiliation
-			case 13:
-				_tcsncpy(pszText, client->IsCommunity() ? GetResString(IDS_YES) : _T(""), cchTextMax);
-				break;
-			// [end] Mighty Knife
-
-			// EastShare - Added by Pretender, Friend Tab
-			case 14:
-				_tcsncpy(pszText, client->IsFriend() ? GetResString(IDS_YES) : _T(""), cchTextMax);
-				break;
-			// EastShare - Added by Pretender, Friend Tab
-
-			case 15:
-				_tcsncpy(pszText, client->GetCountryName(), cchTextMax);
-				break;
-
-			case 16:
-				_tcsncpy(pszText, _T("Chunk Details"), cchTextMax);
-				break;
+		//Xman end
+				
+		//Xman show complete up/down in uploadlist
+		case 9:
+			if(client->Credits())
+				_sntprintf(pszText, cchTextMax, _T("%s/ %s"), CastItoXBytes(client->credits->GetUploadedTotal()), CastItoXBytes(client->credits->GetDownloadedTotal()));
+			break;
+		//Xman end
 	}
 	pszText[cchTextMax - 1] = _T('\0');
 }
@@ -798,18 +766,7 @@ void CUploadListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 		{
 			CString strInfo;
 			strInfo.Format(GetResString(IDS_USERINFO), client->GetUserName());
-
-			//MORPH START - Adde by SiRoB, Optimization requpfile
-			/*
 			const CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-			*/
-			const CKnownFile* file = client->CheckAndGetReqUpFile();
-			//MORPH END   - Adde by SiRoB, Optimization requpfile
-			// build info text and display it
-			//MORPH START - Extra User Infos
-			strInfo += GetResString(IDS_CD_CSOFT) + _T(": ") + client->GetClientSoftVer() + _T("\n");
-			strInfo += GetResString(IDS_COUNTRY) + _T(": ") + client->GetCountryName(true) + _T("\n");
-			//MORPH END   - Extra User Infos
 			if (file)
 			{
 				strInfo += GetResString(IDS_SF_REQUESTED) + _T(' ') + file->GetFileName() + _T('\n');
@@ -877,14 +834,8 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 			break;
 
 		case 1: {
-			//MORPH START - Adde by SiRoB, Optimization requpfile
-			/*
 			const CKnownFile *file1 = theApp.sharedfiles->GetFileByID(item1->GetUploadFileID());
 			const CKnownFile *file2 = theApp.sharedfiles->GetFileByID(item2->GetUploadFileID());
-			*/
-			const CKnownFile *file1 = item1->CheckAndGetReqUpFile();
-			const CKnownFile *file2 = item2->CheckAndGetReqUpFile();
-			//MORPH END   - Adde by SiRoB, Optimization requpfile
 			if (file1 != NULL && file2 != NULL)
 				iResult = CompareLocaleStringNoCase(file1->GetFileName(), file2->GetFileName());
 			else if (file1 == NULL)
@@ -894,20 +845,25 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 			break;
 		}
 
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		/*
 		case 2:
 			iResult = CompareUnsigned(item1->GetDatarate(), item2->GetDatarate());
 			break;
+		*/
+		case 2: 
+			iResult = item1->GetUploadDatarate() - item2->GetUploadDatarate();
+			break;
+		// Maella end
 
-		//Morph - modified by AndCycle, more uploading session info to show full chunk transfer
-		/*
 		case 3:
 			iResult = CompareUnsigned(item1->GetSessionUp(), item2->GetSessionUp());
+			//Xman don't show too many values
+			/*
 			if (iResult == 0 && thePrefs.m_bExtControls)
 				iResult = CompareUnsigned(item1->GetQueueSessionPayloadUp(), item2->GetQueueSessionPayloadUp());
-		*/
-		case 3: 
-			iResult=CompareUnsigned(item1->GetQueueSessionUp(), item2->GetQueueSessionUp());
-		//Morph - modified by AndCycle, more uploading session info to show full chunk transfer
+			*/
+			//Xman end
 			break;
 
 		case 4:
@@ -925,66 +881,32 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		case 7:
 			iResult = CompareUnsigned(item1->GetUpPartCount(), item2->GetUpPartCount());
 			break;
-		//MORPH START - Modified by SiRoB, Client Software	
+
+		//Xman version see clientversion in every window
 		case 8:
-			/*
-			iResult=item2->GetClientSoftVer().CompareNoCase(item1->GetClientSoftVer());
-			*/
-			if (item1->GetClientSoft() == item2->GetClientSoft())
-				if (item2->GetVersion() == item1->GetVersion() && item1->GetClientSoft() == SO_EMULE){
-					iResult= CompareOptLocaleStringNoCase(item2->GetClientSoftVer(), item1->GetClientSoftVer());
+			// Maella -Support for tag ET_MOD_VERSION 0x55-
+			if(item1->GetClientSoft() == item2->GetClientSoft())
+				if(item1->GetVersion() == item2->GetVersion() && item1->GetClientSoft() == SO_EMULE){
+					iResult = item2->DbgGetFullClientSoftVer().CompareNoCase( item1->DbgGetFullClientSoftVer());
 				}
 				else {
-					iResult= item1->GetVersion() - item2->GetVersion();
+					iResult = item1->GetVersion() - item2->GetVersion();
 				}
 			else
-				iResult=-(item1->GetClientSoft() - item2->GetClientSoft());
+				iResult = -(item1->GetClientSoft() - item2->GetClientSoft()); // invert result to place eMule's at top
 			break;
-		//MORPH END - Modified by SiRoB, Client Software
+		//Xman end
 
-		//MORPH START - Added By Yun.SF3, Upload/Download
-		case 9: // UP-DL TOTAL
-			iResult=CompareUnsigned64(item2->Credits()->GetUploadedTotal(), item1->Credits()->GetUploadedTotal());
-			break;
-		//MORPH END - Added By Yun.SF3, Upload/Download
-
-		//MORPH START - Added by SiRoB, ZZ Upload System
-		case 11:
-			iResult=CompareUnsigned(item1->GetSlotNumber(), item2->GetSlotNumber());
-			break;
-		//MORPH END - Added by SiRoB, ZZ Upload System 20030724-0336
-
-		//MORPH START - Added by SiRoB, Show Compression by Tarod
-		case 12:
-			if (item1->GetCompression() == item2->GetCompression())
+		//Xman show complete up/down in uploadlist
+		case 9:
+			if(item1->Credits() && item2->Credits())
+			{
+				iResult=CompareUnsigned64(item1->credits->GetUploadedTotal(), item2->credits->GetUploadedTotal());
+			}
+			else
 				iResult=0;
-			else
-				iResult=item1->GetCompression() > item2->GetCompression()?1:-1;
 			break;
-		//MORPH END - Added by SiRoB, Show Compression by Tarod
-		
-		// Mighty Knife: Community affiliation
-		case 13:
-			iResult=item1->IsCommunity() - item2->IsCommunity();
-			break;
-		// [end] Mighty Knife
-
-		// EastShare - Added by Pretender, Friend Tab
-		case 14:
-			iResult=item1->IsFriend() - item2->IsFriend();
-			break;
-		// EastShare - Added by Pretender, Friend Tab
-
-		// Commander - Added: IP2Country column - Start
-	        case 15:
-			if(item1->GetCountryName(true) && item2->GetCountryName(true))
-				iResult=CompareLocaleStringNoCase(item1->GetCountryName(true), item2->GetCountryName(true));
-			else if(item1->GetCountryName(true))
-				iResult=1;
-			else
-				iResult=-1;
-			break;
-		// Commander - Added: IP2Country column - End
+		//Xman end
 	}
 
 	if (lParamSort >= 100)
@@ -997,7 +919,7 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	if (iResult == 0 && (dwNextSort = theApp.emuledlg->transferwnd->uploadlistctrl.GetNextSortOrder(lParamSort)) != -1)
 		iResult = SortProc(lParam1, lParam2, dwNextSort);
 	*/
-	// SLUGFILLER: multiSort remove - handled in parent class
+	//Xman end
 
 	return iResult;
 }
@@ -1025,31 +947,28 @@ void CUploadListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	ClientMenu.AddMenuTitle(GetResString(IDS_CLIENTS), true);
 	ClientMenu.AppendMenu(MF_STRING | (client ? MF_ENABLED : MF_GRAYED), MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
 	ClientMenu.SetDefaultItem(MP_DETAIL);
-	if(!thePrefs.IsLessControls()){ //MORPH show less controls
+	//Xman friendhandling
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	//Xman end
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && !client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_ADDFRIEND, GetResString(IDS_ADDFRIEND), _T("ADDFRIEND"));
-	//MORPH START - Added by SiRoB, Friend Addon
-	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
-	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->IsFriend()) ? MF_ENABLED  | ((!client->HasLowID() && client->IsFriend() && client->GetFriendSlot())?MF_CHECKED : MF_UNCHECKED) : MF_GRAYED), MP_FRIENDSLOT, GetResString(IDS_FRIENDSLOT), _T("FRIENDSLOT"));
-	//MORPH END - Added by SiRoB, Friend Addon
+	//Xman friendhandling
+	ClientMenu.AppendMenu(MF_STRING | (client && client->IsFriend() ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
+	ClientMenu.AppendMenu(MF_STRING | (client && client->IsFriend() ? MF_ENABLED : MF_GRAYED), MP_FRIENDSLOT, GetResString(IDS_FRIENDSLOT), _T("FRIENDSLOT"));
+	ClientMenu.CheckMenuItem(MP_FRIENDSLOT, (client && client->GetFriendSlot()) ? MF_CHECKED : MF_UNCHECKED);
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	//Xman end
+
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient()) ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
 	if (Kademlia::CKademlia::IsRunning() && !Kademlia::CKademlia::IsConnected())
 		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetKadPort()!=0) ? MF_ENABLED : MF_GRAYED), MP_BOOT, GetResString(IDS_BOOTSTRAP));
 	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
-	
-	//MORPH START - Added by Yun.SF3, List Requested Files
-	ClientMenu.AppendMenu(MF_SEPARATOR); // Added by sivka
-	ClientMenu.AppendMenu(MF_STRING | (client ? MF_ENABLED : MF_GRAYED),MP_LIST_REQUESTED_FILES, GetResString(IDS_LISTREQUESTED), _T("FILEREQUESTED")); // Added by sivka
-	//MORPH END - Added by Yun.SF3, List Requested Files
-	//MORPH START show less controls
-	}
-	else
-	{
-		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient()) ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
-		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
-		ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
-	}
-	//MORPH END show less controls
+
+	// - show requested files (sivka/Xman)
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED),MP_LIST_REQUESTED_FILES, GetResString(IDS_LISTREQUESTED), _T("FILEREQUESTED")); 
+	//Xman end
+
 	GetPopupMenuPos(*this, point);
 	ClientMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 	VERIFY( ClientMenu.DestroyMenu() ); // XP Style Menu [Xanatos] - Stulle
@@ -1080,6 +999,26 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				if (theApp.friendlist->AddFriend(client))
 					Update(iSel);
 				break;
+			//Xman friendhandling
+			case MP_REMOVEFRIEND:
+				if (client && client->IsFriend())
+				{
+					theApp.friendlist->RemoveFriend(client->m_Friend);
+					Update(iSel);
+				}
+				break;
+			case MP_FRIENDSLOT: 
+				if (client)
+				{
+					bool IsAlready;				
+					IsAlready = client->GetFriendSlot();
+					theApp.friendlist->RemoveAllFriendSlots();
+					if( !IsAlready )
+						client->SetFriendSlot(true);
+					Update(iSel);
+				}
+				break;
+			//Xman end
 			case MP_DETAIL:
 			case MPG_ALTENTER:
 			case IDA_ENTER:
@@ -1092,43 +1031,16 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				if (client->GetKadPort())
 					Kademlia::CKademlia::Bootstrap(ntohl(client->GetIP()), client->GetKadPort(), (client->GetKadVersion() > 1));
 				break;
-			//MORPH START - Addded by SiRoB, Friend Addon
-			case MP_REMOVEFRIEND:{//LSD
-				if (client && client->IsFriend())
-				{
-					theApp.friendlist->RemoveFriend(client->m_Friend);
-					RefreshClient(client);
-				}
-				break;
-			}
-			case MP_FRIENDSLOT:{
-				//MORPH START - Modified by SIRoB, Added by Yun.SF3, ZZ Upload System
-				if (client){
-					bool IsAlready;
-					IsAlready = client->GetFriendSlot();
-					//theApp.friendlist->RemoveAllFriendSlots();
-					if( IsAlready ) {
-						client->SetFriendSlot(false);
-					} else {
-						client->SetFriendSlot(true);
-					}
-					theApp.friendlist->ShowFriends();
-					RefreshClient(client);
-				}
-				//MORPH END - Modified by SIRoB, Added by Yun.SF3, ZZ Upload System
-				break;
-			}
-			//Xman end
-			//MORPH END   - Added by SiRoB, Friend Addon
-			//MORPH START - Added by Yun.SF3, List Requested Files
-			case MP_LIST_REQUESTED_FILES: { // added by sivka
+
+			// - show requested files (sivka/Xman)
+			case MP_LIST_REQUESTED_FILES: { 
 				if (client != NULL)
 				{
-					client->ShowRequestedFiles(); //Changed by SiRoB
+					client->ShowRequestedFiles(); 
 				}
 				break;
-			}
-			//MORPH END - Added by Yun.SF3, List Requested Files
+										  }
+		  //Xman end
 		}
 	}
 	return true;
@@ -1136,7 +1048,10 @@ BOOL CUploadListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 
 void CUploadListCtrl::AddClient(const CUpDownClient *client)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	if (!theApp.emuledlg->IsRunning())
 		return;
@@ -1164,7 +1079,10 @@ void CUploadListCtrl::RemoveClient(const CUpDownClient *client)
 
 void CUploadListCtrl::RefreshClient(const CUpDownClient *client)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	if (!theApp.emuledlg->IsRunning())
 		return;
@@ -1172,17 +1090,12 @@ void CUploadListCtrl::RefreshClient(const CUpDownClient *client)
 	if (theApp.emuledlg->activewnd != theApp.emuledlg->transferwnd || !theApp.emuledlg->transferwnd->uploadlistctrl.IsWindowVisible())
 		return;
 
-	//MORPH START- UpdateItemThread
-	/*
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)client;
 	int result = FindItem(&find);
 	if (result != -1)
 		Update(result);
-	*/
-	m_updatethread->AddItemToUpdate((LPARAM)client);
-	//MORPH END- UpdateItemThread
 }
 
 void CUploadListCtrl::ShowSelectedUserDetails()

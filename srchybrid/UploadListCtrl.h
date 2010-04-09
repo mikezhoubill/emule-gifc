@@ -40,10 +40,8 @@ public:
 
 protected:
 	CImageList m_ImageList;
-	// Mighty Knife: Community visualization
-	CImageList m_overlayimages;
-	// [end] Mighty Knife
 	CToolTipCtrlX *m_tooltip;
+	CImageList  m_overlayimages; // Mod Icons - Stulle
 
 	void SetAllIcons();
 	void GetItemDisplayText(const CUpDownClient *client, int iSubItem, LPTSTR pszText, int cchTextMax);

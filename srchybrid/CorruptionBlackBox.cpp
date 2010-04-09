@@ -95,7 +95,8 @@ void CCorruptionBlackBox::TransferredData(uint64 nStartPos, uint64 nEndPos, cons
 		ASSERT( false );
 		return;
 	}
-	//MORPH START - Import Parts
+
+	//MORPH START - Import Parts - added by zz_fly
 	/*
 	uint32 dwSenderIP = pSender->GetIP();
 	*/
@@ -103,6 +104,7 @@ void CCorruptionBlackBox::TransferredData(uint64 nStartPos, uint64 nEndPos, cons
 	if(pSender)
 		dwSenderIP = pSender->GetIP();
 	//MORPH END - Import Parts
+
 	// we store records seperated for each part, so we don't have to search all entries everytime
 	
 	// convert pos to relative block pos

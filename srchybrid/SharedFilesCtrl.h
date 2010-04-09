@@ -24,10 +24,6 @@
 // <== XP Style Menu [Xanatos] - Stulle
 #include "ListCtrlItemWalk.h"
 
-// Mighty Knife: CRC32-Tag
-#include "FileProcessing.h"
-// [end] Mighty Knife
-
 class CSharedFileList;
 class CKnownFile;
 class CShareableFile;
@@ -67,7 +63,12 @@ public:
 	void	ReloadFileList();
 	void	AddFile(const CShareableFile* file);
 	void	RemoveFile(const CShareableFile* file, bool bDeletedFromDisk);
+	//Xman advanced upload-priority
+	/*
 	void	UpdateFile(const CShareableFile* file, bool bUpdateFileSummary = true);
+	*/
+	void	UpdateFile(const CShareableFile* file, bool bUpdateFileSummary = true, bool force=false);
+	//Xman end
 	void	Localize();
 	void	ShowFilesCount();
 	void	ShowComments(CShareableFile* file);
@@ -80,25 +81,20 @@ protected:
 	// ==> XP Style Menu [Xanatos] - Stulle
 	/*
 	CMenu			m_PrioMenu;
-	CMenu			m_PermMenu; //MORPH START - Added by SiRoB, Keep Permission flag
-	CMenu			m_PowershareMenu; //MORPH - Added by SiRoB, ZZ Upload System
-	CMenu			m_SpreadbarMenu; //MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	CMenu			m_HideOSMenu; //MORPH - Added by SiRoB, HIDEOS
-	CMenu			m_SelectiveChunkMenu; //MORPH - Added by SiRoB, HIDEOS
-	CMenu			m_ShareOnlyTheNeedMenu; //MORPH - Added by SiRoB, SHARE_ONLY_THE_NEED
-	CMenu			m_PowerShareLimitMenu; //MORPH - Added by SiRoB, POWERSHARE Limit
-	CMenu			m_CRC32Menu; //MORPH - Added by SiRoB, CRC32-Tag
 	*/
-	CTitleMenu	m_PrioMenu;
-	CTitleMenu	m_PermMenu; //MORPH START - Added by SiRoB, Keep Permission flag
-	CTitleMenu	m_PowershareMenu; //MORPH - Added by SiRoB, ZZ Upload System
-	CTitleMenu	m_SpreadbarMenu; //MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	CTitleMenu	m_HideOSMenu; //MORPH - Added by SiRoB, HIDEOS
-	CTitleMenu	m_SelectiveChunkMenu; //MORPH - Added by SiRoB, HIDEOS
-	CTitleMenu	m_ShareOnlyTheNeedMenu; //MORPH - Added by SiRoB, SHARE_ONLY_THE_NEED
-	CTitleMenu	m_PowerShareLimitMenu; //MORPH - Added by SiRoB, POWERSHARE Limit
-	CTitleMenu	m_CRC32Menu; //MORPH - Added by SiRoB, CRC32-Tag
-	CTitleMenu	m_PsAmountLimitMenu; // Limit PS by amount of data uploaded - Stulle
+	CTitleMenu		m_PrioMenu;
+	// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+	CTitleMenu		m_HideOSMenu;
+	CTitleMenu		m_SelectiveChunkMenu;
+	CTitleMenu		m_ShareOnlyTheNeedMenu;
+	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+	// ==> PowerShare [ZZ/MorphXT] - Stulle
+	CTitleMenu       m_PowershareMenu;
+	CTitleMenu		m_PowerShareLimitMenu;
+	// <== PowerShare [ZZ/MorphXT] - Stulle
+	// ==> Limit PS by amount of data uploaded [Stulle] - Stulle
+	CTitleMenu		m_PsAmountLimitMenu;
+	// <== Limit PS by amount of data uploaded [Stulle] - Stulle
 	// <== XP Style Menu [Xanatos] - Stulle
 	bool			m_aSortBySecondValue[4];
 	CImageList		m_ImageList;
@@ -135,11 +131,4 @@ protected:
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg BOOL OnNMClick(NMHDR *pNMHDR, LRESULT *pResult);
 
-	// Mighty Knife: CRC32-Tag
-	CFileProcessingThread m_FileProcessingThread;
-	afx_msg LRESULT OnCRC32RenameFile (WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnCRC32UpdateFile (WPARAM wParam, LPARAM lParam);
-public:
-	void	EndFileProcessingThread(); //Fafner: vs2005 - 071206
-	// [end] Mighty Knife
 };

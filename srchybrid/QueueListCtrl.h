@@ -37,6 +37,8 @@ public:
 	void	Localize();
 	void	ShowSelectedUserDetails();
 	void	ShowQueueClients();
+	//Xman faster Updating of Queuelist
+	void	UpdateAll();
 
 protected:
 	CImageList m_ImageList;
@@ -57,8 +59,5 @@ protected:
 	afx_msg void OnNmDblClk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSysColorChange();
 
-private:
-	// Mighty Knife: Community visualization
-	CImageList m_overlayimages;
-	// [end] Mighty Knife
+	CImageList  m_overlayimages; // Mod Icons - Stulle
 };

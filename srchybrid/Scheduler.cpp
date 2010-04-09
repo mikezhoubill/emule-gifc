@@ -23,19 +23,14 @@
 #include "DownloadQueue.h"
 #include "emuledlg.h"
 #include "MenuCmds.h"
-
-// Mighty Knife: additional scheduling events
-#include "PPgBackup.h"
-#include "ipfilter.h"
-#include "fakecheck.h"
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
 #include "log.h"
-#include "SharedFileList.h"  // MORPH add reload shared files on schedule
-// [end] Mighty Knife
+// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -46,12 +41,7 @@ CScheduler::CScheduler(){
 }
 
 CScheduler::~CScheduler(){
-	// Mighty Knife: Saving of scheduler events is now done by SaveSettings!
-	// -> much cleaner. This should be changed for the constructor, too...
-	/*
 	SaveToFile();
-	*/
-	// [end] Mighty Knife
 	RemoveAll();
 }
 
@@ -188,13 +178,13 @@ int CScheduler::Check(bool forcecheck){
 		it1=h1*60 + m1;
 		it2=h2*60 + m2;
 
-		// Mighty Knife: handling of one-time-events.
+		// ==> handling of one-time-events [Mighty Knife] - Stulle
 		// if start-time=end-time, this is an event that should
 		// occur once in that minute. In that case we add 1 to it2 to make sure
 		// it happens (because of the timespan-comparison below, which happens
 		// once per minute, too...)
 		if (it2==it1) it2++;
-		// [end] Mighty Knife
+		// <== handling of one-time-events [Mighty Knife] - Stulle
 
 		itn=tNow.GetHour()*60 + tNow.GetMinute();
 		if (it1<=it2) { // normal timespan
@@ -216,13 +206,6 @@ void CScheduler::SaveOriginals() {
 	original_connections=thePrefs.GetMaxConnections();
 	original_cons5s=thePrefs.GetMaxConperFive();
 	original_sources=thePrefs.GetMaxSourcePerFileDefault();
-	
-	//EastShare START - Added by Pretender, add USS settings in scheduler tab
-	original_ussmaxping=thePrefs.GetDynUpPingToleranceMilliseconds();
-	original_ussgoup=thePrefs.GetDynUpGoingUpDivider();
-	original_ussgodown=thePrefs.GetDynUpGoingDownDivider();
-	original_ussminup=thePrefs.GetMinUpload();
-	//EastShare END - Added by Pretender, add USS settings in scheduler tab
 }
 
 void CScheduler::RestoreOriginals() {
@@ -231,13 +214,6 @@ void CScheduler::RestoreOriginals() {
 	thePrefs.SetMaxConnections(original_connections);
 	thePrefs.SetMaxConsPerFive(original_cons5s);
 	thePrefs.SetMaxSourcesPerFile(original_sources);
-
-	//EastShare START - Added by Pretender, add USS settings in scheduler tab
-	thePrefs.SetDynUpPingToleranceMilliseconds(original_ussmaxping);
-	thePrefs.SetDynUpGoingUpDivider(original_ussgoup);
-	thePrefs.SetDynUpGoingDownDivider(original_ussgodown);
-	thePrefs.SetMinUpload(original_ussminup);
-	//EastShare END - Added by Pretender, add USS settings in scheduler tab
 }
 
 void CScheduler::ActivateSchedule(int index,bool makedefault) {
@@ -249,6 +225,9 @@ void CScheduler::ActivateSchedule(int index,bool makedefault) {
 
 		switch (schedule->actions[ai]) {
 			case 1 :
+				//Xman
+				// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+				/*
 				thePrefs.SetMaxUpload(_tstoi(schedule->values[ai]));
 				if (makedefault)
 					original_upload=(uint16)_tstoi(schedule->values[ai]); 
@@ -257,6 +236,17 @@ void CScheduler::ActivateSchedule(int index,bool makedefault) {
 				thePrefs.SetMaxDownload(_tstoi(schedule->values[ai]));
 				if (makedefault)
 					original_download=(uint16)_tstoi(schedule->values[ai]);
+				*/
+				thePrefs.SetMaxUpload((float)_tstof(schedule->values[ai]));
+				thePrefs.CheckSlotSpeed(); //Xman Xtreme Upload
+				if (makedefault)
+					original_upload= original_upload=(float)_tstof(schedule->values[ai]); 
+				break;
+			case 2 :
+				thePrefs.SetMaxDownload((float)_tstof(schedule->values[ai]));
+				if (makedefault)
+					original_download=(float)_tstof(schedule->values[ai]);
+				//Xman end
 				break;
 			case 3 :
 				thePrefs.SetMaxSourcesPerFile(_tstoi(schedule->values[ai]));
@@ -279,69 +269,20 @@ void CScheduler::ActivateSchedule(int index,bool makedefault) {
 			case 7 :
 				theApp.downloadqueue->SetCatStatus(_tstoi(schedule->values[ai]),MP_RESUME);
 				break;
-
-			//EastShare START - Added by Pretender, add USS settings in scheduler tab
-			case 8 :
-				thePrefs.SetDynUpPingToleranceMilliseconds(_tstoi(schedule->values[ai]));
-				if (makedefault)
-					original_sources=_tstoi(schedule->values[ai]);
-				break;
-			case 9 :
-				thePrefs.SetDynUpGoingUpDivider(_tstoi(schedule->values[ai]));
-				if (makedefault)
-					original_sources=_tstoi(schedule->values[ai]);
-				break;
-			case 10 :
-				thePrefs.SetDynUpGoingDownDivider(_tstoi(schedule->values[ai]));
-				if (makedefault)
-					original_sources=_tstoi(schedule->values[ai]);
-				break;
-			case 11 :
-				thePrefs.SetMinUpload(_tstoi(schedule->values[ai]));
-				if (makedefault)
-					original_sources=_tstoi(schedule->values[ai]);
-				break;
-			//EastShare END - Added by Pretender, add USS settings in scheduler tab
-
-			// Mighty Knife: additional scheduling events
-			case ACTION_BACKUP : {
-					// Save everything before backup
-					AddLogLine (false,GetResString (IDS_SCHED_BACKUP_LOG));
-					theApp.emuledlg->SaveSettings (false);
-
-					// backup everything
-					theApp.ppgbackup->Backup(_T("*.ini"), false);
-					theApp.ppgbackup->Backup(_T("*.dat"), false);
-					theApp.ppgbackup->Backup(_T("*.met"), false);
-				} break;
+			// ==> Advanced Updates [MorphXT/Stulle] - Stulle
 			case ACTION_UPDIPCONF : {
 					AddLogLine (false,GetResString (IDS_SCHED_UPDATE_IPCONFIG_LOG));
-					//MORPH START - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-					/*
-					theApp.ipfilter->UpdateIPFilterURL();
-					*/
 					theApp.emuledlg->CheckIPFilter();
-					//MORPH END   - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
 				} break;
-			case ACTION_UPDFAKES : {
-					AddLogLine (false,GetResString (IDS_SCHED_UPDATE_FAKES_LOG));
-					theApp.FakeCheck->DownloadFakeList();
+			case ACTION_UPDANTILEECH : {
+					AddLogLine (false,GetResString (IDS_SCHED_UPDATE_ANTILEECH_LOG));
+					theApp.emuledlg->DoDLPVersioncheck();
 				} break;
-			case ACTION_RELOAD : { // leuk_he reload on schedule
-					AddLogLine (false,GetResString (IDS_SCHED_RELOAD));
-					theApp.sharedfiles->Reload();
-				} break;
-
-
-			// [end] Mighty Knife
-
+			// <== Advanced Updates [MorphXT/Stulle] - Stulle
 		}
 	}
-}
-
-
-// MORPH START leuk_he automatic weekly ipfilter/fakefilter update. 
-bool CScheduler::HasWeekly(int par_action) // MORPH 
+}// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+bool CScheduler::HasWeekly(int par_action)
 {
 	if (theApp.scheduler->GetCount()==0) return false; 
 	Schedule_Struct* curschedule;
@@ -349,7 +290,7 @@ bool CScheduler::HasWeekly(int par_action) // MORPH
 	for (uint8 si=0;si< theApp.scheduler->GetCount();si++) {
 		curschedule=  GetSchedule(si);
 		if (curschedule->actions[0]==0 || !curschedule->enabled) continue;
-		if (curschedule->day!=DAY_DAYLY) { // nt daily, so must be weekly ( or montly, good also) 
+		if (curschedule->day!=DAY_DAYLY) { // not daily, so must be weekly ( or montly, good also) 
 			for (int ai=0;ai<16;ai++) {
 				if (curschedule->actions[ai]==par_action) 
 					return true;
@@ -361,18 +302,18 @@ bool CScheduler::HasWeekly(int par_action) // MORPH
 }
 
 
-void    CScheduler::SetWeekly(int action,bool activate) // MORPH leuk_he : automatic weekly ipfilter/fakefilter update. 
+void CScheduler::SetWeekly(int action,bool activate)
 {
 	bool Currentactivated = HasWeekly(action);
     if (  Currentactivated == activate) 
 		 return; // nothing to do. 
 
-	if ( ( Currentactivated == false )&& (activate == true)) { // must we isnert a new? 
+	if ( ( Currentactivated == false )&& (activate == true)) { // must we insert a new? 
      	Schedule_Struct* newschedule=new Schedule_Struct();
 		struct tm tmTemp;
 	    CTime tNow = CTime(safe_mktime(CTime::GetCurrentTime().GetLocalTm(&tmTemp)));
 	
-	    newschedule->day=tNow.GetDayOfWeek();  // 
+	    newschedule->day=tNow.GetDayOfWeek();
 	    newschedule->enabled=true;
 	    newschedule->time=time(NULL);
 	    newschedule->time2=time(NULL);
@@ -385,22 +326,21 @@ void    CScheduler::SetWeekly(int action,bool activate) // MORPH leuk_he : autom
 	}
 	if ((Currentactivated == true )&& (activate == false)) { // we must delete
 
-	Schedule_Struct* curschedule;
-	for (uint8 si=0;si< GetCount();si++) {
-		curschedule=  GetSchedule(si);
-		if (curschedule->actions[0]==0 || !curschedule->enabled) continue;
-		if (curschedule->day!=DAY_DAYLY) { // nt daily, so must be weekly ( or montly, good also) 
-			for (int ai=0;ai<16;ai++) {
-				if (curschedule->actions[ai]==action) {
-					RemoveSchedule(si);
-				    return ;
+		Schedule_Struct* curschedule;
+		for (uint8 si=0;si< GetCount();si++) {
+			curschedule=  GetSchedule(si);
+			if (curschedule->actions[0]==0 || !curschedule->enabled) continue;
+			if (curschedule->day!=DAY_DAYLY) { // not daily, so must be weekly ( or montly, good also) 
+				for (int ai=0;ai<16;ai++) {
+					if (curschedule->actions[ai]==action) {
+						RemoveSchedule(si);
+						return ;
+					}
 				}
 			}
 		}
-	}
-	// not found? then schedule does not exist. ASSERT()?;
-    return ;
+		// not found? then schedule does not exist. ASSERT()?;
+		return ;
 	}
 };
-
-// MORPH END leuk_he automatic weekly ipfilter/fakefilter update. 
+// <== Advanced Updates [MorphXT/Stulle] - Stulle

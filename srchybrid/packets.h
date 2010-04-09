@@ -30,7 +30,6 @@ public:
 	Packet(const CStringA& str, uint8 ucProtocol, uint8 ucOpcode);
 	Packet(uint8 in_opcode, uint32 in_size, uint8 protocol = OP_EDONKEYPROT, bool bFromPartFile = true);
 	Packet(char* pPacketPart,uint32 nSize,bool bLast,bool bFromPartFile = true); // only used for splitted packets!
-	Packet(Packet* tocopy);//bugfix by Xanatos [cyrex2001]
 	virtual ~Packet();
 
 	virtual char* GetHeader();
@@ -113,11 +112,11 @@ public:
 	
 	UINT	GetInt() const			{ ASSERT(IsInt());		return (UINT)m_uVal; }
 	uint64	GetInt64() const		{ ASSERT(IsInt64(true));return m_uVal; }
-	const CString& GetStr() const	{ ASSERT(IsStr());		return *m_pstrVal; }
-	float GetFloat() const			{ ASSERT(IsFloat());	return m_fVal; }
-	const BYTE* GetHash() const		{ ASSERT(IsHash());		return m_pData; }
-	uint32 GetBlobSize() const		{ ASSERT(IsBlob());		return m_nBlobSize; }
-	const BYTE* GetBlob() const		{ ASSERT(IsBlob());		return m_pData; }
+	const	CString& GetStr() const	{ ASSERT(IsStr());		return *m_pstrVal; }
+	float	GetFloat() const		{ ASSERT(IsFloat());	return m_fVal; }
+	const	BYTE* GetHash() const	{ ASSERT(IsHash());		return m_pData; }
+	uint32	GetBlobSize() const		{ ASSERT(IsBlob());		return m_nBlobSize; }
+	const	BYTE* GetBlob() const	{ ASSERT(IsBlob());		return m_pData; }
 
 	void SetInt(UINT uVal);
 	void SetInt64(uint64 uVal);
@@ -158,5 +157,3 @@ __inline int CmpED2KTagName(LPCSTR pszTagName1, LPCSTR pszTagName2){
 	return __ascii_stricmp(pszTagName1, pszTagName2);
 }
 void ConvertED2KTag(CTag*& pTag);
-
-bool WriteOptED2KUTF8Tag(CFileDataIO* data, LPCWSTR pwsz, uint8 uTagName);

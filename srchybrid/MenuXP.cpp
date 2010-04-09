@@ -23,7 +23,7 @@ const int CYBUTTONMARGIN = 2;	// ditto for height
 // DrawText flags
 const int DT_MYSTANDARD = DT_SINGLELINE|DT_LEFT|DT_VCENTER;
 
-// MenuXP Sub Heading [fafner] - fafner
+// MenuXP Sub Heading [fafner] - MyTh
 #define SUB_HEAD_MULTI 0.95
 
 //////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ CMenuXP::CMenuXP()
 	m_clrSelectedText = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
 	m_clrText = ::GetSysColor(COLOR_MENUTEXT);
 	m_clrDisabledText = ::GetSysColor(COLOR_GRAYTEXT);
-	m_clrHeadingText = ::GetSysColor(COLOR_MENUTEXT); // MenuXP Sub Heading [fafner] - fafner
+	m_clrHeadingText = ::GetSysColor(COLOR_MENUTEXT); // MenuXP Sub Heading [fafner] - MyTh
 	m_clrIconArea = m_clrBackGround;
 
 	//initialize sidebar colors
@@ -104,13 +104,13 @@ void CMenuXP::MeasureItem( LPMEASUREITEMSTRUCT lpms )
 		CFont	fontBold;
 		LOGFONT	logFont;
 		m_fontMenu.GetLogFont(&logFont);
-		// ==> MenuXP Sub Heading [fafner] - fafner
+		// ==> MenuXP Sub Heading [fafner] - MyTh
 		if (pItem->m_bHeading) {
 			logFont.lfHeight = (LONG)(logFont.lfHeight * SUB_HEAD_MULTI);
 			logFont.lfWeight = FW_SEMIBOLD;
 		}
 		else
-		// <== MenuXP Sub Heading [fafner] - fafner
+		// <== MenuXP Sub Heading [fafner] - MyTh
 		logFont.lfWeight = FW_BOLD;
 		fontBold.CreateFontIndirect(&logFont);
 		
@@ -121,10 +121,11 @@ void CMenuXP::MeasureItem( LPMEASUREITEMSTRUCT lpms )
 
 		// the height of the item should be the maximun of the text and the button
 		lpms->itemHeight = max(rcText.Height(), pItem->m_nSize + (CYBUTTONMARGIN<<1));
-		// ==> MenuXP Sub Heading [fafner] - fafner
+
+		// ==> MenuXP Sub Heading [fafner] - MyTh
 		if (pItem->m_bHeading)
 			lpms->itemHeight = (LONG)(lpms->itemHeight * SUB_HEAD_MULTI);
-		// <== MenuXP Sub Heading [fafner] - fafner
+		// <== MenuXP Sub Heading [fafner] - MyTh
 
 		if (pItem->m_bButtonOnly)
 		{	//for button only style, we set the item's width to be the same as its height
@@ -213,7 +214,7 @@ void CMenuXP::DrawItem( LPDRAWITEMSTRUCT lpds )
 		BOOL bSelected = lpds->itemState & ODS_SELECTED;
 		BOOL bChecked  = lpds->itemState & ODS_CHECKED;
 
-		// ==> MenuXP Sub Heading [fafner] - fafner
+		// ==> MenuXP Sub Heading [fafner] - MyTh
 		if (pItem->m_bHeading)
 		{
 			HBITMAP	bmpBar = CreateGradientBMP(
@@ -233,10 +234,11 @@ void CMenuXP::DrawItem( LPDRAWITEMSTRUCT lpds )
 			}
 		}
 		else
-		// <== MenuXP Sub Heading [fafner] - fafner
+		// <== MenuXP Sub Heading [fafner] - MyTh
+
 		//draw the background first
 		DrawBackGround(&dc, rcItem, bSelected, bDisabled);
-
+		
 		//Draw the icon area for XP style
 		if (m_Style == STYLE_XP)
 		{
@@ -291,11 +293,11 @@ void CMenuXP::DrawItem( LPDRAWITEMSTRUCT lpds )
 			CRect rcText = rcItem;				 // start w/whole item
 			rcText.left += rcButton.Width() + CXGAP + CXTEXTMARGIN; // left margin
 			rcText.right -= pItem->m_nSize;				 // right margin
-			// ==> MenuXP Sub Heading [fafner] - fafner
+			// ==> MenuXP Sub Heading [fafner] - MyTh
 			if (pItem->m_bHeading)
 				DrawText(&dc, rcText, pItem->m_strText, true, false, 0, true);
 			else
-			// <== MenuXP Sub Heading [fafner] - fafner
+			// <== MenuXP Sub Heading [fafner] - MyTh			
 			DrawText(&dc, rcText, pItem->m_strText, bSelected, bDisabled, lpds->itemState&ODS_DEFAULT ? 1 : 0);
 		}
 
@@ -406,7 +408,7 @@ HICON CreateGrayscaleIcon(CDC *pDC, HICON hIcon)
 		// modify the colour table
 		for (int x = 0; x < nColours; x++)
 		{
-			BYTE nGray = (BYTE)(GRAY(pal[x].rgbRed, pal[x].rgbGreen, pal[x].rgbBlue)); //Fafner: C4333 - 0529
+			BYTE nGray = (BYTE)(GRAY(pal[x].rgbRed, pal[x].rgbGreen, pal[x].rgbBlue)); //Fafner: C4333 - 0529 - MyTh
 			pal[x].rgbRed = nGray;
 			pal[x].rgbGreen = nGray;
 			pal[x].rgbBlue = nGray;
@@ -654,11 +656,11 @@ void CMenuXP::DrawCheckMark(CDC *pDC, CRect rect, BOOL /*bSelected*/)
 }
 
 //Draw menu text
-void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BOOL bDisabled, BOOL bBold, bool bHeading) // MenuXP Sub Heading [fafner] - fafner
+void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BOOL bDisabled, BOOL bBold, bool bHeading) // MenuXP Sub Heading [fafner] - MyTh
 {
 	CFont*	pOldFont;
 	CFont	fontBold;
-	CFont	fontHead; // MenuXP Sub Heading [fafner] - fafner
+	CFont	fontHead; // MenuXP Sub Heading [fafner] - MyTh
 
 	if (bBold)
 	{
@@ -669,7 +671,7 @@ void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BO
 
 		pOldFont = pDC->SelectObject(&fontBold);
 	}
-	// ==> MenuXP Sub Heading [fafner] - fafner
+	// ==> MenuXP Sub Heading [fafner] - MyTh
 	else if (bHeading)
 	{
 		LOGFONT	logFont;
@@ -680,7 +682,7 @@ void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BO
 
 		pOldFont = pDC->SelectObject(&fontHead);
 	}
-	// <== MenuXP Sub Heading [fafner] - fafner
+	// <== MenuXP Sub Heading [fafner] - MyTh
 	else
 	{
 		pOldFont = pDC->SelectObject(&m_fontMenu);
@@ -697,11 +699,11 @@ void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BO
 	}
 	else
 	{
-		// ==> MenuXP Sub Heading [fafner] - fafner
+		// ==> MenuXP Sub Heading [fafner] - MyTh
 		if(bHeading)
 			DrawMenuText(*pDC, rect + CPoint(1, 1), strText, m_clrHeadingText);
 		else
-		// <== MenuXP Sub Heading [fafner] - fafner
+		// <== MenuXP Sub Heading [fafner] - MyTh
 			DrawMenuText(*pDC, rect, strText, bSelected? m_clrSelectedText : m_clrText);
 	}
 
@@ -709,10 +711,10 @@ void CMenuXP::DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BO
 
 	if (bBold)
 		fontBold.DeleteObject();
-	// ==> MenuXP Sub Heading [fafner] - fafner
+	// ==> MenuXP Sub Heading [fafner] - MyTh
 	if (bHeading)
 		fontHead.DeleteObject();
-	// <== MenuXP Sub Heading [fafner] - fafner
+	// <== MenuXP Sub Heading [fafner] - MyTh
 }
 
 //set menu font
@@ -1031,16 +1033,16 @@ void CMenuXP::AddMenuTitle(LPCTSTR lpszTitle, bool /*bIsIconMenu*/, bool bIsSide
 
 	if(bIsSidebar)
 		AddSideBar(new CMenuXPSideBar(17, theApp.m_strModLongVersion));
-	if(lpszTitle)
+        if(lpszTitle)
 		AppendHeading(lpszTitle);
 
 	SetBackBitmap(_T("MENUBACK"), _T("JPG"));
-	SetSideBarStartColor(RGB(149,190,223));
-	SetSideBarEndColor(RGB(230,230,230));
-	SetSelectedBarColor(RGB(120,180,225));
-	SetHeadingTextColor(RGB(0,0,0)); // MenuXP Sub Heading [fafner] - fafner
+	SetSideBarStartColor(RGB(255,194,189));
+	SetSideBarEndColor(RGB(237,237,237));
+	SetSelectedBarColor(RGB(252,231,211));
 	SetTextColor(RGB(0,0,0));
 	SetSelectedTextColor(RGB(0,0,0));
+	SetHeadingTextColor(RGB(0,0,0)); // MenuXP Sub Heading [fafner] - MyTh
 	// <== XP Style Menu [Xanatos] - Stulle
 }
 
@@ -1094,7 +1096,7 @@ void CMenuXP::ChangeMenuIcon(UINT_PTR nIDNewItem, LPCTSTR /*lpszNewItem*/, LPCTS
 	{
 		if (pData->m_hIcon)
 			::DestroyIcon(pData->m_hIcon);
-		pData->m_hIcon = (lpszIconName ? theApp.LoadIcon(lpszIconName, 16, 16) : NULL);
+		pData->m_hIcon = (/*lpszNewItem, */lpszIconName ? theApp.LoadIcon(lpszIconName, 16, 16) : NULL);
 	}
 }
 
@@ -1151,7 +1153,7 @@ BOOL CMenuXP::AppendSeparator(void)
 	return CMenu::AppendMenu(MF_OWNERDRAW | MF_SEPARATOR, 0, (LPCTSTR)pItem);
 }
 
-// ==> MenuXP Sub Heading [fafner] - fafner
+// ==> MenuXP Sub Heading [fafner] - MyTh
 BOOL CMenuXP::AppendHeading(LPCTSTR lpszTitle)	
 {
 	// Note: We need to add a break if we want to add this item on the top! [Stulle]
@@ -1166,7 +1168,7 @@ BOOL CMenuXP::AppendHeading(LPCTSTR lpszTitle)
 
 	return CMenu::AppendMenu(nFlags, 0, (LPCTSTR)pItem);
 }
-// <== MenuXP Sub Heading [fafner] - fafner
+// <== MenuXP Sub Heading [fafner] - MyTh
 
 //add a popup menu
 /*void CMenuXP::AppendODPopup(UINT &nFlags, CMenuXPItem* pItem)

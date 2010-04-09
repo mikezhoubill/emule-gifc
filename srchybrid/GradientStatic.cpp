@@ -36,6 +36,10 @@ CGradientStatic::~CGradientStatic()
 		m_Mem.bmp.DeleteObject();
 	if(m_Mem.dc.GetSafeHdc())
 		m_Mem.dc.DeleteDC();
+	//Xman Code Improvement
+	if(m_cfFont.GetSafeHandle())
+		m_cfFont.DeleteObject();
+	//Xman end
 }
 
 
@@ -216,6 +220,9 @@ void CGradientStatic::DrawVerticalText(CRect *pRect)
 	DrawRotatedText(m_Mem.dc.m_hDC, strText, rText, 90);
 	
 	m_Mem.dc.SelectObject(pOldFont);
+
+	//Xman Code Imrovement
+	Font.DeleteObject();
 }	
 
 void CGradientStatic::SetFont(CFont *pFont)

@@ -23,19 +23,10 @@
 #define ACTION_CONS			5
 #define ACTION_CATSTOP		6
 #define ACTION_CATRESUME	7
-//EastShare START - Added by Pretender, add USS settings in scheduler tab
-#define ACTION_USSMAXPING	8
-#define ACTION_USSGOUP		9
-#define ACTION_USSGODOWN	10
-#define ACTION_USSMINUP		11
-//EastShare END - Added by Pretender, add USS settings in scheduler tab
-
-// Mighty Knife: additional scheduling events
-#define ACTION_BACKUP  	    12
-#define ACTION_UPDIPCONF    13
-#define ACTION_UPDFAKES	    14
-#define ACTION_RELOAD	    15
-// [end] Mighty Knife
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+#define ACTION_UPDIPCONF    8
+#define ACTION_UPDANTILEECH 9
+// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 #define DAY_DAYLY		0
 #define DAY_MO			1
@@ -53,8 +44,14 @@ struct Schedule_Struct{
    CString			title;
    bool				enabled;
    UINT				day;
-   time_t			time; //vs2005
-   time_t			time2; //vs2005
+   // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+   /*
+   uint32			time;
+   uint32			time2;
+   */
+   time_t			time;
+   time_t			time2;
+   // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
    CString			values[16];
    int				actions[16];
    void ResetActions()	{for (uint8 index=0;index<16;index++) {actions[index]=0;values[index]=_T("");}}
@@ -79,22 +76,27 @@ public:
 	void	SaveOriginals();
 	void	RestoreOriginals();
 	void	ActivateSchedule(int index,bool makedefault=false);
-	bool	HasWeekly(int action); // MORPH leuk_he : automatic weekly ipfilter/fakefilter update. 
-	void 	SetWeekly(int action,bool activate); // MORPH leuk_he : automatic weekly ipfilter/fakefilter update. 
 	
-	UINT	original_upload; //MORPH uint16 is not enough
-	UINT    original_download; //MORPH uint16 is not enough
+	//Xman
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	/*
+	uint16	original_upload;
+	uint16	original_download;
+	*/
+	float	original_upload;
+	float	original_download;
+	//Xman end
 	UINT	original_connections;
 	UINT	original_cons5s;
 	UINT	original_sources;
-	//EastShare START - Added by Pretender, add USS settings in scheduler tab
-	int	original_ussmaxping;
-	int	original_ussgoup;
-	int	original_ussgodown;
-	UINT original_ussminup; //MORPH uint16 is not enough
-	//EastShare END - Added by Pretender, add USS settings in scheduler tab
 
 private:
 	CArray<Schedule_Struct*,Schedule_Struct*> schedulelist;
 	int		m_iLastCheckedMinute;
+
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+public:
+	bool	HasWeekly(int action);
+	void 	SetWeekly(int action,bool activate);
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
 };

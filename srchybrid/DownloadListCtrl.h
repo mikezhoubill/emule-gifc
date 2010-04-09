@@ -24,6 +24,7 @@
 // <== XP Style Menu [Xanatos] - Stulle
 #include <map>
 #include "ListCtrlItemWalk.h"
+#include "SettingsSaver.h" // File Settings [sivka/Stulle] - Stulle
 
 #define COLLAPSE_ONLY	0
 #define EXPAND_ONLY		1
@@ -46,7 +47,14 @@ class CtrlItem_Struct : public CObject
 	DECLARE_DYNAMIC(CtrlItem_Struct)
 
 public:
+
+#ifdef PRINT_STATISTIC
+	static uint32	amount;
+	CtrlItem_Struct()	{amount++;}
+	~CtrlItem_Struct() { status.DeleteObject(); amount--;}
+#else
 	~CtrlItem_Struct() { status.DeleteObject(); }
+#endif
 
 	ItemType         type;
 	CPartFile*       owner;
@@ -54,8 +62,6 @@ public:
 	CtrlItem_Struct* parent;
 	DWORD            dwUpdated;
 	CBitmap          status;
-	DWORD            dwUpdatedchunk; //MORPH
-	CBitmap          statuschunk;	//MORPH - Downloading Chunk Detail Display
 };
 
 
@@ -85,7 +91,6 @@ class CDownloadListCtrl : public CMuleListCtrl, public CDownloadListListCtrlItem
 {
 	DECLARE_DYNAMIC(CDownloadListCtrl)
 	friend class CDownloadListListCtrlItemWalk;
-	friend class CDownloadClientsCtrl; //SLAHAM: ADDED DownloadClientsCtrl
 
 public:
 	CDownloadListCtrl();
@@ -119,35 +124,39 @@ public:
 	void	UpdateCurrentCategoryView(CPartFile* thisfile);
 	CImageList *CreateDragImage(int iItem, LPPOINT lpPoint);
 
+	//Xman Xtreme Downloadmanager
+	void    StopSingleClient (CUpDownClient* single);	
+
+#ifdef PRINT_STATISTIC
+	void	PrintStatistic();
+#endif
+
 protected:
 	CImageList  m_ImageList;
-	// Mighty Knife: Community visualization
-	CImageList m_overlayimages;
-	// [end] Mighty Knife
-
 	CTitleMenu	m_PrioMenu;
 	CTitleMenu	m_FileMenu;
-	//MORPH - Added icons
+	// ==> XP Style Menu [Xanatos] - Stulle
 	/*
 	CMenu		m_SourcesMenu;
+	CMenu		m_DropMenu;//Xman Xtreme Downloadmanager
 	*/
-	CTitleMenu	m_SourcesMenu;
-	//MORPH - ADDED icons
-	//MORPH - Removed by SiRoB, Remain time and size Columns have been splited
-	/*
+	CTitleMenu		m_SourcesMenu;
+	CTitleMenu		m_DropMenu;
+	// <== XP Style Menu [Xanatos] - Stulle
 	bool		m_bRemainSort;
-	*/
-
-	CTitleMenu		m_PermMenu;	// xMule_MOD: showSharePermissions
-	CTitleMenu		m_A4AFMenuFlag; //MORPH - Added by SiRoB, Advanced A4AF Flag derivated from Khaos
-
 	typedef std::pair<void*, CtrlItem_Struct*> ListItemsPair;
 	typedef std::multimap<void*, CtrlItem_Struct*> ListItems;
     ListItems	m_ListItems;
 	CFont		m_fontBold; // may contain a locally created bold font
 	CFont*		m_pFontBold;// points to the bold font which is to be used (may be the locally created or the default bold font)
-	CFont		m_fontSmaller;//MORPH - Draw Display Chunk Detail
-	CFont		m_fontBoldSmaller;//MORPH - Added by SiRoB, Draw Client Percentage
+	// ==> Design Settings [eWombat/Stulle] - Stulle
+	/*
+	//Xman narrow font at transferwindow
+	CFont		m_fontNarrowBold;
+	//Xman end
+	*/
+	// <== Design Settings [eWombat/Stulle] - Stulle
+	CImageList  m_overlayimages; // Mod Icons - Stulle
 	CToolTipCtrlX* m_tooltip;
 
 	void ShowFileDialog(UINT uInvokePage);
@@ -155,18 +164,17 @@ protected:
 	void SetAllIcons();
 	void DrawFileItem(CDC *dc, int nColumn, LPCRECT lpRect, UINT uDrawTextAlignment, CtrlItem_Struct *pCtrlItem);
 	void DrawSourceItem(CDC *dc, int nColumn, LPCRECT lpRect, UINT uDrawTextAlignment, CtrlItem_Struct *pCtrlItem);
+	//Xman see all sources
+	/*
 	int GetFilesCountInCurCat();
+	*/
+	//Xman end
 	void GetFileItemDisplayText(CPartFile *lpPartFile, int iSubItem, LPTSTR pszText, int cchTextMax);
 	void GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlItem, int iSubItem, LPTSTR pszText, int cchTextMax);
 
 	static int CALLBACK SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
     static int Compare(const CPartFile* file1, const CPartFile* file2, LPARAM lParamSort);
-	//MORPH START - Keep A4AF Infos
-	/*
     static int Compare(const CUpDownClient* client1, const CUpDownClient* client2, LPARAM lParamSort);
-	*/
-	static int Compare(const CUpDownClient* client1, const CUpDownClient* client2, LPARAM lParamSort, const CPartFile* file);
-	//MORPH END   - A4AF Infos
 
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
@@ -181,12 +189,7 @@ protected:
 	afx_msg void OnNmDblClk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSysColorChange();
 
-	// ==> drop sources - Stulle
-protected:
-	CTitleMenu m_DropMenu;
-	// <== drop sources - Stulle
-
-	CTitleMenu m_FollowTheMajorityMenu; // Set and save Follow the Majority per file - Stulle
+	CTitleMenu m_FollowTheMajorityMenu; // Follow The Majority [AndCycle/Stulle] - Stulle
 
 	// ==> show global HL - Stulle
 public:

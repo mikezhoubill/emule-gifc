@@ -181,8 +181,6 @@ bool CAICHHashTree::VerifyHashTree(CAICHHashAlgo* hashalg, bool bDeleteBadTrees)
 			delete m_pRightTree;
 			m_pRightTree = NULL;
 		}
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_HIGH,*/ false, _T("VerifyHashTree - No masterhash available"));
 		return false;
 	}
@@ -201,8 +199,6 @@ bool CAICHHashTree::VerifyHashTree(CAICHHashAlgo* hashalg, bool bDeleteBadTrees)
 				delete m_pRightTree;
 				m_pRightTree = NULL;
 			}
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(/*DLP_HIGH,*/ false, _T("VerifyHashSet failed - Hashtree incomplete"));
 			return false;
 		}
@@ -237,8 +233,6 @@ void CAICHHashTree::SetBlockHash(uint64 nSize, uint64 nStartPos, CAICHHashAlgo* 
 	CAICHHashTree* pToInsert = FindHash(nStartPos, nSize);
 	if (pToInsert == NULL){ // sanity
 		ASSERT ( false );
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Critical Error: Failed to Insert SHA-HashBlock, FindHash() failed!"));
 		return;
 	}
@@ -246,8 +240,6 @@ void CAICHHashTree::SetBlockHash(uint64 nSize, uint64 nStartPos, CAICHHashAlgo* 
 	//sanity
 	if (pToInsert->GetBaseSize() != EMBLOCKSIZE || pToInsert->m_nDataSize != nSize){
 		ASSERT ( false );
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Critical Error: Logical error on values in SetBlockHashFromData"));
 		return;
 	}
@@ -392,8 +384,6 @@ bool CAICHHashTree::SetHash(CFileDataIO* fileInput, uint32 wHashIdent, sint8 nLe
 			wHashIdent <<= 1;
 		}
 		if (i > 31){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(/*DLP_HIGH,*/ false, _T("CAICHHashTree::SetHash - found invalid HashIdent (0)"));
 			return false;
 		}
@@ -508,8 +498,6 @@ bool CAICHHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fil
 	}
 	if (!bDbgDontLoad){
 		if (!LoadHashSet()){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Created RecoveryData error: failed to load hashset (file: %s)"), m_pOwner->GetFileName() );
 			SetStatus(AICH_ERROR);
 			return false;
@@ -529,8 +517,6 @@ bool CAICHHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fil
 	if (m_pHashTree.CreatePartRecoveryData(nPartStartPos, nPartSize, fileDataOut, 0, bUse32BitIdentifier)){
 		if (nHashsToWrite*(HASHSIZE+(bUse32BitIdentifier? 4:2)) != fileDataOut->GetPosition() - nCheckFilePos){
 			ASSERT( false );
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Created RecoveryData has wrong length (file: %s)"), m_pOwner->GetFileName() );
 			bResult = false;
 			SetStatus(AICH_ERROR);
@@ -539,8 +525,6 @@ bool CAICHHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fil
 			bResult = true;
 	}
 	else{
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Failed to create RecoveryData for %s"), m_pOwner->GetFileName() );
 		bResult = false;
 		SetStatus(AICH_ERROR);
@@ -578,8 +562,6 @@ bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileData
 	uint16 nHashsAvailable = fileDataIn->ReadUInt16();
 	if (fileDataIn->GetLength()-fileDataIn->GetPosition() < nHashsToRead*(HASHSIZE+2) || (nHashsToRead != nHashsAvailable && nHashsAvailable != 0)){
 		// this check is redunant, CSafememfile would catch such an error too
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Failed to read RecoveryData for %s - Received datasize/amounts of hashs was invalid (1)"), m_pOwner->GetFileName() );
 		return false;
 	}
@@ -610,8 +592,6 @@ bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileData
 				|| wHashIdent > 0x400000
 				|| !m_pHashTree.SetHash(fileDataIn, wHashIdent,(-1), false))
 			{
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-				if(thePrefs.GetLogICHEvents()) //JP log ICH events
 				theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Failed to read RecoveryData for %s - Error when trying to read hash into tree (2)"), m_pOwner->GetFileName() );
 				VerifyHashTree(true); // remove invalid hashs which we have already written
 				return false;
@@ -630,8 +610,6 @@ bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileData
 		for (uint32 nPartPos = 0; nPartPos < nPartSize; nPartPos += EMBLOCKSIZE){
 			CAICHHashTree* phtToCheck = m_pHashTree.FindHash(nPartStartPos+nPartPos, min(EMBLOCKSIZE, nPartSize-nPartPos));
 			if (phtToCheck == NULL || !phtToCheck->m_bHashValid){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-				if(thePrefs.GetLogICHEvents()) //JP log ICH events
 				theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Failed to read RecoveryData for %s - Error while verifying presence of all lowest level hashs"), m_pOwner->GetFileName() );
 				return false;
 			}
@@ -640,8 +618,6 @@ bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileData
 		return true;
 	}
 	else{
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(/*DLP_VERYHIGH,*/ false, _T("Failed to read RecoveryData for %s - Verifying received hashtree failed"), m_pOwner->GetFileName() );
 		return false;
 	}
@@ -658,6 +634,7 @@ bool CAICHHashSet::SaveHashSet(){
 		ASSERT( false );
 		return false;
 	}
+
 	CSingleLock lockKnown2Met(&m_mutKnown2File, false);
 	if (!lockKnown2Met.Lock(5000)){
 		return false;
@@ -711,21 +688,15 @@ bool CAICHHashSet::SaveHashSet(){
 		if (!m_pHashTree.WriteLowestLevelHashs(&file, 0, true, true)){
 			// thats bad... really
 			file.SetLength(nExistingSize);
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(true, _T("Failed to save HashSet: WriteLowestLevelHashs() failed!"));
 			return false;
 		}
 		if (file.GetLength() != nExistingSize + (nHashCount+1)*HASHSIZE + 4){
 			// thats even worse
 			file.SetLength(nExistingSize);
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-			if(thePrefs.GetLogICHEvents()) //JP log ICH events
 			theApp.QueueDebugLogLine(true, _T("Failed to save HashSet: Calculated and real size of hashset differ!"));
 			return false;
 		}
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(false, _T("Successfully saved eMuleAC Hashset, %u Hashs + 1 Masterhash written"), nHashCount);
 	    file.Flush();
 	    file.Close();
@@ -761,7 +732,7 @@ bool CAICHHashSet::LoadHashSet(){
 	CFileException fexp;
 	if (!file.Open(fullpath,CFile::modeCreate|CFile::modeRead|CFile::modeNoTruncate|CFile::osSequentialScan|CFile::typeBinary|CFile::shareDenyNone, &fexp)){
 		if (fexp.m_cause != CFileException::fileNotFound){
-			CString strError(GetResString(IDS_FAILEDTOLOAD)+_T(" ") KNOWN2_MET_FILENAME _T(" ")+GetResString(IDS_FILE)); // Localized by FrankyFive
+			CString strError(_T("Failed to load ") KNOWN2_MET_FILENAME _T(" file"));
 			TCHAR szError[MAX_CFEXP_ERRORMSG];
 			if (fexp.GetErrorMessage(szError, ARRSIZE(szError))){
 				strError += _T(" - ");
@@ -789,28 +760,20 @@ bool CAICHHashSet::LoadHashSet(){
 					nExpectedCount += (uint32)((m_pHashTree.m_nDataSize % PARTSIZE)/EMBLOCKSIZE + (((m_pHashTree.m_nDataSize % PARTSIZE) % EMBLOCKSIZE != 0)? 1 : 0));
 				nHashCount = file.ReadUInt32();
 				if (nHashCount != nExpectedCount){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-					if(thePrefs.GetLogICHEvents()) //JP log ICH events
 					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Available Hashs and expected hashcount differ!"));
 					return false;
 				}
 				//uint32 dbgPos = file.GetPosition();
 				if (!m_pHashTree.LoadLowestLevelHashs(&file)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-					if(thePrefs.GetLogICHEvents()) //JP log ICH events
 					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: LoadLowestLevelHashs failed!"));
 					return false;
 				}
 				//uint32 dbgHashRead = (file.GetPosition()-dbgPos)/HASHSIZE;
 				if (!ReCalculateHash(false)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-					if(thePrefs.GetLogICHEvents()) //JP log ICH events
 					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Calculating loaded hashs failed!"));
 					return false;
 				}
 				if (CurrentHash != m_pHashTree.m_Hash){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-					if(thePrefs.GetLogICHEvents()) //JP log ICH events
 					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Calculated Masterhash differs from given Masterhash - hashset corrupt!"));
 					return false;
 				}
@@ -823,8 +786,6 @@ bool CAICHHashSet::LoadHashSet(){
 			// skip the rest of this hashset
 			file.Seek(nHashCount*HASHSIZE, CFile::current);
 		}
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: HashSet not found!"));
 	}
 	catch(CFileException* error){
@@ -958,8 +919,6 @@ void CAICHHashSet::ClientAICHRequestFailed(CUpDownClient* pClient){
 	if (data.m_pClient != pClient)
 		return;
 	if(theApp.downloadqueue->IsPartFile(data.m_pPartFile)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		theApp.QueueDebugLogLine(false, _T("AICH Request failed, Trying to ask another client (file %s, Part: %u,  Client%s)"), data.m_pPartFile->GetFileName(), data.m_nPart, pClient->DbgGetClientInfo());
 		data.m_pPartFile->RequestAICHRecovery(data.m_nPart);
 	}

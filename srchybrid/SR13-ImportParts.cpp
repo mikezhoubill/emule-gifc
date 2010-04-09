@@ -136,7 +136,11 @@ bool CAddFileThread::SR13_ImportParts(){
 			if (theApp.emuledlg->IsRunning()){
 				UINT uProgress = (UINT)(i * 100 / m_PartsToImport.GetSize());
 				VERIFY( PostMessage(theApp.emuledlg->GetSafeHwnd(), TM_FILEOPPROGRESS, uProgress, (LPARAM)m_partfile) );
+				//zz_fly :: increase sleep time to 150ms
+				/*
 				Sleep(100); // sleep very short to give write time to write (or else mem grows!)
+				*/
+				Sleep(150); // sleep very short to give write time to write (or else mem grows!)
 
 			}
 

@@ -19,7 +19,7 @@
 #include "emule.h"
 #include "barshader.h"
 #include "Preferences.h"
-#include "Log.h" //Fafner: corrupted barshaderinfo? - 080317
+#include "Log.h" // Corrupted barshaderinfo? [fafner] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -35,7 +35,14 @@ static char THIS_FILE[] = __FILE__;
 
 #define HALF(X) (((X) + 1) / 2)
 
+// Maella -Code Improvement (CPU load)- 
+/*
 CBarShader::CBarShader(uint32 height, uint32 width) {
+*/
+CBarShader::CBarShader(uint32 height, uint32 width) 
+: m_Spans(100)
+{
+//Xman end
 	m_iWidth = width;
 	m_iHeight = height;
 	m_uFileSize = (uint64)1;
@@ -130,14 +137,20 @@ void CBarShader::FillRange(uint64 start, uint64 end, COLORREF color) {
 		endpos = m_Spans.GetTailPosition();
 
 	ASSERT(endpos != NULL);
-	if (endpos == NULL) { //Fafner: corrupted barshaderinfo? - 080317
-		DebugLog(LOG_MORPH|LOG_ERROR, _T("FillRange: No endpos in barshaderinfo - %I64u, %I64u"), start, end);
+	// ==> Corrupted barshaderinfo? [fafner] - Stulle
+	if (endpos == NULL) {
+		AddDebugLogLine(false, _T("FillRange: No endpos in barshaderinfo - %I64u, %I64u"), start, end);
 		return;
 	}
+	// <== Corrupted barshaderinfo? [fafner] - Stulle
 
 	COLORREF endcolor = m_Spans.GetValueAt(endpos);
 	endpos = m_Spans.SetAt(end, endcolor);
 
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	for (POSITION pos = m_Spans.FindFirstKeyAfter(start+1); pos != NULL && pos != endpos; ) {
+	*/
 	//Fafner: fix vs2005 chunk detail - 080317
 	//Fafner: fix vs2005 freeze - 080317
 	//Fafner: note: FindFirstKeyAfter seems to work differently under vs2005 than under vs2003
@@ -146,10 +159,11 @@ void CBarShader::FillRange(uint64 start, uint64 end, COLORREF color) {
 	//Fafner: note: see also similar code in CStatisticFile::AddBlockTransferred
 	//Fafner: note: also look for the keywords 'spreadbarinfo', 'barshaderinfo'
 #if _MSC_VER < 1400
-	for (POSITION pos = m_Spans.FindFirstKeyAfter(start+1); pos != NULL && pos != endpos; ) {
+	for (POSITION pos = m_Spans.FindFirstKeyAfter(start+1); pos != endpos && pos != NULL; ) {
 #else
-	for (POSITION pos = m_Spans.FindFirstKeyAfter(start); pos != NULL && pos != endpos; ) {
+	for (POSITION pos = m_Spans.FindFirstKeyAfter(start); pos != endpos && pos != NULL; ) {
 #endif
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		POSITION pos1 = pos;
 		m_Spans.GetNext(pos);
 		m_Spans.RemoveAt(pos1);
@@ -229,7 +243,12 @@ void CBarShader::Draw(CDC* dc, int iLeft, int iTop, bool bFlat) {
 
 void CBarShader::FillRect(CDC *dc, LPRECT rectSpan, COLORREF color, bool bFlat) {
 	if(!color || bFlat)
+		//Xman Code Improvement: FillSolidRect
+		/*
 		dc->FillRect(rectSpan, &CBrush(color));
+		*/
+		dc->FillSolidRect(rectSpan, color);
+		//Xman end
 	else
 		FillRect(dc, rectSpan, GetRValue(color), GetGValue(color), GetBValue(color), false);
 }
@@ -238,7 +257,12 @@ void CBarShader::FillRect(CDC *dc, LPRECT rectSpan, float fRed, float fGreen,
 						  float fBlue, bool bFlat) {
 	if(bFlat) {
 		COLORREF color = RGB((int)(fRed + .5f), (int)(fGreen + .5f), (int)(fBlue + .5f));
+		//Xman Code Improvement: FillSolidRect
+		/*
 		dc->FillRect(rectSpan, &CBrush(color));
+		*/
+		dc->FillSolidRect(rectSpan, color);
+		//Xman end
 	} else {
 		if (m_Modifiers == NULL || (m_used3dlevel!=thePrefs.Get3DDepth() && !m_bIsPreview) )
 			BuildModifiers();
@@ -247,15 +271,30 @@ void CBarShader::FillRect(CDC *dc, LPRECT rectSpan, float fRed, float fGreen,
 		int iBot = rect.bottom;
 		int iMax = HALF(m_iHeight);
 		for(int i = 0; i < iMax; i++) {
+			//Xman Code Improvement: FillSolidRect
+			/*
 			CBrush cbNew(RGB((int)(fRed * m_Modifiers[i] + .5f), (int)(fGreen * m_Modifiers[i] + .5f), (int)(fBlue * m_Modifiers[i] + .5f)));
+			*/
+			const COLORREF crNew = RGB((int)(fRed * m_Modifiers[i] + .5f), (int)(fGreen * m_Modifiers[i] + .5f), (int)(fBlue * m_Modifiers[i] + .5f));
+			//Xman end
 			
 			rect.top = iTop + i;
 			rect.bottom = iTop + i + 1;
+			//Xman Code Improvement: FillSolidRect
+			/*
 			dc->FillRect(&rect, &cbNew);
+			*/
+			dc->FillSolidRect(&rect, crNew);
+			//Xman end
 
 			rect.top = iBot - i - 1;
 			rect.bottom = iBot - i;
+			//Xman Code Improvement: FillSolidRect
+			/*
 			dc->FillRect(&rect, &cbNew);
+			*/
+			dc->FillSolidRect(&rect, crNew);
+			//Xman end
 		}
 	}
 }

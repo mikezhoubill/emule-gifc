@@ -106,7 +106,7 @@ CUPnP_IGDControlPoint::~CUPnP_IGDControlPoint(void)
 // Eanble or disbale upnp. Note that this is indepednge of accepting ports to map. 
 bool CUPnP_IGDControlPoint::SetUPnPNat(bool upnpNat)
 {
-	if (upnpNat==true && thePrefs.IsUPnPNat()==false ) {
+	if (upnpNat==true && thePrefs.IsUPnPEnabled()==false ) {
 		thePrefs.m_bUPnPNat=true;
 		Init(thePrefs.GetUPnPLimitToFirstConnection()); 
 		UpdateAllMappings(true,false); // send any queued mappings to device. 
@@ -114,7 +114,7 @@ bool CUPnP_IGDControlPoint::SetUPnPNat(bool upnpNat)
 			PostMessage(theApp.emuledlg->GetSafeHwnd(),WEB_GUI_INTERACTION,WEBGUIIA_UPDATEMYINFO,0); // update myinfo if device detected. (from different thread!)
 
 	}
-	else if (upnpNat==false && thePrefs.IsUPnPNat()==true ) {
+	else if (upnpNat==false && thePrefs.IsUPnPEnabled()==true ){
    		DeleteAllPortMappingsOnClose(); // idependand of setting thePrefs.GetUPnPClearOnClose
 	    // Note that devices are not removed. 
 		thePrefs.m_bUPnPNat=false;
@@ -345,13 +345,13 @@ CUPnP_IGDControlPoint::UPNPNAT_RETURN CUPnP_IGDControlPoint::AddPortMapping(CUPn
 			pos = NULL;
 		}
 	}
-	if(!m_bInit ||thePrefs.IsUPnPNat()==false){ // if not initialized then just note the mappings for later adding. 
+	if(!m_bInit ||thePrefs.IsUPnPEnabled()==false){ // if not initialized then just note the mappings for later adding. 
 
 	   if(!found ){
 			//If we do not have this mapping, add it to our list when enabled
 		   //TODO use getresstring.
 		   if(thePrefs.GetUPnPVerboseLog())
-					theApp.QueueDebugLogLine(false, _T("Upnp:queuing port for when upnpis enabled: %s"), mapping->description);
+					theApp.QueueDebugLogLine(false, _T("Upnp:queuing port for when upnp is enabled: %s"), mapping->description);
 		    m_Mappings.AddTail(*mapping);
 		}
 	   m_MappingsLock.Unlock();
@@ -428,18 +428,19 @@ CUPnP_IGDControlPoint::UPNPNAT_RETURN CUPnP_IGDControlPoint::DeletePortMapping(C
 	}
 
 	UPNPNAT_MAPPING item;
-	if (!m_bInit || thePrefs.IsUPnPNat()==false) {
+	if(!m_bInit || thePrefs.IsUPnPEnabled()==false) {
 		// remove the queued mapping (only in queue, not in device) 
 		m_MappingsLock.Lock();
         POSITION pos = m_Mappings.GetHeadPosition();
 		if (pos) (item = m_Mappings.GetNext(pos));
-	    while (pos && (item.externalPort != mapping.externalPort || item.protocol != mapping.protocol)) {
-			item = m_Mappings.GetNext(pos);
+	    while(pos && (item.externalPort != mapping.externalPort 
+			          ||item.protocol != mapping.protocol)		){
+  		   item = m_Mappings.GetNext(pos);
 		}
-		if( pos && removeFromList)
+	   if( pos && removeFromList)
 			m_Mappings.RemoveAt(pos);
 	   	m_MappingsLock.Unlock();
-		m_devListLock.Unlock();
+       m_devListLock.Unlock();
        return UNAT_OK;
 	}
 
@@ -520,7 +521,7 @@ bool CUPnP_IGDControlPoint::DeleteAllPortMappings(){
 }
 
 bool CUPnP_IGDControlPoint::UpdateAllMappings( bool bLockDeviceList, bool bUpdating){
-    if (thePrefs.IsUPnPNat()==false) // upnp portmapping disabled. 
+    if (thePrefs.IsUPnPEnabled()==false) // upnp portmapping disabled. 
 		return true;
 
 	if(bLockDeviceList)
@@ -1049,12 +1050,12 @@ CUPnP_IGDControlPoint::UPNPNAT_RETURN CUPnP_IGDControlPoint::AddPortMappingToSer
 				if(fullMapping.enabled == TRUE && fullMapping.leaseDuration == 0){
 					if(bIsUpdating){
 						if(thePrefs.GetUPnPVerboseLog()) {
-							theApp.QueueDebugLogLine(false, _T("UPnP: The port mapping \"%s\" don't need an update. [%s]"), desc, srv->ServiceType);
+							theApp.QueueDebugLogLine(false, _T("UPnP: The port mapping \"%s\" doesn't need an update. [%s]"), desc, srv->ServiceType);
 						}
 					}
 					else 
 						if(thePrefs.GetUPnPVerboseLog()) {
-							theApp.QueueDebugLogLine(false,_T("UPnP: The port mapping \"%s\" don't need to be recreated. [%s]"), desc, srv->ServiceType);
+							theApp.QueueDebugLogLine(false,_T("UPnP: The port mapping \"%s\" doesn't need to be recreated. [%s]"), desc, srv->ServiceType);
 						};
 					//Mapping is already OK
 					return UNAT_OK;
@@ -1636,7 +1637,11 @@ int  CUPnP_IGDControlPoint::GetStatusString(CString & displaystring,bool verbose
 				if (verbose)
 					displaystring +=  port + ((mapping.protocol == UNAT_UDP)?_T(":UDP\t"): _T(":TCP\t")) +  mapping.description +_T("\r\n");
 				else
-					displaystring +=  port + ((mapping.protocol == UNAT_UDP)?_T(":UDP"): _T(":TCP")) + _T(", ");
+				{
+					displaystring +=  port + ((mapping.protocol == UNAT_UDP)?_T(":UDP"): _T(":TCP"));
+					if(map_pos)
+						displaystring += _T(", ");
+				}
 		}
 	}
 	else 

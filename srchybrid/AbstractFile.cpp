@@ -44,6 +44,12 @@ CAbstractFile::CAbstractFile()
 	m_uUserRating = 0;
 	m_bHasComment = false;
 	m_bKadCommentSearchRunning = false;
+	//Xman Code Improvement for choosing to use compression
+	compressible=false;
+	//Xman end
+	//Xman Code Improvement for HasCollectionExtention
+	m_bhasCollectionExtention=false;
+	//Xman end
 }
 
 CAbstractFile::CAbstractFile(const CAbstractFile* pAbstractFile)
@@ -58,6 +64,14 @@ CAbstractFile::CAbstractFile(const CAbstractFile* pAbstractFile)
 	m_bHasComment = pAbstractFile->m_bHasComment;
 	m_strFileType = pAbstractFile->m_strFileType;
 	m_bKadCommentSearchRunning = pAbstractFile->m_bKadCommentSearchRunning;
+
+	//Xman Code Improvement for choosing to use compression
+	compressible=pAbstractFile->IsCompressible();
+	//Xman end
+	//Xman Code Improvement for HasCollectionExtention
+	m_bhasCollectionExtention=pAbstractFile->HasCollectionExtenesion_Xtreme();
+	//Xman end
+
 
 	const CTypedPtrList<CPtrList, Kademlia::CEntry*>& list = pAbstractFile->getNotes();
 	for(POSITION pos = list.GetHeadPosition(); pos != NULL; )
@@ -192,6 +206,41 @@ void CAbstractFile::SetFileName(LPCTSTR pszFileName, bool bReplaceInvalidFileSys
 			else
 				i++;
 	}
+
+	//Xman Code Improvement for choosing to use compression
+	// Check extension
+	compressible=true;
+	int pos = m_strFileName.ReverseFind(_T('.'));
+	if(pos != -1)
+	{
+		CString ext = m_strFileName.Mid(pos);
+		ext.MakeLower();
+
+		// Skip compressed file
+		//zz_fly :: also .mkv and .mp4
+		/*
+		if(thePrefs.GetDontCompressAvi() && ext == _T(".avi"))
+		*/
+		if(thePrefs.GetDontCompressAvi() && (ext == _T(".avi") || ext == _T(".mkv") || ext == _T(".mp4")))
+		//zz_fly :: also .mkv and .mp4
+			compressible = false;
+		//zz_fly :: also .7z
+		/*
+		else if(ext == _T(".zip") || ext == _T(".rar") || ext == _T(".ace") || ext == _T(".ogm") || ext == _T(".cbz") || ext == _T(".cbr"))
+		*/
+		else if(ext == _T(".zip") || ext == _T(".rar") || ext == _T(".ace") || ext == _T(".ogm") || ext == _T(".cbz") || ext == _T(".cbr") || ext == _T(".7z"))
+		//zz_fly :: also .7z
+			compressible = false;
+	}
+	//Xman end
+
+	//Xman Code Improvement for HasCollectionExtention
+	#define COLLECTION_FILEEXTENSION	_T(".emulecollection")
+	if(m_strFileName.Find(COLLECTION_FILEEXTENSION) == -1)
+		m_bhasCollectionExtention=false;
+	else
+		m_bhasCollectionExtention=true;
+	//Xman end
 } 
       
 void CAbstractFile::SetFileType(LPCTSTR pszFileType)

@@ -51,10 +51,8 @@
 #include "MenuCmds.h"
 #include "DropDownButton.h"
 #include "ButtonsTabCtrl.h"
-#include "TransferWnd.h" //MORPH - Added by SiRoB, Selective Category
-// emulEspaña: Added by Announ [MoNKi: -Check already downloaded files-]
-#include "KnownFileList.h"
-// End emulEspaña
+#include "KnownFileList.h" //Xman [MoNKi: -Check already downloaded files-]
+#include "TransferWnd.h" // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -110,11 +108,9 @@ BEGIN_MESSAGE_MAP(CSearchResultsWnd, CResizableFormView)
 	ON_WM_SYSCOMMAND()
 	ON_MESSAGE(UM_DELAYED_EVALUATE, OnChangeFilter)
 	ON_NOTIFY(TBN_DROPDOWN, IDC_SEARCHLST_ICO, OnSearchListMenuBtnDropDown)
-	ON_NOTIFY(NM_CLICK, IDC_CATTAB2, OnNMClickCattab2) //MORPH - Added by SiRoB, Selection category support
+	ON_NOTIFY(NM_CLICK, IDC_CATTAB2, OnNMClickCattab2) // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 	ON_WM_SIZE()
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 END_MESSAGE_MAP()
 
@@ -170,11 +166,8 @@ void CSearchResultsWnd::OnInitialUpdate()
 	m_btnSearchListMenu->RecalcLayout(true);
 
 	m_ctlFilter.OnInit(&m_ctlSearchListHeader);
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	SetAllIcons();
 	Localize();
@@ -191,13 +184,12 @@ void CSearchResultsWnd::OnInitialUpdate()
 	AddAnchor(IDC_OPEN_PARAMS_WND, TOP_RIGHT);
 	AddAnchor(searchselect.m_hWnd, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_STATIC_DLTOof, BOTTOM_LEFT);
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+	// ==> Design Settings [eWombat/Stulle] - Max
+	/*
 	AddAnchor(*m_cattabs, BOTTOM_LEFT, BOTTOM_RIGHT);
-#else
+	*/
 	ResizeTab();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 
 	ShowSearchSelector(false);
 
@@ -287,12 +279,6 @@ void CSearchResultsWnd::OnTimer(UINT nIDEvent)
 					toask = NULL;
 					continue;
 				}
-				// START MORPH lh require obfuscated server connection 
-				if (toask->GetServerKeyUDP() ==0 && thePrefs.IsServerCryptLayerRequiredStrict()){ // skip servers we do not have a encryption key for. 
-					toask = NULL;
-				    continue; 
-				}
-				// START MORPH lh require obfuscated server connection 
 				break;
 			}
 
@@ -533,10 +519,6 @@ void CSearchResultsWnd::LocalEd2kSearchEnd(UINT count, bool bMoreResultsAvailabl
 			VERIFY( (global_search_timer = SetTimer(TimerGlobalSearch, 750, 0)) != NULL );
 	}
 	m_pwndParams->m_ctlMore.EnableWindow(bMoreResultsAvailable && m_iSentMoreReq < MAX_MORE_SEARCH_REQ);
-	// >> add by Ken
-	if (m_pwndParams->m_bAutoDownload)
-		AutoDownloadGIFC();
-	// << add by Ken
 }
 
 // >> add by Ken
@@ -685,11 +667,13 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 	CWaitCursor curWait;
 	POSITION pos = searchlistctrl.GetFirstSelectedItemPosition();
 
-	// khaos::categorymod+ Category selection stuff...
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	// Category selection stuff...
 	if (!pos) return; // No point in asking for a category if there are no selected files to download.
+
 	int useCat = GetSelectedCat();
 	bool	bCreatedNewCat = false;
-	if (useCat==-1 && thePrefs.SelectCatForNewDL() && thePrefs.GetCatCount()>1 
+	if (useCat==-1 && thePrefs.SelectCatForNewDL() && thePrefs.GetCatCount()>1
 		// >> add by Ken
 		&& !m_pwndParams->m_bAutoDownload)
 		// << add by Ken
@@ -707,7 +691,7 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 		if (bCanceled)
 			return;
 	}
-	// khaos::categorymod-
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	while (pos != NULL)
 	{
@@ -738,10 +722,16 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 			CSearchFile tempFile(parent);
 			tempFile.SetFileName(sel_file->GetFileName());
 			tempFile.SetStrTagValue(FT_FILENAME, sel_file->GetFileName());
-			// khaos::categorymod+ m_cattabs is obsolete.
+			// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			/*
-			theApp.downloadqueue->AddSearchToDownload(&tempFile, bPaused, GetSelectedCat());
+			//Xman [MoNKi: -Check already downloaded files-]
+			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName()) )
+			{
+				theApp.downloadqueue->AddSearchToDownload(&tempFile, bPaused, GetSelectedCat());
+			}
+			//Xman end
 			*/
+			// m_cattabs is obsolete.
 			UINT fileCat = 0;
 			if (useCat==-1)
 			{
@@ -752,10 +742,9 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 			}
 			else 
 			{
-				fileCat = useCat;
-			}
+                  fileCat = useCat;
+            }
 			
-			//EastShare START - Modified by Pretender [MoNKi: -Check already downloaded files-]
 			// >> modified by Ken
 			//if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName()) )
 			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(tempFile.GetFileHash(), tempFile.GetFileName(), m_pwndParams->m_bAutoDownload) )
@@ -768,20 +757,19 @@ void CSearchResultsWnd::DownloadSelected(bool bPaused)
 				else
 					theApp.downloadqueue->AddSearchToDownload(&tempFile, bPaused, fileCat, (uint16)(theApp.downloadqueue->GetMaxCatResumeOrder(fileCat)));
 			}
-			//EastShare END		
-			// khaos::categorymod-
+			// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 			// update parent and all childs
 			searchlistctrl.UpdateSources(parent);
 		}
 	}
 
-	// khaos::categorymod+ m_cattabs is obsolete.
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle	
 	// This bit of code will resume the number of files that the user specifies in preferences (Off by default)
 	if (thePrefs.StartDLInEmptyCats() > 0 && bCreatedNewCat && bPaused)
 		for (int i = 0; i < thePrefs.StartDLInEmptyCats(); i++)
 			if (!theApp.downloadqueue->StartNextFile(useCat)) break;
-	// khaos::categorymod-
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 }
 
 void CSearchResultsWnd::OnSysColorChange()
@@ -1835,7 +1823,7 @@ void CSearchResultsWnd::UpdateCatTabs()
 	int oldsel=m_cattabs->GetCurSel();
 	m_cattabs->DeleteAllItems();
 	for (int ix=0;ix<thePrefs.GetCatCount();ix++) {
-	//MORPH START - Changed by SiRoB, Selection category support
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	/*
 		CString label=(ix==0)?GetResString(IDS_ALL):thePrefs.GetCategory(ix)->strTitle;
 		label.Replace(_T("&"),_T("&&"));
@@ -1850,7 +1838,7 @@ void CSearchResultsWnd::UpdateCatTabs()
 	}
 	if (oldsel>=m_cattabs->GetItemCount())
 		oldsel=-1;
-	//MORPH END   - Changed by SiRoB, Selection category support
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	m_cattabs->SetCurSel(oldsel);
 	int flag;
@@ -1858,11 +1846,7 @@ void CSearchResultsWnd::UpdateCatTabs()
 	m_cattabs->ShowWindow(flag);
 	GetDlgItem(IDC_STATIC_DLTOof)->ShowWindow(flag);
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	ResizeTab();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	ResizeTab(); // Design Settings [eWombat/Stulle] - Max
 }
 
 void CSearchResultsWnd::ShowSearchSelector(bool visible)
@@ -2120,8 +2104,8 @@ BOOL CSearchResultsWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 	return CResizableFormView::OnCommand(wParam, lParam);
 }
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
+/*
 HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
@@ -2129,7 +2113,7 @@ HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		return hbr;
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
-#else
+*/
 HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* /*pWnd*/, UINT nCtlColor)
 {
 	HBRUSH hbr = theApp.emuledlg->GetWndClr();
@@ -2146,10 +2130,9 @@ HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* /*pWnd*/, UINT nCtlColor)
 
 	return hbr;
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max
 
-//MORPH START - Added by SiRoB, Selection category support
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 void CSearchResultsWnd::OnNMClickCattab2(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 {
 	POINT point;
@@ -2171,10 +2154,9 @@ void CSearchResultsWnd::OnNMClickCattab2(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 		}
 	*pResult = 0;
 }
-//MORPH END - Added by SiRoB, Selection category support
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
 void CSearchResultsWnd::OnBackcolor() 
 {
 	COLORREF crTempColor = thePrefs.GetStyleBackColor(window_styles, style_w_search);
@@ -2227,5 +2209,4 @@ void CSearchResultsWnd::ResizeTab()
 
 	m_cattabs->MoveWindow(TabRect,TRUE);
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max

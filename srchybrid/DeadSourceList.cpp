@@ -29,10 +29,21 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 
+//Xman
+/*
 #define	CLEANUPTIME			MIN2MS(60)
+*/
+#define	CLEANUPTIME			MIN2MS(30)
+//Xman end
 
+//Xman increased:
+/*
 #define BLOCKTIME		(::GetTickCount() + (m_bGlobalList ? MIN2MS(15):MIN2MS(45)))
 #define BLOCKTIMEFW		(::GetTickCount() + (m_bGlobalList ? MIN2MS(30):MIN2MS(45)))
+*/
+#define BLOCKTIME		(::GetTickCount() + (m_bGlobalList ? MIN2MS(32):MIN2MS(60)))
+#define BLOCKTIMEFW		(::GetTickCount() + (m_bGlobalList ? MIN2MS(40):MIN2MS(60)))
+//Xman end
 
 ///////////////////////////////////////////////////////////////////////////////////////
 //// CDeadSource

@@ -10,7 +10,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -34,6 +34,7 @@ void CWebSocket::OnRequestReceived(char* pHeader, DWORD dwHeaderLen, char* pData
 	CStringA sHeader(pHeader, dwHeaderLen);
 	CStringA sData(pData, dwDataLen);
 	CStringA sURL;
+	CStringA sCookie; // Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
 	bool filereq=false;
 
 	if(sHeader.Left(3) == "GET")
@@ -41,6 +42,13 @@ void CWebSocket::OnRequestReceived(char* pHeader, DWORD dwHeaderLen, char* pData
 
 	else if(sHeader.Left(4) == "POST")
 		sURL = "?" + sData.Trim();	// '?' to imitate GET syntax for ParseURL
+
+	// ==> Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
+	int pos = sHeader.Find("Cookie:");
+	if(pos != -1) //found
+	sCookie = sHeader.Mid(pos+7);
+	sCookie.Trim();
+	// <== Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
 
 	if(sURL.Find(" ") > -1)
 		sURL = sURL.Mid(sURL.Find(" ")+1, sURL.GetLength());
@@ -61,6 +69,7 @@ void CWebSocket::OnRequestReceived(char* pHeader, DWORD dwHeaderLen, char* pData
 	Data.pThis = m_pParent;
 	Data.inadr = inad;
 	Data.pSocket = this;
+	Data.sCookie = sCookie; // Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
 
 	if (!filereq)
 		m_pParent->ProcessURL(Data);
@@ -229,7 +238,7 @@ void CWebSocket::SendReply(LPCSTR szReply)
 	char szBuf[256];
 	int nLen = _snprintf(szBuf, _countof(szBuf), "%s\r\n", szReply);
 	if (nLen > 0)
-	SendData(szBuf, nLen);
+		SendData(szBuf, nLen);
 }
 
 void CWebSocket::SendContent(LPCSTR szStdResponse, const void* pContent, DWORD dwContentSize)
@@ -237,8 +246,8 @@ void CWebSocket::SendContent(LPCSTR szStdResponse, const void* pContent, DWORD d
 	char szBuf[0x1000];
 	int nLen = _snprintf(szBuf, _countof(szBuf), "HTTP/1.1 200 OK\r\n%sContent-Length: %ld\r\n\r\n", szStdResponse, dwContentSize);
 	if (nLen > 0) {
-	SendData(szBuf, nLen);
-	SendData(pContent, dwContentSize);
+		SendData(szBuf, nLen);
+		SendData(pContent, dwContentSize);
 	}
 }
 
@@ -419,14 +428,14 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 		else
 			stAddr.sin_addr.S_un.S_addr = INADDR_ANY;
 
-		if (!bind(hSocket, (sockaddr*)&stAddr, sizeof(stAddr)) && !listen(hSocket, 5)) //SOMAXCONN is too much with winsock2 MORPH
+		if (!bind(hSocket, (sockaddr*)&stAddr, sizeof(stAddr)) && !listen(hSocket, SOMAXCONN))
 		{
 			HANDLE hEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
 			if (hEvent)
 			{
 				if (!WSAEventSelect(hSocket, hEvent, FD_ACCEPT))
 				{
-					// emulEspaña: Added by MoNKi [MoNKi: -UPnPNAT Support-]
+					// ==> UPnP support [MoNKi] - leuk_he
 					CUPnP_IGDControlPoint::UPNPNAT_MAPPING mapping;
 					BOOL UPnP = false;
 
@@ -435,7 +444,7 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 					mapping.description = "Web Interface";
 					if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts() && thePrefs.GetUPnPNatWeb())
 						UPnP = theApp.m_UPnP_IGDControlPoint->AddPortMapping(&mapping);
-					// End -UPnPNAT Support-
+					// <== UPnP support [MoNKi] - leuk_he
 
 					HANDLE pWait[] = { hEvent, s_hTerminate };
 					while (WAIT_OBJECT_0 == WaitForMultipleObjects(2, pWait, FALSE, INFINITE))
@@ -447,7 +456,7 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 
 							SOCKET hAccepted = accept(hSocket,(struct sockaddr *)&their_addr, &sin_size);
 							if (INVALID_SOCKET == hAccepted)
-									break;
+								break;
 
 							if (thePrefs.GetAllowedRemoteAccessIPs().GetCount() > 0)
 							{
@@ -473,7 +482,7 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 								pData->hSocket = hAccepted;
 								pData->pThis = pThis;
 								pData->incomingaddr=their_addr.sin_addr;
-									
+								
 								// - do NOT use Windows API 'CreateThread' to create a thread which uses MFC/CRT -> lot of mem leaks!
 								// - 'AfxBeginThread' could be used here, but creates a little too much overhead for our needs.
 								CWinThread* pAcceptThread = new CWinThread(WebSocketAcceptedFunc, (LPVOID)pData);
@@ -493,10 +502,10 @@ UINT AFX_CDECL WebSocketListeningFunc(LPVOID pThis)
 						}
 					}
 
-					//MORPH START - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
+					// ==> UPnP support [MoNKi] - leuk_he
 					if(UPnP)
 						theApp.m_UPnP_IGDControlPoint->DeletePortMapping(mapping);
-					//MORPH END   - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
+					// <== UPnP support [MoNKi] - leuk_he
 				}
 				VERIFY( CloseHandle(hEvent) );
 				hEvent = NULL;

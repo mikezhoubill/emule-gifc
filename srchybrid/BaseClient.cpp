@@ -62,8 +62,11 @@
 #include "shahashset.h"
 #include "Log.h"
 #include "CaptchaGenerator.h"
-#include "libald.h" //MORPH - Added by Stulle, AppleJuice Detection [Xman]
-#include "AntiNick.h" // AntiNickThief Class - Stulle
+//Xman
+#include "DLP.h" //Xman DLP
+#include "BandWidthControl.h"
+//Xman End
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -73,10 +76,29 @@ static char THIS_FILE[] = __FILE__;
 
 #define URLINDICATOR	_T("http:|www.|.de |.net |.com |.org |.to |.tk |.cc |.fr |ftp:|ed2k:|https:|ftp.|.info|.biz|.uk|.eu|.es|.tv|.cn|.tw|.ws|.nu|.jp")
 
+//Xman unused
+/*
 IMPLEMENT_DYNAMIC(CClientException, CException)
+*/
+//Xman end
 IMPLEMENT_DYNAMIC(CUpDownClient, CObject)
 
+//Xman
+// Maella -Upload Stop Reason-
+// Maella -Download Stop Reason-
+// Remark: static element are automaticaly initialized with zero
+uint32 CUpDownClient::m_upStopReason[2][CUpDownClient::USR_EXCEPTION+1];
+uint32 CUpDownClient::m_downStopReason[2][CUpDownClient::DSR_EXCEPTION+1];
+// Maella end
+//Xman Anti-Leecher: simple Anti-Thief
+const CString CUpDownClient::str_ANTAddOn=CUpDownClient::GetANTAddOn();
+//Xman end
+
 CUpDownClient::CUpDownClient(CClientReqSocket* sender)
+//Xman // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+: m_upHistory_list(3),
+m_downHistory_list(3)
+// Maella end
 {
 	socket = sender;
 	reqfile = NULL;
@@ -84,6 +106,10 @@ CUpDownClient::CUpDownClient(CClientReqSocket* sender)
 }
 
 CUpDownClient::CUpDownClient(CPartFile* in_reqfile, uint16 in_port, uint32 in_userid,uint32 in_serverip, uint16 in_serverport, bool ed2kID)
+//Xman // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+: m_upHistory_list(3),
+m_downHistory_list(3)
+// Maella end
 {
 	//Converting to the HybridID system.. The ED2K system didn't take into account of IP address ending in 0..
 	//All IP addresses ending in 0 were assumed to be a lowID because of the calculations.
@@ -110,27 +136,28 @@ CUpDownClient::CUpDownClient(CPartFile* in_reqfile, uint16 in_port, uint32 in_us
 
 void CUpDownClient::Init()
 {
-	m_bKadHello = false;//EastShare
+	//Xman Full Chunk
+	upendsoon=false;
+	
+	//Xman filter clients with failed downloads
+	m_faileddownloads=0;
 
-	//SLAHAM: ADDED Known Since/Last Asked =>
-	uiDLAskingCounter = 0;
-	dwThisClientIsKnownSince = ::GetTickCount();
-	//SLAHAM: ADDED Known Since/Last Asked <=
+	//Xman Xtreme Mod
+	m_szFullUserIP=_T("?");
+	m_cFailed = 0; //Xman Downloadmanager / Xtreme Mod // holds the failed connection attempts
 
-	//SLAHAM: ADDED Show Downloading Time =>
-	uiStartDLCount = 0;
-	dwStartDLTime = 0;
-	dwSessionDLTime = 0;
-	dwTotalDLTime = 0;
-	//SLAHAM: ADDED Show Downloading Time <=
+	//Xman fix for startupload
+	lastaction=0;
 
-	//MORPH START - Added by schnulli900, filter clients with failed downloads [Xman]
-	m_uFailedDownloads=0;
-	//MORPH END   - Added by schnulli900, filter clients with failed downloads [Xman]
+	//Xman fix for startupload (downloading side)
+	protocolstepflag1=false;
 
-	//MORPH START - Added by schnulli900, count failed TCP/IP connections [Xman]
-	m_cFailed = 0;
-	//MORPH END   - Added by schnulli900, count failed TCP/IP connections [Xman]
+	//Xman uploading problem client
+	isupprob=false;
+
+	//Xman askfordownload priority
+	m_downloadpriority=1;
+	//Xman end
 
 	m_nChatstate = MS_NONE;
 	m_nKadState = KS_NONE;
@@ -143,32 +170,31 @@ void CUpDownClient::Init()
 	m_ePeerCacheUpState = PCUS_NONE;
 
 	credits = NULL;
-	m_nSumForAvgUpDataRate = 0;
-	//MORPH START - Changed by SiRoB, ZZUL_20040904	
+	//Xman
 	/*
-	m_bAddNextConnect = false;
+	m_nSumForAvgUpDataRate = 0;
 	*/
-	m_dwWouldHaveGottenUploadSlotIfNotLowIdTick = 0;  // VQB Fix for LowID slots only on connection
-	//MORPH END   - Changed by SiRoB, ZZUL_20040904	
+	//Xman end
+	m_bAddNextConnect = false;
+	//Xman
+	/*
 	m_cShowDR = 0;
+	*/
+	//Xman end
 	m_nUDPPort = 0;
 	m_nKadPort = 0;
 	m_nTransferredUp = 0;
 	m_cAsked = 0;
 	m_cDownAsked = 0;
+	//Xman
+	/*
 	m_nUpDatarate = 0;
-	//MORPH START - Determine Remote Speed based
-	m_dwUpDatarateAVG = 0;
-	m_nUpDatarateAVG = 0;
-	m_nTransferredUpDatarateAVG = 0;
-	//MORPH END   - Determine Remote Speed based
+	*/
+	//Xman end
 	m_pszUsername = 0;
-	m_pszFunnyNick = 0; //MORPH - Added by SiRoB, Dynamic FunnyNick
 	m_nUserIDHybrid = 0;
 	m_dwServerIP = 0;
 	m_nServerPort = 0;
-	m_bLeecher = false; //MORPH - Added by IceCream, Antileecher feature
-	old_m_pszUsername = 0; //MORPH - Added by IceCream, Antileecher feature
     m_iFileListRequested = 0;
 	m_dwLastUpRequest = 0;
 	m_bEmuleProtocol = false;
@@ -185,13 +211,12 @@ void CUpDownClient::Init()
 	m_abyUpPartStatus = 0;
 	m_dwUploadTime = 0;
 	m_nTransferredDown = 0;
+	//Xman
+	/*
 	m_nDownDatarate = 0;
-	//MORPH START - Determine Remote Speed
-	m_nDownDatarateAVG = 0;
-	m_dwDownDatarateAVG = 0; 
-	m_nTransferredDownDatarateAVG = 0;
-	//MORPH END   - Determine Remote Speed
 	m_nDownDataRateMS = 0;
+	*/
+	//Xman end
 	m_dwLastBlockReceived = 0;
 	m_byDataCompVer = 0;
 	m_byUDPVer = 0;
@@ -199,10 +224,6 @@ void CUpDownClient::Init()
 	m_byAcceptCommentVer = 0;
 	m_byExtendedRequestsVer = 0;
 	m_nRemoteQueueRank = 0;
-	//MORPH - RemoteQueueRank Estimated Time
-	m_nRemoteQueueRankPrev = 0;
-	m_dwRemoteQueueRankEstimatedTime = 0;
-	//MORPH - RemoteQueueRank Estimated Time
 	m_dwLastSourceRequest = 0;
 	m_dwLastSourceAnswer = 0;
 	m_dwLastAskedForSources = 0;
@@ -210,10 +231,6 @@ void CUpDownClient::Init()
 	m_nSourceFrom = SF_SERVER;
 	m_bIsHybrid = false;
 	m_bIsML=false;
-	m_uModClient = MOD_NONE; //MOPPH - Added by Stulle, Mod Icons
-	m_uiCompletedParts = 0; //Fafner: client percentage - 080325
-	m_uiLastChunk = (UINT)-1; //Fafner: client percentage - 080325
-	m_uiCurrentChunks = 0; //Fafner: client percentage - 080325
 	m_Friend = NULL;
 	m_uFileRating=0;
 	(void)m_strFileComment;
@@ -224,9 +241,11 @@ void CUpDownClient::Init()
 	m_nCurSessionUp = 0;
 	m_nCurSessionDown = 0;
 	m_nCurSessionPayloadDown = 0;
-	/*zz*/m_nCurQueueSessionUp = 0;
-	/*MORPH - FIX for zz code*/m_nCurSessionPayloadUp = 0;
+	//Xman
+	/*
 	m_nSumForAvgDownDataRate = 0;
+	*/
+	//Xman end
 	m_clientSoft=SO_UNKNOWN;
 	m_bRemoteQueueFull = false;
 	md4clr(m_achUserHash);
@@ -242,17 +261,20 @@ void CUpDownClient::Init()
 	else{
 		SetIP(0);
 	}
+	//Xman
+	//remark: in most cases we use the defaultstrcut (ip=0)
+	//we could use the right IP from begining by moving this method to the constructor
+	//disadvantage: we create and immediately delete many clients, always searching the
+	//country costs too much time
 	//EastShare Start - added by AndCycle, IP to Country
-	m_structUserCountry = theApp.ip2country->GetCountryFromIP(GetIP());
+	m_structUserCountry = theApp.ip2country->GetCountryFromIP(m_dwUserIP); 
 	//EastShare End - added by AndCycle, IP to Country
+
 	m_fHashsetRequesting = 0;
 	m_fSharedDirectories = 0;
 	m_fSentCancelTransfer = 0;
 	m_nClientVersion = 0;
-	//MORPH START - UpdateItemThread
-	/*
 	m_lastRefreshedDLDisplay = 0;
-	*/
 	m_dwDownStartTime = 0;
 	m_nLastBlockOffset = (uint64)-1;
 	m_bUnicodeSupport = false;
@@ -265,15 +287,14 @@ void CUpDownClient::Init()
 	m_fPreviewReqPending = 0;
 	m_fPreviewAnsPending = 0;
 	m_bTransferredDownMini = false;
-	m_addedPayloadQueueSession = 0;
-	m_nCurQueueSessionPayloadUp = 0; // PENDING: Is this necessary? ResetSessionUp()...
-	m_lastRefreshedULDisplay = ::GetTickCount();
+    m_addedPayloadQueueSession = 0;
+    m_nCurQueueSessionPayloadUp = 0; // PENDING: Is this necessary? ResetSessionUp()...
+    m_lastRefreshedULDisplay = ::GetTickCount();
 	m_bGPLEvildoer = false;
 	m_bHelloAnswerPending = false;
 	m_fNoViewSharedFiles = 0;
 	m_bMultiPacket = 0;
 	md4clr(requpfileid);
-	requpfile = NULL; //MORPH - Added by SiRoB, Optimization requpfile
 	m_nTotalUDPPackets = 0;
 	m_nFailedUDPPackets = 0;
 	m_nUrlStartPos = (uint64)-1;
@@ -288,18 +309,21 @@ void CUpDownClient::Init()
 	m_bPeerCacheUpHit = false;
 	m_fNeedOurPublicIP = 0;
     m_random_update_wait = (uint32)(rand()/(RAND_MAX/1000));
-	//MORPH START - Added by SiRoB, ZZUL_20040904
-    m_dwLastCheckedForEvictTick = 0;
-    m_addedPayloadQueueSession = 0;
-	//MORPH END   - Added by SiRoB, ZZUL_20040904	
+	//Xman
+	/*
     m_bSourceExchangeSwapped = false; // ZZ:DownloadManager
-	m_dwLastTriedToConnect = ::GetTickCount()-20*60*1000; // ZZ:DownloadManager
+    m_dwLastTriedToConnect = ::GetTickCount()-20*60*1000; // ZZ:DownloadManager
+	*/
+	//Xman end
 	m_fQueueRankPending = 0;
 	m_fUnaskQueueRankRecv = 0;
 	m_fFailedFileIdReqs = 0;
-	m_slotNumber = 0;
-	m_classID = LAST_CLASS; //MORPH - Upload Splitting Class
+	//Xman
+	/*
+    m_slotNumber = 0;
     lastSwapForSourceExchangeTick = 0;
+	*/
+	//Xman end
 	m_pReqFileAICHHash = NULL;
 	m_fSupportsAICH = 0;
 	m_fAICHRequested = 0;
@@ -317,82 +341,78 @@ void CUpDownClient::Init()
 	m_fDirectUDPCallback = 0;
 	m_cCaptchasSent = 0;
 
-	//MORPH START - Added By AndCycle, ZZUL_20050212-0200
-	m_bScheduledForRemoval = false;
-	m_bScheduledForRemovalWillKeepWaitingTimeIntact = false;
-	//MORPH END   - Added By AndCycle, ZZUL_20050212-0200
+	//Xman -----------------
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	m_displayUpDatarateCounter = 0;
+	m_displayDownDatarateCounter = 0;
 
-	//MORPH START - Added by SiRoB, ET_MOD_VERSION 0x55
-	m_strModVersion.Empty();
-	//MORPH END   - Added by SiRoB, ET_MOD_VERSION 0x55
-	m_nDownTotalTime = 0;//wistily Total download time for this client for this emule session
-	m_nUpTotalTime = 0;//wistily Total upload time for this client for this emule session
+	m_nUpDatarate = 0;
+	m_nUpDatarate10 = 0;
+	m_nUpDatarateMeasure = 0;
 
-	m_incompletepartVer = 0; //MORPH - Added By SiRoB, ICS merged into partstatus
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	m_nDownDatarateMeasure = 0;
+	// Maella end
 
-	// ==> StulleMule is not banned - Stulle
-	/*
-	m_bSendOldMorph = false; //MORPH - prevent being banned by old MorphXT
-	*/
-	// <== StulleMule is not banned - Stulle
+	// Maella -Unnecessary Protocol Overload-
+	CalculateJitteredFileReaskTime(false); //Xman 5.1 
+	m_dwLastAskedTime = 0;
+	m_dwLastUDPReaskTime = 0;
+	m_dwNextTCPAskedTime = 0;
+	// Maella end
 
-	//MORPH START - ReadBlockFromFileThread
-	m_abyfiledata = NULL;
-	m_readblockthread =NULL;
-	//MORPH END   - ReadBlockFromFileThread
+	//Xman Xtreme Downloadmanager
+	droptime=0;
+	isduringswap=false;
+	enterqueuetime=0;
+	oldQR=0; //Xman diffQR
+	//Xman end
 
-	// ==> Sivka-Ban [cyrex2001] - Stulle
-	dwLastTimeAskedForWPRank = 0;
-	uiULAskingCounter = 0;
-	dwThisClientIsKnownSince = ::GetTickCount();
-	// <== Sivka-Ban [cyrex2001] - Stulle
+	// Maella -Extended clean-up II-
+	m_lastCleanUpCheck = GetTickCount(); //Note: this feature is important for Xtreme Downloadmanager
+	// Maella end
+	
+	//Xman Anti-Leecher
+	m_bLeecher = 0;
+	old_m_pszUsername.Empty();
+	m_strBanMessage.Empty();
+	strBanReason_permament.Empty(); 
+	uhashsize=16;
+	//Xman Anti-Nick-Changer
+	m_uNickchanges=0;
+	m_ulastNickChage=0; //no need to initalize
+	//Xman end
 
-	// ==> Spread Requests - Stulle
-	// Remark: a client will be remove from an upload queue after 2*FILEREASKTIME (~1 hour)
-	//         a two small value increases the traffic + causes a banishment if lower than 10 minutes
-	//         srand() is already called a few times..
-	uint32 SpreadTime = rand() * MIN2S(4) / RAND_MAX; // 0..4 minutes, keep in mind integer overflow
-	m_dwSpreadReAskTime = FILEREASKTIME + SEC2MS(SpreadTime) - MIN2MS(2); // -2..+2 minutes, keep the same average overload
-	// Stulle: result between 27 and 31 this is useful to use TCP-Connection from older clients
-	// <== Spread Requests - Stulle
 
-	m_bAntiUploaderCaseThree = false; // Anti Uploader Ban - Stulle
-
-	// ==> Anti-XS-Exploit [Xman] - Stulle
+	//>>> Anti-XS-Exploit (Xman)
 	m_uiXSReqs = 0;
 	m_uiXSAnswer = 0;
-	// <== Anti-XS-Exploit [Xman] - Stulle
+	//<<< Anti-XS-Exploit
 
-	// ==> New United Community Detection [Xman] - Stulle
-	uhashsize=16;
-	m_bUnitedComm = false;
-	// <== New United Community Detection [Xman] - Stulle
+	filedata = NULL; // SiRoB: ReadBlockFromFileThread
 
-	// ==> Nick Changer Check [Xman] - Stulle
-	m_uNickchanges = 0;
-	m_ulastNickChage = 0;
-	// <== Nick Changer Check [Xman] - Stulle
+	//Xman Funny-Nick (Stulle/Morph)
+	m_pszFunnyNick=NULL;
+	//Xman end
 
-	m_bSpreadClient = 0; // Spread Credits Slot - Stulle
+	//Xman client percentage
+	hiscompletedparts_percent_up=-1;
+	hiscompletedparts_percent_down=-1;
+	//Xman end
 
-	m_uBanReason = GOOD_BOY; // Reduce Score for leecher - Stulle
+	//Xman end --------------
 
-	m_bSendIP = false; // Inform Clients after IP Change - Stulle
+	m_uModClient = MOD_NONE; // Mod Icons - Stulle
 
-	// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-	m_strModPure.Empty();
-#endif
-	// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
+	m_bGiveWaittimeBack = false; // SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+
+	m_bAntiUploaderCaseThree = false; // Anti Uploader Ban [Stulle] - Stulle
+
+	m_uSpreadClient = 0; // Spread Credits Slot [Stulle] - Stulle
 }
 
 CUpDownClient::~CUpDownClient(){
-	//MORPH START - ReadBlockFromFileThread //Fafner: for safety (got mem leaks) - 071127
-	if (m_readblockthread) {
-		m_readblockthread->StopReadBlock();
-		m_readblockthread = NULL;
-	}
-	//MORPH END   - ReadBlockFromFileThread
 	if (IsAICHReqPending()){
 		m_fAICHRequested = FALSE;
 		CAICHHashSet::ClientAICHRequestFailed(this);
@@ -402,7 +422,7 @@ CUpDownClient::~CUpDownClient(){
 	{
 		if (GetFriend()->IsTryingToConnect())
 			GetFriend()->UpdateFriendConnectionState(FCR_DELETED);
-		m_Friend->SetLinkedClient(NULL);
+        m_Friend->SetLinkedClient(NULL);
 	}
 	ASSERT( m_nConnectingState == CCS_NONE || !theApp.emuledlg->IsRunning() );
 	theApp.clientlist->RemoveClient(this, _T("Destructing client object"));
@@ -411,20 +431,6 @@ CUpDownClient::~CUpDownClient(){
 		socket->client = 0;
 		socket->Safe_Delete();
 	}
-
-	//MORPH START - Added by SiRoB, Keep A4AF infos
-	POSITION			pos = m_PartStatus_list.GetStartPosition();
-	CPartFile*			curFile;
-	uint8*				curPS;
-	while (pos)
-	{
-		m_PartStatus_list.GetNextAssoc(pos, (const CPartFile *&)curFile, curPS); //RM vs2005
-		if (curPS != m_abyPartStatus)
-			delete[] curPS;
-	}
-	m_nUpCompleteSourcesCount_list.RemoveAll();
-	//MORPH END   - Added by SiRoB, Keep A4AF infos
-
 	if (m_pPCDownSocket){
 		m_pPCDownSocket->client = NULL;
 		m_pPCDownSocket->Safe_Delete();
@@ -435,28 +441,25 @@ CUpDownClient::~CUpDownClient(){
 	}
 
 	free(m_pszUsername);
-	//MORPH START - Added by SiRoB, Dynamic FunnyNick
-	if (m_pszFunnyNick) {
-		delete[] m_pszFunnyNick;
-		m_pszFunnyNick = NULL;
-	}
-	//MORPH END  - Added by SiRoB, Dynamic FunnyNick
-	if (m_abyPartStatus){
+
+	if (m_abyPartStatus){ //from MorphXT
 		delete[] m_abyPartStatus;
 		m_abyPartStatus = NULL;
 	}
-	if (m_abyUpPartStatus){
+
+	if (m_abyUpPartStatus){ //from MorphXT
 		delete[] m_abyUpPartStatus;
 		m_abyUpPartStatus = NULL;
 	}
+
 	ClearUploadBlockRequests();
 
 	for (POSITION pos = m_DownloadBlocks_list.GetHeadPosition();pos != 0;)
 		delete m_DownloadBlocks_list.GetNext(pos);
-
+	
 	for (POSITION pos = m_RequestedFiles_list.GetHeadPosition();pos != 0;)
 		delete m_RequestedFiles_list.GetNext(pos);
-
+	
 	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition();pos != 0;){
 		Pending_Block_Struct *pending = m_PendingBlocks_list.GetNext(pos);
 		delete pending->block;
@@ -474,580 +477,47 @@ CUpDownClient::~CUpDownClient(){
 	DEBUG_ONLY (theApp.listensocket->Debug_ClientDeleted(this));
 	SetUploadFileID(NULL);
 
-	m_fileReaskTimes.RemoveAll(); // ZZ:DownloadManager (one resk timestamp for each file)
+	//Xman
+	/*
+    m_fileReaskTimes.RemoveAll(); // ZZ:DownloadManager (one resk timestamp for each file)
+	*/
+	//Xman end
 
 	delete m_pReqFileAICHHash;
+
+	//Xman --------------------
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	m_upHistory_list.RemoveAll();
+	m_downHistory_list.RemoveAll();
+	
+	// Maella -Unnecessary Protocol Overload-
+	m_partStatusMap.clear();
+	//Xman end
+
+	//Xman Extened credit- table-arragement
+	if(Credits())
+	{
+		Credits()->SetLastSeen(); //ensure we keep the credits at least 6 hours in memory, without this line our LastSeen can be outdated if we did only UDP
+		//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+		/*
+		if(Credits()->GetDownloadedTotal()==0 && Credits()->GetUploadedTotal()==0) //just to save some CPU-cycles, a second test is done at credits
+			Credits()->MarkToDelete();
+		*/
+			Credits()->DecReferredTimes();
+		//zz_fly :: End
+	}
+	//Xman end
+
+	//Xman Funny-Nick (Stulle/Morph)
+	if (m_pszFunnyNick) {
+		delete[] m_pszFunnyNick;
+		m_pszFunnyNick = NULL;
+	}
+	//Xman end
+
+
+	//Xman end -----------------
 }
-
-//MORPH START - Added by IceCream, Anti-leecher feature
-// ==> Reduce Score for leecher - Stulle
-/*
-LPCTSTR CUpDownClient::TestLeecher(){
-*/
-uint8 CUpDownClient::TestLeecher(){
-// <== Reduce Score for leecher - Stulle
-	// ==> Anti Uploader Ban - Stulle
-	if (AntiUploaderBanActive())
-	{
-		m_bLeecher = false;
-		SetBanReason(GOOD_BOY); // Reduce Score for leecher - Stulle
-		return NULL;
-	}
-	// <== Anti Uploader Ban - Stulle
-
-	if (thePrefs.IsAntiModIdFaker() && IsModFaker()){
-		return BAN_FAKE_MOD;
-	//MORPH START - Added by Stulle, Morph Leecher Detection
-	}else if(thePrefs.IsBadModString()){
-		if(IsMorphLeecher())
-		{
-			return BAN_MORPH_LEECHER;
-		}
-	}
-	//MORPH END - Added by Stulle, Morph Leecher Detection
-	// ==> AntiNickThief [WiZaRd] - Stulle
-	if (thePrefs.IsAntiNickThief() && theAntiNickClass.FindOurTagIn(m_pszUsername)){
-		return BAN_FAKE_NICK;
-	// <== AntiNickThief [WiZaRd] - Stulle
-	// ==> Leecher Name [Xman] - Stulle
-	}else if (thePrefs.IsLeecherName() && IsLeecherName(m_pszUsername)){
-		return BAN_LEECHER_NICK;
-	// <== Leecher Name [Xman] - Stulle
-	// ==> Community Check [Xman] - Stulle
-	}else if(thePrefs.IsCommunityCheck()){
-	//MORPH START - Added by Stulle, AppleJuice Detection [Xman]
-		if(IsEmuleClient() && CheckUserHash())
-			return BAN_APPLE_JUICE;
-	//MORPH END   - Added by Stulle, AppleJuice Detection [Xman]
-		else if(IsSnakeOrGamer(m_pszUsername))
-			return BAN_COMMUNITY;
-		// ==> New United Community Detection [Xman] - Stulle
-		else if(m_bUnitedComm)
-			return BAN_WRONG_HASHSIZE;
-		// <== New United Community Detection [Xman] - Stulle
-	}
-	// <== Community Check [Xman] - Stulle
-	// ==> Hex Check [Xman] - Stulle
-	if (thePrefs.IsHexCheck() && IsTypicalHex(m_strModVersion)){
-		return BAN_HEX_CHECK;
-	// <== Hex Check [Xman] - Stulle
-	}else if (thePrefs.IsBadModString())
-	{
-		if(old_m_strClientSoftware != m_strClientSoftware)
-		{
-			if (StrStrI(m_strModVersion,_T("Freeza"))||
-				StrStrI(m_strModVersion,_T("d-unit"))||
-				//StrStrI(m_strModVersion,_T("NOS"))|| //removed for the moment
-				StrStrI(m_strModVersion,_T("imperator"))||
-				StrStrI(m_strModVersion,_T("SpeedLoad"))||
-				StrStrI(m_strModVersion,_T("gt mod"))||
-				StrStrI(m_strModVersion,_T("egomule"))||
-				//StrStrI(m_strModVersion,"aldo")|| //removed for the moment
-				StrStrI(m_strModVersion,_T("darkmule"))||
-				StrStrI(m_strModVersion,_T("LegoLas"))||
-				StrStrI(m_strModVersion,_T("dodgethis"))|| //Updated
-				StrStrI(m_strModVersion,_T("DM-"))|| //hotfix
-				StrStrI(m_strModVersion,_T("|X|"))||
-				StrStrI(m_strModVersion,_T("eVorte"))||
-				StrStrI(m_strModVersion,_T("Mison"))||
-				StrStrI(m_strModVersion,_T("father"))||
-				StrStrI(m_strModVersion,_T("Dragon"))||
-				StrStrI(m_strModVersion,_T("booster"))|| //Temporaly added, must check the tag
-				StrStrI(m_strModVersion,_T("$motty"))||
-				StrStrI(m_strModVersion,_T("Thunder"))||
-				StrStrI(m_strModVersion,_T("BuzzFuzz"))||
-				//StrStrI(m_strModVersion,_T("Speed-Unit"))|| 
-				StrStrI(m_strModVersion,_T("Killians"))||
-				StrStrI(m_strModVersion,_T("00de"))|| //Commander - Added: LeecherMod
-				// EastShare - Added by Pretender, TAHO
-				StrStrI(m_strModVersion,_T("Heartbreaker"))||
-				StrStrI(m_strModVersion,_T("crack"))||
-				StrStrI(m_strModVersion,_T("Power Mule"))||
-				StrStrI(m_strModVersion,_T("SweetMule"))||
-				StrStrI(m_strModVersion,_T("Kalitsch"))||
-				StrStrI(m_strModVersion,_T("Ketamine"))||
-				StrStrI(m_strModVersion,_T("Viva"))||
-				StrStrI(m_strModVersion,_T("Rul0r"))||
-				StrStrI(m_strModVersion,_T("Element"))|| 
-				StrStrI(m_strModVersion,_T("HARDMULE"))||
-				StrStrI(m_strModVersion,_T("lovelace.10e X"))|| 
-//				StrStrI(m_strModVersion,_T("§¯Å]"))||
-				StrStrI(m_strModVersion,_T("rappi"))|| //20040522
-				StrStrI(m_strModVersion,_T("EastShare")) && StrStrI(m_strClientSoftware,_T("0.29"))||
-				StrStrI(m_strClientSoftware,_T("0.60"))|| //20040330
-				StrStrI(m_strClientSoftware,_T("0.69"))|| //20040402
-				(StrStrI(m_strModVersion,_T("EastShare")) && StrStrI(m_strClientSoftware,_T("0.29")))||
-//				(StrStrI(m_strModVersion,_T("EastShare")) && (m_strClientSoftware.GetLength() == 28))|| //20041128
-					// EastShare - Added by Pretender, TAHO
-
-				//StrStrI(m_strModVersion,_T("LSD.7c")) && !StrStrI(m_strClientSoftware,_T("27"))||
-				StrStrI(m_strModVersion,_T("eChanblard v7.0")) ||
-				StrStrI(m_strModVersion,_T("ACAT")) && m_strModVersion.GetLength() > 4 ||
-				//StrStrI(m_strModVersion,_T("!FREEANGEL!")) ||
-				StrStrI(m_strModVersion,_T("Applejuice")) || // community & gpl violator
-				StrStrI(m_strModVersion,_T("          ")) ||
-				// ==> added - Stulle
-				StrStrI(m_strModVersion,_T("[OO.de-L33CH4"))||
-				StrStrI(m_strModVersion,_T("Zambor"))||
-				StrStrI(m_strModVersion,_T("sivka v12e8")) && m_nClientVersion != MAKE_CLIENT_VERSION(0, 42, 4)||
-				StrStrI(m_strModVersion,_T("Speedmule"))|| 
-				// xman list start
-				//StrStrI(m_strModVersion,_T("Stonehenge"))||
-				StrStrI(m_strModVersion,_T("@RAPTOR"))||
-				StrStr(m_strModVersion,_T("pwNd muLe"))||
-				StrStrI(m_strModVersion,_T("HARDPAW"))||
-				//StrStrI(m_strModVersion,_T("XXL"))||
-				StrStrI(m_strModVersion,_T("LSD"))||			
-				StrStrI(m_strModVersion,_T("Bad Donkey"))||
-				StrStrI(m_strModVersion,_T("DSL-Light-Client"))||
-				StrStrI(m_strModVersion,_T("Elben"))||
-				StrStr(m_strModVersion,_T("PROeMule"))||
-				StrStrI(m_strModVersion,_T("Devil"))||
-				StrStrI(m_strModVersion,_T("Elfen"))||
-				StrStrI(m_strModVersion,_T("Ef-mod "))||
-				StrStrI(m_strModVersion,_T("Xtreme Xtended"))||
-				StrStrI(m_strModVersion,_T("MirageMod"))||
-				StrStrI(m_strModVersion,_T("SpeedX"))||
-				StrStrI(m_strModVersion,_T("AIDEADSL"))||
-				StrStrI(m_strModVersion,_T("Hypnotix"))||
-				StrStrI(m_strModVersion,_T("BLACKMULE"))|| 
-				StrStrI(m_strModVersion,_T("blackviper"))||
-				StrStrI(m_strModVersion,_T("BlackAngel"))||
-				StrStrI(m_strModVersion,_T("rabbit"))|| 
-				StrStrI(m_strModVersion,_T("rabb_it"))|| 
-				StrStrI(m_strModVersion,_T("Raptor"))|| 
-				StrStrI(m_strModVersion,_T("Hawkstar"))|| 
-				StrStrI(m_strModVersion,_T("ServerClient"))|| 
-				StrStrI(m_strModVersion,_T("Love-Angel"))|| 
-				StrStrI(m_strModVersion,_T("SuperKiller"))|| 
-				StrStrI(m_strModVersion,_T("Morph XT"))||
-				StrStrI(m_strModVersion,_T("BlueHex"))||
-				StrStrI(m_strModVersion,_T("FlowerPower"))||
-				StrStrI(m_strModVersion,_T("Fincan"))||
-				StrStrI(m_strModVersion,_T("OO.de"))||
-				StrStrI(m_strModVersion,_T("00.de"))||
-				StrStrI(m_strModVersion,_T("OOde"))||
-				StrStrI(m_strModVersion,_T("00de"))||
-				StrStrI(m_strModVersion,_T("OS_"))||
-				StrStrI(m_strModVersion,_T("Heartbreaker"))||
-				StrStrI(m_strModVersion,_T("Arabella"))||
-				StrStrI(m_strModVersion,_T("Administrator"))||
-				StrStrI(m_strModVersion,_T("B@d-D3vi7"))||
-				StrStrI(m_strModVersion, _T("Dying Angel"))||
-				StrStrI(m_strModVersion, _T("FREAK MOD VENOM"))||
-				StrStrI(m_strModVersion,_T("CryptedSpeed"))||
-				StrStrI(m_strModVersion, _T("h34r7b34k3r"))||
-				StrStrI(m_strModVersion, _T("Exorzist"))||
-				StrStrI(m_strModVersion, _T("A.i.d.e-A.D.S.L"))||
-				StrStrI(m_strModVersion,_T("DarkDragon"))||
-				(StrStrI(m_strModVersion, _T("Xtreme")) && StrStrI(m_strModVersion, _T("]")))||
-				StrStrI(m_strModVersion,_T("Rockesel"))||
-				StrStrI(m_strModVersion,_T("Community"))|| 
-				StrStrI(m_strModVersion,_T("IcE-MoD"))||
-				StrStrI(m_strModVersion,_T("a-eDit"))||
-				StrStrI(m_strModVersion,_T("Ultimativ"))||
-				StrStrI(m_strModVersion, _T("Ulti F"))||
-				StrStrI(m_strModVersion, _T("NewMule"))||
-				StrStrI(m_strModVersion, _T("smart- muli"))||
-				StrStrI(m_strModVersion,_T("uptempo"))||
-				StrStrI(m_strModVersion, _T("albaR"))||
-				StrStrI(m_strModVersion, _T("AngelDr"))||	//5/2006
-				StrStrI(m_strModVersion, _T("Tombstone Reloaded"))|| //5/2006
-				StrStrI(m_strModVersion, _T("Tombstone Next"))|| //10/2006
-				StrStrI(m_strModVersion, _T("pP.r8b"))|| //5/2006
-				StrStrI(m_strModVersion, _T("x0Rz!$T"))|| //E/€xorzist
-				StrStrI(m_strModVersion, _T("€xORz!§T"))||
-				StrStrI(m_strClientSoftware,_T("eMule Compat v0.40")) || //7/2006
-				StrStrI(m_strClientSoftware,_T("eMule Compat v127.")) || //8/2006
-				StrStrI(m_strModVersion, _T("No Ratio"))|| //based on scarangel 7/2006
-				StrStrI(m_strModVersion, _T("DeathAngel"))|| //based on Xtreme 8/2006
-				StrStrI(m_strModVersion, _T("PROemule"))||	//9/2006
-				StrStrI(m_strModVersion, _T("Simple Leecher"))||	//9/2006
-				StrStrI(m_strModVersion, _T("oFF *+*"))||	//10/2006
-				StrStrI(m_strModVersion, _T("0FF "))||	//6/2007
-				StrStrI(m_strModVersion, _T("SmartMuli"))||	//12/2006
-				StrStrI(m_strModVersion, _T("D10T"))||	//12/2006
-				StrStrI(m_strModVersion, _T("the fonz"))||	//12/2006
-				StrStrI(m_strModVersion, _T("TurkMule"))||	//1/2007
-				StrStrI(m_strModVersion, _T("Hyperdrive"))||	//1/2007
-				StrStrI(m_strModVersion, _T("NextEvolution"))||	//1/2007
-				StrStr(m_strModVersion, _T("xtreme")) || //case sensitive!
-				StrStrI(m_strModVersion, _T("Enter MoD Name"))||
-				StrStrI(m_strModVersion, _T("TCMatic 3"))|| //1/2007  //version 3 is the public version and used as leecher
-				StrStrI(m_strModVersion, _T("Pimp"))||	//3/2007
-				StrStrI(m_strModVersion, _T("XDP "))||	//6/2007
-				StrStrI(m_strModVersion, _T("AeOnFlux"))||	//8/2007
-				StrStrI(m_strModVersion, _T("Final Fight"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("Fireball"))||	//added dlarge "standart String"
-				StrStrI(m_strModVersion, _T("SunPower"))||	//added dlarge "standart String"
-				StrStrI(m_strModVersion, _T("SuperKiller"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("X-Cite"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("waZZa"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("Merza"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("K.O.T."))|| //added dlarge
-				StrStrI(m_strModVersion, _T("Licokine"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("BlackStar"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("nEwLoGic"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("Dein Modstring"))||	// 3/2007
-				StrStrI(m_strModVersion, _T("choose your modstring"))|| // 3/2007
-				StrStrI(m_strModVersion, _T("Enter Your Modstring"))|| //added dlarge
-				StrStrI(m_strModVersion, _T("C-E-R-E-B-R-O")) || //added dlarge
-				StrStrI(m_strModVersion, _T("SPEED EMULE"))|| //MyTh	
-				StrStrI(m_strModVersion, _T("SPIKE2 +"))|| //MyTh hard leecher
-				StrStrI(m_strModVersion, _T("WIKINGER"))|| //MyTh apple-com
-				//StrStrI(m_strModVersion, _T("Adunanza"))|| //MyTh italian ISP-spec com user
-				StrStrI(m_strModVersion, _T("Asiklar"))|| //MyTh apple-com
-				StrStrI(m_strModVersion, _T("Shadow"))|| //MyTh
-				StrStrI(m_strModVersion, _T("RC-Atlantis"))|| //MyTh
-				StrStrI(m_strModVersion, _T("Rockforce"))|| //MyTh
-				StrStrI(m_strModVersion, _T("EPB"))|| //MyTh
-				StrStrI(m_strModVersion, _T("Tyrantmule"))|| //MyTh
-				StrStrI(m_strModVersion, _T("APRC"))|| //MyTh
-				StrStrI(m_strModVersion, _T("Hardstyle"))|| //MyTh
-				StrStrI(m_strModVersion, _T("pP.r12b"))|| //MyTh
-				StrStrI(m_strModVersion, _T("Simple Life"))|| //MyTh
-				StrStrI(m_strModVersion, _T("PRO"))|| //MyTh eMule 0.49a PRO (+ONO)
-				StrStrI(m_strModVersion, _T("TYRANUS"))|| //MyTh
-				StrStrI(m_strClientSoftware,_T("eMule v2.0")) || //6/2007 fake Xtreme / GPL-breaker
-				// added in 6.1
-				((_tcsstr(m_strModVersion, _T("MorphXT v9.6")) || _tcsstr(m_strModVersion, _T("Xtreme 7")) || _tcsstr(m_strModVersion, _T("ZZUL Plus 1"))) && _tcsstr(m_strClientSoftware, _T("0.48a"))) || //should not 0.48a
-				_tcsstr(m_strModVersion, _T("NetF WARP 9")) || //should be NetF WARP 0.3a.9
-				_tcsstr(m_strModVersion, _T("xunlei")) ||//xunlei v5.7.1
-				StrStrI(m_strModVersion, _T("20071122")) ||//xunlei 5.7.5
-				StrStrI(m_strModVersion, _T("20080228")) ||//xunlei 5.7.9.463
-				StrStrI(m_strModVersion, _T("080620")) ||//xunlei 5.8
-				StrStrI(m_strModVersion, _T("080509")) ||
-				StrStrI(m_strModVersion, _T("20080505")) || //xunlei 6
-				StrStrI(m_strModVersion, _T("v 080828")) ||
-				StrStrI(m_strModVersion, _T("XL8828")) ||
-				StrStrI(m_strModVersion, _T("build 11230")) ||
-				StrStrI(m_strModVersion, _T("X 9.23")) ||
-				StrStrI(m_strModVersion, _T("ZZULL")) ||
-				StrStrI(m_strModVersion, _T("XunL")) ||
-				StrStrI(m_strModVersion, _T("Xthunder")) ||
-				StrStrI(m_strModVersion, _T("xl build")) ||
-				StrStrI(m_strModVersion, _T("PlayMule")) || //PlayMule
-				( !m_strModVersion.IsEmpty() && m_strModVersion.Trim().IsEmpty() ) || //pruma, korean leecher, modversion is a space
-				StrStrI(m_strModVersion, L"Angelmule") || // JvA: no sources, no changelog, community username,...
-				StrStrI(m_strModVersion, L"TR-P2P-MoD") || // JvA: bad client
-				StrStrI(m_strModVersion, L"Esekci") || // JvA: no sources, no changelog, ...
-				StrStrI(m_strClientSoftware,_T("eMule v0.95g")) || //korea
-				StrStrI(m_strClientSoftware,_T("eMule v0.47f")) ||
-				StrStrI(m_strClientSoftware,_T("eMule v2.4")) ||
-				StrStrI(m_strClientSoftware,_T("eMule v2.5")) ||
-				StrStrI(m_strClientSoftware,_T("eMule v3.1")) ||
-				_tcsstr(m_strModVersion,_T("VMULE")) || //israel
-				StrStrI(m_strModVersion,_T("Goop.co.il")) ||
-				StrStrI(m_strModVersion,_T("Razorback3")) ||
-				StrStrI(m_strModVersion,_T("UlTiMaTiC ")) || //based on MA 3.5
-				_tcsstr(m_strModVersion,_T("Peizheng 090304")) || //gpl-breaker
-				_tcsstr(m_strModVersion, _T("Neo-R")) ||
-				_tcsstr(m_strModVersion, _T("Neo-RS")) ||
-				StrStrI(m_strModVersion, _T("Apace")) ||
-				StrStrI(m_strModVersion,_T("L!()Netw0rk")) ||
-				StrStrI(m_strModVersion,_T("L!ONetwork")) ||
-				StrStrI(m_strModVersion, _T("FreeCD")) || //GPL-Breaker
-				StrStrI(m_strModVersion,_T("800STER")) ||
-				StrStrI(m_strModVersion,_T("8OOSTER")) ||
-				StrStrI(m_strModVersion,_T("BOO$T")) ||
-				StrStrI(m_strModVersion,_T("B00ST")) ||
-				StrStrI(m_strModVersion, _T("T-L-N BO0ST")) || //by briandgwx
-				StrStrI(m_strModVersion, _T("T L N B O O S T")) ||	//by taz-me
-//from Riso64bit
-				_tcsstr(m_strModVersion, _T("Thor ")) ||
-				_tcsstr(m_strModVersion, _T("DeSfAlko")) ||
-				_tcsstr(m_strModVersion, _T("ZZ-R ")) ||
-				_tcsstr(m_strModVersion, _T("ZZ-RS ")) ||
-				_tcsstr(m_strModVersion, _T("Reptil-Crew-3")) ||
-				_tcsstr(m_strModVersion, _T("Anonymous Mod")) ||
-				StrStrI(m_strModVersion, _T("NFO.Co.iL")) ||
-				_tcsstr(m_strModVersion, _T("Red Projekt")) ||
-				_tcsstr(m_strModVersion, _T("centraldivx.com")) || //no source
-				StrStrI(m_strModVersion, _T("emule.co.il")) ||
-				StrStrI(m_strModVersion, _T("Fire eMule")) ||
-				StrStrI(m_strModVersion, _T("PirateMule")) ||
-				StrStrI(m_strModVersion, _T("HighTime")) ||
-				StrStrI(m_strModVersion, _T("GPS2Crew")) ||
-				StrStrI(m_strModVersion, _T("TLN eMule")) ||
-				StrStrI(m_strModVersion, _T("DVD-RS")) ||
-				_tcsstr(m_strModVersion, _T("ZZULtimativ-R")) ||
-				_tcsstr(m_strModVersion, _T("Div eMule")) ||
-				_tcsstr(m_strModVersion, _T("Pwr eMule")) ||
-				_tcsstr(m_strModVersion, _T("VipeR")) ||
-				_tcsstr(m_strModVersion, _T("Methadone")) ||
-				_tcsstr(m_strModVersion, _T("Titandonkey")) ||
-				_tcsstr(m_strModVersion, _T("SpeedShare")) ||
-				_tcsstr(m_strModVersion, _T("Wodan")) ||
-				_tcsstr(m_strModVersion, _T("Sikombious")) ||
-				_tcsstr(m_strModVersion, _T("HyperTraxx")) ||
-				_tcsstr(m_strModVersion, _T("Div pro")) ||
-				_tcsstr(m_strModVersion, _T("GangBang")) ||
-				_tcsstr(m_strModVersion, _T("WarezFaw.Com")) ||
-				_tcsstr(m_strModVersion, _T("Rastak")) ||
-				_tcsstr(m_strModVersion, _T("Okinawa")) ||
-				_tcsstr(m_strModVersion, _T("Hiroshima")) ||
-				_tcsstr(m_strModVersion, _T("Kamikaze")) ||
-				_tcsstr(m_strModVersion, _T("Addiction")) ||
-				_tcsstr(m_strModVersion, _T("Bondage")) ||
-				_tcsstr(m_strModVersion, _T("eMuleLife")) ||
-				StrStrI(m_strModVersion, _T("PP-edition")) ||
-				_tcsstr(m_strModVersion, _T("ZZULtra")) ||
-				StrStrI(m_strModVersion, L"RapCom Mod") || //added dlarge 
-				StrStrI(m_strModVersion, L"SBI leecher") || //added dlarge 
-				StrStrI(m_strModVersion, L"TS Next Lite") || //added dlarge  
-				StrStrI(m_strModVersion, L"TR-P2P-MoD") || // JvA: bad client
-				StrStrI(m_strModVersion, L"Esekci") || // JvA: no sources, no changelog, ...
-				_tcslen(m_strModVersion) > 0 && (StrStrI(m_strClientSoftware,_T("edonkey")) || m_strModVersion[0]==_T('['))   ||  //1. donkey user with modstring, 2. modstring begins with [ this is a known leecher
-				(StrStrI(m_strModVersion, _T("Xtreme")) && StrStrI(m_strModVersion, _T("]"))) || //bad Xtreme mod
-				// <== added - Stulle
-				m_strModVersion.IsEmpty() == false && StrStrI(m_strClientSoftware,_T("edonkey"))||
-				((GetVersion()>589) && (GetSourceExchange1Version()>0) && (GetClientSoft()==51)) //LSD, edonkey user with eMule property
-				)
-			{
-				old_m_strClientSoftware = m_strClientSoftware;
-				return BAN_BAD_MOD;
-			}
-		}
-		else if (GetBanReason() == BAN_BAD_MOD)
-			return BAN_BAD_MOD;
-	}
-	if (thePrefs.IsBadNickBan())
-	{
-		if(old_m_pszUsername != m_pszUsername)
-		{
-			if (StrStrI(m_pszUsername,_T("$GAM3R$"))||
-				StrStrI(m_pszUsername,_T("G@m3r"))||
-				StrStrI(m_pszUsername,_T("$WAREZ$"))||
-				//StrStrI(m_pszUsername,_T("RAMMSTEIN"))|| // removed - Stulle	
-				//StrStrI(m_pszUsername,_T("toXic"))|| //removed for the moment
-				StrStrI(m_pszUsername,_T("Leecha"))||
-				//StrStrI(m_pszUsername,_T("eDevil"))|| //removed for the moment
-				StrStrI(m_pszUsername,_T("darkmule"))||
-				StrStrI(m_pszUsername,_T("phArAo"))||
-				StrStrI(m_pszUsername,_T("dodgethis"))||
-				StrStrI(m_pszUsername,_T("Reverse"))||
-				StrStrI(m_pszUsername,_T("eVortex"))||
-				StrStrI(m_pszUsername,_T("|eVorte|X|"))||
-				//StrStrI(m_pszUsername,_T("Chief"))|| // removed - Stulle	
-				//StrStrI(m_pszUsername,"Mison"))|| //Temporaly desactivated, ban only on mod tag
-				StrStrI(m_pszUsername,_T("$motty"))||
-				StrStrI(m_pszUsername,_T("emule-speed"))||
-				StrStrI(m_pszUsername,_T("celinesexy"))||
-				StrStrI(m_pszUsername,_T("Gate-eMule"))||
-				StrStrI(m_pszUsername,_T("energyfaker"))||
-				StrStrI(m_pszUsername,_T("BuzzFuzz"))||
-				StrStrI(m_pszUsername,_T("Speed-Unit"))|| 
-				StrStrI(m_pszUsername,_T("Killians"))||
-				StrStrI(m_pszUsername,_T("pubsman"))||
-				StrStrI(m_pszUsername,_T("00de.de"))|| //Commander - Added: LeecherMod
-				StrStrI(m_pszUsername,_T("OO.de"))|| //Commander - Added: LeecherMod
-				// EastShare - Added by Pretender, TAHO
-				StrStrI(m_pszUsername,_T("eMule@#$"))||
-				StrStrI(m_pszUsername,_T("emule-element"))||
-				StrStrI(m_pszUsername,_T("DarkMule"))||
-				// EastShare - Added by Pretender, TAHO
-				// ==> added - Stulle
-				StrStrI(m_pszUsername,_T("00de"))||
-				StrStrI(m_pszUsername,_T("futurezone-reloaded"))||
-				StrStrI(m_pszUsername,_T("Dazzle Mod"))||
-				StrStrI(m_pszUsername,_T("Emule FX"))||
-				StrStrI(m_pszUsername,_T("OOde")) ||
-				StrStrI(m_pszUsername,_T("Rappi")) ||
-				StrStrI(m_pszUsername,_T("Ketamine")) ||
-				StrStrI(m_pszUsername,_T("HARDMULE")) ||
-				StrStrI(m_pszUsername,_T("emuleech")) ||
-				StrStrI(m_pszUsername, _T("SchlumpMule"))||
-				StrStrI(m_pszUsername, _T("Safty´s"))||
-				StrStr(m_pszUsername, _T("UnKnOwN pOiSoN"))||
-				StrStrI(m_pszUsername, _T("ElfenPower"))||
-				StrStrI(m_pszUsername, _T("eMule Cow"))||
-				//StrStrI(m_pszUsername, _T("Freezamule"))||
-				StrStr(m_pszUsername, _T("EGOmule"))||
-				StrStrI(m_pszUsername, _T("-=EGOist=-"))||
-				StrStrI(m_pszUsername, _T("FreezaVamp"))||
-				StrStrI(m_pszUsername, _T("Muli_Checka"))||
-				StrStr(m_pszUsername, _T("PrOjEcT-SaNdStOrM"))||
-				StrStr(m_pszUsername, _T("NotHer eDitiOn"))||
-				StrStrI(m_pszUsername, _T("eSl@d3vil"))||
-				StrStrI(m_pszUsername, _T(" AgentSmith"))||
-				StrStrI(m_pszUsername, _T("rabb_it"))||
-				StrStrI(m_pszUsername, _T("ServerClient"))||
-				StrStrI(m_pszUsername, _T(">>Power-Mod"))||
-				StrStr(m_pszUsername, _T("DM_X"))||
-				StrCmpI(m_pszUsername, _T("Muse"))==0 ||
-				StrStr(m_pszUsername, _T("ZamBoR"))||
-				StrStr(m_pszUsername, _T("emule.razorback3.com"))||
-				StrStrI(m_pszUsername,_T("[LSD.19"))||
-				StrStr(m_pszUsername, _T("Gate-To-Darkness.com"))||
-				StrStr(m_pszUsername, _T("emule.razorback3.com"))||
-				StrStr(m_pszUsername, _T("Titanesel.tk"))||
-				StrStr(m_pszUsername, _T("bigbang.to"))||
-				StrStrI(m_pszUsername,_T("leecherclients.org")) ||  //Xman 10/06
-				StrStrI(m_pszUsername,_T("futuremods.de")) ||  //Xman 10/06
-				StrStrI(m_pszUsername,_T(".::Stenoco-Zone::.")) ||
-				StrStrI(m_pszUsername,_T("emule-mods.cc")) || //Xman 01/07
-				StrStrI(m_pszUsername,_T("leecher-mod.net")) || //Xman 02/07
-				StrStrI(m_pszUsername,_T("leecher-world.com")) || //added dlarge
-				StrStrI(m_pszUsername,_T("leecher.biz")) || //added dlarge
-				StrStr(m_pszUsername, _T("FUCKLW"))|| //added dlarge
-				// added in 6.1
-				StrStrI(m_pszUsername, L"futuremod.de") || // JvA: apple-com adress
-				StrStrI(m_pszUsername, L"@ Raptor") ||     //added dlarge
-				StrStrI(m_pszUsername,_T("Flashget")) || //FlashGet
-				StrStrI(m_pszUsername,_T("http://www.net-xfer.com")) || //netxfer
-				StrStrI(m_pszUsername,_T("emuIe-project.net")) || //phishing site
-				StrStrI(m_pszUsername,_T("QQDownload")) || //tencent
-				StrStrI(m_pszUsername, _T("DONKEY2007")) || //korea
-				StrStrI(m_pszUsername, _T("www.Freang.com")) ||
-				StrStrI(m_pszUsername, _T("www.pruna.com")) ||
-				StrStrI(m_pszUsername, _T("[KOREA]")) ||
-				StrStrI(m_pszUsername, _T("superemule")) ||
-				StrStrI(m_pszUsername, _T("PRUNA 2008")) ||
-				StrStrI(m_pszUsername, _T("MOYAM")) ||
-				StrStrI(m_pszUsername, _T("Li()Network")) || //lionetwork
-				_tcsstr(m_pszUsername,L"dianlei.com") ||
-				_tcsstr(m_pszUsername,L"[eMuleBT]") ||
-				_tcsstr(m_pszUsername,L"[PPMule]") ||
-				_tcsstr(m_pszUsername,L"[TUOTU]") ||
-				_tcsstr(m_pszUsername,L"kaggo.com") ||
-				_tcsstr(m_pszUsername,L"[Chinfo]") ||
-				_tcsstr(m_pszUsername,L"vgo.21cn") ||
-//more AJ modstrings
-				( StrStrI(m_pszUsername, L"[") && StrStrI(m_pszUsername, L"]")
-				&& (
-					StrStrI(m_pszUsername, L"Applejuice") ||
-					StrStrI(m_pszUsername, L"Wikinger") ||
-					StrStrI(m_pszUsername, L"ROCKFORCE") ||
-					StrStrI(m_pszUsername, L"RC-ATLANTIS") ||
-					StrStrI(m_pszUsername, L"Fireball") ||
-					StrStrI(m_pszUsername, L"SunPower")
-					)
-				) ||
-//zz_fly Start
-				_tcsstr(m_pszUsername,_T("a1[VeryCD]xthame")) || //XL
-//zz_fly End
-//from Riso64bit
-				_tcsstr(m_pszUsername, _T("FincanMod")) || //fincan
-				_tcsstr(m_pszUsername, _T("Finc@nMod")) ||
-				StrStrI(m_pszUsername, _T("www.titanmule.to")) ||
-				StrStrI(m_pszUsername, _T("Www.NFOil.com")) ||
-				StrStrI(m_pszUsername, _T("TLN eMule")) ||
-				StrStrI(m_pszUsername, _T("LHeMule")) ||
-				_tcsstr(m_pszUsername, _T("L!()Network")) ||
-				_tcsstr(m_pszUsername, _T("Li()Network")) ||
-				StrStrI(m_pszUsername, _T("VMULE 2007")) ||
-				StrStrI(m_pszUsername, _T("TLNGuest")) ||
-				StrStrI(m_pszUsername, _T("Div eMule 2007")) ||
-				StrStrI(m_pszUsername, _T("eMulePro.de.vu")) ||
-				StrStrI(m_pszUsername, _T("emuIe-co.net")) ||
-				StrStrI(m_pszUsername, _T("AE CoM UseR")) ||
-				StrStrI(m_pszUsername, _T("BTFaw.Com")) ||
-				StrStrI(m_pszUsername, _T("warezfaw.net")) ||
-				StrStrI(m_pszUsername, _T("lh.2y.net")) ||
-				StrStrI(m_pszUsername, _T("[Pwr Mule]Usuario")) ||
-				StrStrI(m_pszUsername, _T("Www.D-iL.Net")) ||
-				_tcsstr(m_pszUsername, _T("http://emule.net")) ||
-				StrStrI(m_pszUsername, _T("www.aideadsl.com")) ||
-				StrStrI(m_pszUsername, _T("tangot.com")) ||
-				StrStrI(m_pszUsername, _T("r3wlx.com")) ||
-				StrStrI(m_pszUsername, _T("http://yo.com")) ||
-				StrStrI(m_pszUsername, _T("Angel eMule")) ||
-				StrStrI(m_pszUsername, _T("AngelMule")) ||
-				_tcsstr(m_pszUsername, _T("Ultimativ"))||
-				StrStrI(m_pszUsername, _T("www.eChanblardNext.org")) ||		
-				StrStrI(m_pszUsername, _T("www.extremule.com")) || //phishing site
-				StrStrI(m_pszUsername, _T("www.emuleproject.com")) ||
-//End
-				// <== added - Stulle
-				StrStrI(m_pszUsername,_T("emule")) && StrStrI(m_pszUsername,_T("booster"))
-				)
-			{
-				old_m_pszUsername = m_pszUsername;
-				return BAN_BAD_NICK;
-			}
-		}
-		else if(GetBanReason() == BAN_BAD_NICK)
-			return BAN_BAD_NICK;
-	}
-	/*
-	if (IsLeecher()){
-		return _T("Allready Known");
-	}else*/
-	if (thePrefs.IsGhostMod() && (!m_strNotOfficial.IsEmpty() && m_strModVersion.IsEmpty() && (m_clientSoft == SO_EMULE) && (m_nClientVersion <= MAKE_CLIENT_VERSION(CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, CemuleApp::m_nVersionUpd)))){
-		return BAN_GHOST;
-	}else if (thePrefs.IsFakeEmule() && (m_nClientVersion > MAKE_CLIENT_VERSION(0, 30, 0) && m_byEmuleVersion > 0 && m_byEmuleVersion != 0x99 && m_clientSoft == SO_EMULE)){
-		return BAN_FAKE_VER;
-	}else if(thePrefs.IsEmptyNick() && m_clientSoft == SO_EMULE && !m_pszUsername){
-		return BAN_EMPTY_NICK;
-	}
-	// ==> Nick Changer Check [Xman] - Stulle
-	if(thePrefs.IsNickChanger()){
-		if(m_pszUsername!=NULL && old_m_pszUsername != NULL)
-		{
-			if(old_m_pszUsername!=m_pszUsername)
-			{
-				if(GetBanReason()==GOOD_BOY && m_strModVersion.IsEmpty() //check only if it isn't a known leecher and doesn't send modversion
-					&& ::GetTickCount() - m_ulastNickChage < HR2MS(3)) //last nickchane was in less than 3 hours
-				{
-					m_uNickchanges++;
-					if(m_uNickchanges >=3)
-						return BAN_NICK_CHANGER;
-				}
-				m_ulastNickChage = ::GetTickCount();
-			}
-			else
-			{
-				//decrease the value if it's the same nick
-				if(m_uNickchanges>0)
-					m_uNickchanges--;
-			}
-		}
-		old_m_pszUsername = m_pszUsername;
-	}
-	// <== Nick Changer Check [Xman] - Stulle
-	//MORPH START - Added, Community/Corrupt userhash check [zz_fly/squallATF]
-	if(thePrefs.IsCommunityCheck()){ // ban systems optional - Stulle
-		CString userhash=md4str(GetUserHash());
-		//community userhash check 
-		static const TCHAR refuserhash0[] = _T("154CE646120E96CC798C439A20D26F8D");
-		static const TCHAR refuserhash1[] = _T("455361F9D95C3CD7E6BF2192D1CB3D02");
-		static const TCHAR refuserhash2[] = _T("DA1CEEE05B0E5319B3B48CAED24C6F4A");
-		static const TCHAR refuserhash3[] = _T("C8B5F41441C615FBABAD9A7E55294D01");
-		if(_tcsicmp(userhash,refuserhash0)==0 ||
-		_tcsicmp(userhash,refuserhash1)==0 ||
-		_tcsicmp(userhash,refuserhash2)==0 ||
-		_tcsicmp(userhash,refuserhash3)==0)
-			// ==> Reduce Score for leecher - Stulle
-			/*
-			return _T("Community userhash");
-			*/
-			return BAN_COMMUNITY;
-			// <== Reduce Score for leecher - Stulle
-
-		//corrupt userhash check
-		static const TCHAR refuserhash4[] = _T("00000000000E00000000000000006F00");
-		static const TCHAR refuserhash5[] = _T("FE000000000E00000000000000006F00");
-		if(_tcsicmp(userhash,refuserhash4)==0 ||
-		_tcsicmp(userhash,refuserhash5)==0)
-			// ==> Reduce Score for leecher - Stulle
-			/*
-			return _T("Corrupt userhash");
-			*/
-			return BAN_COMMUNITY;
-			// <== Reduce Score for leecher - Stulle
-	} // ban systems optional - Stulle
-	//MORPH END   - Added, Community/Corrupt userhash check [zz_fly/squallATF]
-
-	//MORPH START - Added by leuk_he, eMCrypt Detection [Xman]
-	if (thePrefs.IsEmcrypt() && !m_bGPLEvildoer && m_bUnicodeSupport==false && m_nClientVersion == MAKE_CLIENT_VERSION(0,44,3) && m_strModVersion.IsEmpty() && m_byCompatibleClient==0)
-	{
-		m_bGPLEvildoer = true;
-		DebugLog(LOG_MORPH, _T("[%s]-(%s) Client %s"),_T("eMCrypt(set GPLEvildoer)"),m_strNotOfficial ,DbgGetClientInfo());
-	}
-	//MORPH END   - Added by leuk_he, eMCrypt Detection [Xman]
-	return NULL;
-}
-//MORPH END   - Added by IceCream, Anti-leecher feature
 
 void CUpDownClient::ClearHelloProperties()
 {
@@ -1077,34 +547,50 @@ void CUpDownClient::ClearHelloProperties()
 	m_fSupportsSourceEx2 = 0;
 	m_fSupportsCaptcha = 0;
 	m_fDirectUDPCallback = 0;
+	m_strModVersion.Empty(); //Maella -Support for tag ET_MOD_VERSION 0x55
 }
 
 bool CUpDownClient::ProcessHelloPacket(const uchar* pachPacket, uint32 nSize)
 {
 	CSafeMemFile data(pachPacket, nSize);
-	// ==> New United Community Detection [Xman] - Stulle
+	//Xman Anti-Leecher
 	/*
 	data.ReadUInt8(); // read size of userhash
 	*/
 	uhashsize=data.ReadUInt8();
-	// <== New United Community Detection [Xman] - Stulle
-
+	//Xman end
 	// reset all client properties; a client may not send a particular emule tag any longer
 	ClearHelloProperties();
+ 	//Xman Anti-Leecher
+	/*
 	return ProcessHelloTypePacket(&data);
+	*/
+	return ProcessHelloTypePacket(&data,true);
+	//Xman end
 }
 
 bool CUpDownClient::ProcessHelloAnswer(const uchar* pachPacket, uint32 nSize)
 {
-	uhashsize=16; // New United Community Detection [Xman] - Stulle
-
+	//Xman Anti-Leecher
+	uhashsize=16;
+	//Xman end
 	CSafeMemFile data(pachPacket, nSize);
+ 	//Xman Anti-Leecher
+	/*
 	bool bIsMule = ProcessHelloTypePacket(&data);
+	*/
+	bool bIsMule = ProcessHelloTypePacket(&data, false);
+	//Xman end
 	m_bHelloAnswerPending = false;
 	return bIsMule;
 }
 
+//Xman Anti-Leecher
+/*
 bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
+*/
+bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data, bool isHelloPacket)
+//Xman end
 {
 	bool bDbgInfo = thePrefs.GetUseDebugDevice();
 	m_strHelloInfo.Empty();
@@ -1113,18 +599,9 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 	m_bIsML = false;
 	m_fNoViewSharedFiles = 0;
 	m_bUnicodeSupport = false;
-	m_incompletepartVer = 0; // enkeyDev: ICS //Morph - added by AndCycle, ICS
-	//MORPH START - Added by SiRoB, ET_MOD_VERSION 0x55
-	m_strModVersion.Empty();
-	//MORPH END   - Added by SiRoB, ET_MOD_VERSION 0x55
-	m_uModClient = MOD_NONE; //MOPPH - Added by Stulle, Mod Icons
-	uint8 uBanReason = 0; // Reduce Score for leecher - Stulle
-	// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-	m_strModPure.Empty();
-#endif
-	// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-	
+
+	m_uModClient = MOD_NONE; // Mod Icons - Stulle
+
 	data->ReadHash16(m_achUserHash);
 	if (bDbgInfo)
 		m_strHelloInfo.AppendFormat(_T("Hash=%s (%s)"), md4str(m_achUserHash), DbgGetHashTypeString(m_achUserHash));
@@ -1135,19 +612,22 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 	if (bDbgInfo)
 		m_strHelloInfo.AppendFormat(_T("  Port=%u"), nUserPort);
 	
+	CString strBanReason; //Xman Anti-Leecher
+	bool nonofficialopcodes = false; //Xman Anti-Leecher
+	CString unknownopcode; //Xman Anti-Leecher
+	bool wronghello = false; //Xman Anti-Leecher
+	uint32 hellotagorder = 1; //Xman Anti-Leecher
+	bool foundmd4string = false; //Xman Anti-Leecher
+	//zz_fly :: Fake Shareaza Detection
+	bool bWasUDPPortSent = false;
+	bool bIsFakeShareaza = false;
+	//zz_fly :: Fake Shareaza Detection end
+
 	DWORD dwEmuleTags = 0;
 	bool bPrTag = false;
 	uint32 tagcount = data->ReadUInt32();
 	if (bDbgInfo)
 		m_strHelloInfo.AppendFormat(_T("  Tags=%u"), tagcount);
-	//MOPRH START - Added by SiRoB, Control Mod Tag
-	m_strNotOfficial.Empty();
-	CString strBanReason = NULL;
- 	//MOPRH END   - Added by SiRoB, Control Mod Tag
-	//MORPH START - Added, Bad Shareaza detection [zz_fly]
-	bool bWasUDPPortSent = false;
-	bool bIsBadShareaza = false;
-	//MORPH END   - Added, Bad Shareaza detection [zz_fly]
 	for (uint32 i = 0; i < tagcount; i++)
 	{
 		CTag temptag(data, true);
@@ -1157,8 +637,8 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				if (temptag.IsStr()) {
 					free(m_pszUsername);
 					m_pszUsername = _tcsdup(temptag.GetStr());
-					if (bDbgInfo){
-						if (m_pszUsername){//filter username for bad chars
+					if (bDbgInfo) {
+						if (m_pszUsername) {//filter username for bad chars
 							TCHAR* psz = m_pszUsername;
 							while (*psz != _T('\0')) {
 								if (*psz == _T('\n') || *psz == _T('\r'))
@@ -1171,84 +651,52 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsStr()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_NAME"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
+				//Xman Anti-Leecher
+				if(hellotagorder!=1)
+					wronghello=true;
+				hellotagorder++;
+				//Xman end
 				break;
 
 			case CT_VERSION:
-				if (temptag.IsInt()){
+				if (temptag.IsInt()) {
 					if (bDbgInfo)
 						m_strHelloInfo.AppendFormat(_T("\n  Version=%u"), temptag.GetInt());
 					m_nClientVersion = temptag.GetInt();
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_VERSION"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
+				//Xman Anti-Leecher
+				if(hellotagorder!=2)
+					wronghello=true;
+				hellotagorder++;
+				//Xman end
 				break;
 
 			case CT_PORT:
-				if (temptag.IsInt()){
+				if (temptag.IsInt()) {
 					if (bDbgInfo)
 						m_strHelloInfo.AppendFormat(_T("\n  Port=%u"), temptag.GetInt());
 					nUserPort = (uint16)temptag.GetInt();
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_PORT"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
 
 			case CT_MOD_VERSION:
-				m_strNotOfficial.AppendFormat(_T(",MID=%s"),temptag.GetFullInfo()); //MOPRH - Added by SiRoB, Control Mod Tag
 				if (temptag.IsStr())
 				{
 					m_strModVersion = temptag.GetStr();
-					// ==> StulleMule is not banned - Stulle
-					/*
-					m_bSendOldMorph = GetOldMorph();//MORPH - prevent being banned by old MorphXT
-					*/
-					// <== StulleMule is not banned - Stulle
 
-					// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-					SetModPureString();
-#endif
-					// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-
-					//MOPRH START - Added by Stulle, Mod Icons
-					if(StrStrI(m_strModVersion,_T("MorphXT"))!=0)
-						m_uModClient = MOD_MORPH;
-					else if(StrStrI(m_strModVersion,_T("ScarAngel"))!=0)
+					// ==> Mod Icons - Stulle
+					if(StrStrI(m_strModVersion,_T("ScarAngel"))!=0)
 						m_uModClient = MOD_SCAR;
 					else if(StrStrI(m_strModVersion,_T("StulleMule"))!=0)
 						m_uModClient = MOD_STULLE;
 					else if(StrStrI(m_strModVersion,_T("Xtreme"))!=0)
 						m_uModClient = MOD_XTREME;
+					else if(StrStrI(m_strModVersion,_T("MorphXT"))!=0)
+						m_uModClient = MOD_MORPH;
 					else if(StrStrI(m_strModVersion,_T("EastShare"))!=0)
 						m_uModClient = MOD_EASTSHARE;
 					else if(StrStrI(m_strModVersion,_T("eMuleFuture"))!=0)
@@ -1263,7 +711,7 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 						m_uModClient = MOD_MAGIC;
 					else
 						m_uModClient = MOD_NONE;
-					//MOPRH END   - Added by Stulle, Mod Icons
+					// <== Mod Icons - Stulle
 				}
 				else if (temptag.IsInt())
 					m_strModVersion.Format(_T("ModID=%u"), temptag.GetInt());
@@ -1273,26 +721,6 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 					m_strHelloInfo.AppendFormat(_T("\n  ModID=%s"), m_strModVersion);
 				CheckForGPLEvilDoer();
 				break;
-
-			// MORPH START - Append WC info to m_strNotOfficial
-			case WC_TAG_VOODOO:
-				if (temptag.IsInt()) {
-					m_strNotOfficial.AppendFormat(_T(",WCV=%s"),temptag.GetFullInfo());
-				}
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				else {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadHello()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("Suspect Hello-Tag: %s"),apszSnafuTag[3]);
-						uBanReason = BAN_BAD_HELLO; // Reduce Score for leecher - Stulle
-					}
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				break;
-			case WC_TAG_FLAGS:
-				m_strNotOfficial.AppendFormat(_T(",WCF=%s"),temptag.GetFullInfo()); //MOPRH - Added by SiRoB, Control Mod Tag
-				break;
-			// MORPH END - Append WC info to m_strNotOfficial
 
 			case CT_EMULE_UDPPORTS:
 				// 16 KAD Port
@@ -1306,17 +734,7 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_UDPPORTS"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				bWasUDPPortSent = true; //MORPH - Added, Bad Shareaza detection [zz_fly]
+				bWasUDPPortSent = true; //zz_fly :: Fake Shareaza Detection
 				break;
 
 			case CT_EMULE_BUDDYUDP:
@@ -1325,20 +743,10 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				if (temptag.IsInt()) {
 					m_nBuddyPort = (uint16)temptag.GetInt();
 					if (bDbgInfo)
-					m_strHelloInfo.AppendFormat(_T("\n  BuddyPort=%u"), m_nBuddyPort);
+						m_strHelloInfo.AppendFormat(_T("\n  BuddyPort=%u"), m_nBuddyPort);
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_BUDDYUDP"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
 
 			case CT_EMULE_BUDDYIP:
@@ -1350,16 +758,6 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_BUDDYIP"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
 
 			case CT_EMULE_MISCOPTIONS1:
@@ -1389,29 +787,24 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 					m_bMultiPacket			= (temptag.GetInt() >>  1) & 0x01;
 					m_fSupportsPreview		= (temptag.GetInt() >>  0) & 0x01;
 					dwEmuleTags |= 2;
-					if (bDbgInfo){
+					if (bDbgInfo) {
 						m_strHelloInfo.AppendFormat(_T("\n  PeerCache=%u  UDPVer=%u  DataComp=%u  SecIdent=%u  SrcExchg=%u")
-												_T("  ExtReq=%u  Commnt=%u  Preview=%u  NoViewFiles=%u  Unicode=%u"), 
-													m_fPeerCache, m_byUDPVer, m_byDataCompVer, m_bySupportSecIdent, m_bySourceExchange1Ver, 
-												m_byExtendedRequestsVer, m_byAcceptCommentVer, m_fSupportsPreview, m_fNoViewSharedFiles, m_bUnicodeSupport);
+							_T("  ExtReq=%u  Commnt=%u  Preview=%u  NoViewFiles=%u  Unicode=%u"), 
+							m_fPeerCache, m_byUDPVer, m_byDataCompVer, m_bySupportSecIdent, m_bySourceExchange1Ver, 
+							m_byExtendedRequestsVer, m_byAcceptCommentVer, m_fSupportsPreview, m_fNoViewSharedFiles, m_bUnicodeSupport);
+//Xman
+#ifdef LOGTAG
+						m_strHelloInfo.AppendFormat(_T("\n m_fSupportsAICH=%u"), m_fSupportsAICH);
+#endif
+//Xman end						
 					}
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_MISCOPTIONS1"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				//MORPH START - Added, Bad Shareaza detection [zz_fly]
-				if(!bWasUDPPortSent && !bIsBadShareaza)
-					bIsBadShareaza = true;
-				//MORPH END   - Added, Bad Shareaza detection [zz_fly]
+				//zz_fly :: Fake Shareaza Detection
+				if(!bWasUDPPortSent && !bIsFakeShareaza)
+					bIsFakeShareaza = true;
+				//zz_fly :: Fake Shareaza Detection
 				break;
 
 			case CT_EMULE_MISCOPTIONS2:
@@ -1446,20 +839,10 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_MISCOPTIONS2"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				//MORPH START - Added, Bad Shareaza detection [zz_fly]
-				if(!bWasUDPPortSent && !bIsBadShareaza)
-					bIsBadShareaza = true;
-				//MORPH END   - Added, Bad Shareaza detection [zz_fly]
+				//zz_fly :: Fake Shareaza Detection
+				if(!bWasUDPPortSent && !bIsFakeShareaza)
+					bIsFakeShareaza = true;
+				//zz_fly :: Fake Shareaza Detection
 				break;
 
 			case CT_EMULE_VERSION:
@@ -1479,51 +862,32 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				}
 				else if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: CT_EMULE_VERSION"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			//Morph Start - added by AndCycle, ICS
-			// enkeyDEV: ICS
-			case ET_INCOMPLETEPARTS:
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				m_strNotOfficial.AppendFormat(_T(",ICS=%s"),temptag.GetFullInfo());
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_INCOMPLETEPARTS"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					break;
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				m_incompletepartVer = temptag.GetInt();
+
+			//Xman Anti-Leecher
+			case 0x69: //Webcache WC_TAG_VOODOO
+			case 0x6A: //Webcache WC_TAG_FLAGS
+			case 0x3D: //ICS
+			//zz_fly :: Anti-Leehcer
+			case 0xEE: //VeryCD L2L protocol tag
+			case 0x3E: //X-Ray L2HAC tag
+			//zz_fly :: Anti-Leehcer end
+				nonofficialopcodes=true; //Xman Anti-Leecher
 				break;
-			// <--- enkeyDEV: ICS
-			//Morph End - added by AndCycle, ICS
+			//Xman end
 			default:
+				//Xman Anti-Leecher
+				if(thePrefs.GetAntiLeecherSnafu())
+					if(ProcessUnknownHelloTag(&temptag, strBanReason))
+						foundmd4string=true;
+				
+				unknownopcode.AppendFormat(_T(",%s"),temptag.GetFullInfo());
+				//Xman end
 				// Since eDonkeyHybrid 1.3 is no longer sending the additional Int32 at the end of the Hello packet,
 				// we use the "pr=1" tag to determine them.
 				if (temptag.GetName() && temptag.GetName()[0]=='p' && temptag.GetName()[1]=='r') {
 					bPrTag = true;
 				}
-				bool bTemp = strBanReason.IsEmpty(); // Reduce Score for leecher - Stulle
-				//<<< [SNAFU_V3] Check unknown tags !
-				if (!((temptag.GetNameID() & 0xF0)==0xF0) || strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsSnafu()) // ban systems optional - Stulle
-					ProcessUnknownHelloTag(&temptag, strBanReason);
-				//>>> [SNAFU_V3] Save unknown tags !
-				// ==> Reduce Score for leecher - Stulle
-				if(bTemp && strBanReason.IsEmpty()==false)
-					uBanReason = BAN_SNAFU;
-				// <== Reduce Score for leecher - Stulle
-				m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo()); //MOPRH - Added by SiRoB, Control Mod Tag
 				if (bDbgInfo)
 					m_strHelloInfo.AppendFormat(_T("\n  ***UnkTag=%s"), temptag.GetFullInfo());
 		}
@@ -1552,37 +916,35 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 				m_strHelloInfo.AppendFormat(_T("\n  ***AddData: uint32=%u (0x%08x)"), test, test);
 		}
 	}
-	else if (/*bDbgInfo &&*/ data->GetPosition() < data->GetLength()){
+	else if (bDbgInfo && data->GetPosition() < data->GetLength()){
 		UINT uAddHelloDataSize = (UINT)(data->GetLength() - data->GetPosition());
-		//MOPRH - Added by SiRoB, Control Mod Tag
-		m_strNotOfficial.AppendFormat(_T(",ExtraByte=%u"),uAddHelloDataSize);
-		if(strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsExtraBytes()) // ban systems optional - Stulle
-		{
-			strBanReason=_T("ExtraBytes");
-			uBanReason = BAN_EXTRABYTE;
+		if (uAddHelloDataSize == sizeof(uint32)){
+			DWORD dwAddHelloInt32 = data->ReadUInt32();
+			m_strHelloInfo.AppendFormat(_T("\n  ***AddData: uint32=%u (0x%08x)"), dwAddHelloInt32, dwAddHelloInt32);
 		}
-		//MOPRH - Added by SiRoB, Control Mod Tag
-		if (bDbgInfo) {
-			if (uAddHelloDataSize == sizeof(uint32)){
-				DWORD dwAddHelloInt32 = data->ReadUInt32();
-				m_strHelloInfo.AppendFormat(_T("\n  ***AddData: uint32=%u (0x%08x)"), dwAddHelloInt32, dwAddHelloInt32);
-			}
-			else if (uAddHelloDataSize == sizeof(uint32)+sizeof(uint16)){
-				DWORD dwAddHelloInt32 = data->ReadUInt32();
-				WORD w = data->ReadUInt16();
-				m_strHelloInfo.AppendFormat(_T("\n  ***AddData: uint32=%u (0x%08x),  uint16=%u (0x%04x)"), dwAddHelloInt32, dwAddHelloInt32, w, w);
-			}
-			else
-				m_strHelloInfo.AppendFormat(_T("\n  ***AddData: %u bytes"), uAddHelloDataSize);
+		else if (uAddHelloDataSize == sizeof(uint32)+sizeof(uint16)){
+			DWORD dwAddHelloInt32 = data->ReadUInt32();
+			WORD w = data->ReadUInt16();
+			m_strHelloInfo.AppendFormat(_T("\n  ***AddData: uint32=%u (0x%08x),  uint16=%u (0x%04x)"), dwAddHelloInt32, dwAddHelloInt32, w, w);
 		}
+		else
+			m_strHelloInfo.AppendFormat(_T("\n  ***AddData: %u bytes"), uAddHelloDataSize);
 	}
+
+	//Xman IP to Country
+	uint32 oldIP=m_dwUserIP;
+	//Xman end
 
 	SOCKADDR_IN sockAddr = {0};
 	int nSockAddrLen = sizeof(sockAddr);
 	socket->GetPeerName((SOCKADDR*)&sockAddr, &nSockAddrLen);
 	SetIP(sockAddr.sin_addr.S_un.S_addr);
+
+	//Xman IP to Country
+	//only search if changed, it's cheaper
 	//EastShare Start - added by AndCycle, IP to Country
-	m_structUserCountry = theApp.ip2country->GetCountryFromIP(GetIP());
+	if(oldIP!=m_dwUserIP)
+		m_structUserCountry = theApp.ip2country->GetCountryFromIP(m_dwUserIP);
 	//EastShare End - added by AndCycle, IP to Country
 
 	if (thePrefs.GetAddServersFromClients() && m_dwServerIP && m_nServerPort){
@@ -1600,23 +962,72 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 	if(!HasLowID() || m_nUserIDHybrid == 0 || m_nUserIDHybrid == m_dwUserIP ) 
 		m_nUserIDHybrid = ntohl(m_dwUserIP);
 
+	//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+	//note: do not create credit in memory when we going to ban the client
+	/*
 	CClientCredits* pFoundCredits = theApp.clientcredits->GetCredit(m_achUserHash);
+	*/
+	//zz_fly :: End
 	if (credits == NULL){
+		//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+		/*
 		credits = pFoundCredits;
+		*/
+		//zz_fly :: End
+		//Xman Extened credit- table-arragement
+		/*
 		if (!theApp.clientlist->ComparePriorUserhash(m_dwUserIP, m_nUserPort, pFoundCredits)){
 			if (thePrefs.GetLogBannedClients())
 				AddDebugLogLine(false, _T("Clients: %s (%s), Banreason: Userhash changed (Found in TrackedClientsList)"), GetUserName(), ipstr(GetConnectIP()));
+		*/
+		if (!theApp.clientlist->ComparePriorUserhash(m_dwUserIP, m_nUserPort, m_achUserHash)){
+			AddLeecherLogLine(false, _T("Clients: %s (%s), Banreason: Userhash changed (Found in TrackedClientsList)"), GetUserName(), ipstr(GetConnectIP()));
+		//Xman end
 			Ban();
-		}	
+		}
+		//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+		else if (GetUploadState()!=US_BANNED){
+			credits = theApp.clientcredits->GetCredit(m_achUserHash);
+		}
+		//zz_fly :: End
 	}
+	//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+	/*
 	else if (credits != pFoundCredits){
+	*/
+	else if (md4cmp(credits->GetKey(), m_achUserHash)){
+	//zz_fly :: End
+		//Xman Extened credit- table-arragement
+		credits->SetLastSeen(); //ensure to keep it at least 5 hours
+		//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+		/*
+		if(credits->GetUploadedTotal()==0 && credits->GetDownloadedTotal()==0)
+			credits->MarkToDelete(); //check also if the old hash is used by an other client
+		*/		
+			credits->DecReferredTimes(); //check also if the old hash is used by an other client
+		//zz_fly :: End
+		//Xman end
 		// userhash change ok, however two hours "waittime" before it can be used
+		//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+		/*
 		credits = pFoundCredits;
+		*/
+		credits = NULL;
+		//zz_fly :: End
+		//Xman Extened credit- table-arragement
+		/*
 		if (thePrefs.GetLogBannedClients())
 			AddDebugLogLine(false, _T("Clients: %s (%s), Banreason: Userhash changed"), GetUserName(), ipstr(GetConnectIP()));
+		*/
+		AddLeecherLogLine(false, _T("Clients: %s (%s), Banreason: Userhash changed"), GetUserName(), ipstr(GetConnectIP()));
+		//Xman end
 		Ban();
 	}
-
+	//zz_fly :: Optimized on table-arragement :: Enig123 :: Start
+	else {
+		credits->SetLastSeen(); //Enig123::refresh is neccessary here to avoid wrong judgement
+	}
+	//zz_fly :: End
 
 	if (GetFriend() != NULL && GetFriend()->HasUserhash() && md4cmp(GetFriend()->m_abyUserhash, m_achUserHash) != 0)
 	{
@@ -1631,7 +1042,12 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 	if (GetFriend() == NULL || GetFriend()->HasUserhash() || GetFriend()->m_dwLastUsedIP != GetConnectIP()
 		|| GetFriend()->m_nLastUsedPort != GetUserPort())
 	{
+		//zz_fly :: minor issue with friends handling :: WiZaRd :: start
+		/*
 		if ((m_Friend = theApp.friendlist->SearchFriend(m_achUserHash, m_dwUserIP, m_nUserPort)) != NULL){
+		*/
+		if ((m_Friend = theApp.friendlist->SearchFriend(m_achUserHash, GetConnectIP(), m_nUserPort)) != NULL){
+		//zz_fly :: end
 			// Link the friend to that client
 			m_Friend->SetLinkedClient(this);
 		}
@@ -1670,75 +1086,152 @@ bool CUpDownClient::ProcessHelloTypePacket(CSafeMemFile* data)
 	if (m_bIsHybrid)
 		m_fSharedDirectories = 1;
 
-	// ==> New United Community Detection [Xman] - Stulle
-	if(uhashsize!=16)
-		m_bUnitedComm = true;
-	else
-		m_bUnitedComm = false;
-	// <== New United Community Detection [Xman] - Stulle
-
-	//MORPH START - Added, Bad Shareaza detection [zz_fly]
-	//note: Shareaza like client send UDPPort tag AFTER Misc Options tag
-	if(thePrefs.GetEnableAntiLeecher() && // Anti-Leecher enabled
-		thePrefs.IsFakeEmule() && // ban systems optional - Stulle
-		strBanReason.IsEmpty() && // and we do not have a ban, yet
-		bIsBadShareaza && // was UDP sent after Misc Options tag
-		m_clientSoft == SO_EMULE) // but pretends to be a mule?
-	{ // Reduce Score for leecher - Stulle
-		strBanReason = _T("Fake emuleVersion");
-	// ==> Reduce Score for leecher - Stulle
-		uBanReason = BAN_FAKE_VER;
-	}
-	// <== Reduce Score for leecher - Stulle
-	//MORPH END   - Added, Bad Shareaza detection [zz_fly]
-
-	//MORPH START - Added by SiRoB, Anti-leecher feature
-	if (bIsMule) {
-		if(thePrefs.GetEnableAntiCreditHack() && strBanReason.IsEmpty())
-			if (theApp.GetID()!=m_nUserIDHybrid && memcmp(m_achUserHash, thePrefs.GetUserHash(), 16)==0)
-			{
-				strBanReason = _T("Anti Credit Hack");
-				uBanReason = BAN_CREDIT_HACK;
-			}
-		if(thePrefs.GetEnableAntiLeecher()){
-			// ==> Reduce Score for leecher - Stulle
-			/*
-			if (strBanReason.IsEmpty())
-				strBanReason = TestLeecher();
-			if(!strBanReason.IsEmpty())
-				BanLeecher(strBanReason);
-			*/
-			if (thePrefs.IsReduceScore() || strBanReason.IsEmpty())
-			{
-				uint8 uTestLeecher = TestLeecher();
-				if(uTestLeecher!=0)
-					uBanReason = uTestLeecher;
-			}
-			if(!strBanReason.IsEmpty() || uBanReason != GOOD_BOY)
-				BanLeecher(strBanReason,uBanReason);
-			// <== Reduce Score for leecher - Stulle
-		}
-	}
-	//MORPH END   - Added by SiRoB, Anti-leecher feature
-	//MORPH START - Added by SiRoB, Anti-leecher feature
-	// ==> Reduce Score for leecher - Stulle
-	/*
-	else if(!strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher())
-		BanLeecher(strBanReason);
-	*/
-	else if(thePrefs.GetEnableAntiLeecher() && (!strBanReason.IsEmpty() || uBanReason != GOOD_BOY))
-		BanLeecher(strBanReason,uBanReason);
-	if(uBanReason == GOOD_BOY)
-		SetBanReason(GOOD_BOY);
-	// <== Reduce Score for leecher - Stulle
-	//MORPH END   - Added by SiRoB, Anti-leecher feature
-	
-	//MORPH START - Added by SiRoB, Dynamic FunnyNick
-	UpdateFunnyNick();
-	//MORPH END   - Added by SiRoB, Dynamic FunnyNick
-
 	if (thePrefs.GetVerbose() && GetServerIP() == INADDR_NONE)
 		AddDebugLogLine(false, _T("Received invalid server IP %s from %s"), ipstr(GetServerIP()), DbgGetClientInfo());
+
+	//Xman Anti-Leecher
+	if(thePrefs.GetAntiLeecher())
+	{
+		if (theApp.GetID()!=m_nUserIDHybrid && memcmp(m_achUserHash, thePrefs.GetUserHash(), 16)==0)
+		{
+			strBanReason = _T("Anti Credit Hack");
+			BanLeecher(strBanReason,9);
+			return bIsMule;
+		}
+		if(strBanReason.IsEmpty()==false && thePrefs.GetAntiLeecherSnafu())
+		{
+			BanLeecher(strBanReason,2); //snafu = old leecher = hard ban
+			return bIsMule;
+		}
+		if(foundmd4string && thePrefs.GetAntiLeecherSnafu())
+		{
+			strBanReason = _T("md4-string in opcode");
+			BanLeecher(strBanReason, 15);
+			return bIsMule;
+		}
+		//zz_fly :: Fake Shareaza Detection
+		//note: clients based on Shareaza send UDPPort tag AFTER Misc Options tag
+		if(bIsFakeShareaza && m_clientSoft==SO_EMULE)
+		{
+			strBanReason = _T("Fake emuleVersion");
+			BanLeecher(strBanReason,9);  
+			return bIsMule;
+		}
+		//zz_fly :: Fake Shareaza Detection end
+		if(thePrefs.GetAntiLeecherBadHello() && (m_clientSoft==SO_EMULE || (m_clientSoft==SO_XMULE && m_byCompatibleClient!=SO_XMULE)))
+		{
+			if(wronghello)
+			{
+				strBanReason= _T("wrong hello order");
+				BanLeecher(strBanReason,1); //these are Leechers of a big german Leechercommunity
+				return bIsMule;
+			}
+			if(data->GetPosition() < data->GetLength())
+			{
+				strBanReason= _T("extra bytes");
+				BanLeecher(strBanReason,13); // darkmule (or buggy)
+				return bIsMule;
+			}
+			if(uhashsize!=16)
+			{
+				strBanReason= _T("wrong Hashsize");
+				BanLeecher(strBanReason,14); //new united community
+				return bIsMule;
+			}
+			if(m_fSupportsAICH > 1  && m_clientSoft == SO_EMULE && m_nClientVersion <= MAKE_CLIENT_VERSION(CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, CemuleApp::m_nVersionUpd))
+			{
+				strBanReason= _T("Applejuice");
+				BanLeecher(strBanReason,17); //Applejuice 
+				return bIsMule;
+			}
+		}
+
+		//if it is now a good mod, remove the reducing of score but do a second test
+		if(IsLeecher()==1 || IsLeecher()==15) //category 2 is snafu and always a hard ban, need only to check 1
+		{
+			m_bLeecher=0; //it's a good mod now
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			old_m_strClientSoftwareFULL.Empty();	//force recheck
+			old_m_pszUsername.Empty();
+		}
+
+		if(IsLeecher()==14 && isHelloPacket) //check if it is a Hello-Packet
+		{
+			m_bLeecher=0; //it's a good mod now
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			old_m_strClientSoftwareFULL.Empty();	//force recheck
+			old_m_pszUsername.Empty();
+		}
+
+		if(IsLeecher()==17)
+		{
+			m_bLeecher=0; //it's a good mod now
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			old_m_strClientSoftwareFULL.Empty();	//force recheck
+			old_m_pszUsername.Empty();
+		}
+
+		TestLeecher(); //test for modstring, nick and thiefs
+
+		if(thePrefs.GetAntiLeecheremcrypt())
+		{
+			//Xman remark: I only check for 0.44d. 
+			if(m_nClientVersion == MAKE_CLIENT_VERSION(0,44,3) && m_strModVersion.IsEmpty() && m_byCompatibleClient==0 && m_bUnicodeSupport==false && bIsMule)
+			{
+				if(IsLeecher()==0)
+				{
+					strBanReason = _T("emcrypt");
+					BanLeecher(strBanReason,12); // emcrypt = no unicode for unicode version
+				}
+			}
+			else if(IsLeecher()==12)
+			{
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				m_bLeecher=0; //unban, it isn't any longer a emcrypt
+			}
+		}
+		else if(IsLeecher()==12) 
+		{
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			m_bLeecher=0; //unban, user doesn't want to ban it anymore
+		}
+
+		if(thePrefs.GetAntiGhost() )
+		{
+			if(m_strModVersion.IsEmpty() &&
+				((nonofficialopcodes==true	&&	GetClientSoft()!=SO_LPHANT)
+				|| ((unknownopcode.IsEmpty()==false || m_byAcceptCommentVer > 1) && m_clientSoft == SO_EMULE && m_nClientVersion <= MAKE_CLIENT_VERSION(CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, CemuleApp::m_nVersionUpd)))
+				)
+			{
+				if(IsLeecher()==0)
+				{
+					strBanReason = _T("GhostMod");
+					if(unknownopcode.IsEmpty()==false)
+						strBanReason += _T(" ") + unknownopcode;
+					BanLeecher(strBanReason,3); // ghost mod = webcache tag without modstring
+				}
+			}
+			else if(IsLeecher()==3) 
+			{
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				m_bLeecher=0; //unban, it isn't any longer a ghost mod
+			}
+
+		}
+		else if(IsLeecher()==3)
+		{
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			m_bLeecher=0; //unban, user doesn't want to ban it anymore
+		}
+	}
+	else if(IsLeecher()>0)
+	{
+		m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+		m_bLeecher=0; //unban, user doesn't want to ban it anymore
+	}
+	//Xman end
+
+	UpdateFunnyNick(); //Xman Funny-Nick (Stulle/Morph)
 
 	return bIsMule;
 }
@@ -1757,8 +1250,7 @@ void CUpDownClient::SendHelloPacket(){
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP__Hello", this);
 	theStats.AddUpDataOverheadOther(packet->size);
-	SendPacket(packet,true);
-	AskTime=::GetTickCount(); //MORPH - Added by SiRoB, Smart Upload Control v2 (SUC) [lovelace]
+	SendPacket(packet, true);
 
 	m_bHelloAnswerPending = true;
 	return;
@@ -1773,18 +1265,19 @@ void CUpDownClient::SendMuleInfoPacket(bool bAnswer){
 	CSafeMemFile data(128);
 	data.WriteUInt8((uint8)theApp.m_uCurVersionShort);
 	data.WriteUInt8(EMULE_PROTOCOL);
-	//MORPH START - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-	// ==> Reduce Score for leecher - Stulle
+	
+	//Xman
+	// Maella -Support for tag ET_MOD_VERSION 0x55-
 	/*
-	bool bSendModVersion = (m_strModVersion.GetLength() || m_pszUsername==NULL) && !IsLeecher();
+	data.WriteUInt32(7); // nr. of tags
 	*/
-	bool bSendModVersion = (m_strModVersion.GetLength() || m_pszUsername==NULL) && (!IsLeecher() || GetScoreReduce());
-	// <== Reduce Score for leecher - Stulle
+	uint32 tagcount = 7;
+	//Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
+	bool bSendModVersion = m_strModVersion.GetLength() || m_pszUsername==NULL;
 	if (bSendModVersion)
-		data.WriteUInt32(7/*7 OFFICIAL*/+1/*ET_MOD_VERSION*/+1/*enkeyDev: ICS*/); // nr. of tags
-	else
-	//MORPH END   - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-		data.WriteUInt32(7); // nr. of tags
+		tagcount +=1;
+	data.WriteUInt32(tagcount); // nr. of tags
+	// Maella end
 	CTag tag(ET_COMPRESSION,1);
 	tag.WriteTagToFile(&data);
 	CTag tag2(ET_UDPVER,4);
@@ -1803,30 +1296,20 @@ void CUpDownClient::SendMuleInfoPacket(bool bAnswer){
 		dwTagValue |= 128;
 	CTag tag7(ET_FEATURES, dwTagValue);
 	tag7.WriteTagToFile(&data);
-	if (bSendModVersion){ //MORPH - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-		// ==> StulleMule is not banned - Stulle
+
+	//Xman
+	// Maella -Support for tag ET_MOD_VERSION 0x55-
+	if (bSendModVersion){
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
 		/*
-		//MORPH START - prevent being banned by old MorphXT
-		if(m_bSendOldMorph)
-		{
-			CTag tag8(ET_MOD_VERSION, theApp.m_strModVersionOld);
-			tag8.WriteTagToFile(&data);
-		}
-		else
+		CTag tag8(ET_MOD_VERSION, MOD_VERSION);
 		*/
-		// <== StulleMule is not banned - Stulle
-		{
-			CTag tag8(ET_MOD_VERSION, theApp.m_strModVersion);
-			tag8.WriteTagToFile(&data);
-		}
-		//MORPH END   - prevent being banned by old MorphXT
-		//Morph Start - added by AndCycle, ICS
-		// enkeyDev: ICS
-		CTag tag9(ET_INCOMPLETEPARTS,1);
-		tag9.WriteTagToFile(&data);
-		// <--- enkeyDev: ICS
-		//Morph End - added by AndCycle, ICS
-	}  //MORPH - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
+		CTag tag8(ET_MOD_VERSION, theApp.m_strModVersion);
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		tag8.WriteTagToFile(&data);
+	}
+	// Maella end
+
 	Packet* packet = new Packet(&data,OP_EMULEPROT);
 	if (!bAnswer)
 		packet->opcode = OP_EMULEINFO;
@@ -1842,12 +1325,16 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 {
 	bool bDbgInfo = thePrefs.GetUseDebugDevice();
 	m_strMuleInfo.Empty();
+
+	CString strBanReason = NULL; //Xman Anti-Leecher
+	bool nonofficialopcodes = false; //Xman Anti-Leecher
+
 	CSafeMemFile data(pachPacket, nSize);
 	m_byCompatibleClient = 0;
 	m_byEmuleVersion = data.ReadUInt8();
 	if (bDbgInfo)
 		m_strMuleInfo.AppendFormat(_T("EmuleVer=0x%x"), (UINT)m_byEmuleVersion);
-	if( m_byEmuleVersion == 0x2B )
+	if (m_byEmuleVersion == 0x2B)
 		m_byEmuleVersion = 0x22;
 	uint8 protversion = data.ReadUInt8();
 	if (bDbgInfo)
@@ -1857,32 +1344,29 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 	if (protversion == EMULE_PROTOCOL) {
 		//in the future do not use version to guess about new features
 
-		if(m_byEmuleVersion < 0x25 && m_byEmuleVersion > 0x22)
+		if (m_byEmuleVersion < 0x25 && m_byEmuleVersion > 0x22)
 			m_byUDPVer = 1;
 
-		if(m_byEmuleVersion < 0x25 && m_byEmuleVersion > 0x21)
+		if (m_byEmuleVersion < 0x25 && m_byEmuleVersion > 0x21)
 			m_bySourceExchange1Ver = 1;
 
-		if(m_byEmuleVersion == 0x24)
+		if (m_byEmuleVersion == 0x24)
 			m_byAcceptCommentVer = 1;
 
 		// Shared directories are requested from eMule 0.28+ because eMule 0.27 has a bug in 
 		// the OP_ASKSHAREDFILESDIR handler, which does not return the shared files for a 
 		// directory which has a trailing backslash.
-		if(m_byEmuleVersion >= 0x28 && !m_bIsML) // MLdonkey currently does not support shared directories
+		if (m_byEmuleVersion >= 0x28 && !m_bIsML) // MLdonkey currently does not support shared directories
 			m_fSharedDirectories = 1;
 
 	} else {
 		return;
 	}
-	m_incompletepartVer = 0;	// enkeyDEV: ICS //Morph - added by AndCycle, ICS
 
 	uint32 tagcount = data.ReadUInt32();
 	if (bDbgInfo)
 		m_strMuleInfo.AppendFormat(_T("  Tags=%u"), (UINT)tagcount);
-	CString strBanReason=NULL; //MORPH - Added by SiRoB, Control mod Tag
-	uint8 uBanReason = GOOD_BOY; // Reduce Score for leecher - Stulle
-	for (uint32 i = 0;i < tagcount; i++)
+	for (uint32 i = 0; i < tagcount; i++)
 	{
 		CTag temptag(&data, false);
 		switch (temptag.GetNameID())
@@ -1897,18 +1381,8 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_COMPRESSION"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_UDPPORT:
 				// Bits 31-16: 0 - reserved
 				// Bits 15- 0: UDP port
@@ -1919,18 +1393,8 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_UDPPORT"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_UDPVER:
 				// Bits 31- 8: 0 - reserved
 				// Bits  7- 0: UDP protocol version
@@ -1941,18 +1405,8 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_UDPVER"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_SOURCEEXCHANGE:
 				// Bits 31- 8: 0 - reserved
 				// Bits  7- 0: source exchange protocol version
@@ -1963,18 +1417,8 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()) {
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_SOURCEEXCHANGE"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_COMMENTS:
 				// Bits 31- 8: 0 - reserved
 				// Bits  7- 0: comments version
@@ -1985,18 +1429,8 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_COMMENTS"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_EXTENDEDREQUEST:
 				// Bits 31- 8: 0 - reserved
 				// Bits  7- 0: extended requests version
@@ -2007,40 +1441,20 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_EXTENDEDREQUEST"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_COMPATIBLECLIENT:
 				// Bits 31- 8: 0 - reserved
 				// Bits  7- 0: compatible client ID
 				if (temptag.IsInt()) {
 					m_byCompatibleClient = (uint8)temptag.GetInt();
-				if (bDbgInfo)
-					m_strMuleInfo.AppendFormat(_T("\n  Comptbl=%u"), (UINT)temptag.GetInt());
+					if (bDbgInfo)
+						m_strMuleInfo.AppendFormat(_T("\n  Comptbl=%u"), (UINT)temptag.GetInt());
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_COMPATIBLECLIENT"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-			
+
 			case ET_FEATURES:
 				// Bits 31- 8: 0 - reserved
 				// Bit	    7: Preview
@@ -2053,44 +1467,22 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 				}
 				else if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkType=%s"), temptag.GetFullInfo());
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsBadInfo()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_FEATURES"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo());
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
 				break;
-				
- 			case ET_MOD_VERSION:
-				m_strNotOfficial.AppendFormat(_T(",mid=%s"),temptag.GetFullInfo()); //MOPRH - Added by SiRoB, Control Mod Tag
+
+			case ET_MOD_VERSION:
 				if (temptag.IsStr())
 				{
 					m_strModVersion = temptag.GetStr();
-					// ==> StulleMule is not banned - Stulle
-					/*
-					m_bSendOldMorph = GetOldMorph();//MORPH - prevent being banned by old MorphXT
-					*/
-					// <== StulleMule is not banned - Stulle
 
-					// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-					SetModPureString();
-#endif
-					// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-
-					//MOPRH START - Added by Stulle, Mod Icons
-					if(StrStrI(m_strModVersion,_T("MorphXT"))!=0)
-						m_uModClient = MOD_MORPH;
-					else if(StrStrI(m_strModVersion,_T("ScarAngel"))!=0)
+					// ==> Mod Icons - Stulle
+					if(StrStrI(m_strModVersion,_T("ScarAngel"))!=0)
 						m_uModClient = MOD_SCAR;
 					else if(StrStrI(m_strModVersion,_T("StulleMule"))!=0)
 						m_uModClient = MOD_STULLE;
 					else if(StrStrI(m_strModVersion,_T("Xtreme"))!=0)
 						m_uModClient = MOD_XTREME;
+					else if(StrStrI(m_strModVersion,_T("MorphXT"))!=0)
+						m_uModClient = MOD_MORPH;
 					else if(StrStrI(m_strModVersion,_T("EastShare"))!=0)
 						m_uModClient = MOD_EASTSHARE;
 					else if(StrStrI(m_strModVersion,_T("eMuleFuture"))!=0)
@@ -2105,7 +1497,7 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 						m_uModClient = MOD_MAGIC;
 					else
 						m_uModClient = MOD_NONE;
-					//MOPRH END   - Added by Stulle, Mod Icons
+					// <== Mod Icons - Stulle
 				}
 				else if (temptag.IsInt())
 					m_strModVersion.Format(_T("ModID=%u"), temptag.GetInt());
@@ -2115,101 +1507,78 @@ void CUpDownClient::ProcessMuleInfoPacket(const uchar* pachPacket, uint32 nSize)
 					m_strMuleInfo.AppendFormat(_T("\n  ModID=%s"), m_strModVersion);
 				CheckForGPLEvilDoer();
 				break;
-			//Morph Start - added by AndCycle, ICS
-			// enkeyDEV: ICS
-			case ET_INCOMPLETEPARTS:
-				//MOPRH START - Added by SiRoB,  Control Mod Tag
-				m_strNotOfficial.AppendFormat(_T(",ics=%s"),temptag.GetFullInfo());
-				if (!temptag.IsInt()){
-					if (strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher()) // ban systems optional - Stulle
-					{
-						strBanReason.Format(_T("BadType eMuleInfo-Tag: ET_INCOMPLETEPARTS"));
-						uBanReason = BAN_BAD_INFO; // Reduce Score for leecher - Stulle
-					}
-					break;
-				}
-				//MOPRH END - Added by SiRoB,  Control Mod Tag
-				m_incompletepartVer = temptag.GetInt();
-				break;
-			// <--- enkeyDEV: ICS
-			//Morph End - added by AndCycle, ICS
 
-			//EastShare
-			case KADEMLIA_HELLO_ACK:
-				m_bKadHello = true;
+			//Xman Anti-Leecher
+			case 0x3D: //ICS
+				nonofficialopcodes=true; //Xman Anti-Leecher
 				break;
-			//EastShare
+			//Xman end
 			default:
-				bool bTemp = strBanReason.IsEmpty(); // Reduce Score for leecher - Stulle
-				//<<< [SNAFU_V3] Check unknown tags !
-				if (!((temptag.GetNameID() & 0xF0)==0xF0) || strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsSnafu()) // ban systems optional - Stulle
+				//Xman Anti-Leecher
+				if(thePrefs.GetAntiLeecher())
 					ProcessUnknownInfoTag(&temptag, strBanReason);
-				//>>> [SNAFU_V3] Check unknown tags !
-				// ==> Reduce Score for leecher - Stulle
-				if(bTemp && strBanReason.IsEmpty()==false)
-					uBanReason = BAN_SNAFU;
-				// <== Reduce Score for leecher - Stulle
-				m_strNotOfficial.AppendFormat(_T(",%s"),temptag.GetFullInfo()); //MOPRH - Added by SiRoB, Control Mod Tag
+				//Xman end
 				if (bDbgInfo)
 					m_strMuleInfo.AppendFormat(_T("\n  ***UnkTag=%s"), temptag.GetFullInfo());
 		}
 	}
-	if( m_byDataCompVer == 0 ){
+	if (m_byDataCompVer == 0) {
 		m_bySourceExchange1Ver = 0;
 		m_byExtendedRequestsVer = 0;
 		m_byAcceptCommentVer = 0;
 		m_nUDPPort = 0;
-		m_incompletepartVer = 0;	// enkeyDEV: ICS //Morph - added by AndCycle, ICS
 	}
-	if (/*bDbgInfo &&*/ data.GetPosition() < data.GetLength()) {
-		if (bDbgInfo)
+	if (bDbgInfo && data.GetPosition() < data.GetLength()) {
 		m_strMuleInfo.AppendFormat(_T("\n  ***AddData: %u bytes"), data.GetLength() - data.GetPosition());
-		//MOPRH - Added by SiRoB, Control Mod Tag
-		m_strNotOfficial.AppendFormat(_T(",extrabyte=%u"),data.GetPosition() < data.GetLength());
-		if(strBanReason.IsEmpty() && thePrefs.GetEnableAntiLeecher() && thePrefs.IsExtraBytes()) // ban systems optional - Stulle
-		{
-			strBanReason=_T("extrabytes");
-			uBanReason = BAN_EXTRABYTE;
-		}
-		//MOPRH - Added by SiRoB, Control Mod Tag
 	}
 
 	m_bEmuleProtocol = true;
-
-	//EastShare
-	if (!StrStrI(m_strModVersion,_T("echanblard")))
-	DoKadHello();
-	//EastShare
-
 	m_byInfopacketsReceived |= IP_EMULEPROTPACK;
 	InitClientSoftwareVersion();
 
 	if (thePrefs.GetVerbose() && GetServerIP() == INADDR_NONE)
 		AddDebugLogLine(false, _T("Received invalid server IP %s from %s"), ipstr(GetServerIP()), DbgGetClientInfo());
 
-	//MORPH START - Added by SiRoB, Anti-leecher feature
-	if(thePrefs.GetEnableAntiLeecher())
+	//Xman Anti-Leecher
+	if(thePrefs.GetAntiLeecher())
 	{
-		// ==> Reduce Score for leecher - Stulle
-		/*
-		if (strBanReason.IsEmpty())
-			strBanReason = TestLeecher();
-		if (!strBanReason.IsEmpty())
-			BanLeecher(strBanReason);
-		*/
-		if(thePrefs.IsReduceScore() || strBanReason.IsEmpty())
+		if(strBanReason.IsEmpty()==false && thePrefs.GetAntiLeecherSnafu())
 		{
-			uint8 uTestLeecher = TestLeecher();
-			if(uTestLeecher!=0)
-				uBanReason = uTestLeecher;
+			BanLeecher(strBanReason,2); //snafu = old leecher = hard ban
+			return;
 		}
-		if (!strBanReason.IsEmpty() || uBanReason != 0)
-			BanLeecher(strBanReason,uBanReason);
-		if(uBanReason == GOOD_BOY)
-			SetBanReason(GOOD_BOY);
-		// <== Reduce Score for leecher - Stulle
+
+		TestLeecher(); //test for modstring (older clients send it with the MuleInfoPacket
+
+		if(thePrefs.GetAntiGhost() )
+		{
+			if(nonofficialopcodes==true && m_strModVersion.IsEmpty() &&  GetClientSoft()!=SO_LPHANT)
+			{
+				if(IsLeecher()==0)
+				{
+					strBanReason = _T("GhostMod");
+					BanLeecher(strBanReason,3); // ghost mod = webcache tag without modstring
+				}
+			}
+			else if(IsLeecher()==3)
+			{
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				m_bLeecher=0; //unban, it isn't any longer a ghost mod
+			}
+
+		}
+		else if(IsLeecher()==3)
+		{
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			m_bLeecher=0; //unban, user doesn't want to ban it anymore
+		}
 	}
-	//MORPH END   - Added by SiRoB, Anti-leecher feature
+	else if(IsLeecher()>0)
+	{
+		m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+		m_bLeecher=0; //unban, user doesn't want to ban it anymore
+	}
+	//Xman end
 }
 
 void CUpDownClient::SendHelloAnswer(){
@@ -2225,11 +1594,11 @@ void CUpDownClient::SendHelloAnswer(){
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP__HelloAnswer", this);
 	theStats.AddUpDataOverheadOther(packet->size);
-
+	
 	// Servers send a FIN right in the data packet on check connection, so we need to force the response immediate
 	bool bForceSend = theApp.serverconnect->AwaitingTestFromIP(GetConnectIP());
 	socket->SendPacket(packet, true, true, 0, bForceSend);
-
+	
 	m_bHelloAnswerPending = false;
 }
 
@@ -2243,16 +1612,12 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 	memcpy(hash,thePrefs.GetUserHash(), 16);
 	if (thePrefs.IsEmuMLDonkey() && GetClientSoft() == SO_MLDONKEY)
 	{
-		if(GetHashType() == SO_OLD_MLDONKEY)
+//		if(GetHashType() == SO_OLD_MLDONKEY)
 		{
 			hash[5] = 'M'; //WiZaRd::Proper Hash Fake :P
 			hash[14] = 'L'; //WiZaRd::Proper Hash Fake :P
 			if (thePrefs.IsEmuLog())
-			{
-				CString buffer;
-				buffer.Format(_T("[EMULATE] Emulate MLDonkey(old) (%s)"),DbgGetClientInfo());
-				DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-			}
+				AddDebugLogLine(false,_T("[EMULATE] Emulate MLDonkey (%s)"),DbgGetClientInfo());
 		}
 	}
 	else if ((thePrefs.IsEmueDonkey() && GetClientSoft() == SO_EDONKEY)
@@ -2264,12 +1629,10 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 		hash[14] = random == 111 ? random+1 : random; //WiZaRd::Avoid eMule Hash
 		if (thePrefs.IsEmuLog())
 		{
-			CString buffer;
 			if(GetClientSoft() == SO_EDONKEY)
-				buffer.Format(_T("[EMULATE] Emulate eDonkey (%s)"),DbgGetClientInfo());
+				AddDebugLogLine(false,_T("[EMULATE] Emulate eDonkey (%s)"),DbgGetClientInfo());
 			else if(GetClientSoft() == SO_EDONKEYHYBRID)
-				buffer.Format(_T("[EMULATE] Emulate eDonkeyHybrid (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
+				AddDebugLogLine(false,_T("[EMULATE] Emulate eDonkeyHybrid (%s)"),DbgGetClientInfo());
 		}
 	}
 	data->WriteHash16(hash);
@@ -2285,44 +1648,52 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 	if( theApp.clientlist->GetBuddy() && theApp.IsFirewalled() )
 		tagcount += 2;
 
-	//MORPH START - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-	// ==> Reduce Score for leecher - Stulle
-	/*
-	bool bSendModVersion = (m_strModVersion.GetLength() || m_pszUsername==NULL) && !IsLeecher();
-	*/
-	bool bSendModVersion = (m_strModVersion.GetLength() || m_pszUsername==NULL) && (!IsLeecher() || GetScoreReduce());
-	// <== Reduce Score for leecher - Stulle
-	if (bSendModVersion) tagcount+=(1/*MOD_VERSION*/+1/*enkeyDev: ICS*/);
-	//MORPH END   - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-	// ==> StulleMule is not banned - Stulle
-	/*
-	m_bSendOldMorph = GetOldMorph();//MORPH - prevent being banned by old MorphXT
-	*/
-	// <== StulleMule is not banned - Stulle
+	//Xman ModID
+	//Xman - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
+	//Xman send modtring only to non Leechers or Modthiefs
+	bool bSendModVersion = (m_strModVersion.GetLength() || m_pszUsername==NULL) && (IsLeecher()==0 || IsLeecher()==6);
+	if (bSendModVersion) tagcount+=1;
+	//Xman END   - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
 
 	data->WriteUInt32(tagcount);
 
 	// eD2K Name
 
 	// TODO implement multi language website which informs users of the effects of bad mods
-	//MOPRH START - Anti ModID Faker [Xman]
+	//Xman Anti-Leecher
 	/*
 	CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? thePrefs.GetUserNick() : _T("Please use a GPL-conform version of eMule") );
-	*/
-	// ==> AntiNickThief [WiZaRd] - Stulle
-	/*
-	CString m_strTemp = thePrefs.GetUserNick();
-	m_strTemp.AppendFormat(_T("\x20\xAB%s\xBB"), theApp.m_strModVersion);
-	CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? m_strTemp : _T("Please use a GPL-conform version of eMule") );
-	//MOPRH END   - Anti ModID Faker [Xman]
-	*/
-	//always send the "lure" tag!
-	// remark by Stulle: we don't have to check the guy if he is a nick thief since we know he uses a GPLEvildoer
-	CString m_strTemp = theAntiNickClass.GetAntiNickThiefNick();
-	m_strTemp.AppendFormat(_T("\x20\xAB%s\xBB"), theApp.m_strModVersion);
-	CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? m_strTemp : _T("Please use a GPL-conform version of eMule") );
-	// <== AntiNickThief [WiZaRd] - Stulle
 	tagName.WriteTagToFile(data, utf8strRaw);
+	*/
+	if(IsLeecher()==12)
+	{
+		//emcrypt
+		CTag tagName(CT_NAME, _T("You are using a spyware infected emule version") );
+		tagName.WriteTagToFile(data, utf8strRaw);
+	}
+	//Xman send Nickaddon only to non Leechers or NickThiefs/ModThiefs
+	else if(IsLeecher()==0 || IsLeecher()==11 || IsLeecher()==6) 
+	{
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? thePrefs.GetUserNick() + _T(' ') + str_ANTAddOn + MOD_NICK_ADD : _T("Please use a GPL-conform version of eMule") ); //Xman Anti-Leecher: simple Anti-Thief
+		*/
+		CString m_strTemp = thePrefs.GetUserNick();
+		// >> modified by Ken
+		//m_strTemp.AppendFormat(_T(" %s ?s?), str_ANTAddOn, theApp.m_strModVersion);
+		m_strTemp.AppendFormat(_T("\x20\xAB%s\xBB"), str_ANTAddOn, theApp.m_strModVersion);
+		// << modified by Ken
+		CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? m_strTemp : _T("Please use a GPL-conform version of eMule") );
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		tagName.WriteTagToFile(data, utf8strRaw);
+	}
+	//else send the standard-nick
+	else
+	{
+		CTag tagName(CT_NAME, (!m_bGPLEvildoer) ? thePrefs.GetUserNick()  : _T("Please use a GPL-conform version of eMule") ); //Xman Anti-Leecher: simple Anti-Thief
+		tagName.WriteTagToFile(data, utf8strRaw);
+	}
+	//Xman end
 
 	// ==> Emulate others [WiZaRd/Spike/shadow2004] - Stulle
 	/*
@@ -2335,11 +1706,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 		CTag tagVersion(CT_VERSION,	SHAREAZAEMUVERSION);
 		tagVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate Shareaza (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate Shareaza (%s)"),DbgGetClientInfo());
 	}
 	else
 	{
@@ -2403,7 +1770,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				(uUdpVer				<< 24) |
 				(uDataCompVer			<< 20) |
 				(uSupportSecIdent		<< 16) |
-				(uSourceExchange1Ver	<< 12) |
+				(uSourceExchange1Ver		<< 12) |
 				(uExtendedRequestsVer	<<  8) |
 				(uAcceptCommentVer		<<  4) |
 				(uPeerCache				<<  3) |
@@ -2428,7 +1795,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 		&& !Kademlia::CUDPFirewallTester::IsFirewalledUDP(true) && Kademlia::CUDPFirewallTester::IsVerified()) ? 1 : 0;
 
 	CTag tagMisOptions2(CT_EMULE_MISCOPTIONS2, 
-//				(RESERVED				     ) 
+//				(RESERVED				     )
 				(uDirectUDPCallback		<< 12) |
 				(uSupportsCaptcha		<< 11) |
 				(uSupportsSourceEx2		<< 10) |
@@ -2465,11 +1832,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				);
 		tagMuleVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate Shareaza (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate Shareaza (%s)"),DbgGetClientInfo());
 	} 
 	else if (thePrefs.IsEmuLphant() && GetClientSoft() == SO_LPHANT)
 	{
@@ -2481,11 +1844,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				);
 		tagMuleVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate Lphant (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate Lphant (%s)"),DbgGetClientInfo());
 	}
 	else if (thePrefs.IsEmuMLDonkey() && GetClientSoft() == SO_MLDONKEY)
 	{
@@ -2497,11 +1856,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				);
 		tagMuleVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate MLDonkey (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate MLDonkey (%s)"),DbgGetClientInfo());
 	}
 	else if (thePrefs.IsEmueDonkey() && GetClientSoft() == SO_EDONKEY)
 	{
@@ -2511,11 +1866,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				);
 		tagMuleVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate eDonkey (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate eDonkey (%s)"),DbgGetClientInfo());
 	}
 	else if (thePrefs.IsEmueDonkeyHybrid() && GetClientSoft() == SO_EDONKEYHYBRID)
 	{
@@ -2525,11 +1876,7 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 				);
 		tagMuleVersion.WriteTagToFile(data);
 		if (thePrefs.IsEmuLog())
-		{
-			CString buffer;
-			buffer.Format( _T("[EMULATE] Emulate eDonkeyHybrid (%s)"),DbgGetClientInfo());
-			DebugLog(LOG_USC | DLP_VERYLOW,buffer);
-		}
+			AddDebugLogLine(false,_T("[EMULATE] Emulate eDonkeyHybrid (%s)"),DbgGetClientInfo());
 	}
 	else
 	{
@@ -2545,33 +1892,17 @@ void CUpDownClient::SendHelloTypePacket(CSafeMemFile* data)
 	}
 	// <== Emulate others [WiZaRd/Spike/shadow2004] - Stulle
 
-	if (bSendModVersion) { //MORPH - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
-		//MORPH - Added by SiRoB, ET_MOD_VERSION 0x55
-		// ==> StulleMule is not banned - Stulle
+	//Xman - modID
+	if (bSendModVersion) {
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
 		/*
-		//MORPH START - prevent being banned by old MorphXT
-		if(m_bSendOldMorph)
-		{
-			CTag tagMODVersion(ET_MOD_VERSION, theApp.m_strModVersionOld);
-			tagMODVersion.WriteTagToFile(data);
-		}
-		else
+		CTag tagMODVersion(ET_MOD_VERSION, MOD_VERSION);
 		*/
-		// <== StulleMule is not banned - Stulle
-		{
-			CTag tagMODVersion(ET_MOD_VERSION, theApp.m_strModVersion);
-			tagMODVersion.WriteTagToFile(data);
-		}
-		//MORPH END   - prevent being banned by old MorphXT
-		//MORPH - Added by SiRoB, ET_MOD_VERSION 0x55
-
-		//Morph Start - added by AndCycle, ICS
-		// enkeyDev: ICS
-		CTag tagIncompleteParts(ET_INCOMPLETEPARTS,1);
-		tagIncompleteParts.WriteTagToFile(data);
-		// <--- enkeyDev: ICS
-		//Morph End - added by AndCycle, ICS
-	} //MORPH - Added by SiRoB, Don't send MOD_VERSION to client that don't support it to reduce overhead
+		CTag tagMODVersion(ET_MOD_VERSION, theApp.m_strModVersion);
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		tagMODVersion.WriteTagToFile(data);
+	}
+	//Xman end - modID
 	uint32 dwIP;
 	uint16 nPort;
 	if (theApp.serverconnect->IsConnected()){
@@ -2647,11 +1978,16 @@ void CUpDownClient::ProcessMuleCommentPacket(const uchar* pachPacket, uint32 nSi
 	}
 }
 
+// Maella -Upload Stop Reason-
+/*
 bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
+*/
+bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket, UpStopReason reason)
+//Xman end
 {
 	ASSERT( theApp.clientlist->IsValidClient(this) );
-	
-	// TODO LOGREMOVE
+
+		// TODO LOGREMOVE
 	if (m_nConnectingState == CCS_DIRECTCALLBACK)
 		DebugLog(_T("Direct Callback failed - %s"), DbgGetClientInfo());
 	
@@ -2664,15 +2000,20 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	//If this is a KAD client object, just delete it!
 	SetKadState(KS_NONE);
 
-	//MORPH START - Changed by SiRoB
+	//Xman Xtreme Mod
 	/*
     if (GetUploadState() == US_UPLOADING || GetUploadState() == US_CONNECTING)
 	*/
-	if (GetUploadState() == US_UPLOADING || GetUploadState() == US_CONNECTING || GetUploadState() == US_BANNED)
-	//MORPH END   - Changed by SiRoB
+	if (GetUploadState() == US_UPLOADING) //uploading problem client
+	//Xman end
 	{
 		// sets US_NONE
+		// Maella -Upload Stop Reason-
+		/*
 		theApp.uploadqueue->RemoveFromUploadQueue(this, CString(_T("CUpDownClient::Disconnected: ")) + pszReason);
+		*/
+		theApp.uploadqueue->RemoveFromUploadQueue(this, CString(_T("CUpDownClient::Disconnected: ")) + pszReason , reason);
+		//Xman end
 	}
 
 	// 28-Jun-2004 [bc]: re-applied this patch which was in 0.30b-0.30e. it does not seem to solve the bug but
@@ -2696,21 +2037,27 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 		ASSERT( m_nConnectingState == CCS_NONE );
 		if (m_ePeerCacheDownState == PCDS_WAIT_CACHE_REPLY || m_ePeerCacheDownState == PCDS_DOWNLOADING)
 			theApp.m_pPeerCache->DownloadAttemptFailed();
+		//Xman remark: the only reason can be a socket-error/timeout
+		// Maella -Download Stop Reason-
+		/*
 		SetDownloadState(DS_ONQUEUE, CString(_T("Disconnected: ")) + pszReason);
+		*/
+		//Xman remark: the only reason can be a socket-error/timeout
+		SetDownloadState(DS_ONQUEUE, CString(_T("Disconnected: ")) + pszReason, CUpDownClient::DSR_SOCKET);
+		//Xman end
 	}
 	else{
 		// ensure that all possible block requests are removed from the partfile
 		ClearDownloadBlockRequests();
-		if(GetDownloadState() == DS_CONNECTED){ // successfully connected, but probably didn't responsed to our filerequest
-		    //MORPH START - Added by SiRoB, Don't kill source if it's the only one complet source or it's a friend
-			if(reqfile && m_bCompleteSource && reqfile->m_nCompleteSourcesCountLo <= 1  || IsFriend())
-				SetDownloadState(DS_ONQUEUE);
-			else {
-			//MORPH END   - Added by SiRoB, Don't kill source if it's the only one complet source or it's a friend
-			    theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
-				theApp.downloadqueue->RemoveSource(this);
-		    }
+
+		//Xman Code Imrpovement moved down
+		/*
+		if (GetDownloadState() == DS_CONNECTED){ // successfully connected, but probably didn't responsed to our filerequest
+			theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
+			theApp.downloadqueue->RemoveSource(this);
 	    }
+		*/
+		//Xman end
 	}
 
 	// we had still an AICH request pending, handle it
@@ -2737,6 +2084,8 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 
 	//check if this client is needed in any way, if not delete it
 	bool bDelete = true;
+	//Xman
+	/*
 	switch(m_nUploadState){
 		case US_ONUPLOADQUEUE:
 			bDelete = false;
@@ -2748,16 +2097,44 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 		case DS_NONEEDEDPARTS:
 		case DS_LOWTOLOWIP:
 			bDelete = false;
-        //MORPH START - Added by schnulli900, count failed TCP/IP connections [Xman]
-		break; // this break is required because the above cases got nothing to do with these mod cases
-		case DS_CONNECTING:
-			m_cFailed++;
-		case DS_CONNECTED:
-		case DS_WAITCALLBACK:
-			theApp.downloadqueue->AddFailedTCPFileReask();
-        //MORPH END   - Added by schnulli900, count failed TCP/IP connections [Xman]
 	}
+	*/
+	switch(m_nUploadState){
+		case US_CONNECTING:
+		{
+			//if (thePrefs.GetLogUlDlEvents())
+			//    AddDebugLogLine(DLP_VERYLOW, true,_T("Removing connecting client from upload list: %s Client: %s"), pszReason, DbgGetClientInfo());
+			//Xman uploading problem client
+			{
+				theApp.uploadqueue->RemoveFromUploadQueue(this,pszReason ,CUpDownClient::USR_SOCKET );
+				isupprob=true;
+				//back to queue
+				theApp.uploadqueue->AddClientDirectToQueue(this);
+				m_bAddNextConnect=true;
+				bDelete = false;
+				break;
+			}
+			//Xman end
+		}
+		case US_ONUPLOADQUEUE:
+			bDelete = false;
+			break;
+		//Xman 5.1 why we should keep it ?
+		case US_BANNED:
+			bDelete = true;
+	}
+	switch(m_nDownloadState){
+		case DS_ONQUEUE:
+		case DS_TOOMANYCONNS:
+		case DS_NONEEDEDPARTS:
+		case DS_LOWTOLOWIP:
+			bDelete = false;
+	}
+	//Xman end
 
+	//Xman remark:
+	//this official code is only used at downloadstate, because upload is handled different with Xtreme
+	//
 	// Dead Soure Handling
 	//
 	// If we failed to connect to that client, it is supposed to be 'dead'. Add the IP
@@ -2768,17 +2145,100 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	// is supposed to be valid until the proxy itself tells us that the IP can not be
 	// connected to (e.g. 504 Bad Gateway)
 	//
+	bool bAddDeadSource = true;
+	//Xman
+	/*
+	switch(m_nUploadState){
+		case US_CONNECTING:
+			if (socket && socket->GetProxyConnectFailed())
+				bAddDeadSource = false;
+			if (thePrefs.GetLogUlDlEvents())
+                AddDebugLogLine(DLP_VERYLOW, true,_T("Removing connecting client from upload list: %s Client: %s"), pszReason, DbgGetClientInfo());
+		case US_WAITCALLBACK:
+		case US_ERROR:
+			if (bAddDeadSource)
+				theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
+			bDelete = true;
+	}
+	
 	if ( (m_nConnectingState != CCS_NONE && !(socket && socket->GetProxyConnectFailed()))
 		|| m_nDownloadState == DS_ERROR)
 	{
 		if (m_nDownloadState != DS_NONE) // Unable to connect = Remove any downloadstate
 			theApp.downloadqueue->RemoveSource(this);
-		theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
-		bDelete = true;
+				theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
+			bDelete = true;
 	}
+	*/
+	//Xman end
+
+	
+	if(m_nUploadState!=US_BANNED) //Xman DLP - Anti-Leecher / Code-Improvement
+	switch(m_nDownloadState){
+		case DS_CONNECTING:
+			{
+				m_cFailed++;
+				
+				//Xman Anti-Leecher
+				if(IsBanned())
+				{
+					bDelete=true; //force delete and no retry and no deadsourcelist
+					break;
+				}
+				//Xman end
+
+				//Xman  spread reasks after timeout
+				//Xman Xtreme Mod
+				//why we should immediately reask the source ? 
+				//either the source are busy -->let`s wait
+				//or the source are gone, in this case, we shouldn't waste the socket, 
+				//but ask other sources (too many connections)
+				//TryToConnect(); is called indirect later
+
+				//Xman 
+				//optional retry connection attempts
+				if(thePrefs.retryconnectionattempts==false)
+					m_cFailed=5; //force deadsourcelist
+
+				//Xman  udppending only 1 retry, and lets wait 70 sec
+				if (m_cFailed < 2)  //we don't know this clients, only 2 attemps
+				{
+					SetNextTCPAskedTime(::GetTickCount()+70000); //wait 70 sec bevore the next try
+					SetDownloadState(DS_NONE);
+					bDelete = false; //Delete this socket but not this client
+					break;
+				}
+				else if (m_cFailed < 3 && GetUserName()!=NULL && !m_bUDPPending ) //we now the client, give 3 attemps
+				{
+					//theApp.AddLogLine(false,_T("Client with with IP=%s, Version=%s, Name=%s failed to connect %u times"), GetFullIP(), GetClientVerString(), GetUserName(),m_cFailed);
+					SetNextTCPAskedTime(::GetTickCount()+50000); //wait 50 sec bevore the next try
+					SetDownloadState(DS_NONE);
+					bDelete = false; //Delete this socket but not this client
+					break;
+				}
+				//Xman end
+
+				if (socket && socket->GetProxyConnectFailed())
+					bAddDeadSource = false;
+
+			}
+		case DS_CONNECTED: //Xman Code Improvement delete non answering clients
+		case DS_WAITCALLBACK:
+			if (bAddDeadSource)
+				theApp.clientlist->m_globDeadSourceList.AddDeadSource(this);
+			theApp.downloadqueue->AddFailedTCPFileReask(); //Xman Xtreme Mod: count the failed TCP-connections
+			if(m_bUDPPending) theApp.downloadqueue->AddFailedUDPFileReasks(); //Xman Xtreme Mod: for correct statistics, if it wasn't counted on connection established //Xman x4 test
+		case DS_ERROR: //Xman Xtreme Mod: this clients get IP-Filtered!
+			bDelete = true;
+	}
+	//Xman end
 
 	// We keep chat partners in any case
 	if (GetChatState() != MS_NONE){
+		//Xman Code Improvement
+		if(bDelete==true)
+			theApp.downloadqueue->RemoveSource(this);
+		//Xman end
 		bDelete = false;
 		if (GetFriend() != NULL && GetFriend()->IsTryingToConnect())
 			GetFriend()->UpdateFriendConnectionState(FCR_DISCONNECTED); // for friends any connectionupdate is handled in the friend class
@@ -2793,7 +2253,9 @@ bool CUpDownClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 	}
 	socket = NULL;
 
-	theApp.emuledlg->transferwnd->clientlistctrl.RefreshClient(this);
+	//Xman Code Improvement: don't refresh list-item on deletion
+	if(bDelete==false)
+		theApp.emuledlg->transferwnd->clientlistctrl.RefreshClient(this);
 
 	// finally, remove the client from the timeouttimer and reset the connecting state
 	m_nConnectingState = CCS_NONE;
@@ -2878,6 +2340,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 			if (CheckHandshakeFinished()){
 				DEBUG_ONLY( DebugLog(_T("TryToConnect: Already Connected (%s)"), DbgGetClientInfo()) );// TODO LogRemove
 				ConnectionEstablished();
+				return true;
 			}
 			else
 				DebugLogWarning( _T("TryToConnect found connected socket, but without Handshake finished - %s"), DbgGetClientInfo());
@@ -2903,6 +2366,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		}
 		return true;
 	}
+
 	// do not try to connect to source which are incompatible with our encryption setting (one requires it, and the other one doesn't supports it)
 	if ( (RequiresCryptLayer() && !thePrefs.IsClientCryptLayerSupported()) || (thePrefs.IsClientCryptLayerRequired() && !SupportsCryptLayer()) )
 	{
@@ -2927,6 +2391,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 			theStats.filteredclients++;
 			if (thePrefs.GetLogFilteredIPs())
 				AddDebugLogLine(true, GetResString(IDS_IPFILTERED), ipstr(uClientIP), theApp.ipfilter->GetLastHit());
+			m_cFailed=5; //force deletion //Xman 
 			if (Disconnected(_T("IPFilter")))
 			{
 				delete this;
@@ -2940,6 +2405,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		{
 			if (thePrefs.GetLogBannedClients())
 				AddDebugLogLine(false, _T("Refused to connect to banned client %s"), DbgGetClientInfo());
+			m_cFailed=5; //force deletion //Xman 
 			if (Disconnected(_T("Banned IP")))
 			{
 				delete this;
@@ -2963,7 +2429,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 				return false;
 			}
 			return true;
-		}
+			}
 
 		// are callbacks disallowed?
 		if (bNoCallbacks){
@@ -2987,9 +2453,9 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 				delete this;
 				return false;
 			}
-			return true;
-		}
-	}
+					return true;
+				}
+			}
 
 	// Prechecks finished, now for the real connecting
 	////////////////////////////////////////////////////
@@ -3039,13 +2505,13 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 	// 6) Server Callback + 7) Kad Callback
 	if (GetDownloadState() == DS_CONNECTING)
 		SetDownloadState(DS_WAITCALLBACK);
-	
+
 	if (GetUploadState() == US_CONNECTING){
 		ASSERT( false ); // we should never try to connect in this case, but wait for the LowID to connect to us
 		DebugLogError( _T("LowID and US_CONNECTING (%s)"), DbgGetClientInfo());
 	}
 
-	if (theApp.serverconnect->IsLocalServer(m_dwServerIP, m_nServerPort))
+	if (theApp.serverconnect->IsLocalServer(m_dwServerIP,m_nServerPort))
 	{
 		m_nConnectingState = CCS_SERVERCALLBACK;
 		Packet* packet = new Packet(OP_CALLBACKREQUEST,4);
@@ -3054,7 +2520,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 			DebugSend("OP__CallbackRequest", this);
 		theStats.AddUpDataOverheadServer(packet->size);
 		theApp.serverconnect->SendPacket(packet);
-		return true;
+				return true;
 	}
 	else if (HasValidBuddyID() && Kademlia::CKademlia::IsConnected())
 	{
@@ -3076,7 +2542,7 @@ bool CUpDownClient::TryToConnect(bool bIgnoreMaxCon, bool bNoCallbacks, CRuntime
 		}
 		else
 		{
-			// I don't think we should ever have a buddy without its IP (anymore), but nevertheless let the functionality in
+		// I don't think we should ever have a buddy without its IP (anymore), but nevertheless let the functionality in
 			//Create search to find buddy.
 			Kademlia::CSearch *findSource = new Kademlia::CSearch;
 			findSource->SetSearchTypes(Kademlia::CSearch::FINDSOURCE);
@@ -3133,9 +2599,48 @@ void CUpDownClient::Connect()
 
 void CUpDownClient::ConnectionEstablished()
 {
-	//MORPH START - Added by schnulli900, count failed TCP/IP connections [Xman]
-	m_cFailed = 0;
-        //MORPH END   - Added by schnulli900, count failed TCP/IP connections [Xman]
+
+	m_cFailed = 0; //Xman Downloadmanager / Xtreme Mod // holds the failed connection attempts
+	
+	//Xman Xtreme Mod
+	if (m_bUDPPending && !IsRemoteQueueFull()) //Xman  maybe the client has now place at its queue .. then it's right to not answer an UDPFilereaskping
+	{
+		m_nFailedUDPPackets++;
+		theApp.downloadqueue->AddFailedUDPFileReasks();
+	}
+	m_bUDPPending = false;
+
+	//Xman -Reask sources after IP change- v4 
+	//Xman at this point we know, we have a internet-connection -> enable upload
+
+	static uint32 lastaskedforip;
+	if(theApp.internetmaybedown)
+	{
+		if(Kademlia::CKademlia::IsConnected() 
+			&& (theApp.uploadqueue->waitinglist.GetSize()>10 //check if we have clients queued, otherwise inetmaybedown gives a wrong value
+			|| theApp.last_ip_change==0) //we just started the client //Xman new adapter selection 
+			&& theApp.last_ip_change  < ::GetTickCount() - MIN2MS(2) //only once in 2 minutes
+			) 
+			theApp.m_bneedpublicIP=true;
+		if(theApp.IsConnected()) //only free the upload if we are connected. important! otherwise we would have problems with nafc-adapter on a hotstart
+		{
+			theApp.internetmaybedown=false;
+			theApp.last_traffic_reception=::GetTickCount();
+			theApp.pBandWidthControl->AddeMuleOut(1); //this reopens the upload (internetmaybedown checks for upload==0
+		}
+	}
+
+	if(theApp.m_bneedpublicIP==true
+		&& m_fPeerCache 
+		&& lastaskedforip + SEC2MS(3) < ::GetTickCount() //give the client some time, we shouln't ask more than 2-3 clients after reconnect
+		) 
+	{
+		SendPublicIPRequest();
+		lastaskedforip=::GetTickCount();
+		AddDebugLogLine(false, _T("Internet-connection was possibly down. ask client for ip: %s"), DbgGetClientInfo()); 
+	}
+	//Xman end
+
 	// ok we have a connection, lets see if we want anything from this client
 	
 	// was this a direct callback?
@@ -3149,7 +2654,12 @@ void CUpDownClient::ConnectionEstablished()
 	theApp.clientlist->RemoveConnectingClient(this);
 
 	// check if we should use this client to retrieve our public IP
+	//Xman
+	/*
 	if (theApp.GetPublicIP() == 0 && theApp.IsConnected() && m_fPeerCache)
+	*/
+	if (theApp.GetPublicIP() == 0 && theApp.serverconnect->IsConnected() && m_fPeerCache)
+	//Xman end
 		SendPublicIPRequest();
 
 	switch(GetKadState())
@@ -3212,6 +2722,12 @@ void CUpDownClient::ConnectionEstablished()
 				Packet* packet = new Packet(OP_ACCEPTUPLOADREQ,0);
 				theStats.AddUpDataOverheadFileRequest(packet->size);
 				SendPacket(packet,true);
+				//Xman find best sources
+				//Xman: in every case, we add this client to our downloadqueue
+				CKnownFile* partfile = theApp.downloadqueue->GetFileByID(this->GetUploadFileID());
+				if (partfile && partfile->IsPartFile())
+					theApp.downloadqueue->CheckAndAddKnownSource((CPartFile*)partfile,this,true);
+				//Xman end
 			}
 	}
 
@@ -3258,13 +2774,12 @@ void CUpDownClient::InitClientSoftwareVersion()
 				break;
 			case SO_SHAREAZA:
 			// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
+			/*
 			case 40:
-#else
+			*/
 			case SO_SHAREAZA2:
 			case SO_SHAREAZA3:
 			case SO_SHAREAZA4:
-#endif
 			// <== Enhanced Client Recognition [Spike] - Stulle
 				m_clientSoft = SO_SHAREAZA;
 				pszSoftware = _T("Shareaza");
@@ -3274,7 +2789,6 @@ void CUpDownClient::InitClientSoftwareVersion()
 				pszSoftware = _T("lphant");
 				break;
 			// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
 			case SO_EMULEPLUS:
 				m_clientSoft = SO_EMULEPLUS;
 				pszSoftware = _T("eMule Plus");
@@ -3287,25 +2801,22 @@ void CUpDownClient::InitClientSoftwareVersion()
 				m_clientSoft = SO_TRUSTYFILES;
 				pszSoftware = _T("TrustyFiles");
 				break;
-#endif
 			// <== Enhanced Client Recognition [Spike] - Stulle
 			default:
 				// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
+				/*
 				if (m_bIsML || m_byCompatibleClient == SO_MLDONKEY){
-#else
+				*/
 				if (m_bIsML || m_byCompatibleClient == SO_MLDONKEY || m_byCompatibleClient == SO_MLDONKEY2 || m_byCompatibleClient == SO_MLDONKEY3){
-#endif
 				// <== Enhanced Client Recognition [Spike] - Stulle
 					m_clientSoft = SO_MLDONKEY;
 					pszSoftware = _T("MLdonkey");
 				}
 				// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
+				/*
 				else if (m_bIsHybrid){
-#else
+				*/
 				else if (m_bIsHybrid || m_byCompatibleClient == SO_EDONKEYHYBRID){
-#endif
 				// <== Enhanced Client Recognition [Spike] - Stulle
 					m_clientSoft = SO_EDONKEYHYBRID;
 					pszSoftware = _T("eDonkeyHybrid");
@@ -3313,29 +2824,27 @@ void CUpDownClient::InitClientSoftwareVersion()
 				else if (m_byCompatibleClient != 0){
 					// ==> Enhanced Client Recognition [Spike] - Stulle
 					// Recognize other Shareazas - just to be sure :)
-#ifdef ENHANCED_CLIENTS_RECOG
+					//WiZaRd: this is highly unreliable and thus I removed it
+					/*
 					if (StrStrI(m_pszUsername,_T("shareaza")))
 					{
 						m_clientSoft = SO_SHAREAZA;
 						pszSoftware = _T("Shareaza");
 					}
+					else
+					*/
 					// Recognize all eMulePlus - just to be sure !
-					else if (StrStr(m_strModVersion,_T("Plus 1")))
+					if (StrStr(m_strModVersion,_T("Plus 1")))
 					{
 						m_clientSoft = SO_EMULEPLUS;
 						pszSoftware = _T("eMule Plus");
 					}
 					else
 					{
-#endif
 					// <== Enhanced Client Recognition [Spike] - Stulle
 					m_clientSoft = SO_XMULE; // means: 'eMule Compatible'
 					pszSoftware = _T("eMule Compat");
-					// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-					}
-#endif
-					// <== Enhanced Client Recognition [Spike] - Stulle
+					} // Enhanced Client Recognition [Spike] - Stulle
 				}
 				else{
 					m_clientSoft = SO_EMULE;
@@ -3362,7 +2871,6 @@ void CUpDownClient::InitClientSoftwareVersion()
 			if (m_clientSoft == SO_EMULE)
 				iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.%u%c"), pszSoftware, nClientMajVersion, nClientMinVersion, _T('a') + nClientUpVersion);
 			// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
 			else if (m_clientSoft == SO_EMULEPLUS)
 			{
 				if(nClientMinVersion == 0)
@@ -3380,14 +2888,13 @@ void CUpDownClient::InitClientSoftwareVersion()
 						iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.%u%c"), pszSoftware, nClientMajVersion, nClientMinVersion, _T('a') + nClientUpVersion - 1);
 				}
 			}
-#endif
 			// <== Enhanced Client Recognition [Spike] - Stulle
 			else if (m_clientSoft == SO_AMULE || nClientUpVersion != 0)
 				iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.%u.%u"), pszSoftware, nClientMajVersion, nClientMinVersion, nClientUpVersion);
 			else if (m_clientSoft == SO_LPHANT)
 			{
 				if (nClientMinVersion < 10)
-				    iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.0%u"), pszSoftware, (nClientMajVersion-1), nClientMinVersion);
+					iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.0%u"), pszSoftware, (nClientMajVersion-1), nClientMinVersion);
 				else
 					iLen = _sntprintf(szSoftware, ARRSIZE(szSoftware), _T("%s v%u.%u"), pszSoftware, (nClientMajVersion-1), nClientMinVersion);
 			}
@@ -3397,20 +2904,15 @@ void CUpDownClient::InitClientSoftwareVersion()
 		if (iLen > 0){
 			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen*sizeof(TCHAR));
 			m_strClientSoftware.ReleaseBuffer(iLen);
-			//MORPH START - Added by SiRoB, MODSTRING
-			if(!m_strModVersion.IsEmpty())
-				m_strClientSoftware.Append(_T(" [") + m_strModVersion + _T("]"));
-			//MORPH END   - Added by SiRoB, MODSTRING
 		}
 		return;
 	}
 
 	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
+	/*
 	if (m_bIsHybrid){
-#else
+	*/
 	if (m_bIsHybrid || m_byCompatibleClient == SO_EDONKEYHYBRID){
-#endif
 	// <== Enhanced Client Recognition [Spike] - Stulle
 		m_clientSoft = SO_EDONKEYHYBRID;
 		// seen:
@@ -3435,7 +2937,12 @@ void CUpDownClient::InitClientSoftwareVersion()
 			nClientMinVersion = (m_nClientVersion - uMaj*100000) / 100;
 			nClientUpVersion = m_nClientVersion % 100;
 		}
+		// ==> Enhanced Client Recognition [Spike] - Stulle
+		/*
 		else if (m_nClientVersion >= 10100 && m_nClientVersion <= 10309){
+		*/
+		else if (m_nClientVersion >= 10100 && m_nClientVersion <= 10409){ // netfinity
+		// <== Enhanced Client Recognition [Spike] - Stulle
 			UINT uMaj = m_nClientVersion/10000;
 			nClientMajVersion = uMaj;
 			nClientMinVersion = (m_nClientVersion - uMaj*10000) / 100;
@@ -3481,21 +2988,11 @@ void CUpDownClient::InitClientSoftwareVersion()
 		if (iLen > 0){
 			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen*sizeof(TCHAR));
 			m_strClientSoftware.ReleaseBuffer(iLen);
-			//MORPH START - Added by SiRoB, MODSTRING
-			if(!m_strModVersion.IsEmpty())
-				m_strClientSoftware.Append(_T(" [") + m_strModVersion + _T("]"));
-			//MORPH END   - Added by SiRoB, MODSTRING
 		}
 		return;
 	}
 
-	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
 	if (m_bIsML || iHashType == SO_MLDONKEY){
-#else
-	if (m_bIsML || iHashType == SO_MLDONKEY || iHashType == SO_OLD_MLDONKEY){
-#endif
-	// <== Enhanced Client Recognition [Spike] - Stulle
 		m_clientSoft = SO_MLDONKEY;
 		UINT nClientMinVersion = m_nClientVersion;
 		m_nClientVersion = MAKE_CLIENT_VERSION(0, nClientMinVersion, 0);
@@ -3504,10 +3001,6 @@ void CUpDownClient::InitClientSoftwareVersion()
 		if (iLen > 0){
 			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen*sizeof(TCHAR));
 			m_strClientSoftware.ReleaseBuffer(iLen);
-			//MORPH START - Added by SiRoB, MODSTRING
-			if(!m_strModVersion.IsEmpty())
-				m_strClientSoftware.Append(_T(" [") + m_strModVersion + _T("]"));
-			//MORPH END   - Added by SiRoB, MODSTRING
 		}
 		return;
 	}
@@ -3521,10 +3014,6 @@ void CUpDownClient::InitClientSoftwareVersion()
 		if (iLen > 0){
 			memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen*sizeof(TCHAR));
 			m_strClientSoftware.ReleaseBuffer(iLen);
-			//MORPH START - Added by SiRoB, MODSTRING
-			if(!m_strModVersion.IsEmpty())
-				m_strClientSoftware.Append(_T(" [") + m_strModVersion + _T("]"));
-			//MORPH END   - Added by SiRoB, MODSTRING
 		}
 		return;
 	}
@@ -3537,10 +3026,6 @@ void CUpDownClient::InitClientSoftwareVersion()
 	if (iLen > 0){
 		memcpy(m_strClientSoftware.GetBuffer(iLen), szSoftware, iLen*sizeof(TCHAR));
 		m_strClientSoftware.ReleaseBuffer(iLen);
-		//MORPH START - Added by SiRoB, MODSTRING
-		if(!m_strModVersion.IsEmpty())
-			m_strClientSoftware.Append(_T(" [") + m_strModVersion + _T("]"));
-		//MORPH END   - Added by SiRoB, MODSTRING
 	}
 }
 
@@ -3551,12 +3036,6 @@ int CUpDownClient::GetHashType() const
 	else if (m_achUserHash[5] == 14 && m_achUserHash[14] == 111)
 		return SO_EMULE;
  	else if (m_achUserHash[5] == 'M' && m_achUserHash[14] == 'L')
-	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-		return SO_OLD_MLDONKEY;
-	else if (m_achUserHash[5] == 0x0E && m_achUserHash[14] == 0x6F) // Spike2 by Torni - recognize newer MLdonkeys (needed for Enhanced Client Recognization & emulate-Settings!)
-#endif
-	// <== Enhanced Client Recognition [Spike] - Stulle
 		return SO_MLDONKEY;
 	else
 		return SO_UNKNOWN;
@@ -3569,24 +3048,8 @@ void CUpDownClient::SetUserName(LPCTSTR pszNewName)
 		m_pszUsername = _tcsdup(pszNewName);
 	else
 		m_pszUsername = NULL;
-	//MORPH START - Added by SiRoB, Anti-leecher feature
-	if(thePrefs.GetEnableAntiLeecher())
-	{
-		// ==> Reduce Score for leecher - Stulle
-		/*
-		LPCTSTR pszLeecherReason = TestLeecher();
-		if (pszLeecherReason != NULL)
-			BanLeecher(pszLeecherReason);
-		*/
-		uint8 uBanReason = TestLeecher();
-		if (uBanReason != 0)
-			BanLeecher(NULL, uBanReason);
-		// <== Reduce Score for leecher - Stulle
-	}
-	//MORPH END   - Added by SiRoB, Anti-leecher feature
-	//MORPH START - Added by SiRoB, Dynamic FunnyNick
-	UpdateFunnyNick();
-	//MORPH END   - Added by SiRoB, Dynamic FunnyNick
+
+	UpdateFunnyNick(); //Xman Funny-Nick (Stulle/Morph)
 }
 
 void CUpDownClient::RequestSharedFileList()
@@ -3605,7 +3068,7 @@ void CUpDownClient::ProcessSharedFileList(const uchar* pachPacket, uint32 nSize,
 {
 	if (m_iFileListRequested > 0)
 	{
-        m_iFileListRequested--;
+		m_iFileListRequested--;
 		theApp.searchlist->ProcessSearchAnswer(pachPacket,nSize,this,NULL,pszDirectory);
 	}
 }
@@ -3634,7 +3097,11 @@ void CUpDownClient::SendPublicKeyPacket()
 {
 	// send our public key to the client who requested it
 	if (socket == NULL || credits == NULL || m_SecureIdentState != IS_KEYANDSIGNEEDED){
+		//zz_fly :: see the changes in clientcreditlist
+		/*
 		ASSERT ( false );
+		*/
+		//zz_fly :: see the changes in clientcreditlist
 		return;
 	}
 	if (!theApp.clientcredits->CryptoAvailable())
@@ -3654,7 +3121,11 @@ void CUpDownClient::SendSignaturePacket()
 {
 	// signate the public key of this client and send it
 	if (socket == NULL || credits == NULL || m_SecureIdentState == 0){
+		//zz_fly :: see the changes in clientcreditlist
+		/*
 		ASSERT ( false );
+		*/
+		//zz_fly :: see the changes in clientcreditlist
 		return;
 	}
 
@@ -3714,7 +3185,11 @@ void CUpDownClient::ProcessPublicKeyPacket(const uchar* pachPacket, uint32 nSize
 
 	if (socket == NULL || credits == NULL || pachPacket[0] != nSize-1
 		|| nSize < 10 || nSize > 250){
+		//zz_fly :: see the changes in clientcreditlist
+		/*
 		ASSERT ( false );
+		*/
+		//zz_fly :: see the changes in clientcreditlist
 		return;
 	}
 	if (!theApp.clientcredits->CryptoAvailable())
@@ -3744,7 +3219,11 @@ void CUpDownClient::ProcessSignaturePacket(const uchar* pachPacket, uint32 nSize
 	// here we spread the good guys from the bad ones ;)
 
 	if (socket == NULL || credits == NULL || nSize > 250 || nSize < 10){
+		//zz_fly :: see the changes in clientcreditlist
+		/*
 		ASSERT ( false );
+		*/
+		//zz_fly :: see the changes in clientcreditlist
 		return;
 	}
 
@@ -3871,13 +3350,28 @@ void CUpDownClient::InfoPacketsReceived()
 
 void CUpDownClient::ResetFileStatusInfo()
 {
-	//MORPH START - Changed by SiRoB, Keep A4AF infos
-	/*
 	delete[] m_abyPartStatus;
 	m_abyPartStatus = NULL;
-	*/
-	m_abyPartStatus = NULL;
+
+	//Xman Xtreme Downloadmanager
+	// Maella -Unnecessary Protocol Overload-
+	//m_dwLastAskedTime = 0; we don't reset this value, to decide if a droped client may reenter the queue, see CheckAndAdd
+	m_dwLastUDPReaskTime = 0;
+	m_dwNextTCPAskedTime = 0;
+	// Maella end
+
+	//Xman  Xtreme Mod
+	//at this point there can't be UDPpending... only if we remove the source.. and then we have to reset this value
+	m_bUDPPending=false;
+
+	/*
 	m_nRemoteQueueRank = 0;
+	*/
+	SetRemoteQueueRank(0,false); 
+
+	oldQR=0; //Xman DiffQR
+	//Xman end
+
 	m_nPartCount = 0;
 	m_strClientFilename.Empty();
 	m_bCompleteSource = false;
@@ -3886,20 +3380,17 @@ void CUpDownClient::ResetFileStatusInfo()
 	delete m_pReqFileAICHHash;
 	m_pReqFileAICHHash = NULL;
 
-	//MORPH START - Added by SiRoB, HotFix Due Complete Source Feature
-	m_nUpCompleteSourcesCount = 0;
-	//MORPH END   - Added by SiRoB, HotFix Due Complete Source Feature
-
-	if(this->reqfile != NULL) this->reqfile->RemoveSourceFileName(this); // EastShare       - FollowTheMajority by AndCycle
+	if(reqfile != NULL) reqfile->RemoveSourceFileName(this); // Follow The Majority [AndCycle/Stulle] - Stulle
 }
 
 bool CUpDownClient::IsBanned() const
 {
-	//MORPH START - Added by SiRoB, Code Optimization
-	if (m_nUploadState == US_BANNED)
-		return true;
-	//MORPH END   - Added by SiRoB, Code Optimization
+	//Xman official bugfix
+	/*
 	return theApp.clientlist->IsBannedClient(GetIP());
+	*/
+	return theApp.clientlist->IsBannedClient(GetConnectIP());
+	//Xman end
 }
 
 void CUpDownClient::SendPreviewRequest(const CAbstractFile* pForFile)
@@ -3981,7 +3472,7 @@ void CUpDownClient::ProcessPreviewAnswer(const uchar* pachPacket, uint32 nSize)
 	if (m_fPreviewReqPending == 0)
 		return;
 	m_fPreviewReqPending = 0;
-	CSafeMemFile data(pachPacket, nSize);
+	CSafeMemFile data(pachPacket,nSize);
 	uchar Hash[16];
 	data.ReadHash16(Hash);
 	uint8 nCount = data.ReadUInt8();
@@ -4013,7 +3504,8 @@ void CUpDownClient::ProcessPreviewAnswer(const uchar* pachPacket, uint32 nSize)
 		}
 	}
 	catch(...){
-		delete[] pBuffer;
+		if(pBuffer) //zz_fly :: from ACAT
+			delete[] pBuffer;
 		throw;
 	}
 	(new PreviewDlg())->SetFile(sfile);
@@ -4057,21 +3549,10 @@ void CUpDownClient::AssertValid() const
 {
 	CObject::AssertValid();
 
-	//SLAHAM: ADDED =>
-	(void)uiStartDLCount;
-	(void)dwStartDLTime;
-	(void)dwSessionDLTime;
-	(void)dwTotalDLTime;
-	(void)uiDLAskingCounter;
-	(void)dwThisClientIsKnownSince;
-	//SLAHAM: ADDED <=
-
 	CHECK_OBJ(socket);
 	CHECK_PTR(credits);
 	CHECK_PTR(m_Friend);
 	CHECK_OBJ(reqfile);
-	(void)compressiongain;
-	(void)notcompressed;
 	(void)m_abyUpPartStatus;
 	m_OtherRequests_list.AssertValid();
 	m_OtherNoNeeded_list.AssertValid();
@@ -4112,10 +3593,7 @@ void CUpDownClient::AssertValid() const
 	(void)m_byCompatibleClient;
 	m_WaitingPackets_list.AssertValid();
 	m_DontSwap_list.AssertValid();
-	//MORPH START - UpdateItemThread
-	/*
 	(void)m_lastRefreshedDLDisplay;
-	*/
 	ASSERT( m_SecureIdentState >= IS_UNAVAILABLE && m_SecureIdentState <= IS_KEYANDSIGNEEDED );
 	(void)m_dwLastSignatureIP;
 	ASSERT( (m_byInfopacketsReceived & ~IP_BOTH) == 0 );
@@ -4126,15 +3604,22 @@ void CUpDownClient::AssertValid() const
 	(void)m_cAsked;
 	(void)m_dwLastUpRequest;
 	(void)m_nCurSessionUp;
-    /*MORPH - FIX for zz code*/(void)m_nCurSessionPayloadUp;
     (void)m_nCurQueueSessionPayloadUp;
     (void)m_addedPayloadQueueSession;
 	(void)m_nUpPartCount;
 	(void)m_nUpCompleteSourcesCount;
+	//Xman
+	/*
 	(void)s_UpStatusBar;
+	*/
+	//Xman end
 	(void)requpfileid;
     (void)m_lastRefreshedULDisplay;
+	//Xman
+	/*
 	m_AvarageUDR_list.AssertValid();
+	*/
+	//Xman end
 	m_BlockRequests_queue.AssertValid();
 	m_DoneBlocks_list.AssertValid();
 	m_RequestedFiles_list.AssertValid();
@@ -4143,17 +3628,21 @@ void CUpDownClient::AssertValid() const
 	(void)m_abyPartStatus;
 	(void)m_strClientFilename;
 	(void)m_nTransferredDown;
-    /*zz*/(void)m_nCurSessionPayloadDown;
+	(void)m_nCurSessionPayloadDown;
 	(void)m_dwDownStartTime;
 	(void)m_nLastBlockOffset;
 	(void)m_nDownDatarate;
+	//Xman
+	/*
 	(void)m_nDownDataRateMS;
 	(void)m_nSumForAvgDownDataRate;
 	(void)m_cShowDR;
+	*/
+	//Xman end
 	(void)m_nRemoteQueueRank;
 	(void)m_dwLastBlockReceived;
 	(void)m_nPartCount;
-	ASSERT( m_nSourceFrom >= SF_SERVER && m_nSourceFrom <= SF_SLS );
+	ASSERT( m_nSourceFrom >= SF_SERVER && m_nSourceFrom <= SF_LINK );
 	CHECK_BOOL(m_bRemoteQueueFull);
 	CHECK_BOOL(m_bCompleteSource);
 	CHECK_BOOL(m_bReaskPending);
@@ -4161,23 +3650,24 @@ void CUpDownClient::AssertValid() const
 	CHECK_BOOL(m_bTransferredDownMini);
 	CHECK_BOOL(m_bUnicodeSupport);
 	ASSERT( m_nKadState >= KS_NONE && m_nKadState <= KS_CONNECTING_FWCHECK_UDP);
+	//Xman
+	/*
 	m_AvarageDDR_list.AssertValid();
 	(void)m_nSumForAvgUpDataRate;
+	*/
+	//Xman end
 	m_PendingBlocks_list.AssertValid();
 	m_DownloadBlocks_list.AssertValid();
+	//Xman
+	/*
 	(void)s_StatusBar;
+	*/
+	//Xman end
 	ASSERT( m_nChatstate >= MS_NONE && m_nChatstate <= MS_UNABLETOCONNECT );
 	(void)m_strFileComment;
 	(void)m_uFileRating;
 	CHECK_BOOL(m_bCollectionUploadSlot);
-	// ==> Sivka-Ban [cyrex2001] - Stulle
-	(void)uiULAskingCounter;
-	(void)dwLastTimeAskedForWPRank;
-	(void)uiWaitingPositionRank;
-	(void)dwThisClientIsKnownSince;
-	// <== Sivka-Ban [cyrex2001] - Stulle
-	CHECK_BOOL(m_bAntiUploaderCaseThree); // Anti Uploader Ban - Stulle
-
+	CHECK_BOOL(m_bAntiUploaderCaseThree); // Anti Uploader Ban [Stulle] - Stulle
 #undef CHECK_PTR
 #undef CHECK_BOOL
 }
@@ -4235,12 +3725,12 @@ LPCTSTR CUpDownClient::DbgGetKadState() const
 	const static LPCTSTR apszState[] =
 	{
 		_T("None"),
-		_T("FwCheckQueued"),
-		_T("FwCheckConnecting"),
-		_T("FwCheckConnected"),
-		_T("BuddyQueued"),
-		_T("BuddyIncoming"),
-		_T("BuddyConnecting"),
+			_T("FwCheckQueued"),
+			_T("FwCheckConnecting"),
+			_T("FwCheckConnected"),
+			_T("BuddyQueued"),
+			_T("BuddyIncoming"),
+			_T("BuddyConnecting"),
 		_T("BuddyConnected"),
 		_T("QueuedFWCheckUDP"),
 		_T("FWCheckUDP"),
@@ -4253,14 +3743,9 @@ LPCTSTR CUpDownClient::DbgGetKadState() const
 
 CString CUpDownClient::DbgGetFullClientSoftVer() const
 {
-	//MORPH START - Changed by SiRoB, [itsonlyme: -modname-]
-	/*
 	if (GetClientModVer().IsEmpty())
 		return GetClientSoftVer();
 	return GetClientSoftVer() + _T(" [") + GetClientModVer() + _T(']');
-	*/
-	return GetClientSoftVer();
-	//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-]
 }
 
 CString CUpDownClient::DbgGetClientInfo(bool bFormatIP) const
@@ -4305,13 +3790,13 @@ CString CUpDownClient::DbgGetClientInfo(bool bFormatIP) const
 	return str;
 }
 
-bool CUpDownClient::CheckHandshakeFinished(UINT protocol, UINT opcode) const
+bool CUpDownClient::CheckHandshakeFinished() const
 {
 	if (m_bHelloAnswerPending)
 	{
 		// 24-Nov-2004 [bc]: The reason for this is that 2 clients are connecting to each other at the same..
-		if (thePrefs.GetVerbose() && protocol != 0 && opcode != 0)
-			DebugLog(DLP_VERYLOW, _T("Handshake not finished - while processing packet: %s; %s"), DbgGetClientTCPOpcode(protocol, opcode), DbgGetClientInfo());
+		//if (thePrefs.GetVerbose())
+		//	AddDebugLogLine(DLP_VERYLOW, false, _T("Handshake not finished - while processing packet: %s; %s"), DbgGetClientTCPOpcode(protocol, opcode), DbgGetClientInfo());
 		return false;
 	}
 
@@ -4328,10 +3813,7 @@ void CUpDownClient::CheckForGPLEvilDoer()
 			pszModVersion++;
 
 		// check for known major gpl breaker
-		if (_tcsnicmp(pszModVersion, _T("LH"), 2)==0 ||
-			_tcsnicmp(pszModVersion, _T("LIO"), 3)==0 ||
-			_tcsnicmp(pszModVersion, _T("PLUS PLUS"), 9)==0 ||
-			_tcsnicmp(pszModVersion, _T("WAREZFAW.COM 2.0"),16)==0)
+		if (_tcsnicmp(pszModVersion, _T("LH"), 2)==0 || _tcsnicmp(pszModVersion, _T("LIO"), 3)==0 || _tcsnicmp(pszModVersion, _T("PLUS PLUS"), 9)==0)
 			m_bGPLEvildoer = true;
 	}
 }
@@ -4358,28 +3840,27 @@ CString CUpDownClient::GetDownloadStateDisplayString() const
 			if (IsRemoteQueueFull())
 				strState = GetResString(IDS_QUEUEFULL);
 			else
-			// EastShare START - Modified by TAHO, moved and moddified from Priority column
-            /*
-			strState = GetResString(IDS_ONQUEUE);
-            */
+// ==> {diffQR} [Max] 
+			//strState = GetResString(IDS_ONQUEUE);
 			{
-				if (GetRemoteQueueRank()){
-					//MORPH - RemoteQueueRank Estimated Time
-					strState.Format(_T("QR: %u"), GetRemoteQueueRank());
-					DWORD estimatedTime = GetRemoteQueueRankEstimatedTime();
-					if (estimatedTime) {
-						if (estimatedTime == (DWORD)-1)
-							strState.AppendFormat(_T(" (+)"));
-						else if (estimatedTime>GetTickCount())
-							strState.AppendFormat(_T(" (%s)"), CastSecondsToHM((estimatedTime-GetTickCount())/1000));
+				if ( GetRemoteQueueRank())
+                                {
+					if(GetDiffQR()<=0)
+					{
+					strState.Format(_T("QR: %u (%i)"), GetRemoteQueueRank(), GetDiffQR());
 					}
-					//MORPH - RemoteQueueRank Estimated Time
+					else
+					{
+					strState.Format(_T("QR: %u (+%i)"), GetRemoteQueueRank(), GetDiffQR());// +QR [Max] 
+					}
+					
 				}
-				else{
+				else
+                                {
 				strState = GetResString(IDS_ONQUEUE);
 				}
 			}
-			// EastShare END - Modified by TAHO, moved and moddified from Priority column
+// <== {diffQR} [Max] 
 			break;
 		case DS_DOWNLOADING:
 			strState = GetResString(IDS_TRANSFERRING);
@@ -4406,37 +3887,38 @@ CString CUpDownClient::GetDownloadStateDisplayString() const
 			strState = GetResString(IDS_KAD_TOOMANDYKADLKPS);
 			break;
 	}
-/* MORPH
+
+	//Xman
+	/*
 	if (thePrefs.GetPeerCacheShow())
 	{
-  END MORPH*/
-  		switch (m_ePeerCacheDownState)
+	*/
+	//Xman end
+		switch (m_ePeerCacheDownState)
 		{
 		case PCDS_WAIT_CLIENT_REPLY:
-			strState += _T(" Peer")+GetResString(IDS_PCDS_CLIENTWAIT);
+			strState += _T(" ")+GetResString(IDS_PCDS_CLIENTWAIT);
 			break;
 		case PCDS_WAIT_CACHE_REPLY:
-			strState += _T(" Peer")+GetResString(IDS_PCDS_CACHEWAIT);
+			strState += _T(" ")+GetResString(IDS_PCDS_CACHEWAIT);
 			break;
 		case PCDS_DOWNLOADING:
-			strState += _T(" Peer")+GetResString(IDS_CACHE);
+			strState += _T(" ")+GetResString(IDS_CACHE);
 			break;
 		}
 		if (m_ePeerCacheDownState != PCDS_NONE && m_bPeerCacheDownHit)
-			strState += _T(" Peer Hit");
-/*
+			strState += _T(" Hit");
+	//Xman
+	/*
 	}
-*/
-#if !defined DONT_USE_SOCKET_BUFFERING
-	CEMSocket* s = socket;
-	if (s != NULL) {
-		if (m_pPCDownSocket)
-			s = m_pPCDownSocket;
-#ifndef _RELEASE
-		strState.AppendFormat(_T(",BUF:%u"), socket->GetRecvBufferSize());
-#endif 
-	}
-#endif
+	*/
+	//Xman end
+
+	//Xman 4.2
+	if(GetUploadState()==US_UPLOADING)
+		strState = _T(">>") + strState;
+	//Xman end
+
 	return strState;
 }
 
@@ -4454,38 +3936,54 @@ CString CUpDownClient::GetUploadStateDisplayString() const
 			strState = GetResString(IDS_CONNECTING);
 			break;
 		case US_UPLOADING:
-            if(IsScheduledForRemoval()) {
-				strState = GetScheduledRemovalDisplayReason();
-			} else if(GetPayloadInBuffer() == 0 && GetNumberOfRequestedBlocksInQueue() == 0 && thePrefs.IsExtControlsEnabled()) {
+			//Xman Xtreme Upload
+			/*
+            if(GetPayloadInBuffer() == 0 && GetNumberOfRequestedBlocksInQueue() == 0 && thePrefs.IsExtControlsEnabled()) {
 				strState = GetResString(IDS_US_STALLEDW4BR);
             } else if(GetPayloadInBuffer() == 0 && thePrefs.IsExtControlsEnabled()) {
 				strState = GetResString(IDS_US_STALLEDREADINGFDISK);
-            } else if(GetSlotNumber() <= theApp.uploadqueue->GetActiveUploadsCount(m_classID)) {
+            } else if(GetSlotNumber() <= theApp.uploadqueue->GetActiveUploadsCount()) {
 				strState = GetResString(IDS_TRANSFERRING);
             } else {
                 strState = GetResString(IDS_TRICKLING);
             }
-            break;
+			*/
+			if(GetPayloadInBuffer() == 0 && GetNumberOfRequestedBlocksInQueue() == 0 && thePrefs.IsExtControlsEnabled()) 
+				strState = GetResString(IDS_US_STALLEDW4BR);
+			else  if(GetPayloadInBuffer() == 0 && thePrefs.IsExtControlsEnabled()) 
+				strState = GetResString(IDS_US_STALLEDREADINGFDISK);
+			else
+				strState = GetResString(IDS_TRANSFERRING);
+			//Xman end
+			break;
 	}
-/*
+
+	//Xman
+	/*
 	if (thePrefs.GetPeerCacheShow())
+	*/
+	//Xman end
 	{
-*/		switch (m_ePeerCacheUpState)
+		switch (m_ePeerCacheUpState)
 		{
 		case PCUS_WAIT_CACHE_REPLY:
-			strState += _T(" PeerCacheWait");
+			strState += _T(" CacheWait");
 			break;
 		case PCUS_UPLOADING:
+			//Xman
+			/*
+			strState += _T(" Cache");
+			*/
 			strState += _T(" PeerCache");
+			//Xman end
 			break;
 		}
 		if (m_ePeerCacheUpState != PCUS_NONE && m_bPeerCacheUpHit)
 			strState += _T(" Hit");
-/*
 	}
-*/
-	// ==> Spread Credits Slot - Stulle
-	if( thePrefs.GetSpreadCreditsSlot() )
+
+	// ==> Spread Credits Slot [Stulle] - Stulle
+	if( thePrefs.GetSpreadCreditsSlot() && thePrefs.TransferFullChunks() )
 	{
 		switch(GetSpreadClient())
 		{
@@ -4493,36 +3991,20 @@ CString CUpDownClient::GetUploadStateDisplayString() const
 				strState += _T(" @Spr N");
 				break;
 			case 2:
-				strState += _T(" @Spr F");
-				break;
-			case 3:
 				strState += _T(" @Spr O");
 				break;
+			case 0:
 			default:
 				break;
 		}
 	}
-	// <== Spread Credits Slot - Stulle
+	// <== Spread Credits Slot [Stulle] - Stulle
 
-	if(GetUploadState() != US_NONE) {
-		CEMSocket* s = socket;
-		if (s != NULL) {
-			if (m_pPCUpSocket)
-				s = m_pPCUpSocket;
-			DWORD busySince = s->GetBusyTimeSince();
-			if (s->GetBusyRatioTime() > 0)
-				strState.AppendFormat(_T(",BR: %0.2f"), s->GetBusyRatioTime());
-			if (busySince > 0)
-				strState.AppendFormat(_T(",BT:%ums"), GetTickCount() - busySince);
-#ifndef DONT_USE_SOCKET_BUFFERING
-#ifndef _RELEASE
- 		   // extra info not required in release
-			strState.AppendFormat(_T(",BUF:%u"), s->GetSendBufferSize());		
-#endif			
-#endif
+	//Xman 4.2
+	if(GetDownloadState()==DS_DOWNLOADING)
+		strState = _T("<<") + strState;
+	//Xman end
 
-		}
-	}
 	return strState;
 }
 
@@ -4543,9 +4025,118 @@ void CUpDownClient::ProcessPublicIPAnswer(const BYTE* pbyData, UINT uSize){
 	uint32 dwIP = PeekUInt32(pbyData);
 	if (m_fNeedOurPublicIP == 1){ // did we?
 		m_fNeedOurPublicIP = 0;
+
+		//Xman: we have a problem if our IP ends with 0. The Check for IsLowID() would be true and
+		//the code can't work (also official part)
+		//Fix: if we receive a LowID we do a recheck
+		/*
 		if (theApp.GetPublicIP() == 0 && !::IsLowID(dwIP) )
 			theApp.SetPublicIP(dwIP);
-		theApp.CheckIdChange(); // Inform Clients after IP Change - Stulle
+		*/
+		if(dwIP==0) return; //thats wrong in every case
+		if(IsLowID(dwIP) && dwIP!=theApp.recheck_ip)
+		{
+			//check if still needed:
+			if(theApp.m_bneedpublicIP
+				|| theApp.serverconnect->IsConnected() && theApp.GetPublicIP() == 0)
+				theApp.recheck_ip=dwIP;
+			return; //will force a new request
+		}
+
+		//Xman -Reask sources after IP change- v4 
+		if(theApp.m_bneedpublicIP /*&& !::IsLowID(dwIP)*/) //this is the case we have kad-only but no upload->inet down ?
+		{
+
+			//Xman new adapter selection 
+			{
+				uint32 test=dwIP;
+				CString tmp;
+				tmp.Format(_T("received an IP from a client: %u.%u.%u.%u, NAFC-Adapter will be checked"), (uint8)test, (uint8)(test>>8), (uint8)(test>>16), (uint8)(test>>24));
+				AddLogLine(false,tmp);
+				theApp.pBandWidthControl->checkAdapterIndex(dwIP);
+			}
+			//Xman end
+
+			if(theApp.last_valid_ip!=0 && theApp.last_valid_ip != dwIP)
+			{
+
+				//if we had a lowID we asume we get it again. Then let the server trigger
+				if((theApp.serverconnect->IsConnecting() && IsLowID(theApp.last_valid_serverid))
+					|| (theApp.serverconnect->IsConnected() && theApp.serverconnect->IsLowID() && theApp.GetPublicIP(true)!=dwIP))
+				{
+					//don't trigger
+				}
+				else
+				{
+					// ==> Quick start [TPT] - Max
+					if(thePrefs.GetQuickStart() && thePrefs.GetQuickStartAfterIPChange())
+					{
+						theApp.downloadqueue->quickflag = 0;
+						theApp.downloadqueue->quickflags = 0;
+					}
+					// <== Quick start [TPT] - Max
+					if(GetTickCount() - theApp.last_ip_change > FILEREASKTIME + 60000)
+					{
+						theApp.clientlist->TrigReaskForDownload(true);
+						AddLogLine(false, _T("Kad Connection detected IP-change, changed IP from %s to %s, all sources will be reasked immediately"), ipstr(theApp.last_valid_ip), ipstr(dwIP));
+					}
+					else
+					{
+						theApp.clientlist->TrigReaskForDownload(false);
+						AddLogLine(false, _T("Kad Connection detected IP-change, changed IP from %s to %s, all sources will be reasked within the next 10 minutes"), ipstr(theApp.last_valid_ip), ipstr(dwIP));
+					}
+					SetNextTCPAskedTime(::GetTickCount() + FILEREASKTIME); //not for this source
+					// ==> UPnP support [MoNKi] - leuk_he
+					/*
+					// official UPNP
+					// we don't want to trigger it twice, do we?!
+					theApp.emuledlg->RefreshUPnP(false); // refresh the UPnP mappings once
+					// official UPNP
+					*/
+					// <== UPnP support [MoNKi] - leuk_he
+				}
+				// Xman reconnect Kad on IP-change
+				if (Kademlia::CKademlia::IsConnected() && Kademlia::CKademlia::GetPrefs()->GetIPAddress())
+					if(ntohl(Kademlia::CKademlia::GetIPAddress()) != dwIP)
+					{
+						if(Kademlia::CKademlia::GetIPAddress()!=0)
+						{
+							AddDebugLogLine(DLP_DEFAULT, false,  _T("Public IP Address reported from Kademlia (%s) differs from new found (%s), restart Kad"),ipstr(ntohl(Kademlia::CKademlia::GetIPAddress())),ipstr(dwIP));
+							Kademlia::CKademlia::Stop();
+							Kademlia::CKademlia::Start();
+						}
+						//Kad loaded the old IP, we must reset
+						if(Kademlia::CKademlia::IsRunning()) //one more check
+						{
+							Kademlia::CKademlia::GetPrefs()->SetIPAddress(0);
+							Kademlia::CKademlia::GetPrefs()->SetIPAddress(htonl(dwIP));
+						}
+					}
+				//Xman end
+
+				//on some routers it needs endless time until a server-reconnect is initiated after ip-change
+				if(theApp.serverconnect->IsConnected() && theApp.GetPublicIP(true)!=dwIP)
+				{
+					theApp.serverconnect->Disconnect();
+					theApp.serverconnect->ConnectToAnyServer();
+				}
+			}
+			theApp.last_valid_ip=dwIP;
+
+			theApp.m_bneedpublicIP=false;
+			theApp.last_ip_change=::GetTickCount(); //remark: this is set when ever inet was down, even we receive the old ip
+
+		}
+		if(theApp.serverconnect->IsConnected())//remark: this is the case we have a lowid-server-connect
+			if (theApp.GetPublicIP() == 0 /*&& !::IsLowID(dwIP)*/ )
+			{
+				theApp.SetPublicIP(dwIP); 
+				theApp.last_valid_ip=dwIP;
+			}
+		//Xman end
+
+		//Xman fix
+		theApp.recheck_ip=0;
 	}	
 }
 
@@ -4556,13 +4147,11 @@ void CUpDownClient::CheckFailedFileIdReqs(const uchar* aucFileHash)
 	//if (GetDownloadState() != DS_DOWNLOADING) // filereq floods are never allowed!
 	{
 		if (m_fFailedFileIdReqs < 6)// NOTE: Do not increase this nr. without increasing the bits for 'm_fFailedFileIdReqs'
-		{
 			m_fFailedFileIdReqs++;
-     		// morph some extra suprious verbose tracking, read http://forum.emule-project.net/index.php?showtopic=136682
-	    	DebugLogError( _T("Client: %s (%s), Increased set m_fFailedFileIdReqs to %d"), GetUserName(), ipstr(GetConnectIP()),m_fFailedFileIdReqs );
-		}
 		if (m_fFailedFileIdReqs == 6)
 		{
+			//Xman we filter not ban!
+			/*
 			if (theApp.clientlist->GetBadRequests(this) < 2)
 				theApp.clientlist->TrackBadRequest(this, 1);
 			if (theApp.clientlist->GetBadRequests(this) == 2){
@@ -4570,6 +4159,9 @@ void CUpDownClient::CheckFailedFileIdReqs(const uchar* aucFileHash)
 				Ban(_T("FileReq flood"));
 			}
 			throw CString(thePrefs.GetLogBannedClients() ? _T("FileReq flood") : _T(""));
+			*/
+			throw CString(_T("FileReq flood"));
+			//Xman end
 		}
 	}
 }
@@ -4608,21 +4200,11 @@ bool CUpDownClient::ShouldReceiveCryptUDPPackets() const {
 void CUpDownClient::ProcessChatMessage(CSafeMemFile* data, uint32 nLength)
 {
 	//filter me?
-	//MORPH START - Changed by SiRoB, originaly in ChatSelector::IsSpam(), Added by IceCream, third fixed criteria: leechers who try to afraid other morph/lovelave/blackrat users (NOS, Darkmule ...)
-	/*
 	if ( (thePrefs.MsgOnlyFriends() && !IsFriend()) || (thePrefs.MsgOnlySecure() && GetUserName()==NULL) )
-	*/
-	if ( (thePrefs.MsgOnlyFriends() && !IsFriend()) || (thePrefs.MsgOnlySecure() && GetUserName()==NULL) || (thePrefs.GetEnableAntiLeecher() && (IsLeecher() || TestLeecher())))
-	//MORPH END - Changed by SiRoB, originaly in ChatSelector::IsSpam(), Added by IceCream, third fixed criteria: leechers who try to afraid other morph/lovelave/blackrat users (NOS, Darkmule ...)
 	{
 		if (!GetMessageFiltered()){
 			if (thePrefs.GetVerbose())
-				//MORPH START - Changed by SiRoB, Just Add client soft version
-				/*
 				AddDebugLogLine(false,_T("Filtered Message from '%s' (IP:%s)"), GetUserName(), ipstr(GetConnectIP()));
-				*/
-				AddDebugLogLine(false,_T("Filtered Message from '%s' (IP:%s) (%s)"), GetUserName(), ipstr(GetConnectIP()),GetClientSoftVer());
-				//MORPH END   - Changed by SiRoB, Just Add client soft version
 		}
 		SetMessageFiltered(true);
 		return;
@@ -4631,41 +4213,31 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile* data, uint32 nLength)
 	CString strMessage(data->ReadString(GetUnicodeSupport()!=utf8strNone, nLength));
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		Debug(_T("  %s\n"), strMessage);
-	
 	// default filtering
 	CString strMessageCheck(strMessage);
 
-	// ==> Spam Ban [Xman] - Stulle
+	//Xman Anti-Leecher
+	//Xman DLP
 	if(GetUploadState()==US_BANNED)
 		return; //just to be sure
 
-	if(thePrefs.GetSpamBan() &&
-		GetMessagesReceived()==0 &&	//it's the first message we receive
-		IsFriend()==false //and it isn't a friend
-//		strMessageCheck != NULL
+	if(GetMessagesReceived()==0 &&	//it's the first message we receive
+		IsFriend()==false &&		//and it isn't a friend
+		thePrefs.GetAntiLeecherspammer() &&
+		theApp.dlp->IsDLPavailable()
 		)
 	{
-		if(
-			StrStr(strMessageCheck, _T("ZamBoR")) ||
-			StrStr(strMessageCheck, _T("DI-Emule")) ||
-			StrStr(strMessageCheck, _T("Join the L33cher")) ||
-			StrStr(strMessageCheck, _T("eMule FX")) ||
-			StrStr(strMessageCheck, _T("---> ed2k://|file|Ketamine")) ||
-			StrStr(strMessageCheck, _T("robot from RIAA, you can't fight")) ||
-			StrStr(strMessageCheck, _T("agent from PeerFactor, she advises you to stop")) ||
-			StrStr(strMessageCheck, _T("bot from MPAA, you can't do anything against her")) ||
-			StrStr(strMessageCheck, _T("[Sangue-Suga]")) || //3 /2007
-			StrStr(strMessageCheck, _T("[te@m projekt")) || //5 /2007
-			StrStr(strMessageCheck, _T("eMule PRO Ultra2")) || //8/2007
-			StrStr(strMessageCheck, _T("HyperMule")) || //8/2007
-			StrStr(strMessageCheck, _T("FXeMule")) 
-			)
+		LPCTSTR reason=theApp.dlp->DLPCheckMessageSpam(strMessageCheck);
+		if(reason)
 		{
-			BanLeecher(NULL,BAN_SPAMMER);
+			theApp.emuledlg->chatwnd->chatselector.EndSession(this);
+			BanLeecher(_T(""),0); //dirty trick to get the message
+			BanLeecher(reason,7);
+			ProcessBanMessage();
 			return;
 		}
 	}
-	// <== Spam Ban [Xman] - Stulle
+	//Xman end
 
 	strMessageCheck.MakeLower();
 	CString resToken;
@@ -4799,7 +4371,12 @@ void CUpDownClient::ProcessChatMessage(CSafeMemFile* data, uint32 nLength)
 		{
 			if (IsSpammer()){
 				if (thePrefs.GetVerbose())
+					//Xman
+					/*
 					AddDebugLogLine(false, _T("'%s' has been marked as spammer"), GetUserName());
+					*/
+					AddLeecherLogLine(false, _T("'%s' has been marked as spammer"), GetUserName());
+					//Xman end
 			}
 			SetSpammer(true);
 			theApp.emuledlg->chatwnd->chatselector.EndSession(this);
@@ -4972,8 +4549,6 @@ void CUpDownClient::SetConnectOptions(uint8 byOptions, bool bEncryption, bool bC
 
 void CUpDownClient::SendSharedDirectories()
 {
-	// SLUGFILLER: shareSubdir - enumerate according to shared files
-	/*
 	//TODO: Don't send shared directories which do not contain any files
 	// add shared directories
 	CString strDir;
@@ -5006,75 +4581,6 @@ void CUpDownClient::SendSharedDirectories()
 	tempfile.WriteUInt32(arFolders.GetCount());
 	for (int i = 0; i < arFolders.GetCount(); i++)
 		tempfile.WriteString(arFolders.GetAt(i), GetUnicodeSupport());
-	*/
-	CStringList toSend;		// String list, because it's easier and faster
-	CCKey bufKey;
-	CKnownFile* cur_file;
-
-	// move single shared files to new list to save some loops when using this a lot
-	CStringList	liSingleSharedFiles;
-	if (theApp.sharedfiles->ProbablyHaveSingleSharedFiles())
-	{
-		for (POSITION pos = theApp.sharedfiles->m_liSingleSharedFiles.GetHeadPosition(); pos != NULL; theApp.sharedfiles->m_liSingleSharedFiles.GetNext(pos))
-			liSingleSharedFiles.AddTail(theApp.sharedfiles->m_liSingleSharedFiles.GetAt(pos));
-	}
-
-	for (POSITION pos = theApp.sharedfiles->m_Files_map.GetStartPosition();pos != 0;){
-		theApp.sharedfiles->m_Files_map.GetNextAssoc(pos,bufKey,cur_file);
-		if (cur_file->IsLargeFile() && !SupportsLargeFiles())
-			continue;
-		if (cur_file->IsPartFile()) // partfiles will be taken care of differently
-			continue;
-		// check if this file is explicitly shared
-		if (theApp.sharedfiles->ProbablyHaveSingleSharedFiles())
-		{
-			bool bSingleShared = false;
-			for (POSITION pos = liSingleSharedFiles.GetHeadPosition(); pos != NULL; liSingleSharedFiles.GetNext(pos) )
-			{
-				if (cur_file->GetFilePath().CompareNoCase(liSingleSharedFiles.GetAt(pos)) == 0)
-				{
-					liSingleSharedFiles.RemoveAt(pos); // remove this item so we do not check it again
-					bSingleShared = true;
-					break;
-				}
-			}
-			if (bSingleShared)
-				continue;
-		}
-		// xMule_MOD: showSharePermissions - don't send dir names that are empty
-		// due to file browse permissions
-		int Perm = cur_file->GetPermissions()>=0?cur_file->GetPermissions():thePrefs.GetPermissions();
-		// Mighty Knife: Community visible filelist
-		if ( Perm == PERM_NOONE 
-			|| (Perm == PERM_COMMUNITY && !(IsCommunity() || IsFriend()) ) 
-			|| (Perm == PERM_FRIENDS && !IsFriend()) )
-			continue;
-		// [end] Mighty Knife
-		// xMule_MOD: showSharePermissions
-		CString path = theApp.sharedfiles->GetPseudoDirName(cur_file->GetPath());
-		path.MakeLower();
-		if (toSend.Find(path) == NULL)
-			toSend.AddTail(path);
-	}
-
-	// add temporary folder if there are any temp files
-	if (theApp.downloadqueue->GetFileCount() > 0)
-		toSend.AddTail(CString(OP_INCOMPLETE_SHARED_FILES));
-	// add "Other" folder (for single shared files) if there are any single shared files
-	if (theApp.sharedfiles->ProbablyHaveSingleSharedFiles())
-		toSend.AddTail(CString(OP_OTHER_SHARED_FILES));
-
-	// should actually be empty here but we delete it all just in case
-	ASSERT( liSingleSharedFiles.IsEmpty() );
-	if(liSingleSharedFiles.IsEmpty() == false)
-		liSingleSharedFiles.RemoveAll();
-
-	//build packet
-	CSafeMemFile tempfile(80);
-	tempfile.WriteUInt32(toSend.GetCount());
-	for (POSITION pos = toSend.GetHeadPosition();pos != 0;toSend.GetNext(pos))
-		tempfile.WriteString((LPCTSTR)toSend.GetAt(pos), GetUnicodeSupport());
-	// SLUGFILLER: shareSubdir - enumerate according to shared files
 
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		DebugSend("OP__AskSharedDirsAnswer", this);
@@ -5083,54 +4589,6 @@ void CUpDownClient::SendSharedDirectories()
 	theStats.AddUpDataOverheadOther(replypacket->size);
 	VERIFY( SendPacket(replypacket, true, true) );
 }
-
-//MORPH START - Added by SiRoB, ZZUL_20040904
-void CUpDownClient::SetFriendSlot(bool bNV)		
-{
-    bool oldValue = m_bFriendSlot;
-    m_bFriendSlot = bNV;
-    if(theApp.uploadqueue && oldValue != m_bFriendSlot)
-        theApp.uploadqueue->ReSortUploadSlots(true);
-}
-//MORPH END   - Added by SiRoB, ZZUL_20040904
-//MORPH START - Added by SiRoB, Show Requested Files
-void CUpDownClient::ShowRequestedFiles()
-{
-	CString fileList;
-	fileList += GetResString(IDS_LISTREQDL);
-	fileList += "\n--------------------------\n" ; 
-	if ( reqfile  && reqfile->IsPartFile())
-	{
-		fileList += reqfile->GetFileName(); 
-		for(POSITION pos = m_OtherRequests_list.GetHeadPosition();pos!=0;m_OtherRequests_list.GetNext(pos))
-		{
-			fileList += "\n" ; 
-			fileList += m_OtherRequests_list.GetAt(pos)->GetFileName(); 
-		}
-		for(POSITION pos = m_OtherNoNeeded_list.GetHeadPosition();pos!=0;m_OtherNoNeeded_list.GetNext(pos))
-		{
-			fileList += "\n" ;
-			fileList += m_OtherNoNeeded_list.GetAt(pos)->GetFileName();
-		}
-	}
-	else
-		fileList += GetResString(IDS_LISTREQNODL);
-	fileList += "\n\n\n";
-	fileList += GetResString(IDS_LISTREQUL);
-	fileList += "\n------------------------\n" ; 
-	//MORPH START - Adde by SiRoB, Optimization requpfile
-	/*
-	CKnownFile* uploadfile = theApp.sharedfiles->GetFileByID((uchar*)requpfileid);
-	*/
-	CKnownFile* uploadfile = CheckAndGetReqUpFile();
-	//MORPH END   - Adde by SiRoB, Optimization requpfile
-	if(uploadfile)
-		fileList += uploadfile->GetFileName();
-	else
-		fileList += GetResString(IDS_LISTREQNOUL);
-	AfxMessageBox(fileList,MB_OK);
-}
-//MORPH END   - Added by SiRoB, Show Requested Files
 
 //EastShare Start - added by AndCycle, IP to Country
 // Superlexx - client's location
@@ -5147,267 +4605,338 @@ void CUpDownClient::ResetIP2Country(uint32 m_dwIP){
 }
 //MORPH END - Changed by SiRoB, ProxyClient
 //EastShare End - added by AndCycle, IP to Country
-//<<< eWombat [SNAFU_V3]
-void CUpDownClient::ProcessUnknownHelloTag(CTag *tag, CString &pszReason)
+
+
+//Xman Anti-Leecher
+bool CUpDownClient::ProcessUnknownHelloTag(CTag *tag, CString &pszReason)
 {
-LPCTSTR strSnafuTag=NULL;
-switch(tag->GetNameID())
-	{
-	case CT_UNKNOWNx12:
-	case CT_UNKNOWNx13:
-	case CT_UNKNOWNx14:
-	case CT_UNKNOWNx16:
-	case CT_UNKNOWNx17:
-	case CT_UNKNOWNxE6:			strSnafuTag=apszSnafuTag[0];break;//buffer=_T("DodgeBoards");break;
-	case CT_UNKNOWNx15:			strSnafuTag=apszSnafuTag[1];break;//buffer=_T("DodgeBoards & DarkMule |eVorte|X|");break;
-	case CT_UNKNOWNx22:			strSnafuTag=apszSnafuTag[2];break;//buffer=_T("DarkMule v6 |eVorte|X|");break;
-	case CT_UNKNOWNx5D:
-	case CT_UNKNOWNx6B:
-	case CT_UNKNOWNx6C:			strSnafuTag=apszSnafuTag[17];break;
-	case CT_UNKNOWNx74:
-	case CT_UNKNOWNx87:			strSnafuTag=apszSnafuTag[17];break;
-	case CT_UNKNOWNxF0:
-	case CT_UNKNOWNxF4:			strSnafuTag=apszSnafuTag[17];break;
-	//case CT_UNKNOWNx69:			strSnafuTag=apszSnafuTag[3];break;//buffer=_T("eMuleReactor");break;
-	case CT_UNKNOWNx79:			strSnafuTag=apszSnafuTag[4];break;//buffer=_T("Bionic");break;
-	case CT_UNKNOWNx83:			strSnafuTag=apszSnafuTag[15];break;//buffer=_T("Fusspi");break;
-	case CT_UNKNOWNx76:			
-	case CT_UNKNOWNxCD:			strSnafuTag=apszSnafuTag[16];break;//buffer=_T("www.donkey2002.to");break;
-	case CT_UNKNOWNx88:
-		////If its a LSD its o.k
-		if (m_strModVersion.IsEmpty() || _tcsnicmp(m_strModVersion, _T("LSD"),3)!=0)
-			strSnafuTag=apszSnafuTag[5];//[LSD7c]
-		break;
-	case CT_UNKNOWNx8c:			strSnafuTag=apszSnafuTag[5];break;//buffer=_T("[LSD7c]");break; 
-	case CT_UNKNOWNx8d:			strSnafuTag=apszSnafuTag[6];break;//buffer=_T("[0x8d] unknown Leecher - (client version:60)");break;
-	case CT_UNKNOWNx99:			strSnafuTag=apszSnafuTag[7];break;//buffer=_T("[RAMMSTEIN]");break;		//STRIKE BACK
-	case CT_UNKNOWNx98:
-	case CT_UNKNOWNx9C:
-	case CT_UNKNOWNxDA:			strSnafuTag=apszSnafuTag[3];break;//buffer=_T("eMuleReactor");break;
-	case CT_UNKNOWNxc4:			strSnafuTag=apszSnafuTag[8];break;//buffer=_T("[MD5 Community]");break;	//USED BY NEW BIONIC => 0x12 Sender
-	case CT_FRIENDSHARING:		//STRIKE BACK
-		//if (theApp.glob_prefs->GetAntiFriendshare())
-		//	{
-			if (tag->IsInt() && tag->GetInt() == FRIENDSHARING_ID) //Mit dieser ID Definitiv
-				{
-					// ==> Reduce Score for leecher - Stulle
-					/*
-					BanLeecher(_T("Friend Sharing detected"));
-					*/
-					BanLeecher(NULL,BAN_FRIEND_SHARING);
-					// <== Reduce Score for leecher - Stulle
-					return;				
-				}
-		//	}
-		break;
-	case CT_DARK:				//STRIKE BACK
-	case CT_UNKNOWNx7A:
-	case CT_UNKNOWNxCA:
-			strSnafuTag=apszSnafuTag[9];break;//buffer=_T("new DarkMule");
-		break;
-	case CT_UNKNOWNxEC:		strSnafuTag=apszSnafuTag[18];break; //Xman x4 Speedmule
-	case CT_UNKNOWNx4D:		strSnafuTag=apszSnafuTag[19];break;// pimp my mule misuse an official tag in hello
-	case CT_UNKNOWNxD2:		strSnafuTag=apszSnafuTag[20];break;//squallATF
-	case CT_UNKNOWNx85:		strSnafuTag=apszSnafuTag[21];break;//zz_fly
-	}
-	if (tag->IsStr() && tag->GetStr().GetLength() >= 32)
-		strSnafuTag=apszSnafuTag[17];
+#ifndef LOGTAG
+	//Xman DLP
+	if(pszReason.IsEmpty()==false)
+		return false;
+	//Xman end
+#endif
+
+	//Xman DLP
+	if(theApp.dlp->IsDLPavailable()==false)
+		return false;
+
+	bool foundmd4=false;
+
+	LPCTSTR strSnafuTag=theApp.dlp->DLPCheckHelloTag(tag->GetNameID());
 	if (strSnafuTag!=NULL)
 	{
 		pszReason.Format(_T("Suspect Hello-Tag: %s"),strSnafuTag);
 	}
+	//Xman end
+
+	if (strSnafuTag==NULL && tag->IsStr() && tag->GetStr().GetLength() >= 32)
+		foundmd4=true;
+
+#ifdef LOGTAG
+		if(m_byCompatibleClient==0 && GetHashType() == SO_EMULE )
+		{
+			AddDebugLogLine(false,_T("Unknown HelloTag: 0x%x, %s, client:%s"), tag->GetNameID(), tag->GetFullInfo(), DbgGetClientInfo());
+		}
+#endif
+
+	return foundmd4;
 }
 void CUpDownClient::ProcessUnknownInfoTag(CTag *tag, CString &pszReason)
 {
-LPCTSTR strSnafuTag=NULL;
-switch(tag->GetNameID())
-	{
-	case ET_MOD_UNKNOWNx12:
-	case ET_MOD_UNKNOWNx13:
-	case ET_MOD_UNKNOWNx14:
-	case ET_MOD_UNKNOWNx17:		strSnafuTag=apszSnafuTag[0];break;//("[DodgeBoards]")
-	case ET_MOD_UNKNOWNx2F:		strSnafuTag=apszSnafuTag[10];break;//buffer=_T("[OMEGA v.07 Heiko]");break;
-	case ET_MOD_UNKNOWNx36:
-	case ET_MOD_UNKNOWNx5B:
-	case ET_MOD_UNKNOWNxA6:		strSnafuTag=apszSnafuTag[11];break;//buffer=_T("eMule v0.26 Leecher");break;
-	case ET_MOD_UNKNOWNx60:		strSnafuTag=apszSnafuTag[12];break;//buffer=_T("[Hunter]");break; //STRIKE BACK
-	case ET_MOD_UNKNOWNx76:		strSnafuTag=apszSnafuTag[0];break;//buffer=_T("[DodgeBoards]");break;
-	case ET_MOD_UNKNOWNx50:		
-	case ET_MOD_UNKNOWNxB1:		
-	case ET_MOD_UNKNOWNxB4:		
-	case ET_MOD_UNKNOWNxC8:		
-	case ET_MOD_UNKNOWNxC9:		strSnafuTag=apszSnafuTag[13];break;//buffer=_T("[Bionic 0.20 Beta]");break;
-	case ET_MOD_UNKNOWNxDA:		strSnafuTag=apszSnafuTag[14];break;//buffer=_T("[Rumata (rus)(Plus v1f)]");break;
-	}
+#ifndef LOGTAG
+	//Xman DLP
+	if(pszReason.IsEmpty()==false)
+		return;
+	//Xman end
+#endif
+
+
+	//Xman DLP
+	if(theApp.dlp->IsDLPavailable()==false)
+		return;
+	LPCTSTR strSnafuTag=theApp.dlp->DLPCheckInfoTag(tag->GetNameID());
 	if (strSnafuTag!=NULL)
 	{
-		pszReason.Format(_T("Suspect eMuleInfo-Tag: %s"), strSnafuTag);
+		pszReason.Format(_T("Suspect eMuleInfo-Tag: %s"),strSnafuTag);
 	}
-}
-//>>> eWombat [SNAFU_V3]
+	//Xman end
+#ifdef LOGTAG
+		if(m_byCompatibleClient==0 && GetHashType() == SO_EMULE )
+		{
+			AddDebugLogLine(false,_T("Unknown InfoTag: 0x%x, %s, client:%s"), tag->GetNameID(), tag->GetFullInfo(), DbgGetClientInfo());
+		}
+#endif
 
-//MORPH START - Added by SiRoB, Dynamic FunnyNick
-//most of the code from xrmb FunnyNick
+}
+//Xman end
+//Xman
+// - show requested files (sivka)
+void CUpDownClient::ShowRequestedFiles()
+{
+	CString fileList;
+	fileList += _T("[")+GetResString(IDS_CLIENT)+_T(": ")+(GetUserName())+_T("]");
+	fileList += _T("\n\nList of Downloading Files:\n");
+	fileList += _T("__________________________\n\n") ; 
+	if (reqfile  && reqfile->IsPartFile())
+	{
+		fileList += reqfile->GetFileName(); 
+		for(POSITION pos = m_OtherRequests_list.GetHeadPosition();pos!=0;m_OtherRequests_list.GetNext(pos))
+		{
+			fileList += _T("\n") ; 
+			fileList += m_OtherRequests_list.GetAt(pos)->GetFileName(); 
+		}
+		for(POSITION pos = m_OtherNoNeeded_list.GetHeadPosition();pos!=0;m_OtherNoNeeded_list.GetNext(pos))
+		{
+			fileList += _T("\n") ;
+			fileList += m_OtherNoNeeded_list.GetAt(pos)->GetFileName();
+		}
+	}
+	else
+		fileList += _T("You have not requested a file from this user.");
+	fileList += _T("\n\n\nList of Uploading Files:\n");
+	fileList += _T("__________________________\n\n") ; 
+	CKnownFile* uploadfile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	if(uploadfile)
+		fileList += uploadfile->GetFileName();
+	else
+		fileList += _T("This user has not requested a file from you.");
+	AfxMessageBox(fileList,MB_OK);
+
+}
+//Xman end
+
+//Xman Anti-Leecher: simple Anti-Thief
+//gives back the Xtreme-Mod Version as float
+//0 if it isn't a Xtreme-Mod
+//remark: highest subversion allowed is 9!
+float CUpDownClient::GetXtremeVersion(CString modversion) const
+{
+	// ==> ModID [itsonlyme/SiRoB] - Stulle
+	/*
+	if(modversion.GetLength()<10)
+		return 0.0f;
+
+	if(modversion.Left(7).CompareNoCase(_T("Xtreme "))!=0)
+		return 0.0f;
+
+	return (float)_tstof(modversion.Mid(7));
+	*/
+	uint8 temp = (uint8)(theApp.m_strModVersion.GetLength());
+	if(modversion.GetLength()<temp)
+		return 0.0f;
+
+	// remark: when the first letters do not equal the modstring it's allright!
+	if(modversion.Left(theApp.m_uModLength).CompareNoCase(theApp.m_strModVersionPure)!=0)
+		return 0.0f;
+
+	return (float)_tstof(modversion.Mid(theApp.m_uModLength));
+	// <== ModID [itsonlyme/SiRoB] - Stulle
+
+}
+//Xman end
+
+
+//Xman 5.1
+// Maella -Unnecessary Protocol Overload-
+void CUpDownClient::CalculateJitteredFileReaskTime(bool longer)
+{
+	// ==> Emulate others [WiZaRd/Spike/shadow2004] - Stulle
+	//seeing that MLDonkey has a reask which is ~3 times as fast as eMules and MLDonkey downloads ~3 times as much from each other as an eMule client
+	//this seems to be a sensible approach, though hammering is NOT a good solution... 
+	if (GetClientSoft() == SO_MLDONKEY && thePrefs.IsEmuMLDonkey())
+		m_jitteredFileReaskTime = MIN_REQUESTTIME;
+	// Shareaza allows its users to lower the ReaskTime down to 20 Minutes !! Okay, so do we.... but hardcoded.
+	else if (GetClientSoft() == SO_SHAREAZA && thePrefs.IsEmuShareaza())
+		m_jitteredFileReaskTime = MIN_REQUESTTIME*2;
+	// no change for eMule Plus as they do use the same system like eMule
+	else
+	// <== Emulate others [WiZaRd/Spike/shadow2004] - Stulle
+	if(longer==false)
+	{
+		// Maella -Unnecessary Protocol Overload-
+		// Remark: a client will be remove from an upload queue after 3*FILEREASKTIME (~1 hour)
+		//         a two small value increases the traffic + causes a banishment if lower than 10 minutes
+		//         srand() is already called a few times..
+		uint32 jitter = rand() * (35*6) / RAND_MAX; // 0..3.5 minutes, keep in mind integer overflow
+		m_jitteredFileReaskTime = FILEREASKTIME - (60*1000) + 1000*jitter - (2*60*1000); // -2..+2 minutes, keep the same average overload
+		//Xman: result between 26 and 29.5 this is useful to use TCP-Connection from older clients
+		// ==> Timer for ReAsk File Sources [Stulle] - Stulle
+		if(GetModClient() != MOD_SCAR && GetModClient() != MOD_MEPHISTO && GetModClient() != MOD_XTREME)
+			m_jitteredFileReaskTime += thePrefs.GetReAskTimeDif();
+		// <== Timer for ReAsk File Sources [Stulle] - Stulle
+	}
+	else
+		m_jitteredFileReaskTime = FILEREASKTIME + (3*60*1000); //32 min
+		//this gives the client the chance to connect first
+		//this connection can be used by Xtreme, see partfile->process
+}
+//Xman end
+
+//Xman Funny-Nick (Stulle/Morph)
 void CUpDownClient::UpdateFunnyNick()
 {
 	if(m_pszUsername == NULL || 
 		!IsEd2kClient() || //MORPH - Changed by Stulle, no FunnyNick for http DL
-		_tcsnicmp(m_pszUsername, _T("http://"),7) != 0 &&
-		_tcsnicmp(m_pszUsername, _T("0."),2) != 0 &&
+		_tcsnicmp(m_pszUsername, _T("http://emule"),12) != 0 &&
 		_tcsicmp(m_pszUsername, _T("")) != 0)
 		return;
+
+	if(m_pszFunnyNick!=NULL)
+		return; //why generate a new one ? userhash can't change without getting banned
+
 	// preffix table
-const static LPCTSTR apszPreFix[] =
+	const static LPCTSTR apszPreFix[] =
 	{
-	_T("ATX-"),			//0
-	_T("Gameboy "),
-	_T("PS/2-"),
-	_T("USB-"),
-	_T("Angry "),
-	_T("Atrocious "),
-	_T("Attractive "),
-	_T("Bad "),
-	_T("Barbarious "),
-	_T("Beautiful "),
-	_T("Black "),		//10
-	_T("Blond "),
-	_T("Blue "),
-	_T("Bright "),
-	_T("Brown "),
-	_T("Cool "),
-	_T("Cruel "),
-	_T("Cubic "),
-	_T("Cute "),
-	_T("Dance "),
-	_T("Dark "),		//20
-	_T("Dinky "),
-	_T("Drunk "),
-	_T("Dumb "),
-	_T("E"),
-	_T("Electro "),
-	_T("Elite "),
-	_T("Fast "),
-	_T("Flying "),
-	_T("Fourios "),
-	_T("Frustraded "),	//30
-	_T("Funny "),
-	_T("Furious "),
-	_T("Giant "),
-	_T("Giga "),
-	_T("Green "),
-	_T("Handsome "),
-	_T("Hard "),
-	_T("Harsh "),
-	_T("Hiphop "),
-	_T("Holy "),		//40
-	_T("Horny "),
-	_T("Hot "),
-	_T("House "),
-	_T("I"),
-	_T("Lame "),
-	_T("Leaking "),
-	_T("Lone "),
-	_T("Lovely "),
-	_T("Lucky "),
-	_T("Micro "),		//50
-	_T("Mighty "),
-	_T("Mini "),
-	_T("Nice "),
-	_T("Orange "),
-	_T("Pretty "),
-	_T("Red "),
-	_T("Sexy "),
-	_T("Slow "),
-	_T("Smooth "),
-	_T("Stinky "),		//60
-	_T("Strong "),
-	_T("Super "),
-	_T("Unholy "),
-	_T("White "),
-	_T("Wild "),
-	_T("X"),
-	_T("XBox "),
-	_T("Yellow "),
-	_T("Kentucky Fried "),
-	_T("Mc"),			//70
-	_T("Alien "),
-	_T("Bavarian "),
-	_T("Crazy "),
-	_T("Death "),
-	_T("Drunken "),
-	_T("Fat "),
-	_T("Hazardous "),
-	_T("Holy "),
-	_T("Infested "),
-	_T("Insane "),		//80
-	_T("Mutated "),
-	_T("Nasty "),
-	_T("Purple "),
-	_T("Radioactive "),
-	_T("Ugly "),
-	_T("Green "),		//86
+		_T("ATX-"),			//0
+			_T("Gameboy "),
+			_T("PS/2-"),
+			_T("USB-"),
+			_T("Angry "),
+			_T("Atrocious "),
+			_T("Attractive "),
+			_T("Bad "),
+			_T("Barbarious "),
+			_T("Beautiful "),
+			_T("Black "),		//10
+			_T("Blond "),
+			_T("Blue "),
+			_T("Bright "),
+			_T("Brown "),
+			_T("Cool "),
+			_T("Cruel "),
+			_T("Cubic "),
+			_T("Cute "),
+			_T("Dance "),
+			_T("Dark "),		//20
+			_T("Dinky "),
+			_T("Drunk "),
+			_T("Dumb "),
+			_T("E"),
+			_T("Electro "),
+			_T("Elite "),
+			_T("Fast "),
+			_T("Flying "),
+			_T("Fourios "),
+			_T("Frustraded "),	//30
+			_T("Funny "),
+			_T("Furious "),
+			_T("Giant "),
+			_T("Giga "),
+			_T("Green "),
+			_T("Handsome "),
+			_T("Hard "),
+			_T("Harsh "),
+			_T("Hiphop "),
+			_T("Holy "),		//40
+			_T("Horny "),
+			_T("Hot "),
+			_T("House "),
+			_T("I"),
+			_T("Lame "),
+			_T("Leaking "),
+			_T("Lone "),
+			_T("Lovely "),
+			_T("Lucky "),
+			_T("Micro "),		//50
+			_T("Mighty "),
+			_T("Mini "),
+			_T("Nice "),
+			_T("Orange "),
+			_T("Pretty "),
+			_T("Red "),
+			_T("Sexy "),
+			_T("Slow "),
+			_T("Smooth "),
+			_T("Stinky "),		//60
+			_T("Strong "),
+			_T("Super "),
+			_T("Unholy "),
+			_T("White "),
+			_T("Wild "),
+			_T("X"),
+			_T("XBox "),
+			_T("Yellow "),
+			_T("Kentucky Fried "),
+			_T("Mc"),			//70
+			_T("Alien "),
+			_T("Bavarian "),
+			_T("Crazy "),
+			_T("Death "),
+			_T("Drunken "),
+			_T("Fat "),
+			_T("Hazardous "),
+			_T("Holy "),
+			_T("Infested "),
+			_T("Insane "),		//80
+			_T("Mutated "),
+			_T("Nasty "),
+			_T("Purple "),
+			_T("Radioactive "),
+			_T("Ugly "),
+			_T("Green "),		//86
 	};
 #define NB_PREFIX 87 
 #define MAX_PREFIXSIZE 15
 
-// suffix table
-const static LPCTSTR apszSuffix[] =
+	// suffix table
+	const static LPCTSTR apszSuffix[] =
 	{
-	_T("16"),		//0
-	_T("3"),
-	_T("6"),
-	_T("7"),
-	_T("Abe"),
-	_T("Bee"),
-	_T("Bird"),
-	_T("Boy"),
-	_T("Cat"),
-	_T("Cow"),
-	_T("Crow"),		//10
-	_T("DJ"),
-	_T("Dad"),
-	_T("Deer"),
-	_T("Dog"),
-	_T("Donkey"),
-	_T("Duck"),
-	_T("Eagle"),
-	_T("Elephant"),
-	_T("Fly"),
-	_T("Fox"),		//20
-	_T("Frog"),
-	_T("Girl"),
-	_T("Girlie"),
-	_T("Guinea Pig"),
-	_T("Hasi"),
-	_T("Hawk"),
-	_T("Jackal"),
-	_T("Lizard"),
-	_T("MC"),
-	_T("Men"),		//30
-	_T("Mom"),
-	_T("Mouse"),
-	_T("Mule"),
-	_T("Pig"),
-	_T("Rabbit"),
-	_T("Rat"),
-	_T("Rhino"),
-	_T("Smurf"),
-	_T("Snail"),
-	_T("Snake"),	//40
-	_T("Star"),
-	_T("Tiger"),
-	_T("Wolf"),
-	_T("Butterfly"),
-	_T("Elk"),
-	_T("Godzilla"),
-	_T("Horse"),
-	_T("Penguin"),
-	_T("Pony"), 
-	_T("Reindeer"),	//50
-	_T("Sheep"),
-	_T("Sock Puppet"),
-	_T("Worm"),
-	_T("Bermuda")	//54
+		_T("16"),		//0
+			_T("3"),
+			_T("6"),
+			_T("7"),
+			_T("Abe"),
+			_T("Bee"),
+			_T("Bird"),
+			_T("Boy"),
+			_T("Cat"),
+			_T("Cow"),
+			_T("Crow"),		//10
+			_T("DJ"),
+			_T("Dad"),
+			_T("Deer"),
+			_T("Dog"),
+			_T("Donkey"),
+			_T("Duck"),
+			_T("Eagle"),
+			_T("Elephant"),
+			_T("Fly"),
+			_T("Fox"),		//20
+			_T("Frog"),
+			_T("Girl"),
+			_T("Girlie"),
+			_T("Guinea Pig"),
+			_T("Hasi"),
+			_T("Hawk"),
+			_T("Jackal"),
+			_T("Lizard"),
+			_T("MC"),
+			_T("Men"),		//30
+			_T("Mom"),
+			_T("Mouse"),
+			_T("Mule"),
+			_T("Pig"),
+			_T("Rabbit"),
+			_T("Rat"),
+			_T("Rhino"),
+			_T("Smurf"),
+			_T("Snail"),
+			_T("Snake"),	//40
+			_T("Star"),
+			_T("Tiger"),
+			_T("Wolf"),
+			_T("Butterfly"),
+			_T("Elk"),
+			_T("Godzilla"),
+			_T("Horse"),
+			_T("Penguin"),
+			_T("Pony"), 
+			_T("Reindeer"),	//50
+			_T("Sheep"),
+			_T("Sock Puppet"),
+			_T("Worm"),
+			_T("Bermuda")	//54
 	};
 #define NB_SUFFIX 55 
 #define MAX_SUFFIXSIZE 11
@@ -5429,13 +4958,10 @@ const static LPCTSTR apszSuffix[] =
 		m_pszFunnyNick = NULL;
 	}
 
-	// ==> FunnyNick Tag - Stulle/Aireoreion
+	// ==> FunnyNick Tags - Stulle
 	/*
-	// pick random suffix and prefix
-	m_pszFunnyNick = new TCHAR[13+MAX_PREFIXSIZE+MAX_SUFFIXSIZE];
-	_tcscpy(m_pszFunnyNick, _T("[FunnyNick] "));
-	_tcscat(m_pszFunnyNick, apszPreFix[rand()%NB_PREFIX]);
-	_tcscat(m_pszFunnyNick, apszSuffix[rand()%NB_SUFFIX]);
+	CString tag = _T("[FN]");;
+	uint8 uTagLength = 4+2; //one space + /0
 	*/
 	CString tag = _T("");
 	uint8 uTagLength = 0;
@@ -5458,21 +4984,25 @@ const static LPCTSTR apszSuffix[] =
 			uTagLength = (uint8)(tag.GetLength()+2);
 			break;
 	}
-
+	// <== FunnyNick Tags - Stulle
+	
 	m_pszFunnyNick = new TCHAR[uTagLength+MAX_PREFIXSIZE+MAX_SUFFIXSIZE];
 	// pick random suffix and prefix
+	// ==> FunnyNick Tags - Stulle
 	if(uTagLength==0)
 	{
 		_tcscpy(m_pszFunnyNick, apszPreFix[rand()%NB_PREFIX]);
 		_tcscat(m_pszFunnyNick, apszSuffix[rand()%NB_SUFFIX]);
 	}
 	else if (!thePrefs.GetFnTagAtEnd())
+	// <== FunnyNick Tags - Stulle
 	{
 		_tcscpy(m_pszFunnyNick, tag);
 		_tcscat(m_pszFunnyNick, _T(" "));
 		_tcscat(m_pszFunnyNick, apszPreFix[rand()%NB_PREFIX]);
 		_tcscat(m_pszFunnyNick, apszSuffix[rand()%NB_SUFFIX]);
 	}
+	// ==> FunnyNick Tags - Stulle
 	else
 	{
 		_tcscpy(m_pszFunnyNick, apszPreFix[rand()%NB_PREFIX]);
@@ -5480,162 +5010,305 @@ const static LPCTSTR apszSuffix[] =
 		_tcscat(m_pszFunnyNick, _T(" "));
 		_tcscat(m_pszFunnyNick, tag);
 	}
-	// <== FunnyNick Tag - Stulle/Aireoreion
+	// <== FunnyNick Tags - Stulle
 
 	//--- make the rand random again ---
 	if(m_achUserHash)
 		srand((unsigned)time(NULL));
 }
-//MORPH END   - Added by SiRoB, Dynamic FunnyNick
+//Xman end
 
-//MORPH START - Added by Stulle, Morph Leecher Detection
-bool CUpDownClient::IsMorphLeecher()
-{
-	if (old_m_strClientSoftware != m_strClientSoftware)
+//Xman Anti-Leecher
+//Xman DLP (no more extra tags inside this function)
+void CUpDownClient::TestLeecher(){
+
+	//Xman DLP
+	if(theApp.dlp->IsDLPavailable()==false)
+		return;
+	//Xman end
+
+	// ==> Anti Uploader Ban [Stulle] - Stulle
+	if (AntiUploaderBanActive())
 	{
-		if (StrStrI(m_strModVersion,_T("MorphXT")) && (m_strModVersion[7] == 0x2B || m_strModVersion[7] == 0xD7) ||
-			StrStrI(m_strModVersion,_T("M\xF8rphXT")) ||
-			StrStrI(m_strModVersion,_T("MorphXT 7.60")) ||
-			StrStrI(m_strModVersion,_T("MorphXT 7.30")) ||
-			(StrStrI(m_strModVersion,_T("MorphXT 9.7")) && m_nClientVersion < MAKE_CLIENT_VERSION(0, 48, 0)) ||
-			(StrStrI(m_strModVersion,_T("Morph")) && (StrStrI(m_strModVersion,_T("Max")) || StrStrI(m_strModVersion,_T("+")) || StrStrI(m_strModVersion,_T("FF")) || StrStrI(m_strModVersion,_T("\xD7"))))
-			)
+		m_bLeecher = 0; // no leecher
+		return;
+	}
+	// <== Anti Uploader Ban [Stulle] - Stulle
+
+	if (thePrefs.GetAntiLeecherMod())
+	{
+		if(old_m_strClientSoftwareFULL.IsEmpty() || old_m_strClientSoftwareFULL!= DbgGetFullClientSoftVer() )
 		{
-			old_m_strClientSoftware = m_strClientSoftware;
-			return true;
+		
+			old_m_strClientSoftwareFULL = DbgGetFullClientSoftVer();
+			LPCTSTR reason=theApp.dlp->DLPCheckModstring_Hard(m_strModVersion,m_strClientSoftware);
+			if(reason)
+			{
+				BanLeecher(reason,5); //hard ban
+				return;
+			}
+			reason=theApp.dlp->DLPCheckModstring_Soft(m_strModVersion,m_strClientSoftware);
+			if(reason)
+			{
+				BanLeecher(reason,4); //soft ban
+				return;
+			}
+			else if(IsLeecher()==4)
+			{
+				m_bLeecher=0;	//unban, because it is now a good mod
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				old_m_pszUsername.Empty(); //force recheck
+			}
+
 		}
 	}
-	// ==> Reduce Score for leecher - Stulle
-	else if (GetBanReason() == BAN_MORPH_LEECHER)
-		return true;
-	// <== Reduce Score for leecher - Stulle
-	return false;
-}
-//MORPH END - Added by Stulle, Morph Leecher Detection
-
-// ==> StulleMule is not banned - Stulle
-/*
-//MORPH START - prevent being banned by old MorphXT
-bool CUpDownClient::GetOldMorph()
-{
-	if(m_pszUsername == NULL)
-		return true; // unknown, always true!
-
-	if(m_clientSoft != SO_EMULE)
-		return false; // no mule, anyways
-
-	if(m_nClientVersion >= MAKE_CLIENT_VERSION(0, 48, 0))
-		return false; // bug fixed from this point on
-
-	if	(// pre 10.0
-			GetModClient() == MOD_MORPH || // MorphXT
-			GetModClient() == MOD_STULLE || // MorphXT based
-			GetModClient() == MOD_EASTSHARE //|| MorphXT based
-		)
-		return true; // it's an old morph
-
-	return false; // it's not an old morph
-}
-//MORPH END   - prevent being banned by old MorphXT
-*/
-// <== StulleMule is not banned - Stulle
-
-//MOPRH START - Anti ModID Faker [Xman]
-bool CUpDownClient::IsModFaker()
-{
-	
-	// ==> this ain't no MorphXT
-	/*
-	if(CemuleApp::m_szMMVersion[0]!=0)
-		return false;
-	*/
-	// <== this ain't no MorphXT
-
-	static 	const float MOD_FLOAT_VERSION= (float)_tstof(theApp.m_strModVersion.Mid(theApp.m_uModLength)) ;
-	const float fModVersion=GetModVersion(m_strModVersion);
-
-	if(fModVersion == MOD_FLOAT_VERSION && m_nClientVersion != MAKE_CLIENT_VERSION(CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, CemuleApp::m_nVersionUpd))
-		return true;
-	// ==> this ain't no MorphXT
-	/*
-	// first MorphXT using this is 10.0
-	if(fModVersion >= 10.0f && CString(m_pszUsername).Right(m_strModVersion.GetLength()+1)!=m_strModVersion + _T("\xBB"))
-	*/
-	// first StulleMule using this is 5.0
-	if(fModVersion >= 5.0f && CString(m_pszUsername).Right(m_strModVersion.GetLength()+1)!=m_strModVersion + _T("\xBB"))
-	// <== this ain't no MorphXT
-		return true;
-	return false;
-}
-
-//gives back the Mod Version as float
-//0 if it isn't this mod
-float CUpDownClient::GetModVersion(CString modversion) const
-{
-	uint8 temp = (uint8)(theApp.m_strModVersion.GetLength());
-	if(modversion.GetLength()<temp)
-		return 0.0f;
-
-	// remark: when the first letters do not equal the modstring it's allright!
-	if(modversion.Left(theApp.m_uModLength).CompareNoCase(theApp.m_strModVersionPure)!=0)
-		return 0.0f;
-
-	return (float)_tstof(modversion.Mid(theApp.m_uModLength));
-}
-//MORPH END   - Anti ModID Faker [Xman]
-
-//MORPH START - Added by Stulle, AppleJuice Detection [Xman]
-#define AJ_MD5_BUFFER_SIZE	92				// The buffer is always this length exactly
-
-bool CUpDownClient::CheckUserHash()
-{
-	const PBYTE userhash=(PBYTE)GetUserHash();
-	int buflen;
-	BOOL bIsApplejuice = FALSE;
-	BYTE AJByte;
-	BYTE md5_hashval[16];
-	BYTE buffer[AJ_MD5_BUFFER_SIZE + 2];	// Need 2 extra bytes because _tprintf()
-	_TCHAR FormatString[] =	L"@ppl"			// adds a terminating UNICODE NULL char
-		L"%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
-		L" uf€ablE "
-		L"%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
-		L" 89";
+	else if(IsLeecher()==4)
+	{
+		m_bLeecher=0;	//unban, because user doesn't want to check it anymore
+		m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+		old_m_pszUsername.Empty(); //force recheck
+		old_m_strClientSoftwareFULL.Empty(); //force recheck if user re enable function
+	}
 
 
-	buflen = _stprintf(	(TCHAR *) buffer,
-		FormatString,
-		userhash[0], userhash[1], userhash[2], userhash[3],
-		userhash[4], userhash[5], userhash[6], userhash[7],
-		userhash[9], userhash[10], userhash[11], userhash[12],
-		userhash[13], userhash[14], userhash[15]
-		);
-
-
-		// Hash the data in the buffer using the MD5 algorithm
-
-		if (MD5_FUNCTION(buffer, buflen * sizeof(TCHAR), md5_hashval)) {
-
-
-			AJByte = ((md5_hashval[4] & 0x0F) << 4) | (md5_hashval[12] & 0x0F);
-
-
-			bIsApplejuice = (userhash[8] == AJByte);
+	if(thePrefs.GeTAntiLeecheruserhash() && HasValidHash())
+	{
+		PBYTE uhash=(PBYTE)GetUserHash();
+		LPCTSTR reason=theApp.dlp->DLPCheckUserhash(uhash);
+		if(reason)
+		{
+			BanLeecher(_T("*AJ*"),18);
+			return;
 		}
+	}
 
-		//return bIsApplejuice;
-		if(bIsApplejuice)
-			return true;
-		else
-			return false;
+	if (thePrefs.GetAntiLeecherName())
+	{
+
+		//Xman Anti-Nick-Changer
+		if(m_pszUsername!=NULL && old_m_pszUsername.IsEmpty()==false)
+		{
+			if(old_m_pszUsername!=m_pszUsername)
+			{
+				if(IsLeecher()==0 && m_strModVersion.IsEmpty() //check only if it isn't a known leecher and doesn't send modversion
+					&& ::GetTickCount() - m_ulastNickChage < HR2MS(3)) //last nickchane was in less than 3 hours
+				{
+					m_uNickchanges++;
+					if(m_uNickchanges >=3)
+					{
+						BanLeecher(_T("Nick-Changer"),5); //hard ban
+						return;
+					}
+				}
+			}
+			else
+			{
+				//decrease the value if it's the same nick
+				if(m_uNickchanges>0)
+					m_uNickchanges--;
+			}
+		}
+		//Xman end Anti-Nick-Changer
+		
+		if(m_bLeecher!=4 && m_pszUsername!=NULL && (old_m_pszUsername.IsEmpty() || old_m_pszUsername!=m_pszUsername)) //remark: because old_m_pszUsername is CString and there operator != is defined, it isn't a pointer comparison 
+		{
+			old_m_pszUsername = m_pszUsername;
+			m_ulastNickChage=::GetTickCount(); //Xman Anti-Nick-Changer
+
+			//find gamer snake 
+			if (HasValidHash())
+			{
+				CString struserhash=md4str(GetUserHash());
+				LPCTSTR reason=theApp.dlp->DLPCheckNameAndHashAndMod(m_pszUsername,struserhash,m_strModVersion);
+				if(reason)
+				{
+					BanLeecher(reason,10); //soft ban
+					return;
+				}
+			}
+
+			LPCTSTR reason=theApp.dlp->DLPCheckUsername_Soft(m_pszUsername);
+			if(reason)
+			{
+				BanLeecher(reason,10); //soft ban
+				return;
+			}
+
+			reason=theApp.dlp->DLPCheckUsername_Hard(m_pszUsername);
+			if(reason)
+			{
+				BanLeecher(reason,5); //hard ban
+				return;
+			}
+
+			if(IsLeecher()==10 && reason==NULL)
+			{
+				m_bLeecher=0; //unban it is a good mod now
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			}
+		}
+	}
+	else if(IsLeecher()==10)
+	{
+		m_bLeecher=0;	//unban, because user doesn't want to check it anymore
+		m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+		old_m_pszUsername.Empty(); //force recheck if user re enable function
+	}
+
+	if (m_nClientVersion > MAKE_CLIENT_VERSION(0, 30, 0) && m_byEmuleVersion > 0 && m_byEmuleVersion != 0x99 && m_clientSoft == SO_EMULE)
+	{
+		BanLeecher(_T("Fake emuleVersion"),9);
+		return;
+	} else
+	//Xman Anti-Leecher: simple Anti-Thief
+	if(m_bLeecher==0 || m_bLeecher==6 || m_bLeecher==11 ) //only check if not banned by other criterion
+	{
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		static 	const float MOD_FLOAT_VERSION= (float)_tstof(CString(MOD_VERSION).Mid(7)) ;
+		const float xtremeversion=GetXtremeVersion(m_strModVersion);
+		if(thePrefs.GetAntiLeecherThief())
+		{
+			if(xtremeversion==MOD_FLOAT_VERSION && !StrStrI(m_strClientSoftware,MOD_MAJOR_VERSION))
+			{
+				BanLeecher(_T("Mod-ID Faker"),6);
+				return;
+			}
+			if(xtremeversion>=4.4f && CString(m_pszUsername).Right(m_strModVersion.GetLength()+1)!=m_strModVersion + _T("?))
+			{
+				BanLeecher(_T("MOD-ID Faker(advanced)"),6);
+				return;
+			}
+		}
+		*/
+		static 	const float MOD_FLOAT_VERSION= (float)_tstof(theApp.m_strModVersion.Mid(theApp.m_uModLength)) ;
+		const float xtremeversion=GetXtremeVersion(m_strModVersion);
+		if(thePrefs.GetAntiLeecherThief())
+		{
+			if(xtremeversion==MOD_FLOAT_VERSION && m_nClientVersion != MAKE_CLIENT_VERSION(CemuleApp::m_nVersionMjr, CemuleApp::m_nVersionMin, CemuleApp::m_nVersionUpd))
+			{
+				BanLeecher(_T("Mod-ID Faker"),6);
+				return;
+			}
+			// >> modified by Ken
+			//if(xtremeversion>=1.0f && CString(m_pszUsername).Right(m_strModVersion.GetLength()+1)!=m_strModVersion + _T("))
+			if(xtremeversion>=1.0f && CString(m_pszUsername).Right(m_strModVersion.GetLength()+1)!=m_strModVersion + _T("\x3F"))
+			// << modified by Ken
+			{
+				BanLeecher(_T("MOD-ID Faker(advanced)"),6);
+				return;
+			}
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+
+			if(IsLeecher()==6)
+			{
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				m_bLeecher=0; //unban it isn't anymore a mod faker
+			}
+		}
+		else if(IsLeecher()==6)
+		{
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			m_bLeecher=0; //unban, user doesn't want to ban it anymore
+		}
+		
+		//Xman new Anti-Nick-Thief
+		if(thePrefs.GetAntiLeecherThief() )
+		{
+			if(StrStrI(m_pszUsername, str_ANTAddOn)) 
+			{
+				BanLeecher(_T("Nick Thief"),11);
+				return;
+			}
+			if(IsLeecher()==11)
+			{
+				m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+				m_bLeecher=0; //unban, it isn't a nickthief anymore
+			}
+		}
+		else if(IsLeecher()==11)
+		{
+			m_strBanMessage.Format(_T("unban - Client %s"),DbgGetClientInfo());
+			m_bLeecher=0; //unban, user doesn't want to ban it anymore
+		}
+	}
+	//Xman end simple Anti-Thief
 }
-//MORPH END   - Added by Stulle, AppleJuice Detection [Xman]
+//Xman end
 
-void CUpDownClient::DoKadHello(){
-	if(m_bKadHello)
-		BanLeecher(NULL,0);
+void CUpDownClient::ProcessBanMessage()
+{
+	if(m_strBanMessage.IsEmpty()==false)
+	{
+		AddLeecherLogLine(false,m_strBanMessage);
+		theApp.emuledlg->transferwnd->queuelistctrl.RefreshClient(this);
+	}
+	m_strBanMessage.Empty();
 }
 
-// ==> Anti Uploader Ban - Stulle
+//Xman end
+
+// ==> Design Settings [eWombat/Stulle] - Stulle
+int CUpDownClient::GetClientStyle(bool bDl, bool bUl, bool bShare, bool bOwnCredits) const
+{
+	int iClientStyle = style_c_default;
+	if(IsFriend() && thePrefs.GetStyleOnOff(client_styles, style_c_friend)!=0)
+		iClientStyle = style_c_friend;
+	else if(GetPowerShared() && bShare && thePrefs.GetStyleOnOff(client_styles, style_c_powershare)!=0)
+		iClientStyle = style_c_powershare;
+	else if(GetPowerReleased() && bShare && thePrefs.GetStyleOnOff(client_styles, style_c_powerrelease)!=0)
+		iClientStyle = style_c_powerrelease;
+	else if(GetDownloadState() == DS_DOWNLOADING && bDl && thePrefs.GetStyleOnOff(client_styles, style_c_downloading)!=0)
+		iClientStyle = style_c_downloading;
+	else if(GetUploadState() == US_UPLOADING && bUl && thePrefs.GetStyleOnOff(client_styles, style_c_uploading)!=0)
+		iClientStyle = style_c_uploading;
+	else if(IsLeecher()>0 && thePrefs.GetStyleOnOff(client_styles, style_c_leecher)!=0)
+		iClientStyle = style_c_leecher;
+	else if(HasLowID() && thePrefs.GetStyleOnOff(client_styles, style_c_lowid)!=0)
+		iClientStyle = style_c_lowid;
+	else if(Credits() && thePrefs.GetStyleOnOff(client_styles, style_c_credits)!=0)
+	{
+		if	(
+				(!bOwnCredits && credits->GetHasScore(this))
+				||
+				( bOwnCredits && credits->GetMyScoreRatio(GetIP())>1)
+			)
+			iClientStyle = style_c_credits;
+	}
+	return iClientStyle;
+}
+// <== Design Settings [eWombat/Stulle] - Stulle
+
+// ==> Display reason for zero score [Stulle] - Stulle
+CString CUpDownClient::GetZeroScoreString() const
+{
+	if (!m_pszUsername)
+		return _T("NULL Username");
+
+	if(GetUploadFileID() == NULL)
+		return _T("NULL UploadFileID");
+
+	if (credits == 0){
+		return _T("NULL credits");
+	}
+	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	if(!currequpfile)
+		return _T("NULL reqfile");
+
+	if (credits->GetCurrentIdentState(GetIP()) == IS_IDBADGUY)
+		return _T("Bad guy");
+
+	if (m_nUploadState==US_BANNED)
+		return _T("Banned");
+
+	if (m_bGPLEvildoer)
+		return _T("GPL evildoer");
+
+	return _T("Unknown");
+}
+// <== Display reason for zero score [Stulle] - Stulle
+
+// ==> Anti Uploader Ban [Stulle] - Stulle
 bool CUpDownClient::AntiUploaderBanActive()
 {
 // credits->GetDownloadedTotal() <== data amount the other client gave us
@@ -5687,329 +5360,4 @@ bool CUpDownClient::AntiUploaderBanActive()
 
 	return false;
 }
-// <== Anti Uploader Ban - Stulle
-
-// ==> Snake / Gamer Check [Xman] - Stulle
-bool CUpDownClient::IsSnakeOrGamer(CString Username)
-{
-	if (HasValidHash())
-	{
-		CString userhash=md4str(GetUserHash());
-
-		//community check
-		if(Username.GetLength()>=7 && Username.Right(1)==_T("]"))
-		{
-			//check for gamer
-			//two checks should be enough.
-			if(Username.Right(6).Left(1)==userhash.Mid(5,1)
-				&& Username.Right(3).Left(1)==userhash.Mid(7,1)
-				)
-				return true;
-
-			//check for snake 
-			int find=Username.ReverseFind(_T('['));
-			if(find>=0 )
-			{
-				CString addon=Username.Mid(find+1);
-				int endpos=addon.GetLength()-1;
-				if(addon.GetLength()>2)
-				{
-					int i=0;
-					for(; i<endpos;i++)
-					{
-						if( !(addon.GetAt(i)>=_T('0') && addon.GetAt(i)<=_T('9')) )
-						{
-							i=endpos+1;
-						}
-					}
-					if(i==endpos)
-						return true;
-
-					if(thePrefs.IsHexCheck() && IsTypicalHex(addon.Left(addon.GetLength()-1)))
-						return true;
-				}
-			}
-		}
-	}
-	return false;
-}
-// <== Snake / Gamer Check [Xman] - Stulle
-
-// ==> Leecher Name [Xman] - Stulle
-bool CUpDownClient::IsLeecherName(CString Username)
-{
-	if(_tcslen(Username) >=4 )
-	{
-		if(
-			(Username[3]<=0x1F && Username[1]<=0x1F) || // community
-			(Username[0]==_T('v') && StrStr(Username, _T(":com "))) // X-Treme
-		   )
-		return true;
-	}
-
-	if(m_strModVersion.IsEmpty() && Username.Right(1)==32) // impossible when unmodded!
-		return true;
-
-	if(m_strModVersion.GetLength() == 10 && Username.GetLength()>4 &&  StrStr(Username.Right(4),_T("/]"))  && StrStr(Username,_T("[SE]"))) // mystery mod string
-		return true;
-
-	if(_tcslen(Username) >=14) // new ketamine
-	{
-		LPCTSTR tempstr=StrStr(Username, _T("[ePlus]"));
-		if(tempstr && _tcslen(tempstr)>=7)
-			if(StrStr(tempstr + 7, _T("[ePlus]")))
-				return true;
-	}
-
-	return false;
-}
-// <== Leecher Name [Xman] - Stulle
-
-// ==> Hex Check [Xman] - Stulle
-bool CUpDownClient::IsTypicalHex(CString addon)
-{
-	if(addon.GetLength()>25 || addon.GetLength()<5)
-		return false;
-	short bigalpha=0;
-	short smallalpha=0;
-	short numeric=0;
-
-	int endpos=addon.GetLength();
-	int i=0;
-	for(; i<endpos;i++)
-	{
-		if( (addon.GetAt(i)>=_T('0') && addon.GetAt(i)<=_T('9')) )
-			numeric++;
-		else if( (addon.GetAt(i)>=_T('A') && addon.GetAt(i)<=_T('F')) )
-			bigalpha++;
-		else if( (addon.GetAt(i)>=_T('a') && addon.GetAt(i)<=_T('f')) )
-			smallalpha++;
-		else
-			break;
-	}
-	if(i==endpos)
-	{
-		if(numeric>0 &&
-			(smallalpha>0 && bigalpha==0 || smallalpha==0 && bigalpha>0)
-			)
-			return true;
-	}
-	return false;
-}
-// <== Hex Check [Xman] - Stulle
-
-// ==> Reduce Score for leecher - Stulle
-bool CUpDownClient::GetScoreReduce() const
-{
-	return	(thePrefs.GetEnableAntiLeecher() &&
-			thePrefs.IsReduceScore() &&
-			m_uBanReason > GOOD_BOY && m_uBanReason < BAN_REDUCE_COUNT);
-}
-
-CString CUpDownClient::GetBanReasonString() const
-{
-	CString strTemp;
-	switch(GetBanReason())
-	{
-		case GOOD_BOY:
-			strTemp = GetResString(IDS_GOOD_GUY);
-			break;
-		// reduce
-		case BAN_FAKE_MOD:
-			strTemp = GetResString(IDS_BAN_FAKE_MOD);
-			break;
-		case BAN_MORPH_LEECHER:
-			strTemp = GetResString(IDS_BAN_MORPH_LEECHER);
-			break;
-		case BAN_FAKE_NICK:
-			strTemp = GetResString(IDS_BAN_FAKE_NICK);
-			break;
-		case BAN_LEECHER_NICK:
-			strTemp = GetResString(IDS_BAN_LEECHER_NICK);
-			break;
-		case BAN_COMMUNITY:
-			strTemp = GetResString(IDS_BAN_COMMUNITY);
-			break;
-		case BAN_WRONG_HASHSIZE:
-			strTemp = GetResString(IDS_BAN_WRONG_HASHSIZE);
-			break;
-		case BAN_HEX_CHECK:
-			strTemp = GetResString(IDS_BAN_HEX_CHECK);
-			break;
-		case BAN_BAD_MOD:
-			strTemp = GetResString(IDS_BAN_BAD_MOD);
-			break;
-		case BAN_BAD_NICK:
-			strTemp = GetResString(IDS_BAN_BAD_NICK);
-			break;
-		// ban - no reason relayed
-		case BAN_SIVKA:
-			strTemp = GetResString(IDS_BAN_SIVKA);
-			break;
-		case BAN_SPAMMER:
-			strTemp = GetResString(IDS_BAN_SPAMMER);
-			break;
-		case BAN_FILEFAKER:
-			strTemp = GetResString(IDS_BAN_FILEFAKER);
-			break;
-		case BAN_FRIEND_SHARING:
-			strTemp = GetResString(IDS_BAN_FRIEND_SHARING);
-			break;
-		case BAN_GHOST:
-			strTemp = GetResString(IDS_BAN_GHOST);
-			break;
-		case BAN_FAKE_VER:
-			strTemp = GetResString(IDS_BAN_FAKE_VER);
-			break;
-		case BAN_EMPTY_NICK:
-			strTemp = GetResString(IDS_BAN_EMPTY_NICK);
-			break;
-		case BAN_NICK_CHANGER:
-			strTemp = GetResString(IDS_BAN_NICK_CHANGER);
-			break;
-		case BAN_APPLE_JUICE:
-			strTemp = GetResString(IDS_BAN_APPLE_JUICE);
-			break;
-		case BAN_VAGAA:
-			strTemp = GetResString(IDS_BAN_VAGAA);
-			break;
-		// ban - reason relayed
-		case BAN_BAD_INFO:
-			strTemp = GetResString(IDS_BAN_BAD_INFO);
-			break;
-		case BAN_BAD_HELLO:
-			strTemp = GetResString(IDS_BAN_BAD_HELLO);
-			break;
-		case BAN_SNAFU:
-			strTemp = GetResString(IDS_BAN_SNAFU);
-			break;
-		case BAN_EXTRABYTE:
-			strTemp = GetResString(IDS_BAN_EXTRABYTE);
-			break;
-		case BAN_CREDIT_HACK:
-			strTemp = GetResString(IDS_BAN_CREDIT_HACK);
-			break;
-		default:
-			strTemp = _T("Not Available");
-	}
-	if(m_bGPLEvildoer)
-		return _T("GPL evildoer");
-	else
-		return strTemp;
-}
-// <== Reduce Score for leecher - Stulle
-
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-int CUpDownClient::GetClientStyle(bool bDl, bool bUl, bool bShare, bool bOwnCredits) const
-{
-	CKnownFile* currequpfile = CheckAndGetReqUpFile();
-	int iClientStyle = style_c_default;
-	if(IsFriend() && thePrefs.GetStyleOnOff(client_styles, style_c_friend)!=0)
-		iClientStyle = style_c_friend;
-	else if(currequpfile && currequpfile->GetPowerShared() && bShare && thePrefs.GetStyleOnOff(client_styles, style_c_powershare)!=0)
-		iClientStyle = style_c_powershare;
-	else if(GetDownloadState() == DS_DOWNLOADING && bDl && thePrefs.GetStyleOnOff(client_styles, style_c_downloading)!=0)
-		iClientStyle = style_c_downloading;
-	else if(GetUploadState() == US_UPLOADING && bUl && thePrefs.GetStyleOnOff(client_styles, style_c_uploading)!=0)
-		iClientStyle = style_c_uploading;
-	else if(GetBanReason() != GOOD_BOY && thePrefs.GetStyleOnOff(client_styles, style_c_leecher)!=0)
-		iClientStyle = style_c_leecher;
-	else if(HasLowID() && thePrefs.GetStyleOnOff(client_styles, style_c_lowid)!=0)
-		iClientStyle = style_c_lowid;
-	else if(Credits() && thePrefs.GetStyleOnOff(client_styles, style_c_credits)!=0)
-	{
-		if	(
-				(!bOwnCredits && credits->GetHasScore(GetIP()))
-				||
-				( bOwnCredits && credits->GetMyScoreRatio(GetIP())>1)
-			)
-			iClientStyle = style_c_credits;
-	}
-	return iClientStyle;
-}
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
-
-// ==> Display reason for zero score - Stulle
-CString CUpDownClient::GetZeroScoreString() const
-{
-	if (!m_pszUsername)
-		return _T("NULL Username");
-
-	if (credits == 0){
-		return _T("NULL credits");
-	}
-	CKnownFile* currequpfile = CheckAndGetReqUpFile();
-	if(!currequpfile)
-		return _T("NULL reqfile");
-
-	if (credits->GetCurrentIdentState(GetIP()) == IS_IDBADGUY)
-		return _T("Bad guy");
-
-	if (m_nUploadState==US_BANNED)
-		return _T("Banned");
-
-	if (m_bGPLEvildoer)
-		return _T("GPL evildoer");
-
-	return _T("Unknown");
-}
-// <== Display reason for zero score - Stulle
-
-// ==> Inform Clients after IP Change - Stulle
-void CUpDownClient::SendIPChange()
-{
-	if (theApp.listensocket->TooManySockets() && !(socket && socket->IsConnected()) )
-		return;
-
-	if(GetSendIP()==false)
-		return;
-
-	if (thePrefs.GetDebugClientTCPLevel() > 0)
-		DebugSend("OP__Change_Client_Id", this);
-	Packet* packet = new Packet(OP_CHANGE_CLIENT_ID, 8);
-	PokeUInt32(packet->pBuffer, theApp.GetPublicIP()); // New ID
-	PokeUInt32(packet->pBuffer + 4, theApp.serverconnect->IsConnected() ? theApp.serverconnect->GetCurrentServer()->GetIP() : 0x00000000); // New Server IP
-	theStats.AddUpDataOverheadOther(packet->size);
-	SafeConnectAndSendPacket(packet);
-	WeSentIP();
-}
-// <== Inform Clients after IP Change - Stulle
-
-// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-void CUpDownClient::SetModPureString()
-{
-	int endpos = 0;
-	// we start with two so i-2 will never be smaller than zero.
-	// there should not be any shorter mod names than two letters!
-	for(int i=2; i<m_strModVersion.GetLength();i++)
-	{
-		if(m_strModVersion[i] >= 0x30 && m_strModVersion[i] <= 0x39) // a number
-		{
-			// one char before the number
-			if(m_strModVersion[i-1] == 0x20) // space
-			{
-				endpos = i-1;
-				break;
-			}
-			else if(m_strModVersion[i-1]!=0x76 || // v
-				m_strModVersion[i-1]!=0x56) // V
-			{
-				// two chars before the number
-				if(m_strModVersion[i-2] == 0x20) // space
-				{
-					endpos = i-2;
-					break;
-				}
-			}
-		}
-	}
-	if(endpos>0)
-		m_strModPure = m_strModVersion.Left(endpos);
-	else
-		m_strModPure = m_strModVersion;
-}
-#endif
-// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
+// <== Anti Uploader Ban [Stulle] - Stulle

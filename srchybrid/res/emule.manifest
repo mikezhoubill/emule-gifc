@@ -6,7 +6,7 @@
     name="Microsoft.Windows.emule"
     type="win32"
 />
-<description>eMule Morph by http://emulemorph.sourceforge.net</description>
+<description>eMule by http://www.emule-project.net</description>
 <dependency>
     <dependentAssembly>
         <assemblyIdentity

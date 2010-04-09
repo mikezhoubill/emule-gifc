@@ -45,7 +45,7 @@ public:
 	bool		m_bSeparator;	//Separator
 	bool		m_bSideBar;		//A gradient sidebar
 	bool		m_bButtonOnly;	//Button only style item
-	bool		m_bHeading;		// MenuXP Sub Heading [fafner] - fafner
+	bool		m_bHeading;		// MenuXP Sub Heading [fafner] - MyTh
 	CString		m_strText;		//Menu item text
 	HICON		m_hIcon;		//Menu icon
 	int			m_nSize;		//Height of the item(Width of the sidebar if m_bSideBar is true)
@@ -58,7 +58,7 @@ public:
 		m_bSeparator = false;
 		m_bSideBar = false;
 		m_bButtonOnly = false;
-		m_bHeading = false;		// MenuXP Sub Heading [fafner] - fafner
+		m_bHeading = false;		// MenuXP Sub Heading [fafner] - MyTh
 		m_hIcon = NULL;
 		m_nSize = 16;
 	};
@@ -120,7 +120,7 @@ public:
 	}
 };
 
-// ==> MenuXP Sub Heading [fafner] - fafner
+// ==> MenuXP Sub Heading [fafner] - MyTh
 class CMenuXPHeading : public CMenuXPItem
 {
 public:
@@ -130,7 +130,7 @@ public:
 		m_strText = strText;
 	}
 };
-// <== MenuXP Sub Heading [fafner] - fafner
+// <== MenuXP Sub Heading [fafner] - MyTh
 
 ////////////////////////////////////////////////////////////////////////////////////////
 // Class CMenuXP, an ownerdraw menu
@@ -162,7 +162,7 @@ public:
 	BOOL	AddSideBar(CMenuXPSideBar *pItem);
 	BOOL	AppendODMenu(UINT nFlags, UINT_PTR nIDNewItem, CMenuXPItem* pItem, UINT nPosition = UINT_MAX, ACCEL *pAccel=0);
 	BOOL	AppendSeparator(void);	
-	BOOL	AppendHeading(LPCTSTR lpszTitle); // MenuXP Sub Heading [fafner] - fafner
+	BOOL	AppendHeading(LPCTSTR lpszTitle); // MenuXP Sub Heading [fafner] - MyTh
 	//void	AppendODPopup(UINT &nFlags, CMenuXPItem* pItem);
 	void	Break(void);	//change a column(the next item added will be in a new column)
 	void	BreakBar(void);	//change a column with a break line(same as Break, except that a break line is drawn between two columns)
@@ -174,7 +174,7 @@ protected:
 	COLORREF	m_clrText;			//Text color
 	COLORREF	m_clrSelectedText;	//selected text color
 	COLORREF	m_clrDisabledText;	//disabled text color
-	COLORREF	m_clrHeadingText;	// MenuXP Sub Heading [fafner] - fafner
+	COLORREF	m_clrHeadingText;	// MenuXP Sub Heading [fafner] - MyTh
 
 	COLORREF	m_clrSideBarStart;	//Start color of the gradient sidebar
 	COLORREF	m_clrSideBarEnd;	//end color of the gradient sidebar
@@ -196,7 +196,7 @@ public:	//User these functions to change the default attribute of the menu
 	void	SetTextColor(COLORREF clr) { m_clrText = clr; }
 	void	SetSelectedTextColor(COLORREF clr) { m_clrSelectedText = clr; }
 	void	SetDisabledTextColor(COLORREF clr) { m_clrDisabledText = clr; }
-	void	SetHeadingTextColor(COLORREF clr) { m_clrHeadingText = clr; } // MenuXP Sub Heading [fafner] - fafner
+	void	SetHeadingTextColor(COLORREF clr) { m_clrHeadingText = clr; } // MenuXP Sub Heading [fafner] - MyTh
 	void	SetSideBarStartColor(COLORREF clr) { m_clrSideBarStart = clr; }
 	void	SetSideBarEndColor(COLORREF clr) { m_clrSideBarEnd = clr; }
 	void	SetIconAreaColor(COLORREF clr) { m_clrIconArea = clr; }
@@ -204,7 +204,7 @@ public:	//User these functions to change the default attribute of the menu
 	void	SetBackBitmap(LPCTSTR lpszResourceName, LPCTSTR pszResourceType);
 
 	void	SetMenuStyle(MENUSTYLE	style) { m_Style = style; }
-	
+
 	void	SetEmbossedIcons(BOOL Embossed) { m_EmbossedIcons = Embossed; }
 
 	BOOL	SetMenuFont(LOGFONT	lgfont);
@@ -222,7 +222,7 @@ protected:
 	virtual void DrawButton(CDC *pDC, CRect rect, BOOL bSelected, BOOL bDisabled, BOOL bChecked);
 	virtual void DrawIcon(CDC *pDC, CRect rect, HICON hIcon, BOOL bSelected, BOOL bDisabled, BOOL bChecked);
 	virtual void DrawSideBar(CDC *pDC, CRect rect, HICON hIcon, CString strText);
-	virtual void DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BOOL bDisabled, BOOL bBold, bool bHeading = false); // MenuXP Sub Heading [fafner] - fafner
+	virtual void DrawText(CDC *pDC, CRect rect, CString strText, BOOL bSelected, BOOL bDisabled, BOOL bBold, bool bHeading = false); // MenuXP Sub Heading [fafner] - MyTh
 	virtual void DrawCheckMark(CDC *pDC, CRect rect, BOOL bSelected);
 	virtual void DrawMenuText(CDC& dc, CRect rc, CString text, COLORREF color);
 	virtual void DrawIconArea(CDC *pDC, CRect rect, BOOL bSelected, BOOL bDisabled, BOOL bChecked);

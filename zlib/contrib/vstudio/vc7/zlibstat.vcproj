@@ -62,54 +62,6 @@
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="ReleaseAxp|Win32"
-			OutputDirectory=".\zlibsta0"
-			IntermediateDirectory=".\zlibsta0"
-			ConfigurationType="4"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..;..\..\masmx86"
-				PreprocessorDefinitions="WIN32;ZLIB_WINAPI"
-				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\zlibsta0/zlibstat.pch"
-				AssemblerListingLocation=".\zlibsta0/"
-				ObjectFile=".\zlibsta0/"
-				ProgramDataBaseFileName=".\zlibsta0/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalOptions="/NODEFAULTLIB "
-				OutputFile=".\zlibsta0\zlibstat.lib"
-				SuppressStartupBanner="TRUE"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="..\..\..\Release"
 			IntermediateDirectory="..\..\..\Release"
@@ -137,55 +89,6 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="..\..\..\Release/zlib.lib"
-				SuppressStartupBanner="TRUE"/>
-			<Tool
-				Name="VCMIDLTool"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1036"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseWithoutAsm|Win32"
-			OutputDirectory="zlibstatWithoutAsm"
-			IntermediateDirectory="zlibstatWithoutAsm"
-			ConfigurationType="4"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
-			<Tool
-				Name="VCCLCompilerTool"
-				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="..\..\..;..\..\masmx86"
-				PreprocessorDefinitions="WIN32;ZLIB_WINAPI"
-				StringPooling="TRUE"
-				ExceptionHandling="FALSE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
-				PrecompiledHeaderFile=".\zlibstat/zlibstat.pch"
-				AssemblerListingLocation=".\zlibstatWithoutAsm/"
-				ObjectFile=".\zlibstatWithoutAsm/"
-				ProgramDataBaseFileName=".\zlibstatWithoutAsm/"
-				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
-			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalOptions=" /NODEFAULTLIB "
-				OutputFile=".\zlibstatWithoutAsm\zlibstat.lib"
 				SuppressStartupBanner="TRUE"/>
 			<Tool
 				Name="VCMIDLTool"/>

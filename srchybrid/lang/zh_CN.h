@@ -7,6 +7,7 @@
 #define IDS_OPENGIFC                    2003
 #define IDS_GIF                         2005
 #define IDS_GIFNOTFOUND                 2005
+#define IDS_GIFCNOTFOND                 2005
 #define IDS_SHOWLESS                    2010
 #define IDS_SHOWMORE                    2011
 #define IDS_SHOWEXT                     2012

@@ -83,34 +83,28 @@ enum EClientSoftware{
 	SO_AMULE			= 3,	// ET_COMPATIBLECLIENT
 	SO_SHAREAZA			= 4,	// ET_COMPATIBLECLIENT
 	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-	SO_EMULEPLUS		= 5,
-	SO_HYDRANODE		= 6,
-#endif
+	SO_EMULEPLUS			= 5,
+	SO_HYDRANODE			= 6,
 	// <== Enhanced Client Recognition [Spike] - Stulle
 	SO_MLDONKEY			= 10,	// ET_COMPATIBLECLIENT
 	SO_LPHANT			= 20,	// ET_COMPATIBLECLIENT
 	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-	SO_SHAREAZA2		= 28,
-	SO_TRUSTYFILES		= 30,
-	SO_SHAREAZA3		= 40,
-#endif
+	SO_SHAREAZA2			= 28,
+	SO_TRUSTYFILES			= 30,
+	SO_SHAREAZA3			= 40,
 	// <== Enhanced Client Recognition [Spike] - Stulle
 	// other client types which are not identified with ET_COMPATIBLECLIENT
 	SO_EDONKEYHYBRID	= 50,
 	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifndef ENHANCED_CLIENTS_RECOG
+	/*
 	SO_EDONKEY,
 	SO_OLDEMULE,
-#else
+	*/
 	SO_EDONKEY			= 51,
 	SO_MLDONKEY2		= 52,
 	SO_OLDEMULE			= 53,
 	SO_SHAREAZA4		= 68,
 	SO_MLDONKEY3		= 152,
-	SO_OLD_MLDONKEY,
-#endif
 	// <== Enhanced Client Recognition [Spike] - Stulle
 	SO_URL,
 	SO_UNKNOWN
@@ -136,11 +130,7 @@ enum ESourceFrom{
 	SF_SOURCE_EXCHANGE	= 2,
 	SF_PASSIVE			= 3,
 	SF_LINK				= 4,
-	//MORPH - Source cache
-	SF_CACHE_SERVER			= 5,
-	SF_CACHE_SOURCE_EXCHANGE = 6,
-	//MORPH - Source cache
-	SF_SLS				= 7 //MORPH - Added by SiRoB, Save Load Sources (SLS)
+	SF_SLS				= 5			//Xman SLS
 };
 
 enum EChatCaptchaState{
@@ -161,67 +151,14 @@ enum EConnectingState{
 	CCS_PRECONDITIONS
 };
 
-//MORPH START - Added by SiRoB, See chunk that we hide
+// ==> See chunk that we hide [SiRoB] - Stulle
 enum EChunkStatus{
 	SC_AVAILABLE		= 1,
 	SC_HIDDENBYSOTN		= 2,
-	SC_HIDDENBYHIDEOS	= 4,
-	SC_PARTIAL		= 8, //MORPH - Added By SiRoB, ICS merged into partstatus
-	SC_XFER			= 16 //Fafner: mark transferred parts - 080325
+	SC_HIDDENBYHIDEOS	= 4/*,
+	SC_PARTIAL			= 8 //MORPH - Added By SiRoB, ICS merged into partstatus*/
 };
-//MORPH END   - Added by SiRoB, See chunk that we hide
-
-//MORPH START - Added by Stulle, Mod Icons
-enum EModClient{
-	MOD_NONE,
-	MOD_MORPH,
-	MOD_SCAR,
-	MOD_STULLE,
-	MOD_XTREME,
-	MOD_EASTSHARE,
-	MOD_EMF,
-	MOD_NEO,
-	MOD_MEPHISTO,
-	MOD_XRAY,
-	MOD_MAGIC
-};
-//MORPH END   - Added by Stulle, Mod Icons
-
-// ==> Reduce Score for leecher - Stulle
-enum EBanReason{
-	GOOD_BOY,
-	// reduce
-	BAN_FAKE_MOD,
-	BAN_MORPH_LEECHER,
-	BAN_FAKE_NICK,
-	BAN_LEECHER_NICK,
-	BAN_COMMUNITY,
-	BAN_WRONG_HASHSIZE,
-	BAN_HEX_CHECK,
-	BAN_BAD_MOD,
-	BAN_BAD_NICK,
-	BAN_REDUCE_COUNT, // all above are reduced
-	// ban - no reason relayed
-	BAN_SIVKA,
-	BAN_SPAMMER,
-	BAN_FILEFAKER,
-	BAN_FRIEND_SHARING,
-	BAN_GHOST,
-	BAN_FAKE_VER,
-	BAN_EMPTY_NICK,
-	BAN_NICK_CHANGER,
-	BAN_APPLE_JUICE,
-	BAN_VAGAA,
-	BAN_NORELAY_COUNT, // all above do not relay a particular ban reason
-	// ban - reason relayed
-	BAN_BAD_INFO,
-	BAN_BAD_HELLO,
-	BAN_SNAFU,
-	BAN_EXTRABYTE,
-	BAN_CREDIT_HACK,
-	BAN_COUNT // last item
-};
-// <== Reduce Score for leecher - Stulle
+// <== See chunk that we hide [SiRoB] - Stulle
 
 #ifdef _DEBUG
 	// use the 'Enums' only for debug builds, each enum costs 4 bytes (3 unused)
@@ -234,8 +171,7 @@ enum EBanReason{
 #define _ESourceFrom		ESourceFrom
 #define _EChatCaptchaState  EChatCaptchaState
 #define _EConnectingState	EConnectingState
-#define _EModClient			EModClient //MOPPH - Added by Stulle, Mod Icons
-#define _EBanReason			EBanReason // Reduce Score for leecher - Stulle
+#define _EModClient			EModClient // Mod Icons - Stulle
 #else
 #define _EClientSoftware	uint8
 #define _EChatState			uint8
@@ -246,6 +182,37 @@ enum EBanReason{
 #define _ESourceFrom		uint8
 #define _EChatCaptchaState	uint8
 #define _EConnectingState	uint8
-#define _EModClient			uint8 //MOPPH - Added by Stulle, Mod Icons
-#define _EBanReason			uint8 // Reduce Score for leecher - Stulle
+#define _EModClient			uint8 // Mod Icons - Stulle
 #endif
+// ==> Mod Icons - Stulle
+enum EModClient{
+	MOD_NONE,
+	MOD_SCAR,
+	MOD_STULLE,
+	MOD_XTREME,
+	MOD_MORPH,
+	MOD_EASTSHARE,
+	MOD_EMF,
+	MOD_NEO,
+	MOD_MEPHISTO,
+	MOD_XRAY,
+	MOD_MAGIC
+};
+// <== Mod Icons - Stulle
+
+// ==> FunnyNick [SiRoB/Stulle] - Stulle
+enum FnTagSelection {
+	CS_NONE = 0,
+	CS_SHORT,
+	CS_FULL,
+	CS_CUST
+};
+// <== FunnyNick [SiRoB/Stulle] - Stulle
+
+// ==> Anti Uploader Ban [Stulle] - Stulle
+enum AntiUploaderBanCaseSelection {
+	CS_1 = 0,
+	CS_2,
+	CS_3
+};
+// <== Anti Uploader Ban [Stulle] - Stulle

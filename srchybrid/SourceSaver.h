@@ -1,79 +1,68 @@
 #pragma once
 
+// Maella
+// New rules after a restart:
+// - If elapsed time < 1 hour, reask all sources
+// - If elapsed time > 1 hour, reask 10 sources
+// - If elapsed time > 2 days, reask none
+
+
 class CPartFile;
 class CUpDownClient;
 
 class CSourceSaver
 {
 public:
-	CSourceSaver(void);
+	CSourceSaver(CPartFile* file);
 	~CSourceSaver(void);
-	//MORPH - Changed by SiRoB, SLS keep only for rar files, reduce Saved Source and life time
-	//bool Process(CPartFile* file, int maxSourcesToSave=2);
-	bool Process(CPartFile* file, UINT maxSourcesToSave=10);
-	void DeleteFile(CPartFile* file);
+	bool Process();
+	void DeleteFile();
+
+#ifdef PRINT_STATISTIC
+	uint32 GetSavedSources()	{return m_sourceList.GetSize();}
+#endif
 
 protected:
-	// khaos::kmod+ Source Exchange Version
 	class CSourceData
 	{
 	public:
-		//MORPH - Changed by SiRoB, SLS keep only for rar files, reduce Saved Source and life time
-		//CSourceData(uint32 dwID, uint16 wPort, const char* exp, uint8 srcexver) {	sourceID = dwID; 
-		//																			sourcePort = wPort; 
-		//																			memcpy(expiration, exp, 7);
-		//																			expiration[6] = 0;
-		//																			nSrcExchangeVer = srcexver;}
-		CSourceData(uint32 dwID, uint16 wPort,uint32 dwserverip, uint16 wserverport, const TCHAR* exp, uint8 srcexver) {	sourceID = dwID; 
-																					sourcePort = wPort; 
-																					serverip = dwserverip;
-																					serverport = wserverport;
-																					memcpy(expiration, exp, 11*sizeof(TCHAR));
-																					expiration[10] = 0;
-																					nSrcExchangeVer = srcexver;}
+		CSourceData() {} // Necessary for class CList
 
-		CSourceData(CUpDownClient* client, const TCHAR* exp);
-		//MORPH - Changed by SiRoB, SLS keep only for rar files, reduce Saved Source and life time
-		//CSourceData(CSourceData* pOld) {							sourceID = pOld->sourceID; 
-		//															sourcePort = pOld->sourcePort; 
-		//															memcpy(expiration, pOld->expiration, 7); 
-		//															partsavailable = pOld->partsavailable;
-		//															expiration[6] = 0;
-		//															nSrcExchangeVer = pOld->nSrcExchangeVer;}
-		CSourceData(CSourceData* pOld) {							sourceID = pOld->sourceID; 
-																	sourcePort = pOld->sourcePort; 
-																	serverip = pOld->serverip;
-																	serverport = pOld->serverport;
-																	memcpy(expiration, pOld->expiration, 11*sizeof(TCHAR)); 
-																	partsavailable = pOld->partsavailable;
-																	expiration[10] = 0;
-																	nSrcExchangeVer = pOld->nSrcExchangeVer;}
+		CSourceData(uint32 dwID, uint16 wPort, const CString& expiration90mins, const CString& expiration3days) : sourceID(dwID), 
+																	                                       sourcePort(wPort),
+																		                                   partsavailable(0),
+                                                                                                           expiration90mins(expiration90mins),
+																		                                   expiration3days(expiration3days) {}
 
-		bool Compare(CSourceData* tocompare) {						return ((sourceID == tocompare->sourceID) 
-																	 && (sourcePort == tocompare->sourcePort)); }
+		CSourceData(const CSourceData& ref) : sourceID(ref.sourceID), 
+											  sourcePort(ref.sourcePort),
+											  partsavailable(ref.partsavailable),
+											  expiration90mins(ref.expiration90mins),
+                                              expiration3days(ref.expiration3days){}
+
+		CSourceData(CUpDownClient* client, const CString& expiration90mins, const CString& expiration3days);
+
+		bool Compare(const CSourceData& tocompare) const { return (sourceID == tocompare.sourceID) &&
+																  (sourcePort == tocompare.sourcePort); }
 
 		uint32	sourceID;
 		uint16	sourcePort;
-		uint32	serverip;
-		uint16	serverport;
 		uint32	partsavailable;
-		//MORPH - Changed by SiRoB, SLS keep only for rar files, reduce Saved Source and life time
-		//char	expiration[7];
-		TCHAR	expiration[11];
-		uint8	nSrcExchangeVer;
+		CString expiration90mins; // 1.5 hours
+        CString expiration3days; // 3 days
 	};
-	// khaos::kmod-
-	typedef CTypedPtrList<CPtrList, CSourceData*> SourceList;
+	typedef CList<CSourceData> SourceList;
 
-	void LoadSourcesFromFile(CPartFile* file, SourceList* sources, LPCTSTR slsfile);
-	void SaveSources(CPartFile* file, SourceList* prevsources, LPCTSTR slsfile, UINT maxSourcesToSave);
-	void AddSourcesToDownload(CPartFile* file, SourceList* sources);
+	void LoadSourcesFromFile(const CString& slsfile);
+	void SaveSources(const CString& slsfile);
+	void AddSourcesToDownload();
 	
-	uint32	m_dwLastTimeLoaded;
-	uint32  m_dwLastTimeSaved;
+	uint32     m_dwLastTimeLoaded;
+	uint32     m_dwLastTimeSaved;	
+	CPartFile* m_pFile;
+	SourceList m_sourceList;
 	
-	//MORPH - Changed by SiRoB, SLS keep only for rar files, reduce Saved Source and life time
-	//CString CalcExpiration(int nDays);
-	CString CalcExpiration(int nMinutes);
-	bool IsExpired(CString expirationdate);
+	CString CSourceSaver::CalcExpiration(); // 1.5 hours (8 chars)
+	CString CSourceSaver::CalcExpirationLong(); // 3 days (6 chars)
+	bool IsExpired(const CString& expiration90mins) const;
 };

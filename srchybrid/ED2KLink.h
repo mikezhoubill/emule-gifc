@@ -35,12 +35,12 @@ public:
 	static CED2KLink* CreateLinkFromUrl(const TCHAR* url);
 	virtual ~CED2KLink();
 
-	// MORPH START - Modified by Commander, Friendlinks [emulEspaña]
+	// MORPH START - Modified by Commander, Friendlinks [emulEspaa] - added by zz_fly
 	/*
 	typedef enum { kServerList, kServer , kFile , kNodesList, kInvalid } LinkType;
 	*/
 	typedef enum { kServerList, kServer , kFile , kNodesList, kFriend, kFriendList, kInvalid } LinkType;
-	// MORPH START - Modified by Commander, Friendlinks [emulEspaña]
+	// MORPH END - Modified by Commander, Friendlinks [emulEspaa]
 
 	virtual LinkType GetKind() const = 0;
 	virtual void GetLink(CString& lnk) const = 0;
@@ -164,7 +164,7 @@ private:
 	CString m_address;
 };
 
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 class CED2KFriendLink : public CED2KLink
 {
 public:
@@ -205,4 +205,4 @@ public:
 private:
 	CString	m_address;
 };
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]

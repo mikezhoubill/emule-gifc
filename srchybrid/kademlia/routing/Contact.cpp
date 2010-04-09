@@ -238,7 +238,12 @@ void CContact::UpdateType()
 			break;
 		case 1:
 			m_byType = 1;
-			m_tExpires = (time_t)(time(NULL) + MIN2S(90) ); // morph prevent float overflow
+			// ==> Prevent float overflow [leuk_he] - Stulle
+			/*
+			m_tExpires = time(NULL) + (unsigned)HR2S(1.5);
+			*/
+			m_tExpires = (time_t)(time(NULL) + MIN2S(90) );
+			// <== Prevent float overflow [leuk_he] - Stulle
 			break;
 		default:
 			m_byType = 0;

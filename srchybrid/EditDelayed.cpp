@@ -27,6 +27,7 @@
 #include "emule.h"
 #include "MenuCmds.h"
 #include "MenuXP.h" // XP Style Menu [Xanatos] - Stulle
+#include "OtherFunctions.h"  
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

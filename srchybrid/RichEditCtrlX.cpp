@@ -39,7 +39,10 @@ BEGIN_MESSAGE_MAP(CRichEditCtrlX, CRichEditCtrl)
 	ON_NOTIFY_REFLECT_EX(EN_LINK, OnEnLink)
 	ON_CONTROL_REFLECT(EN_CHANGE, OnEnChange)
 	ON_WM_SETCURSOR()
-	ON_WM_MEASUREITEM() // XP Style Menu [Xanatos] - Stulle
+	// ==> XP Style Menu [Xanatos] - Stulle
+	ON_WM_MEASUREITEM()
+	ON_WM_MENUCHAR()
+	// <== XP Style Menu [Xanatos] - Stulle
 END_MESSAGE_MAP()
 
 CRichEditCtrlX::CRichEditCtrlX()
@@ -381,5 +384,13 @@ void CRichEditCtrlX::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItem
 		pMenu->MeasureItem(lpMeasureItemStruct);
 	
 	CWnd::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+}
+
+LRESULT CRichEditCtrlX::OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu) 
+{
+	if (pMenu->IsKindOf(RUNTIME_CLASS(CTitleMenu)) )
+		return CTitleMenu::OnMenuChar(nChar, nFlags, pMenu);
+
+	return CRichEditCtrl::OnMenuChar(nChar, nFlags, pMenu);
 }
 // <== XP Style Menu [Xanatos] - Stulle

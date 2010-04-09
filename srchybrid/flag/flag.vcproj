@@ -838,6 +838,15 @@
 			<File
 				RelativePath=".\res\zw.ico">
 			</File>
+			<File
+				RelativePath=".\res\ax.ico">
+			</File>
+			<File
+				RelativePath=".\res\me.ico">
+			</File>
+			<File
+				RelativePath=".\res\rs.ico">
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\flag.rc">

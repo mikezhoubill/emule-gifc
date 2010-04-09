@@ -59,15 +59,14 @@ protected:
 	afx_msg void OnEnSetfocusBootstrapNodesdat();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnBnClickedNodesFileButton();
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	afx_msg void OnBnClickedNodesFileButton(); // Links for Server list and nodes file [Stulle] - Stulle
+
+	// ==> Design Settings [eWombat/Stulle] - Max
 	CBrush m_brMyBrush;
 	HBRUSH hbr;	
 	COLORREF crKadColor;
 public:
 	void OnBackcolor(); 
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

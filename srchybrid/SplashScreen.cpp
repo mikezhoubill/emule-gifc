@@ -22,7 +22,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -52,7 +52,7 @@ BOOL CSplashScreen::OnInitDialog()
 	CDialog::OnInitDialog();
 	InitWindowStyles(this);
 
-	VERIFY( m_imgSplash.Attach(theApp.LoadImage(_T("SPLASH"), _T("JPG"))) );
+	VERIFY( m_imgSplash.Attach(theApp.LoadImage(_T("ABOUT"), _T("JPG"))) );
 	if (m_imgSplash.GetSafeHandle())
 	{
 		BITMAP bmp = {0};
@@ -103,42 +103,35 @@ void CSplashScreen::OnPaint()
 			dc.BitBlt(0, 0, BM.bmWidth, BM.bmHeight, &dcMem, 0, 0, SRCCOPY);
 			if (pOldBM)
 				dcMem.SelectObject(pOldBM);
-			long htext = dc.GetTextExtent(_T("T")).cy-2;
-			// ==> modfied Splashscreen - Stulle
-			/*
-			CRect rc(2, BM.bmHeight - htext, BM.bmWidth, BM.bmHeight);//Commander - Changed
-			*/
-			CRect rc(2, BM.bmHeight - htext - 12, BM.bmWidth, BM.bmHeight);
-			// <== modfied Splashscreen - Stulle
 
-			//Commander - Removed
-			//dc.FillSolidRect(rc.left+1, rc.top+1, rc.Width()-2, rc.Height()-2, RGB(255,255,255));
+			CRect rc(0, (int)(BM.bmHeight * 0.65), BM.bmWidth, BM.bmHeight);
+			dc.FillSolidRect(rc.left+1, rc.top+1, rc.Width()-2, rc.Height()-2, RGB(255,255,255));
 
 			LOGFONT lf = {0};
-			lf.lfHeight = 14;
+			lf.lfHeight = 30;
 			lf.lfWeight = FW_BOLD;
-			/* morph no win98
-			lf.lfQuality = afxIsWin95 ? NONANTIALIASED_QUALITY : ANTIALIASED_QUALITY;
-			*/
-			lf.lfQuality = ANTIALIASED_QUALITY;
-			// end
+			lf.lfQuality = afxIsWin95() ? NONANTIALIASED_QUALITY : ANTIALIASED_QUALITY;
 			_tcscpy(lf.lfFaceName, _T("Arial"));
-			// ==> modfied Splashscreen - Stulle
-			/*
-			COLORREF oldclr = dc.SetTextColor(RGB(128,128,255));//Commander: Set white text color
-			*/
-			COLORREF oldclr = dc.SetTextColor(RGB(0,0,0));
-			// <== modfied Splashscreen - Stulle
-			int iOMode = dc.SetBkMode(TRANSPARENT);//Commander: Make bg transparent
 			CFont font;
 			font.CreateFontIndirect(&lf);
 			CFont* pOldFont = dc.SelectObject(&font);
-			CString strAppVersion(_T("eMule ") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]"));
-			dc.DrawText(strAppVersion, &rc, DT_CENTER | DT_NOPREFIX | DT_TOP);
+			CString strAppVersion(_T("eMule ") + theApp.m_strCurVersionLong);
+			rc.top += dc.DrawText(strAppVersion, &rc, DT_CENTER | DT_NOPREFIX);
 			if (pOldFont)
 				dc.SelectObject(pOldFont);
-			dc.SetBkMode(iOMode);
-			dc.SetTextColor(oldclr);
+			font.DeleteObject();
+
+			rc.top += 8;
+
+			lf.lfHeight = 14;
+			lf.lfWeight = FW_NORMAL;
+			lf.lfQuality = afxIsWin95() ? NONANTIALIASED_QUALITY : ANTIALIASED_QUALITY;
+			_tcscpy(lf.lfFaceName, _T("Arial"));
+			font.CreateFontIndirect(&lf);
+			pOldFont = dc.SelectObject(&font);
+			dc.DrawText(_T("Copyright (C) 2002-2009 Merkur"), &rc, DT_CENTER | DT_NOPREFIX);
+			if (pOldFont)
+				dc.SelectObject(pOldFont);
 			font.DeleteObject();
 		}
 	}

@@ -61,7 +61,7 @@ BEGIN_MESSAGE_MAP(CKademliaWnd, CResizableDialog)
 	ON_BN_CLICKED(IDC_RADIP, UpdateControlsState)
 	ON_BN_CLICKED(IDC_RADNODESURL, UpdateControlsState)
 	ON_WM_HELPINFO()
-	ON_BN_CLICKED(IDC_NODESFILEBUTTON, &CKademliaWnd::OnBnClickedNodesFileButton)
+	ON_BN_CLICKED(IDC_NODESFILEBUTTON, OnBnClickedNodesFileButton) // Links for Server list and nodes file [Stulle] - Stulle
 END_MESSAGE_MAP()
 
 CKademliaWnd::CKademliaWnd(CWnd* pParent /*=NULL*/)
@@ -106,12 +106,8 @@ BOOL CKademliaWnd::OnInitDialog()
 	InitWindowStyles(this);
 	m_contactListCtrl->Init();
 	searchList->Init();
-
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	 
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	SetAllIcons();
 	Localize();
@@ -127,9 +123,7 @@ BOOL CKademliaWnd::OnInitDialog()
 	AddAnchor(IDC_KADSEARCHLAB, MIDDLE_LEFT);
 	AddAnchor(IDC_BSSTATIC, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPBUTTON, TOP_RIGHT);
-	// >> add by Ken
 	AddAnchor(IDC_NODESFILEBUTTON, TOP_RIGHT); // Links for Server list and nodes file [Stulle] - Stulle
-	// << add by Ken
 	AddAnchor(IDC_BOOTSTRAPPORT, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPIP, TOP_RIGHT);
 	AddAnchor(IDC_BOOTSTRAPURL, TOP_RIGHT);
@@ -288,9 +282,7 @@ void CKademliaWnd::SetAllIcons()
 void CKademliaWnd::Localize()
 {
 	m_ctrlBootstrap.SetWindowText(GetResString(IDS_BOOTSTRAP));
-	// >> add by Ken
 	GetDlgItem(IDC_NODESFILEBUTTON)->SetWindowText(GetResString(IDS_NODESFILEBUTTON)); // Links for Server list and nodes file [Stulle] - Stulle
-	// << add by Ken
 	GetDlgItem(IDC_BOOTSTRAPBUTTON)->SetWindowText(GetResString(IDS_BOOTSTRAP));
 	GetDlgItem(IDC_SSTATIC4)->SetWindowText(GetResString(IDS_SV_ADDRESS) + _T(":"));
 	GetDlgItem(IDC_SSTATIC7)->SetWindowText(GetResString(IDS_SV_PORT) + _T(":"));
@@ -404,18 +396,16 @@ BOOL CKademliaWnd::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	return TRUE;
 }
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
 HBRUSH CKademliaWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
+// ==> Design Settings [eWombat/Stulle] - Max
+/*
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
 	if (hbr)
 		return hbr;
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
-#else
-HBRUSH CKademliaWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
+*/
 	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 	
 	if (nCtlColor == CTLCOLOR_DLG)
@@ -445,14 +435,11 @@ void CKademliaWnd::OnBackcolor()
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max
 
-// >> add by Ken -- copy from ScareAngle
 // ==> Links for Server list and nodes file [Stulle] - Stulle
 void CKademliaWnd::OnBnClickedNodesFileButton()
 {
 	ShellExecute(NULL, NULL, _T("http://www.nodes-dat.com/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
 }
 // <== Links for Server list and nodes file [Stulle] - Stulle
-// << add by Ken

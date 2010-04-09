@@ -1,4 +1,4 @@
-﻿//this file is part of eMule
+//this file is part of eMule
 //Copyright (C)2002-2008 Merkur ( strEmail.Format("%s@%s", "devteam", "emule-project.net") / http://www.emule-project.net )
 //
 //This program is free software; you can redistribute it and/or
@@ -566,7 +566,7 @@ CED2KLink* CED2KLink::CreateLinkFromUrl(const TCHAR* uri)
 			if (!strURL.IsEmpty() && GetNextString(strURI, _T("|"), iPos) == _T("/"))
 				return new CED2KNodesListLink(strURL);
 		}
-		// MORPH START - Added by Commander, Friendlinks [emulEspaa]
+		// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 		else if ( strTok == _T("friend") )
 		{
 			CString sNick = GetNextString(strURI, _T("|"), iPos);
@@ -589,7 +589,7 @@ CED2KLink* CED2KLink::CreateLinkFromUrl(const TCHAR* uri)
 	throw GetResString(IDS_ERR_NOSLLINK);
 }
 
-// MORPH START - Added by Commander, Friendlinks [emulEspaa]
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 CED2KFriendLink::CED2KFriendLink(LPCTSTR userName, LPCTSTR userHash)
 {
 	if ( _tcslen(userHash) != 32 )

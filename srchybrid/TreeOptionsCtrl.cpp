@@ -150,9 +150,6 @@ to maintain a single distribution point for the source code.
 #include <shlobj.h>
 #endif
 #include "TreeOptionsCtrl.h"
-// emulEspaña: Added by MoNKi [ MoNKi: -Pass Edit on TreeOptionsCtrl- ]
-#include "TreeOptsPrefs\PassTreeOptionsEdit.h"
-// End emulEspaña
 #pragma warning(disable:4189) // 'bSuccess' : local variable is initialized but not referenced
 
 
@@ -545,12 +542,12 @@ HTREEITEM CTreeOptionsCtrl::InsertGroup(LPCTSTR lpszItem, int nImage, HTREEITEM 
 
 HTREEITEM CTreeOptionsCtrl::InsertCheckBox(LPCTSTR lpszItem, HTREEITEM hParent, BOOL bCheck, HTREEITEM hAfter, DWORD dwItemData)
 {
-	//MORPH START - Changed by Stulle, Assert fix for PPgMorph.cpp
+	// ==> Assert fix for radio - Stulle
 	/*
 	ASSERT((hParent == TVI_ROOT) || IsGroup(hParent) || IsCheckBox(hParent)); //The parent of a check box must be a group item or another check box
 	*/
 	ASSERT((hParent == TVI_ROOT) || IsGroup(hParent) || IsCheckBox(hParent) || IsRadioButton(hParent)); //The parent of a check box must be a group item or another check box
-	//MORPH END - Changed by Stulle, Assert fix for PPgMorph.cpp
+	// <== Assert fix for radio - Stulle
 
 	HTREEITEM hItem = InsertItem(lpszItem, 0, 0, hParent, hAfter);
 	CTreeOptionsItemData* pItemData = new CTreeOptionsItemData;
@@ -1712,55 +1709,13 @@ void CTreeOptionsCtrl::CreateBrowseButton(CRuntimeClass* pRuntimeClassBrowseButt
 CString CTreeOptionsCtrl::GetEditText(HTREEITEM hItem) const
 {
 	//Just call the combo box version as currently there is no difference
-	/*
 	return GetComboText(hItem);
-	*/
-	CTreeOptionsItemData* pItemData = (CTreeOptionsItemData*) GetItemData(hItem);
-	return 	pItemData->m_sEditText;
-	// End emulEspaña
 }
 
 void CTreeOptionsCtrl::SetEditText(HTREEITEM hItem, const CString& sEditText)
 {
 	//Just call the combo box version as currently there is no difference
-	/*
 	SetComboText(hItem, sEditText);
-	*/
-	CTreeOptionsItemData* pItemData = (CTreeOptionsItemData*) GetItemData(hItem);
-	pItemData->m_sEditText = sEditText;
-
-	CString sText = GetItemText(hItem);
-	CString sNewText;
-
-	if(pItemData->m_Type == CTreeOptionsItemData::PassEditBox){
-		char *buffer;
-		int buffLen = sEditText.GetLength()+1;
-		if(buffLen){
-			buffer = new char[buffLen];
-			_strnset(buffer, '*',buffLen-1); //Fafner: avoid C4996 (as in 0.49b vanilla) - 080731
-			buffer[buffLen-1] = 0;
-			sNewText = CStringA(buffer);
-			delete[] buffer;
-		}
-		else
-			sNewText = _T("*****");
-	}
-	else
-		sNewText = sEditText;
-
-	int nSeparator = sText.Find(m_sSeparator);
-	if (nSeparator == -1)
-	{
-		sText += m_sSeparator;
-		sText += sNewText;
-	}
-	else
-	{
-		sText = sText.Left(nSeparator + m_sSeparator.GetLength());
-		sText += sNewText;
-	}
-	SetItemText(hItem, sText);
-	// End emulEspaña
 }
 
 BOOL CTreeOptionsCtrl::OnSelchanged(NMHDR *pNMHDR, LRESULT *pResult) 
@@ -3196,18 +3151,3 @@ HTREEITEM CTreeOptionsCtrl::CopyBranch(HTREEITEM htiBranch, HTREEITEM htiNewPare
 	}
 	return hNewItem;
 }
-
-// emulEspaña: Added by MoNKi [ MoNKi: -Pass Edit on TreeOptionsCtrl- ]
-BOOL CTreeOptionsCtrl::AddPassEditBox(HTREEITEM hItem, CRuntimeClass* pRuntimeClassEditCtrl, DWORD dwItemData)
-{
-	//Just call the combo box version as currently there is no difference
-	BOOL bSuccess = AddComboBox(hItem, pRuntimeClassEditCtrl, dwItemData);
-
-	//Update the type in the item data
-	CTreeOptionsItemData* pItemData = (CTreeOptionsItemData*) GetItemData(hItem);
-	ASSERT(pItemData);
-	pItemData->m_Type = CTreeOptionsItemData::PassEditBox;
-
-	return bSuccess;
-}
-// End emulEspaña

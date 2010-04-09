@@ -334,7 +334,12 @@ void CPrefs::SetLastContact()
 
 uint32 CPrefs::GetLastContact() const
 {
-	return (uint32)m_tLastContact;  //vs2005
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	return m_tLastContact;
+	*/
+	return (uint32)m_tLastContact;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 }
 
 uint8 CPrefs::GetTotalFile() const

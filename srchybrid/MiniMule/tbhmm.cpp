@@ -19,6 +19,7 @@
 #include "Log.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "kademlia/kademlia/prefs.h"
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 
 // TBHMM dialog
 //IMPLEMENT_DYNAMIC(CTBHMM, CSnapDialog)
@@ -169,10 +170,12 @@ void CTBHMM::MMUpdate()
 		buffer += buffer2;
 		SetWindowText(buffer);
 
+/*
 		int lastuprateoverheadkb = theStats.GetUpDatarateOverhead();
 		int lastdownrateoverheadkb = theStats.GetDownDatarateOverhead();
 		uint32 upratekb = theApp.uploadqueue->GetDatarate();
 		uint32 downratekb = theApp.downloadqueue->GetDatarate();
+*/
 		CDownloadQueue::SDownloadStats myStats;
 		theApp.downloadqueue->GetDownloadSourcesStats(myStats);
 
@@ -237,16 +240,33 @@ void CTBHMM::MMUpdate()
 */
 		// ==> added - Stulle
 		int iTotal;
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		// Retrieve the current datarates
+		uint32 downratekb;	uint32 eMuleInOverall;
+		uint32 upratekb; uint32 eMuleOutOverall;
+		uint32 notUsed;
+		theApp.pBandWidthControl->GetDatarates(thePrefs.GetDatarateSamples(),
+			downratekb, eMuleInOverall,
+			upratekb, eMuleOutOverall,
+			notUsed, notUsed);
 
-		if ( theStats.sessionReceivedBytes>0 && theStats.sessionSentBytes>0 ) 
+		uint32 lastuprateoverheadkb=eMuleOutOverall-upratekb;
+		uint32 lastdownrateoverheadkb=eMuleInOverall-downratekb;
+		uint64 bEmuleIn= theApp.pBandWidthControl->GeteMuleIn();
+		uint64 bEmuleOut= theApp.pBandWidthControl->GeteMuleOut();
+		//Xman end
+
+		if ( bEmuleIn>0 && bEmuleOut>0 ) 
 		{
-			if (theStats.sessionReceivedBytes<theStats.sessionSentBytes) 
+			// Session
+			if (bEmuleIn<bEmuleOut) 
 			{
-				buffer.Format(_T("%s %.2f : 1"),GetResString(IDS_MM_RATIO),(float)theStats.sessionSentBytes/theStats.sessionReceivedBytes);
+				buffer.Format(_T("%s %.2f : 1"),GetResString(IDS_MM_RATIO),(float)bEmuleOut/bEmuleIn);
 			} 
 			else 
 			{
-				buffer.Format(_T("%s 1 : %.2f"),GetResString(IDS_MM_RATIO),(float)theStats.sessionReceivedBytes/theStats.sessionSentBytes);
+				buffer.Format(_T("%s 1 : %.2f"),GetResString(IDS_MM_RATIO),(float)bEmuleIn/bEmuleOut);
 			}
 		}
 		else 
@@ -262,7 +282,7 @@ void CTBHMM::MMUpdate()
 		else {
 			buffer.Format(_T("%s"), GetResString(IDS_DL_TRANSFCOMPL));
 			buffer += (_T(": "));
-			buffer2.Format(_T("%i"), theApp.emuledlg->transferwnd->downloadlistctrl.GetCompleteDownloads(-1, iTotal));
+			buffer2.Format(_T("%i"), theApp.emuledlg->transferwnd->downloadlistctrl.GetCompleteDownloads(0, iTotal));
 		}
 		GetDlgItem(IDC_MM_COMPLCOUNT)->SetWindowText(buffer + buffer2);
 		// <== added - Stulle
@@ -271,7 +291,7 @@ void CTBHMM::MMUpdate()
 		GetDlgItem(IDC_MM_DLCOUNT)->SetWindowText(buffer);
 		buffer.Format(GetResString(IDS_STATS_ACTUL),theApp.uploadqueue->GetUploadQueueLength());
 		GetDlgItem(IDC_MM_ULCOUNT)->SetWindowText(buffer);
-		buffer.Format(GetResString(IDS_MM_DATA),CastItoXBytes(theStats.sessionSentBytes),CastItoXBytes( theStats.sessionReceivedBytes ));
+		buffer.Format(GetResString(IDS_MM_DATA),CastItoXBytes(bEmuleOut),CastItoXBytes( bEmuleIn ));
 
 		GetDlgItem(IDC_MM_ULDLTRANS)->SetWindowText(buffer);
 		// ==> changed - Stulle

@@ -1,13 +1,8 @@
 #pragma once
 
 #include "3dpreviewcontrol.h"
-// MORPH START  leuk_he tooltipped
-#include "PPGtooltipped.h" 
-/*
+
 class CPPgDisplay : public CPropertyPage
-*/
-class CPPgDisplay : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgDisplay)
 
@@ -28,7 +23,13 @@ protected:
 	} m_eSelectFont;
 	void LoadSettings(void);
 
-	bool m_bModified; // show overhead on title - Stulle
+	// ==> show overhead on title - Stulle
+	bool m_bModified;
+	void SetModified(bool bChanged = TRUE){
+		m_bModified = bChanged;
+		CPropertyPage::SetModified(bChanged);
+	}
+	// <== show overhead on title - Stulle
 
 	void DrawPreview();		//Cax2 - aqua bar
 	C3DPreviewControl	m_3DPreview;
@@ -37,13 +38,6 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual BOOL OnApply();
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
-
-	// ==> show overhead on title - Stulle
-	void SetModified(bool bChanged = TRUE){
-		m_bModified = bChanged;
-		CPropertyPage::SetModified(bChanged);
-	}
-	// <== show overhead on title - Stulle
 
 	static UINT CALLBACK ChooseFontHook(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam);
 

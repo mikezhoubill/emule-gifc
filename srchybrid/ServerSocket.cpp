@@ -99,14 +99,23 @@ BOOL CServerSocket::OnHostNameResolved(const SOCKADDR_IN *pSockAddr)
 			serverconnect->DestroySocket(this);
 			return FALSE;	// Do *NOT* connect to this server
 		}
+		//zz_fly :: support dynamic ip servers :: DolphinX :: Start
+		if (pServer)
+			pServer->ResetIP2Country(); //EastShare - added by AndCycle, IP to Country
+		//zz_fly :: End
 	}
 	return TRUE; // Connect to this server
 }
 
 void CServerSocket::OnConnect(int nErrorCode)
 {
-	//CEMSocket::OnConnect(nErrorCode);
-	//CAsyncSocketEx::OnConnect(nErrorCode);
+	//Xman
+	// MAella -QOS-
+	/*
+	CAsyncSocketEx::OnConnect(nErrorCode);
+	*/
+	CEMSocket::OnConnect(nErrorCode);
+	//Xman end
 
 	switch (nErrorCode)
 	{
@@ -155,6 +164,10 @@ void CServerSocket::OnReceive(int nErrorCode){
 	}
 	CEMSocket::OnReceive(nErrorCode);
 	m_dwLastTransmission = GetTickCount();
+	//zz_fly :: destory socket when serverconnection fail :: DolphinX :: Start
+	if(connectionstate == CS_ERROR)
+		serverconnect->DestroySocket(this);
+	//zz_fly :: destory socket when serverconnection fail :: DolphinX :: End
 }
 
 bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
@@ -255,14 +268,7 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 								theApp.emuledlg->AddServerMessageLine(LOG_SUCCESS, strMsg);
 							}
 						}
-
-						// MORPH START filter gpl violating advertising server message: [leuk_he]
-					    CString address;
-	                    address = pServer->GetAddress();
-                        if (address.Left(11).Compare(_T("80.239.200.")))
-  	                    // MORPH END filter gpl violating adverting server message: [leuk_he]
-   							theApp.emuledlg->AddServerMessageLine(LOG_INFO, message);
-
+						theApp.emuledlg->AddServerMessageLine(LOG_INFO, message);
 					}
 
 					message = strMessages.Tokenize(_T("\r\n"), iPos);
@@ -281,10 +287,6 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 				CServer* pServer = NULL;
 				ASSERT( cur_server );
 				if (cur_server){
-					//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-					uint32 ConnPort = 0;
-					uint32 rport = cur_server->GetConnPort();
-					//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 					if (size >= sizeof(LoginAnswer_Struct)+4){
 						DWORD dwFlags = *((uint32*)(packet + sizeof(LoginAnswer_Struct)));
 						if (thePrefs.GetDebugServerTCPLevel() > 0){
@@ -310,32 +312,14 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 							Debug(_T("%s\n"), strInfo);
 						}
 						cur_server->SetTCPFlags(dwFlags);
-						//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-						if (size >= sizeof(LoginAnswer_Struct)+8) {
-							// aux port login : we should use the 'standard' port of this server to advertize to other clients
-							ConnPort = *((uint32*)(packet + sizeof(LoginAnswer_Struct) + 4)) ;
-							cur_server->SetPort((uint16)ConnPort) ;
-						}
-						//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 					}
 					else
 						cur_server->SetTCPFlags(0);
 
 					// copy TCP flags into the server in the server list
-					//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-					/*
 					pServer = theApp.serverlist->GetServerByAddress(cur_server->GetAddress(), cur_server->GetPort());
 					if (pServer)
 						pServer->SetTCPFlags(cur_server->GetTCPFlags());
-					*/
-					CServer* pServer = theApp.serverlist->GetServerByAddress(cur_server->GetAddress(),(uint16) rport);
-					if (pServer) {
- 						pServer->SetTCPFlags(cur_server->GetTCPFlags());
-						if (ConnPort) pServer->SetPort((uint16)ConnPort);
-							theApp.emuledlg->serverwnd->serverlistctrl.RefreshServer(pServer);
-							theApp.emuledlg->serverwnd->UpdateMyInfo();
-					}
-					//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 				}
 
 				uint32 dwServerReportedIP = 0;
@@ -355,17 +339,16 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 
 				}
 
+				//Xman
+				// Maella -Activate Smart Low ID check-
+				/*
 				if (la->clientid == 0)
 				{
 					uint8 state = thePrefs.GetSmartIdState();
 					if ( state > 0 )
 					{
 						if (state == 1)
-#ifdef USE_OFFICIAL_UPNP
 							theApp.emuledlg->RefreshUPnP(false); // refresh the UPnP mappings once
-#else
-							theApp.RebindUPnP(); //emulEspaa: Added by MoNKi [MoNKi: -UPnPNAT Support-]
-#endif
 						state++;
 						if( state > 2 )
 							thePrefs.SetSmartIdState(0);
@@ -382,11 +365,7 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 						if ( state > 0 )
 						{
 							if (state == 1)
-#ifdef USE_OFFICIAL_UPNP
 								theApp.emuledlg->RefreshUPnP(false); // refresh the UPnP mappings once
-#else
-								theApp.RebindUPnP(); //emulEspaa: Added by MoNKi [MoNKi: -UPnPNAT Support-]
-#endif
 							state++;
 							if( state > 2 )
 								thePrefs.SetSmartIdState(0);
@@ -398,16 +377,29 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 						}
 					}
 				}
-				//MORPH START - Added by SiRoB, SLUGFILLER: lowIdRetry
-				if (thePrefs.GetLowIdRetried()){
-					if (la->clientid < 16777216 ){
-						SetConnectionState(CS_ERROR);
-						AddLogLine(true,GetResString(IDS_LOWIDRETRYING),thePrefs.GetLowIdRetried());
-						thePrefs.SetLowIdRetried();
-						break;
-					}
+				*/
+				if(la->clientid == 0){
+					// Reset attempts counter
+					thePrefs.SetSmartIdState(0);
 				}
-				//MORPH END - Added by SiRoB, SLUGFILLER: lowIdRetry
+				else if(la->clientid >= 16777216){
+					// High ID => reset attempts counter
+					thePrefs.SetSmartIdState(0);
+				}
+				else if(thePrefs.GetSmartIdCheck() == true){
+					// Low ID => Check and increment attempts counter
+					uint8 attempts = thePrefs.GetSmartIdState();
+					if(attempts < 3){							
+						SetConnectionState(CS_ERROR);
+						thePrefs.SetSmartIdState(++attempts);
+						AddLogLine(true, _T("LowID -- Trying Again (attempts %i)"), attempts);
+						break; // Retries
+					}
+					else if (!m_bManualSingleConnect)
+						break; // if this is a connect to any/multiple server connection try, disconnect and try another one
+				}
+				//Xman end
+				
 				// we need to know our client's HighID when sending our shared files (done indirectly on SetConnectionState)
 				serverconnect->clientid = la->clientid;
 
@@ -420,7 +412,69 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 					theApp.SetPublicIP(dwServerReportedIP);
 				AddLogLine(false, GetResString(IDS_NEWCLIENTID), la->clientid);
 
-				theApp.CheckIdChange(); // Inform Clients after IP Change - Stulle
+				//Xman -Reask sources after IP change- v4
+				if(serverconnect->GetClientID() != 0 && theApp.last_valid_ip != 0
+				   && serverconnect->GetClientID() != theApp.last_valid_ip 
+				   && serverconnect->GetClientID() != theApp.last_valid_serverid)
+				{
+					//remark: this code doesn't trigger when changing low->hidh-ID and we already had
+					//a session with this HighID-IP. This is because we don't know when this last lowID-session was.
+					//but there is no need to trigger when changing low to high-id but keeping the IP, we can'tt loose the waiting-position!
+
+					{
+						// Public IP has been changed, it's necessary to inform all sources about it
+						// All sources would be informed during their next session refresh (with TCP)
+						// about the new IP.
+						// ==> Quick start [TPT] - Max
+						if(thePrefs.GetQuickStart() && thePrefs.GetQuickStartAfterIPChange())
+						{
+							theApp.downloadqueue->quickflag = 0;
+							theApp.downloadqueue->quickflags = 0;
+						}
+						// <== Quick start [TPT] - Max
+						if(GetTickCount() - theApp.last_ip_change > FILEREASKTIME + 60000){
+							theApp.clientlist->TrigReaskForDownload(true);
+							theApp.last_ip_change=::GetTickCount();
+							theApp.m_bneedpublicIP=false;
+							AddLogLine(false, _T("Change from %u (%s ID) to %u (%s ID) detected%s"), 
+								theApp.last_valid_serverid,
+								(theApp.last_valid_serverid < 16777216) ? _T("low") : _T("high"),
+								serverconnect->GetClientID(),
+								(serverconnect->GetClientID() < 16777216)  ? _T("low") : _T("high"),
+								_T(", all sources will be reasked immediately"));
+						}
+						else {
+							theApp.clientlist->TrigReaskForDownload(false);
+							theApp.last_ip_change=::GetTickCount();
+							theApp.m_bneedpublicIP=false;
+							AddLogLine(false, _T("Change from %u (%s ID) to %u (%s ID) detected%s"), 
+								theApp.last_valid_serverid,
+								(theApp.last_valid_serverid < 16777216) ? _T("low") : _T("high"),
+								serverconnect->GetClientID(),
+								(serverconnect->GetClientID() < 16777216)  ? _T("low") : _T("high"),
+								_T(", all sources will be reasked within the next 10 minutes"));
+						}
+						// ==> UPnP support [MoNKi] - leuk_he
+						/*
+						// official UPNP
+						theApp.emuledlg->RefreshUPnP(false); // refresh the UPnP mappings once
+						// official UPNP
+						*/
+						theApp.RebindUPnP();
+						// <== UPnP support [MoNKi] - leuk_he
+					}
+				}
+				if(serverconnect->GetClientID() != 0 && theApp.last_ip_change==0)
+					theApp.last_ip_change=::GetTickCount();
+				if(serverconnect->GetClientID() != 0 && serverconnect->GetClientID() != theApp.last_valid_serverid){
+					// Keep track of a change of the global IP
+					theApp.last_valid_serverid = serverconnect->GetClientID();
+				}
+				theApp.last_valid_ip=theApp.GetPublicIP(true); //can also be 0
+
+				theApp.last_traffic_reception=::GetTickCount();
+				theApp.internetmaybedown=false; //we have to reopen here if we are using server only
+				// Xman end
 
 				theApp.downloadqueue->ResetLocalServerRequests();
 				break;
@@ -609,7 +663,12 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 					if (theApp.clientlist->IsBannedClient(dwIP)){
 						if (thePrefs.GetLogBannedClients()){
 							CUpDownClient* pClient = theApp.clientlist->FindClientByIP(dwIP);
+							//Xman Code Fix
+							/*
 							AddDebugLogLine(false, _T("Ignored callback request from banned client %s; %s"), ipstr(dwIP), pClient->DbgGetClientInfo());
+							*/
+							AddDebugLogLine(false, _T("Ignored callback request from banned client %s; %s"), ipstr(dwIP), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+							//Xman end
 						}
 						break;
 					}
@@ -626,7 +685,12 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 					if (client == NULL)
 					{
 						client = new CUpDownClient(0,nPort,dwIP,0,0,true);
-						theApp.clientlist->AddClient(client, true); //MOPRH - Changed by SiRoB, Optimization
+						//Xman Code Improvement don't search new generated clients in lists
+						/*
+						theApp.clientlist->AddClient(client);
+						*/
+						theApp.clientlist->AddClient(client, true);
+						//Xman end
 					}
 					if (size >= 23 && client->HasValidHash()){
 						if (md4cmp(client->GetUserHash(), achUserHash) != 0){
@@ -648,12 +712,7 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 						client->SetCryptLayerRequires((byCryptOptions & 0x04) != 0);
 						client->SetDirectUDPCallbackSupport(false);
 					}
-					//MORPH START - Changed by SiRoB, Force TryToConnect for OP_CALLBACKREQUESTED
-					/*
 					client->TryToConnect();
-					*/
-					client->TryToConnect(true);
-					//MORPH END   - Changed by SiRoB, Force TryToConnect for OP_CALLBACKREQUESTED
 				}
 				break;
 			}
@@ -745,14 +804,12 @@ void CServerSocket::ConnectTo(CServer* server, bool bNoCrypt)
 
 	uint16 nPort = 0;
 	cur_server = new CServer(server);
-	 
 	if ( !bNoCrypt && thePrefs.IsServerCryptLayerTCPRequested() && server->GetObfuscationPortTCP() != 0 && server->SupportsObfuscationTCP()){
 		Log(GetResString(IDS_CONNECTINGTOOBFUSCATED), cur_server->GetListName(), cur_server->GetAddress(), cur_server->GetObfuscationPortTCP());
 		nPort = cur_server->GetObfuscationPortTCP();
 		SetConnectionEncryption(true, NULL, true);
 	}
 	else{
-		ASSERT((thePrefs.IsServerCryptLayerRequiredStrict()==false)); // // MORPH lh require obfuscated server connection It should net even try if the option is set. 
 		Log(GetResString(IDS_CONNECTINGTO), cur_server->GetListName(), cur_server->GetAddress(), cur_server->GetPort());
 		nPort = cur_server->GetPort();
 		SetConnectionEncryption(false, NULL, true);
@@ -769,12 +826,7 @@ void CServerSocket::ConnectTo(CServer* server, bool bNoCrypt)
 	//		resolving the DN right before sending the UDP packet.
 	//
 	SetConnectionState(CS_CONNECTING);
-	//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-	/*
 	if (!Connect(CStringA(server->GetAddress()), nPort)){
-	*/
-	if (!Connect(CStringA(server->GetAddress()),server->GetConnPort())){
-	//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 		DWORD dwError = GetLastError();
 		if (dwError != WSAEWOULDBLOCK){
 			LogError(GetResString(IDS_ERR_CONNECTIONERROR), cur_server->GetListName(), cur_server->GetAddress(), nPort, GetFullErrorMessage(dwError));
@@ -795,15 +847,8 @@ bool CServerSocket::PacketReceived(Packet* packet)
 {
 #ifndef _DEBUG
 	try {
-#endif	
-		
+#endif
 		theStats.AddDownDataOverheadServer(packet->size);
-		// START // MORPH lh require obfuscated server connection
-		if	(thePrefs.IsServerCryptLayerRequiredStrict()&&!IsServerCryptEnabledConnection()){
-				DebugLogError(_T("Connection not obfuscated. DO not process data"));
-			    return false;
-		}
-		// END // MORPH lh require obfuscated server connection
 		if (packet->prot == OP_PACKEDPROT)
 		{
 			uint32 uComprSize = packet->size;
@@ -816,6 +861,7 @@ bool CServerSocket::PacketReceived(Packet* packet)
 			if (thePrefs.GetDebugServerTCPLevel() > 1)
 				Debug(_T("Received compressed server TCP packet; opcode=0x%02x  size=%u  uncompr size=%u\n"), packet->opcode, uComprSize, packet->size);
 		}
+
 		if (packet->prot == OP_EDONKEYPROT)
 		{
 			ProcessPacket((const BYTE*)packet->pBuffer, packet->size, packet->opcode);

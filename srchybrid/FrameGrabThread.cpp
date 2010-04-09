@@ -20,11 +20,11 @@
 #include "CxImage/xImage.h"
 #include "OtherFunctions.h"
 #include "quantize.h"
-//#ifndef HAVE_QEDIT_H
-//// This is a remote feature and not optional, in order to keep to working properly for other clients who want to use it
-//// Check emule_site_config.h to fix it
-//#error Missing 'qedit.h', look at "emule_site_config.h" for further information.
-//#endif
+#ifndef HAVE_QEDIT_H
+// This is a remote feature and not optional, in order to keep to working properly for other clients who want to use it
+// Check emule_site_config.h to fix it
+#error Missing 'qedit.h', look at "emule_site_config.h" for further information.
+#endif
 
 // DirectShow MediaDet
 #include <strmif.h>
@@ -84,11 +84,14 @@ BOOL CFrameGrabThread::InitInstance()
 }
 
 BOOL CFrameGrabThread::Run(){
-	// SLUGFILLER: SafeHash
+
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+
 	imgResults = new CxImage*[nFramesToGrab];
 	FrameGrabResult_Struct* result = new FrameGrabResult_Struct;
 	CoInitialize(NULL);

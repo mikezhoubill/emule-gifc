@@ -35,13 +35,22 @@ public:
 	enum { IDD = IDD_STATISTICS };
 
 	void Localize();
+	//Xman
+	/*
 	void SetCurrentRate(float uploadrate, float downloadrate);
+	*/
+	//Xman end
 	void ShowInterval();
 	// -khaos--+++> Optional force update parameter.
 	void ShowStatistics(bool forceUpdate = false);
 	// <-----khaos-
 	void SetARange(bool SetDownload,int maxValue);
 	void RepaintMeters();
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	void Process();
+	// Maelle end
+
 
 	void	UpdateConnectionsGraph();
 	void	DoTreeMenu();
@@ -54,7 +63,18 @@ private:
     COScopeCtrl m_DownloadOMeter,m_UploadOMeter,m_Statistics;
 	TOOLINFO tt;
 
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	//enum Curve {CURRENT = 0, MINUTE = 1, SESSION = 2, OVERALL = 3, ADAPTER = 4};
+	//Xman had to change it for filled graphs
+	enum Curve {ADAPTER = 0, OVERALL = 1, MINUTE = 2, SESSION = 3, CURRENT = 4};
+#define NUMBEROFLINES 4
+
+	//Xman
+	/*
 	double m_dPlotDataMore[4];
+	*/
+	//Xman end
 	uint32 m_ilastMaxConnReached;
 
 	uint32		cli_lastCount[MAX_CLIENTS_WITH_SUB_VERSION];
@@ -63,32 +83,33 @@ private:
 	HTREEITEM	h_upload, h_up_session, up_S[6], h_up_total, up_T[2]; // Uploads Session and Total Items and Headers
 	HTREEITEM	hup_scb, up_scb[7], hup_spb, up_spb[3], hup_ssb, up_ssb[2]; // Session Uploaded Byte Breakdowns
 	HTREEITEM	hup_tcb, up_tcb[7], hup_tpb, up_tpb[3], hup_tsb, up_tsb[2]; // Total Uploaded Byte Breakdowns
+	//Xman
+	/*
 	HTREEITEM	hup_soh, up_soh[4], hup_toh, up_toh[4]; // Upline Overhead
+	*/
+	HTREEITEM	hup_soh, up_soh[5 /*Xman +1 count obfuscation data*/], hup_toh, up_toh[4]; // Upline Overhead
+	//Xman end
 	HTREEITEM	up_ssessions[4], up_tsessions[4]; // Breakdown of Upload Sessions
 	HTREEITEM	h_download, h_down_session, down_S[8], h_down_total, down_T[6]; // Downloads Session and Total Items and Headers
 	HTREEITEM	hdown_scb, down_scb[8], hdown_spb, down_spb[3]; // Session Downloaded Byte Breakdowns
 	HTREEITEM	hdown_tcb, down_tcb[8], hdown_tpb, down_tpb[3]; // Total Downloaded Byte Breakdowns
-	HTREEITEM	hdown_soh, down_soh[4], hdown_toh, down_toh[4]; // Downline Overhead
-
-	//MORPH START - Added by schnulli900, count failed TCP/IP connections [Xman]
+	//Xman
 	/*
+	HTREEITEM	hdown_soh, down_soh[4], hdown_toh, down_toh[4]; // Downline Overhead
 	HTREEITEM	down_ssessions[4], down_tsessions[4], down_sources[22]; // Breakdown of Download Sessions and Sources
 	*/
+	HTREEITEM	hdown_soh, down_soh[5 /*Xman +1 count obfuscation data*/], hdown_toh, down_toh[4]; // Downline Overhead
 	HTREEITEM	down_ssessions[4], down_tsessions[4], down_sources[23 /*+1 Xman Xtreme Mod: Count failed tcp-connections */]; // Breakdown of Download Sessions and Sources
-        //MORPH END   - Added by schnulli900, count failed TCP/IP connections [Xman]
-
+	//Xman end
 	HTREEITEM	h_connection, h_conn_session, h_conn_total; // Connection Section Headers
 	HTREEITEM	hconn_sg, conn_sg[5], hconn_su, conn_su[4], hconn_sd, conn_sd[4]; // Connection Session Section Headers and Items
 	HTREEITEM	hconn_tg, conn_tg[4], hconn_tu, conn_tu[3], hconn_td, conn_td[3]; // Connection Total Section Headers and Items
-
-	// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifndef GLOBAL_MOD_STATS
-	HTREEITEM	h_clients, cligen[7/* 6*Official +1*Leecher*/], hclisoft, clisoft[8];
-#else
-	HTREEITEM	h_clients, cligen[8/* 6*Official +1*Leecher +1* PureMods */], hclisoft, clisoft[8];
-#endif
-	// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-
+	//Xman
+	/*
+	HTREEITEM	h_clients, cligen[6], hclisoft, clisoft[8];
+	*/
+	HTREEITEM	h_clients, cligen[9/*6*Official+1*Leecher+1*Mods+1*Country*/], hclisoft, clisoft[8]; //Xman Anti-Leecher //Xman extended stats
+	//Xman end
 	HTREEITEM	cli_versions[MAX_CLIENTS_WITH_SUB_VERSION*MAX_SUB_CLIENT_VERSIONS];
 	HTREEITEM	cli_other[MAX_SUB_CLIENT_VERSIONS/2];
 	HTREEITEM	hclinet, clinet[4]; // Clients Section
@@ -117,8 +138,16 @@ private:
 	void SetStatsRanges(int min, int max);
 
 
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	int		m_oldcx;
 	int		m_oldcy;
+	*/
+	void ShowGraphs();
+	uint16 m_intervalGraph; // refresh counter for graphs
+	uint16 m_intervalStat;  // refresh counter for statistic
+	// Maella end
 
 #ifdef _DEBUG
 	HTREEITEM h_debug,h_blocks,debug1,debug2,debug3,debug4,debug5;
@@ -159,14 +188,21 @@ protected:
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	//Xman
+	// Maella -Network Adapter Feedback Control-
+public:	
+	int GetARange(bool SetDownload) const {return m_lastRange[(SetDownload==false)?0:1];}
+
+private:
+	int m_lastRange[2];
+	// Maella end
+
+	// ==> Design Settings [eWombat/Stulle] - Max
 protected:
 	CBrush m_brMyBrush;
 	HBRUSH hbr;	
 	COLORREF crStatsColor;
 public:
 	void OnBackcolor(); 
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

@@ -13,15 +13,15 @@ enum EDebugLogPriority{
 #define	LOG_WARNING		1
 #define	LOG_ERROR		2
 #define	LOG_SUCCESS		3
-#define LOG_USC			4 //MORPH - Added by SiRoB, Upload Splitting Class
-#define	LOGMSGTYPEMASK	0x07/*3*/ //MORPH - Changed by SiRoB, Upload Splitting Class
+#define	LOGMSGTYPEMASK	0x03
 
 // Log message targets flags
 #define	LOG_DEFAULT		0x00
 #define	LOG_DEBUG		0x10
 #define	LOG_STATUSBAR	0x20
 #define	LOG_DONTNOTIFY	0x40
-#define	LOG_MORPH		0x80
+#define LOG_LEECHER		0x80 //Xman Anti-Leecher-Log
+
 
 void Log(LPCTSTR pszLine, ...);
 void LogError(LPCTSTR pszLine, ...);
@@ -47,6 +47,8 @@ void AddDebugLogLine(EDebugLogPriority Priority, bool bAddToStatusBar, LPCTSTR p
 
 void AddLogTextV(UINT uFlags, EDebugLogPriority dlpPriority, LPCTSTR pszLine, va_list argp);
 
+//Xman Anti-Leecher-Log
+void AddLeecherLogLine(bool bAddToStatusBar, LPCTSTR pszLine, ...);
 
 ///////////////////////////////////////////////////////////////////////////////
 // CLogFile
@@ -84,11 +86,12 @@ protected:
 	UINT m_uMaxFileSize;
 	bool m_bInOpenCall;
 	ELogFileFormat m_eFileFormat;
-//Morph START - added by AndCycle, Date File Name Log
+
+	// ==> Date File Name Log [AndCycle] - Stulle
 private:
 	CString m_strOriginFileName;
 	DWORD	m_dwNextRenameTick;
-//Morph END - added by AndCycle, Date File Name Log
+	// <== Date File Name Log [AndCycle] - Stulle
 };
 
 extern CLogFile theLog;

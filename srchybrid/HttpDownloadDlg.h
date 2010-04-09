@@ -91,6 +91,5 @@ protected:
 	CFile		m_FileToWrite;
 	CWinThread*	m_pThread;
 	static ULONGLONG sm_ullWinInetVer;
-
-	LPSYSTEMTIME	m_pLastModifiedTime;//MORPH - Added by SiRoB,
+	LPSYSTEMTIME	m_pLastModifiedTime; //Xman auto update IPFilter
 };
