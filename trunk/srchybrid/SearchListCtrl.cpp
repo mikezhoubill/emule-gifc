@@ -50,8 +50,6 @@
 #include "server.h"
 #include "CommentDialogLst.h"
 #include "MediaInfo.h"
-#include "fakecheck.h" //MORPH - Added by milobac, FakeCheck, FakeReport, Auto-updating
-#include "NTService.h" // MORPH leuk_he:run as ntservice v1..
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -203,7 +201,16 @@ CSearchListCtrl::CSearchListCtrl()
 	searchlist = NULL;
 	m_nResultsID = 0;
 	SetGeneralPurposeFind(true);
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	/*
 	m_tooltip = new CToolTipCtrlX;
+	*/
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+		m_tooltip = new CToolTipCtrlX;
+	else
+		m_tooltip = NULL;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	m_eFileSizeFormat = (EFileSizeFormat)theApp.GetProfileInt(_T("eMule"), _T("SearchResultsFileSizeFormat"), fsizeDefault);
 	SetSkinKey(L"SearchResultsLv");
 }
@@ -252,14 +259,20 @@ void CSearchListCtrl::Init(CSearchList* in_searchlist)
 	ASSERT( (GetStyle() & LVS_SINGLESEL) == 0 );
 	SetStyle();
 
-	CToolTipCtrl* tooltip = GetToolTips();
-	if (tooltip){
-		m_tooltip->SetFileIconToolTip(true);
-		m_tooltip->SubclassWindow(*tooltip);
-		tooltip->ModifyStyle(0, TTS_NOPREFIX);
-		tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
-		//tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
-	}
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	{
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+		CToolTipCtrl* tooltip = GetToolTips();
+		if (tooltip){
+			m_tooltip->SetFileIconToolTip(true);
+			m_tooltip->SubclassWindow(*tooltip);
+			tooltip->ModifyStyle(0, TTS_NOPREFIX);
+			tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
+			//tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
+		}
+	} // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	searchlist = in_searchlist;
 
 	InsertColumn(0, GetResString(IDS_DL_FILENAME),	LVCFMT_LEFT,  DFLT_FILENAME_COL_WIDTH);
@@ -276,7 +289,6 @@ void CSearchListCtrl::Init(CSearchList* in_searchlist)
 	InsertColumn(11,GetResString(IDS_CODEC),		LVCFMT_LEFT,  DFLT_CODEC_COL_WIDTH);
 	InsertColumn(12,GetResString(IDS_FOLDER),		LVCFMT_LEFT,  DFLT_FOLDER_COL_WIDTH,		-1, true);
 	InsertColumn(13,GetResString(IDS_KNOWN),		LVCFMT_LEFT,   50);
-	InsertColumn(14,GetResString(IDS_CHECKFAKE),		LVCFMT_LEFT,   220); //MORPH - Added by milobac, FakeCheck, FakeReport, Auto-updating
 
 	SetAllIcons();
 
@@ -322,9 +334,11 @@ CSearchListCtrl::~CSearchListCtrl()
 		delete pValue;
 	}
 	m_mapSortSelectionStates.RemoveAll();
-    if (!RunningAsService()) { // MORPH leuk_he:run as ntservice v1.. workarround.
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 		delete m_tooltip;
-	}
 }
 
 void CSearchListCtrl::Localize()
@@ -350,7 +364,6 @@ void CSearchListCtrl::Localize()
 			case 11: strRes = GetResString(IDS_CODEC); break;
 			case 12: strRes = GetResString(IDS_FOLDER); break;
 			case 13: strRes = GetResString(IDS_KNOWN); break;
-			case 14: strRes = GetResString(IDS_CHECKFAKE); break; //MORPH START - Added by milobac, FakeCheck, FakeReport, Auto-updating
 		}
 	
 		hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
@@ -362,7 +375,10 @@ void CSearchListCtrl::Localize()
 
 void CSearchListCtrl::AddResult(const CSearchFile* toshow)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	bool bFilterActive = !theApp.emuledlg->searchwnd->m_pwndResults->m_astrFilter.IsEmpty();
 	bool bItemFiltered = bFilterActive ? IsFilteredItem(toshow) : false;
@@ -465,8 +481,11 @@ void CSearchListCtrl::UpdateSources(const CSearchFile* toupdate)
 
 void CSearchListCtrl::UpdateSearch(CSearchFile* toupdate)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
-	
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+
 	if (!toupdate || !theApp.emuledlg->IsRunning())
 		return;
 	//MORPH START - SiRoB, Don't Refresh item if not needed
@@ -474,8 +493,6 @@ void CSearchListCtrl::UpdateSearch(CSearchFile* toupdate)
 		return;
 	//MORPH END   - SiRoB, Don't Refresh item if not needed
 
-	//MORPH START - UpdateItemThread
-	/*
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)toupdate;
@@ -484,9 +501,6 @@ void CSearchListCtrl::UpdateSearch(CSearchFile* toupdate)
 	{
 		Update(index);
 	}
-	*/
-	m_updatethread->AddItemToUpdate((LPARAM)toupdate);
-	//MORPH END - UpdateItemThread
 }
 
 bool CSearchListCtrl::IsComplete(const CSearchFile *pFile, UINT uSources) const
@@ -571,6 +585,7 @@ void CSearchListCtrl::ShowResults(uint32 nResultsID)
 		pCurState->m_nSortItem = GetSortItem();
 		pCurState->m_bSortAscending = GetSortAscending();
 		pCurState->m_nScrollPosition = GetTopIndex();
+		//Xman
 		// SLUGFILLER: multiSort - save sort history
 		pos = m_liSortHistory.GetHeadPosition();
 		while (pos != NULL){
@@ -591,11 +606,13 @@ void CSearchListCtrl::ShowResults(uint32 nResultsID)
 //		thePrefs.SetColumnSortItem(CPreferences::tableSearch, pNewState->m_nSortItem);
 //		thePrefs.SetColumnSortAscending(CPreferences::tableSearch, pNewState->m_bSortAscending);
 
+		//Xman
 		// SLUGFILLER: multiSort - load sort history
 		m_liSortHistory.RemoveAll();
 		for (POSITION pos = pNewState->m_liSortHistory.GetHeadPosition(); pos != NULL; )
 			m_liSortHistory.AddTail(pNewState->m_liSortHistory.GetNext(pos));
 		// SLUGFILLER: multiSort
+
 		SetSortArrow(pNewState->m_nSortItem, pNewState->m_bSortAscending);
 		SortItems(SortProc, pNewState->m_nSortItem + (pNewState->m_bSortAscending ? 0:100));
 		// fill in the items
@@ -651,7 +668,13 @@ int CSearchListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	const CSearchFile *item1 = (CSearchFile *)lParam1;
 	const CSearchFile *item2 = (CSearchFile *)lParam2;
+	//Xman
+	// SLUGFILLER: multiSort remove - handled in parent class
+	/*
 	int orgSort = lParamSort;
+	*/
+	//Xman end
+
 	int sortMod = 1;
 	if (lParamSort >= 100) {
 		sortMod = -1;
@@ -686,10 +709,15 @@ int CSearchListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		comp = CompareChild(item1, item2, lParamSort);
 	}
 
+	//Xman
+	// SLUGFILLER: multiSort remove - handled in parent class
+	/*
 	//call secondary sortorder, if this one results in equal
 	int dwNextSort;
 	if (comp == 0 && (dwNextSort = theApp.emuledlg->searchwnd->m_pwndResults->searchlistctrl.GetNextSortOrder(orgSort)) != -1)
 		comp = SortProc(lParam1, lParam2, dwNextSort);
+	*/
+	// SLUGFILLER: multiSort remove - handled in parent class
 
 	return comp;
 }
@@ -785,10 +813,6 @@ int CSearchListCtrl::Compare(const CSearchFile *item1, const CSearchFile *item2,
 
 		case 13:
 			return item1->GetKnownType() - item2->GetKnownType();
-		//Morph Start - changed by AndCycle, FakeCheck, FakeReport, Auto-updating
-		case 14:
-			return CompareOptLocaleStringNoCase(item1->GetFakeComment(), item2->GetFakeComment());
-		//Morph End - changed by AndCycle, FakeCheck, FakeReport, Auto-updating
 	}
 	return 0;
 }
@@ -818,6 +842,9 @@ void CSearchListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	m_SearchFileMenu.EnableMenuItem(MP_RESUME, iToDownload > 0 ? MF_ENABLED : MF_GRAYED);
 	if (thePrefs.IsExtControlsEnabled())
 		m_SearchFileMenu.EnableMenuItem(MP_RESUMEPAUSED, iToDownload > 0 ? MF_ENABLED : MF_GRAYED);
+	//Xman add search to cancelled
+	m_SearchFileMenu.EnableMenuItem(MP_ADDSEARCHCANCELLED, thePrefs.IsRememberingCancelledFiles() && iSelected > 0 ? MF_ENABLED : MF_GRAYED);
+	//Xman end
 	if (thePrefs.IsExtControlsEnabled())
 		m_SearchFileMenu.EnableMenuItem(MP_DETAIL, iSelected == 1 ? MF_ENABLED : MF_GRAYED);
 	m_SearchFileMenu.EnableMenuItem(MP_CMT, iSelected > 0 ? MF_ENABLED : MF_GRAYED);
@@ -919,6 +946,23 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				theApp.CopyTextToClipboard(clpbrd);
 				return TRUE;
 			}
+
+			//Xman add search to cancelled
+			case MP_ADDSEARCHCANCELLED:
+				{
+					CWaitCursor curWait;
+					POSITION pos = GetFirstSelectedItemPosition();
+					while (pos!=NULL) 
+					{
+						int cur_sel= GetNextSelectedItem(pos);
+						const uchar* cur_hash=((CSearchFile*)GetItemData(cur_sel))->GetFileHash();
+						theApp.knownfiles->AddCancelledFileID(cur_hash);
+						Update(cur_sel);
+					}
+					return TRUE;
+				}
+			//Xman end
+
 			case MP_RESUME:
 			case MP_RESUMEPAUSED:
 			case IDA_ENTER:
@@ -962,7 +1006,12 @@ BOOL CSearchListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					else{
 						CUpDownClient* newclient = new CUpDownClient(NULL, file->GetClientPort(),file->GetClientID(),file->GetClientServerIP(),file->GetClientServerPort(), true);
 						if (!theApp.clientlist->AttachToAlreadyKnown(&newclient,NULL)){
-							theApp.clientlist->AddClient(newclient, true); //MOPRH - Changed by SiRoB, Optimization
+							//Xman Code Improvement don't search new generated clients in lists
+							/*
+							theApp.clientlist->AddClient(newclient);
+							*/
+							theApp.clientlist->AddClient(newclient, true);
+							//Xman end
 						}
 						newclient->SendPreviewRequest(file);
 						// add to res - later
@@ -1044,20 +1093,12 @@ void CSearchListCtrl::CreateMenues()
 
 	m_SearchFileMenu.CreatePopupMenu();
 	m_SearchFileMenu.AddMenuTitle(GetResString(IDS_FILE), true);
-	//MORPH START - Changed by SiRoB, Put an other icon
-	/*
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DOWNLOAD), _T("Resume"));
-	*/
-	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DOWNLOAD), _T("FILEDOWNLOAD"));
-	//MORPH END   - Changed by SiRoB, Put an other icon
-
 	if (thePrefs.IsExtControlsEnabled())
-		//MORPH START - Changed by SiRoB, Put an other icon
-		/*
 		m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, GetResString(IDS_DOWNLOAD) + _T(" (") + GetResString(IDS_PAUSED) + _T(")"));
-		*/
-		m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, GetResString(IDS_DOWNLOAD) + _T(" (") + GetResString(IDS_PAUSED) + _T(")"), _T("FILEDOWNLOADPAUSED"));
-		//MORPH END   - Changed by SiRoB, Put an other icon
+	//Xman add search to cancelled
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_ADDSEARCHCANCELLED, GetResString(IDS_MARKCANCELLED));
+	//Xman end
 	if (thePrefs.IsExtControlsEnabled())
 		m_SearchFileMenu.AppendMenu(MF_STRING, MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("FileInfo"));
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_CMT, GetResString(IDS_CMT_ADD), _T("FILECOMMENTS"));
@@ -1086,12 +1127,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 
 		// those tooltips are very nice for debugging/testing but pretty annoying for general usage
 		// enable tooltips only if Ctrl is currently pressed
-		// MORPH leuk_he also take GetDebugSearchResultDetailLevelinto account... to show tooltips on search results
-		/*
 		bool bShowInfoTip = bOverMainItem && (GetSelectedCount() > 1 || (GetKeyState(VK_CONTROL) & 0x8000));
-		*/
-		bool bShowInfoTip = bOverMainItem && (GetSelectedCount() > 1 || (GetKeyState(VK_CONTROL) & 0x8000)) || (thePrefs.GetDebugSearchResultDetailLevel() != 0);
-	    	// MORPH END leuk_he also take GetDebugSearchResultDetailLevel into account... to show tooltips on search results
 		if (bShowInfoTip && GetSelectedCount() > 1)
 		{
 			// Don't show the tooltip if the mouse cursor is not over at least one of the selected items
@@ -1225,12 +1261,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 				    }
 			    }
     
-// MORPH leuk_he instead of #ifddef debug device show server in tooltip
-/*
     #ifdef USE_DEBUG_DEVICE
-*/
-		if (thePrefs.GetDebugSearchResultDetailLevel()  )
-// MORPH leuk_he instead of #ifddef debug device show server in tooltip
 			    if (file->GetClientsCount()){
 					bool bFirst = true;
 				    if (file->GetClientID() && file->GetClientPort()){
@@ -1248,11 +1279,13 @@ void CSearchListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 						    strInfo += _T("\n");
 					    strInfo += strSource;
 				    }
-/* vs2008  start
+    
+				    // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+				    /*
 				    const CSimpleArray<CSearchFile::SClient>& aClients = file->GetClients();
-*/
+				    */
 				    const CSimpleArray<CSearchFile::SClient,CSearchFile::CSClientEqualHelper>& aClients = file->GetClients();
-// vs2008 end
+				    // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 				    for (int i = 0; i < aClients.GetSize(); i++){
 					    uint32 uClientIP = aClients[i].m_nIP;
 					    uint32 uServerIP = aClients[i].m_nServerIP;
@@ -1273,11 +1306,12 @@ void CSearchListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 			    }
     
 			    if (file->GetServers().GetSize()){
-/* vs2008 start
+				    // ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+				    /*
 				    const CSimpleArray<CSearchFile::SServer>& aServers = file->GetServers();
-*/ 
+				    */
 				    const CSimpleArray<CSearchFile::SServer,CSearchFile::CSServerEqualHelper>& aServers = file->GetServers();
-// vs2008 end
+				    // <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 				    for (int i = 0; i < aServers.GetSize(); i++){
 					    uint32 uServerIP = aServers[i].m_nIP;
 						CString strServer;
@@ -1292,11 +1326,7 @@ void CSearchListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 						    break;
 				    }
 			    }
-// MORPH leuk_he instead of #ifddef debug device show server in tooltip
-/*
     #endif
-*/
-// MORPH leuk_he instead of #ifddef debug device show server in tooltip
 				strInfo = strHead + strInfo + TOOLTIP_AUTOFORMAT_SUFFIX_CH;
 			    _tcsncpy(pGetInfoTip->pszText, strInfo, pGetInfoTip->cchTextMax);
 			    pGetInfoTip->pszText[pGetInfoTip->cchTextMax-1] = _T('\0');
@@ -1637,6 +1667,7 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				dc.LineTo(treeCenter,middle+2);
 			}
 			dc.SelectObject(pOldPen2);
+			penBlack.DeleteObject(); //Xman Code Improvement
 			//draw the line to the child node
 			if (hasNext)
 			{
@@ -1656,9 +1687,6 @@ void CSearchListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		dc.SelectObject(oldpn);
 		pn.DeleteObject();
 	}
-
-	if (!theApp.IsRunningAsService(SVC_LIST_OPT)) // MORPH leuk_he:run as ntservice v1..
-		m_updatethread->AddItemUpdated((LPARAM)content); //MORPH - UpdateItemThread
 }
 
 COLORREF CSearchListCtrl::GetSearchItemColor(/*const*/ CSearchFile* src)
@@ -1791,10 +1819,20 @@ void CSearchListCtrl::SetHighlightColors()
 	m_crSearchResultDownloadStopped = RGB(255,0,0);
 	m_crSearchResultShareing		= RGB(255,0,0);
 	m_crSearchResultKnown			= RGB(0,128,0);
+	//Xman changed to brown
+	/*
 	m_crSearchResultCancelled		= RGB(0,128,0);
+	*/
+	m_crSearchResultCancelled		= RGB(190,130,0);
+	//Xman end
 
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Downloading"), m_crSearchResultDownloading);
+	//zz_fly :: bug fix :: DolphinX :: start
+	/*
 	if (!theApp.LoadSkinColor(_T("Fg_DownloadStopped"), m_crSearchResultDownloadStopped))
+	*/
+	if (!theApp.LoadSkinColor(GetSkinKey() + _T("Fg_DownloadStopped"), m_crSearchResultDownloadStopped))
+	//zz_fly :: end
 		m_crSearchResultDownloadStopped = m_crSearchResultDownloading;
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Sharing"), m_crSearchResultShareing);
 	theApp.LoadSkinColor(GetSkinKey() + _T("Fg_Known"), m_crSearchResultKnown);
@@ -1973,11 +2011,6 @@ void CSearchListCtrl::GetItemDisplayText(const CSearchFile *src, int iSubItem, L
 			}
 #endif
 			break;
-		//MORPH START - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
-		case 14:
-			if (src-> GetFakeComment())
-				_tcsncpy(pszText, src->GetFakeComment(), cchTextMax);
-		//MORPH END   - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
 	}
 	pszText[cchTextMax - 1] = _T('\0');
 }

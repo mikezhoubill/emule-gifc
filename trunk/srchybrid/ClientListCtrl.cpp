@@ -73,23 +73,11 @@ void CClientListCtrl::Init()
 	coltemp = GetResString(IDS_CD_UHASH);
 	coltemp.Remove(_T(':'));
 	InsertColumn(7, coltemp,							LVCFMT_LEFT,  DFLT_HASH_COL_WIDTH);
-	
-	// Mighty Knife: Community affiliation
-	if (thePrefs.IsCommunityEnabled ())//ShowColumn (8); //Removed by SiRoB, some people may prefere disable it
-		InsertColumn(8,GetResString(IDS_COMMUNITY),LVCFMT_LEFT,100);
-	else
-		InsertColumn(8,GetResString(IDS_COMMUNITY),LVCFMT_LEFT,100,-1,true);
-	// [end] Mighty Knife
 
-	// EastShare - Added by Pretender, Friend Tab
-	InsertColumn(9,GetResString(IDS_FRIENDLIST),LVCFMT_LEFT,75);
-	// EastShare - Added by Pretender, Friend Tab
-	// Commander - Added: IP2Country column - Start
-	if (thePrefs.GetIP2CountryNameMode() == IP2CountryName_DISABLE)
-		InsertColumn(10,GetResString(IDS_COUNTRY),LVCFMT_LEFT,100,-1,true);
-	else
-		InsertColumn(10,GetResString(IDS_COUNTRY),LVCFMT_LEFT,100);
-	// Commander - Added: IP2Country column - End
+	//Xman
+	// khaos::kmod+ Show IP
+	InsertColumn(8,GetResString(IDS_IP),LVCFMT_LEFT,75,8);
+	// khaos::kmod-
 
 	SetAllIcons();
 	Localize();
@@ -138,31 +126,15 @@ void CClientListCtrl::Localize()
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(7, &hdi);
 
-	// Mighty Knife: Community affiliation
-	strRes=GetResString(IDS_COMMUNITY);
-	strRes.Remove(_T(':'));
+	//Xman
+	// khaos::kmod+
+	strRes=GetResString(IDS_IP);
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(8, &hdi);
-	// [end] Mighty Knife
-
-	// EastShare - Added by Pretender, Friend Tab
-	strRes=GetResString(IDS_FRIENDLIST);
-	strRes.Remove(_T(':'));
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(9, &hdi);
-	// EastShare - Added by Pretender, Friend Tab
-
-	// Commander - Added: IP2Country column - Start
-	strRes=GetResString(IDS_COUNTRY);
-	strRes.Remove(_T(':'));
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(10, &hdi);
-	// Commander - Added: IP2Country column - End
+	// khaos::kmod-
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 	theApp.emuledlg->transferwnd->SetBackgroundColor(style_b_clientlist);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 }
 
@@ -177,6 +149,8 @@ void CClientListCtrl::SetAllIcons()
 	ApplyImageList(NULL);
 	m_ImageList.DeleteImageList();
 	m_ImageList.Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1);
+	//Xman Show correct Icons	
+	/*
 	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkey")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientCompatible")));
 	m_ImageList.Add(CTempIconLoader(_T("Friend")));
@@ -186,38 +160,57 @@ void CClientListCtrl::SetAllIcons()
 	m_ImageList.Add(CTempIconLoader(_T("Server")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientAMule")));
 	m_ImageList.Add(CTempIconLoader(_T("ClientLPhant")));
-	//MORPH START - Added by SiRoB, More client icon & Credit ovelay icon
-	m_ImageList.Add(CTempIconLoader(_T("ClientRightEdonkey")));
-	m_ImageList.Add(CTempIconLoader(_T("Morph")));
-	m_ImageList.Add(CTempIconLoader(_T("SCARANGEL")));
-	m_ImageList.Add(CTempIconLoader(_T("STULLE")));
-	m_ImageList.Add(CTempIconLoader(_T("XTREME")));
-	m_ImageList.Add(CTempIconLoader(_T("EASTSHARE")));
-	m_ImageList.Add(CTempIconLoader(_T("EMF")));
-	m_ImageList.Add(CTempIconLoader(_T("NEO")));
-	m_ImageList.Add(CTempIconLoader(_T("MEPHISTO")));
-	m_ImageList.Add(CTempIconLoader(_T("XRAY")));
-	m_ImageList.Add(CTempIconLoader(_T("MAGIC")));
-	//MORPH END   - Added by SiRoB, More client icon & Credit ovelay icon
-	m_ImageList.Add(CTempIconLoader(_T("RATING_FAKE"))); // Reduce Score for leecher - Stulle
+	*/
+	m_ImageList.Add(CTempIconLoader(_T("ClientDefault")));		//0
+	m_ImageList.Add(CTempIconLoader(_T("ClientDefaultPlus")));	//1
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkey")));		//2
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyPlus")));	//3
+	m_ImageList.Add(CTempIconLoader(_T("ClientCompatible")));		//4
+	m_ImageList.Add(CTempIconLoader(_T("ClientCompatiblePlus")));	//5
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriend")));			//6
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriendPlus")));		//7
+	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkey")));		//8
+	m_ImageList.Add(CTempIconLoader(_T("ClientMLDonkeyPlus")));	//9
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybrid")));	//10
+	m_ImageList.Add(CTempIconLoader(_T("ClientEDonkeyHybridPlus")));//11
+	m_ImageList.Add(CTempIconLoader(_T("ClientShareaza")));		//12
+	m_ImageList.Add(CTempIconLoader(_T("ClientShareazaPlus")));	//13
+	m_ImageList.Add(CTempIconLoader(_T("ClientAMule")));			//14
+	m_ImageList.Add(CTempIconLoader(_T("ClientAMulePlus")));		//15
+	m_ImageList.Add(CTempIconLoader(_T("ClientLPhant")));			//16
+	m_ImageList.Add(CTempIconLoader(_T("ClientLPhantPlus")));		//17
+	m_ImageList.Add(CTempIconLoader(_T("LEECHER")));				//18 //Xman Anti-Leecher
+
+	//Xman friend visualization
+	m_ImageList.Add(CTempIconLoader(_T("ClientFriendSlotOvl"))); //19
+	//Xman end
+	//Xman end
+
+	// ==> Mod Icons - Stulle
+	m_ImageList.Add(CTempIconLoader(_T("AAAEMULEAPP"))); //20
+	m_ImageList.Add(CTempIconLoader(_T("STULLE"))); //21
+	m_ImageList.Add(CTempIconLoader(_T("XTREME"))); //22
+	m_ImageList.Add(CTempIconLoader(_T("MORPH"))); //23
+	m_ImageList.Add(CTempIconLoader(_T("EASTSHARE"))); //24
+	m_ImageList.Add(CTempIconLoader(_T("EMF"))); //25
+	m_ImageList.Add(CTempIconLoader(_T("NEO"))); //26
+	m_ImageList.Add(CTempIconLoader(_T("MEPHISTO"))); //27
+	m_ImageList.Add(CTempIconLoader(_T("XRAY"))); //28
+	m_ImageList.Add(CTempIconLoader(_T("MAGIC"))); //29
+	// <== Mod Icons - Stulle
 
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("ClientSecureOvl"))), 1);
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("OverlayObfu"))), 2);
 	m_ImageList.SetOverlayImage(m_ImageList.Add(CTempIconLoader(_T("OverlaySecureObfu"))), 3);
-	// Mighty Knife: Community icon
+
+	// ==> Mod Icons - Stulle
 	m_overlayimages.DeleteImageList ();
 	m_overlayimages.Create(16,16,theApp.m_iDfltImageListColorFlags|ILC_MASK,0,1);
 	m_overlayimages.SetBkColor(CLR_NONE);
-	m_overlayimages.Add(CTempIconLoader(_T("Community")));
-	// [end] Mighty Knife
-	//MORPH START - Addded by SiRoB, Friend Addon
-	m_overlayimages.Add(CTempIconLoader(_T("ClientFriendOvl")));
-	m_overlayimages.Add(CTempIconLoader(_T("ClientFriendSlotOvl")));
-	//MORPH END   - Addded by SiRoB, Friend Addon
-	//MORPH START - Credit Overlay Icon
 	m_overlayimages.Add(CTempIconLoader(_T("ClientCreditOvl")));
 	m_overlayimages.Add(CTempIconLoader(_T("ClientCreditSecureOvl")));
-	//MORPH END   - Credit Overlay Icon
+	// <== Mod Icons - Stulle
+
 	// Apply the image list also to the listview control, even if we use our own 'DrawItem'.
 	// This is needed to give the listview control a chance to initialize the row height.
 	ASSERT( (GetStyle() & LVS_SHAREIMAGELISTS) != 0 );
@@ -234,11 +227,10 @@ void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
 	BOOL bCtrlFocused;
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+	/*
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
-#else
+	*/
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused, style_b_clientlist);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 	CRect cur_rec(lpDrawItemStruct->rcItem);
 	CRect rcClient;
@@ -265,14 +257,11 @@ void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 				{
 					case 0:{
 						int iImage;
-						//MORPH - Removed by SiRoB, Friend Addon
+						//Xman Show correct Icons
 						/*
 						if (client->IsFriend())
 							iImage = 2;
 						else if (client->GetClientSoft() == SO_EDONKEYHYBRID)
-						*/
-						if (client->GetClientSoft() == SO_EDONKEYHYBRID)
-						//MORPH - Removed by SiRoB, Friend Addon
 							iImage = 4;
 						else if (client->GetClientSoft() == SO_MLDONKEY)
 							iImage = 3;
@@ -284,55 +273,97 @@ void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 							iImage = 7;
 						else if (client->GetClientSoft() == SO_LPHANT)
 							iImage = 8;
-						// ==> Reduce Score for leecher - Stulle
-						else if (client->GetScoreReduce())
-							iImage = 20;
-						// <== Reduce Score for leecher - Stulle
 						else if (client->ExtProtocolAvailable())
-						//MORPH START - Modified by SiRoB, More client icon & Credit overlay icon
-						{
-							if(client->GetModClient() == MOD_NONE)
-								iImage = 1;
-							else
-								iImage = (int)(client->GetModClient() + 9);
-						}
-						//MORPH END   - Modified by SiRoB, More client icon & Credit overlay icon
-						else if (client->GetClientSoft() == SO_EDONKEY)
-							iImage = 9;
+							iImage = 1;
 						else
 							iImage = 0;
+						*/
+						//Xman Anti-Leecher
+						if(client->IsLeecher()>0)
+							iImage = 18;
+						//Xman end
+						else if (client->IsFriend())
+							iImage = 6;
+						else if (client->GetClientSoft() == SO_EDONKEYHYBRID){
+							iImage = 10;
+						}
+						else if (client->GetClientSoft() == SO_EDONKEY){
+							iImage = 2;
+						}
+						else if (client->GetClientSoft() == SO_MLDONKEY){
+							iImage = 8;
+						}
+						else if (client->GetClientSoft() == SO_SHAREAZA){
+							iImage = 12;
+						}
+						else if (client->GetClientSoft() == SO_AMULE){
+							iImage = 14;
+						}
+						else if (client->GetClientSoft() == SO_LPHANT){
+							iImage = 16;
+						}
+						else if (client->ExtProtocolAvailable()){
+							// ==> Mod Icons - Stulle
+							/*
+								iImage = 4;
+							*/
+							if(client->GetModClient() == MOD_NONE)
+								iImage = 4;
+							else
+								iImage = (uint8)(client->GetModClient() + 19);
+							// <== Mod Icons - Stulle
+						}
+						else{
+							iImage = 0;
+						}
+						//Xman end
+
+						// ==> Mod Icons - Stulle
+						// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+						if (((client->credits)?client->credits->GetScoreRatio(client):0) > 1)
+							if (client->GetModClient() == MOD_NONE){
+								if(client->credits && client->credits->GetHasScore(client))
+									iImage++;
+							}
+						// <== CreditSystems [EastShare/ MorphXT] - Stulle
+						// <== Mod Icons - Stulle
 
 						UINT nOverlayImage = 0;
 						if ((client->Credits() && client->Credits()->GetCurrentIdentState(client->GetIP()) == IS_IDENTIFIED))
 							nOverlayImage |= 1;
+						//Xman changed: display the obfuscation icon for all clients which enabled it
+						/*
 						if (client->IsObfuscatedConnectionEstablished())
+						*/
+						if(client->IsObfuscatedConnectionEstablished() 
+							|| (!(client->socket != NULL && client->socket->IsConnected())
+							&& (client->SupportsCryptLayer() && thePrefs.IsClientCryptLayerSupported() && (client->RequestsCryptLayer() || thePrefs.IsClientCryptLayerRequested()))))
 							nOverlayImage |= 2;
 						int iIconPosY = (cur_rec.Height() > 16) ? ((cur_rec.Height() - 16) / 2) : 1;
 						POINT point = { cur_rec.left, cur_rec.top + iIconPosY };
 						m_ImageList.Draw(dc, iImage, point, ILD_NORMAL | INDEXTOOVERLAYMASK(nOverlayImage));
 
-						//MORPH START - Credit Overlay Icon
-						if (client->Credits() && client->Credits()->GetHasScore(client->GetIP())) {
+						// ==> Mod Icons - Stulle
+						if (client->Credits() && client->Credits()->GetHasScore(client) && client->GetModClient() != MOD_NONE)
+						{
 							if (nOverlayImage & 1)
-								m_overlayimages.Draw(dc, 4, point, ILD_TRANSPARENT);
+								m_overlayimages.Draw(dc, 1, point, ILD_TRANSPARENT);
 							else 
-								m_overlayimages.Draw(dc, 3, point, ILD_TRANSPARENT);
+								m_overlayimages.Draw(dc, 0, point, ILD_TRANSPARENT);
 						}
-						// Mighty Knife: Community visualization
-						if (client->IsCommunity())
-							m_overlayimages.Draw(dc,0, point, ILD_TRANSPARENT);
-						// [end] Mighty Knife
-						//MORPH END   - Credit Overlay Icon
-						if (client->IsFriend())
-							m_overlayimages.Draw(dc,client->GetFriendSlot()?2:1, point, ILD_TRANSPARENT);
-						//MORPH END - Modified by SiRoB, More client icon
+						// <== Mod Icons - Stulle
 
-						//Commander: There is a column now to show the country name
-						if(theApp.ip2country->ShowCountryFlag() && IsColumnHidden(10)){
+						//Xman friend visualization
+						if (client->IsFriend() && client->GetFriendSlot())
+							m_ImageList.Draw(dc,19, point, ILD_NORMAL);
+						//Xman end
+
+						//EastShare Start - added by AndCycle, IP to Country 
+						if(theApp.ip2country->ShowCountryFlag() )
+						{
 							cur_rec.left+=20;
 							POINT point2= {cur_rec.left,cur_rec.top+1};
-							int index = client->GetCountryFlagIndex();
-							theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, index , point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
+							theApp.ip2country->GetFlagImageList()->Draw(dc, client->GetCountryFlagIndex(), point2, ILD_NORMAL);
 							cur_rec.left += sm_iLabelOffset;
 						}
 						//EastShare End - added by AndCycle, IP to Country
@@ -341,30 +372,31 @@ void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
 						cur_rec.left -= 16;
 						cur_rec.right -= sm_iSubItemInset;
+
 						//EastShare Start - added by AndCycle, IP to Country
-						if(theApp.ip2country->ShowCountryFlag() && IsColumnHidden(10)){
+						if(theApp.ip2country->ShowCountryFlag() )
+						{
 							cur_rec.left-=20;
 						}
 						//EastShare End - added by AndCycle, IP to Country
 						break;
 					}
-					// Commander - Added: IP2Country column - Start
-					case 10:
-						//Commander: There is a column now to show the country name
-						if(theApp.ip2country->ShowCountryFlag()){
-							POINT point2= {cur_rec.left,cur_rec.top+1};
-							int index = client->GetCountryFlagIndex();
-							theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, index , point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
-							cur_rec.left+=20;
-						}
-						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
-						if(theApp.ip2country->ShowCountryFlag()){
-							cur_rec.left-=20;
-							cur_rec.left -= sm_iLabelOffset;
-						}
-						break;
-					// Commander - Added: IP2Country column - End
 
+					// ==> Design Settings [eWombat/Stulle] - Stulle
+					/*
+					//Xman show LowIDs
+					case 5:
+					{
+						COLORREF crOldTxtColor = dc->GetTextColor();
+						if(client->HasLowID())
+							dc.SetBkColor(RGB(255,250,200));
+						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
+						dc->SetTextColor(crOldTxtColor);
+						break;
+					}
+					//Xman end
+					*/
+					// <== Design Settings [eWombat/Stulle] - Stulle
 					default:
 						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
 						break;
@@ -375,8 +407,6 @@ void CClientListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	}
 
 	DrawFocusRect(dc, lpDrawItemStruct->rcItem, lpDrawItemStruct->itemState & ODS_FOCUS, bCtrlFocused, lpDrawItemStruct->itemState & ODS_SELECTED);
-	if (!theApp.IsRunningAsService(SVC_LIST_OPT)) // MORPH leuk_he:run as ntservice v1..
-		m_updatethread->AddItemUpdated((LPARAM)client); //MORPH - UpdateItemThread
 }
 
 void CClientListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubItem, LPTSTR pszText, int cchTextMax)
@@ -412,12 +442,12 @@ void CClientListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 			break;
 
 		case 5:
-			//MORPH START
+			// Maella -Support for tag ET_MOD_VERSION 0x55
 			/*
 			_tcsncpy(pszText, client->GetClientSoftVer(), cchTextMax);
 			*/
-			_sntprintf(pszText, cchTextMax, _T("%s%s"), client->GetClientSoftVer(), client->GetClientModTag());
-			//MORPH END
+			_tcsncpy(pszText, client->DbgGetFullClientSoftVer(), cchTextMax);
+			//Xman end
 			if (pszText[0] == _T('\0'))
 				_tcsncpy(pszText, GetResString(IDS_UNKNOWN), cchTextMax);
 			break;
@@ -429,21 +459,12 @@ void CClientListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 		case 7:
 			_tcsncpy(pszText, md4str(client->GetUserHash()), cchTextMax);
 			break;
-		// Mighty Knife: Community affiliation
+		//Xman
+		// khaos::kmod+ Show IP
 		case 8:
-			_tcsncpy(pszText, client->IsCommunity () ? GetResString(IDS_YES) : _T(""), cchTextMax);
+			_sntprintf(pszText, cchTextMax, _T("%s:%u"), client->GetUserIPString(), client->GetUserPort());
 			break;
-		// [end] Mighty Knife
-		// EastShare - Added by Pretender, Friend Tab
-		case 9:
-			_tcsncpy(pszText, client->IsFriend () ? GetResString(IDS_YES) : _T(""), cchTextMax);
-			break;
-		// EastShare - Added by Pretender, Friend Tab
-		// Commander - Added: IP2Country column - Start
-		case 10:
-			_tcsncpy(pszText, client->GetCountryName(), cchTextMax);
-			break;
-		// Commander - Added: IP2Country column - End
+		// khaos::kmod- 
 	}
 	pszText[cchTextMax - 1] = _T('\0');
 }
@@ -556,27 +577,26 @@ int CClientListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				iResult = -1;
 			break;
 
-		//MORPH START - Added by IceCream, ET_MOD_VERSION
-		/*
 		case 5:
+			//Xman
+			// Maella -Support for tag ET_MOD_VERSION 0x55
+			/*
 			if (item1->GetClientSoft() == item2->GetClientSoft())
 			    iResult = item1->GetVersion() - item2->GetVersion();
 		    else 
 				iResult = -(item1->GetClientSoft() - item2->GetClientSoft()); // invert result to place eMule's at top
-			break;
-		*/
-		case 5:
-			if (item1->GetClientSoft() == item2->GetClientSoft())
-				if (item2->GetVersion() == item1->GetVersion() && item1->GetClientSoft() == SO_EMULE){
-					iResult= CompareOptLocaleStringNoCase(item2->GetClientSoftVer(), item1->GetClientSoftVer());
+			*/
+			if(item1->GetClientSoft() == item2->GetClientSoft())
+				if(item1->GetVersion() == item2->GetVersion() && item1->GetClientSoft() == SO_EMULE){
+					iResult = item2->DbgGetFullClientSoftVer().CompareNoCase( item1->DbgGetFullClientSoftVer());
 				}
 				else {
-					iResult= item1->GetVersion() - item2->GetVersion();
+					iResult = item1->GetVersion() - item2->GetVersion();
 				}
 			else
-				iResult=-(item1->GetClientSoft() - item2->GetClientSoft());
+				iResult = -(item1->GetClientSoft() - item2->GetClientSoft()); // invert result to place eMule's at top
+			//Xman end
 			break;
-		//MORPH END   - Added by IceCream, ET_MOD_VERSION
 
 		case 6:
 			if (item1->socket && item2->socket)
@@ -590,26 +610,12 @@ int CClientListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		case 7:
 			iResult = memcmp(item1->GetUserHash(), item2->GetUserHash(), 16);
 			break;
-		// Mighty Knife: Community affiliation
+		//Xman
+		// khaos::kmod+ Show IP
 		case 8:
-			iResult = item1->IsCommunity() - item2->IsCommunity();
+			iResult = CompareUnsigned(ntohl(item1->GetIP()), ntohl(item2->GetIP()));
 			break;
-		// [end] Mighty Knife
-		// EastShare - Added by Pretender, Friend Tab
-		case 9:
-			iResult=item1->IsFriend() - item2->IsFriend();
-			break;
-		// EastShare - Added by Pretender, Friend Tab
-	        // Commander - Added: IP2Country column - Start
-	        case 10:
-			if(item1->GetCountryName(true) && item2->GetCountryName(true))
-				iResult=CompareLocaleStringNoCase(item1->GetCountryName(true), item2->GetCountryName(true));
-			else if(item1->GetCountryName(true))
-				iResult=1;
-			else
-				iResult=-1;
-			break;
-		// Commander - Added: IP2Country column - End		
+		// khaos::kmod- Show IP
 	}
 
 	if (lParamSort >= 100)
@@ -622,6 +628,7 @@ int CClientListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	if (iResult == 0 && (dwNextSort = theApp.emuledlg->transferwnd->clientlistctrl.GetNextSortOrder(lParamSort)) != -1)
 		iResult = SortProc(lParam1, lParam2, dwNextSort);
 	*/
+	// SLUGFILLER: multiSort remove - handled in parent class
 
 	return iResult;
 }
@@ -649,30 +656,27 @@ void CClientListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	ClientMenu.AddMenuTitle(GetResString(IDS_CLIENTS), true);
 	ClientMenu.AppendMenu(MF_STRING | (client ? MF_ENABLED : MF_GRAYED), MP_DETAIL, GetResString(IDS_SHOWDETAILS), _T("CLIENTDETAILS"));
 	ClientMenu.SetDefaultItem(MP_DETAIL);
-	if(!thePrefs.IsLessControls()){ //MORPH show less controls
+	//Xman friendhandling
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	//Xman end
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && !client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_ADDFRIEND, GetResString(IDS_ADDFRIEND), _T("ADDFRIEND"));
-	//MORPH START - Added by SiRoB, Friend Addon
-	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->IsFriend()) ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
-	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->IsFriend()) ? MF_ENABLED  | ((!client->HasLowID() && client->IsFriend() && client->GetFriendSlot())?MF_CHECKED : MF_UNCHECKED) : MF_GRAYED), MP_FRIENDSLOT, GetResString(IDS_FRIENDSLOT), _T("FRIENDSLOT"));
-	//MORPH END - Added by SiRoB, Friend Addon
+	//Xman friendhandling
+	ClientMenu.AppendMenu(MF_STRING | (client && client->IsFriend() ? MF_ENABLED : MF_GRAYED), MP_REMOVEFRIEND, GetResString(IDS_REMOVEFRIEND), _T("DELETEFRIEND"));
+	ClientMenu.AppendMenu(MF_STRING | (client && client->IsFriend() ? MF_ENABLED : MF_GRAYED), MP_FRIENDSLOT, GetResString(IDS_FRIENDSLOT), _T("FRIENDSLOT"));
+	ClientMenu.CheckMenuItem(MP_FRIENDSLOT, (client && client->GetFriendSlot()) ? MF_CHECKED : MF_UNCHECKED);
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	//Xman end
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient()) ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
 	ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
 	if (Kademlia::CKademlia::IsRunning() && !Kademlia::CKademlia::IsConnected())
 		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetKadPort()!=0) ? MF_ENABLED : MF_GRAYED), MP_BOOT, GetResString(IDS_BOOTSTRAP));
 	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
-	//MORPH START - Added by Yun.SF3, List Requested Files
-	ClientMenu.AppendMenu(MF_SEPARATOR); // Added by sivka [sivka: -listing all requested files from user-]
-	ClientMenu.AppendMenu(MF_STRING,MP_LIST_REQUESTED_FILES, GetResString(IDS_LISTREQUESTED), _T("FILEREQUESTED")); // Added by sivka
-	//MORPH END - Added by Yun.SF3, List Requested Files
-	//MORPH START show less controls
-	}
-	else
-	{
-		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient()) ? MF_ENABLED : MF_GRAYED), MP_MESSAGE, GetResString(IDS_SEND_MSG), _T("SENDMESSAGE"));
-		ClientMenu.AppendMenu(MF_STRING | ((client && client->IsEd2kClient() && client->GetViewSharedFilesSupport()) ? MF_ENABLED : MF_GRAYED), MP_SHOWLIST, GetResString(IDS_VIEWFILES), _T("VIEWFILES"));
-		ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
-	}
-	//MORPH END show less controls
+
+	// - show requested files (sivka/Xman)
+	ClientMenu.AppendMenu(MF_SEPARATOR); 
+	ClientMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED),MP_LIST_REQUESTED_FILES, GetResString(IDS_LISTREQUESTED), _T("FILEREQUESTED")); 
+	//Xman end
+
 	GetPopupMenuPos(*this, point);
 	ClientMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, point.x, point.y, this);
 	VERIFY( ClientMenu.DestroyMenu() ); // XP Style Menu [Xanatos] - Stulle
@@ -703,6 +707,26 @@ BOOL CClientListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				if (theApp.friendlist->AddFriend(client))
 					Update(iSel);
 				break;
+			//Xman friendhandling
+			case MP_REMOVEFRIEND:
+				if (client && client->IsFriend())
+				{
+					theApp.friendlist->RemoveFriend(client->m_Friend);
+					Update(iSel);
+				}
+				break;
+			case MP_FRIENDSLOT: 
+				if (client)
+				{
+					bool IsAlready;				
+					IsAlready = client->GetFriendSlot();
+					theApp.friendlist->RemoveAllFriendSlots();
+					if( !IsAlready )
+						client->SetFriendSlot(true);
+					Update(iSel);
+				}
+				break;
+			//Xman end
 			case MP_UNBAN:
 				if (client->IsBanned()){
 					client->UnBan();
@@ -721,43 +745,16 @@ BOOL CClientListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				if (client->GetKadPort())
 					Kademlia::CKademlia::Bootstrap(ntohl(client->GetIP()), client->GetKadPort(), (client->GetKadVersion() > 1));
 				break;
-			//MORPH START - Added by SIRoB, Friend Addon
-            		//Xman friendhandling
-			case MP_FRIENDSLOT:{
-				//MORPH START - Modified by SIRoB, Added by Yun.SF3, ZZ Upload System
-				if (client){
-					bool IsAlready;
-					IsAlready = client->GetFriendSlot();
-					//theApp.friendlist->RemoveAllFriendSlots();
-					if( IsAlready ) {
-						client->SetFriendSlot(false);
-					} else {
-						client->SetFriendSlot(true);
-					}
-					theApp.friendlist->ShowFriends();
-				}
-				//MORPH END - Modified by SIRoB, Added by Yun.SF3, ZZ Upload System
-				break;
-			}
-			case MP_REMOVEFRIEND:{//LSD
-				if (client && client->IsFriend())
-				{					
-					theApp.friendlist->RemoveFriend(client->m_Friend);
-					//this->UpdateItem(client);
+			// - show requested files (sivka/Xman)
+			case MP_LIST_REQUESTED_FILES: 
+			{ 
+				if (client != NULL)
+				{
+					client->ShowRequestedFiles(); 
 				}
 				break;
 			}
 			//Xman end
-			//MORPH END   - Added by SIRoB, Friend Addon
-			//MORPH START - Added by Yun.SF3, List Requested Files
-			case MP_LIST_REQUESTED_FILES: { // added by sivka
-				if (client != NULL)
-				{
-					client->ShowRequestedFiles(); //Changed by SiRoB
-				}
-				break;
-			}
-			//MORPH END - Added by Yun.SF3, List Requested Files
 		}
 	}
 	return true;
@@ -765,7 +762,10 @@ BOOL CClientListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 
 void CClientListCtrl::AddClient(const CUpDownClient *client)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	if (!theApp.emuledlg->IsRunning())
 		return;
@@ -794,7 +794,10 @@ void CClientListCtrl::RemoveClient(const CUpDownClient *client)
 
 void CClientListCtrl::RefreshClient(const CUpDownClient *client)
 {
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	if (!theApp.emuledlg->IsRunning())
 		return;
@@ -802,17 +805,12 @@ void CClientListCtrl::RefreshClient(const CUpDownClient *client)
 	if (theApp.emuledlg->activewnd != theApp.emuledlg->transferwnd || !theApp.emuledlg->transferwnd->clientlistctrl.IsWindowVisible())
 		return;
 
-	//MORPH START- UpdateItemThread
-	/*
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)client;
 	int result = FindItem(&find);
 	if (result != -1)
 		Update(result);
-	*/
-	m_updatethread->AddItemToUpdate((LPARAM)client);
-	//MORPH END - UpdateItemThread
 }
 
 void CClientListCtrl::ShowSelectedUserDetails()
@@ -848,3 +846,10 @@ void CClientListCtrl::ShowKnownClients()
 	}
 	theApp.emuledlg->transferwnd->UpdateListCount(CTransferWnd::wnd2Clients, iItemCount);
 }
+
+//Xman SortingFix for Morph-Code-Improvement Don't Refresh item if not needed
+void CClientListCtrl::UpdateAll()
+{
+	SortItems(SortProc, GetSortItem() + (GetSortAscending() ? 0:100));
+}
+//Xman end

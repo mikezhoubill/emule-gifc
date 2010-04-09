@@ -28,19 +28,15 @@ class Packet;
 
 #define PACKET_HEADER_SIZE	6
 
+//Xman Xtreme Upload
+// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+class CUpDownClient;
+// Maella end
+
 struct StandardPacketQueueEntry {
     uint32 actualPayloadSize;
     Packet* packet;
 };
-
-#if !defined DONT_USE_SOCKET_BUFFERING
-struct BufferedPacket {
-		UINT	remainpacketsize;
-		UINT	packetpayloadsize;
-		bool	iscontrolpacket;
-		bool	isforpartfile;
-};
-#endif
 
 class CEMSocket : public CEncryptedStreamSocket, public ThrottledFileSocket // ZZ:UploadBandWithThrottler (UDP)
 {
@@ -50,22 +46,13 @@ public:
 	virtual ~CEMSocket();
 
 	virtual void 	SendPacket(Packet* packet, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-    //MORPH START - Added by SiRoB, Send Packet Array to prevent uploadbandwiththrottler lock
-#if !defined DONT_USE_SEND_ARRAY_PACKET
-	virtual void 	SendPacket(Packet* packet[], uint32 npacket, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-#endif
-	//MORPH END   - Added by SiRoB, Send Packet Array to prevent uploadbandwiththrottler lock
-	bool	IsConnected() const {return byConnected == ES_CONNECTED;}
+    bool	IsConnected() const {return byConnected == ES_CONNECTED;}
 	uint8	GetConState() const {return byConnected;}
 	virtual bool IsRawDataMode() const { return false; }
 	void	SetDownloadLimit(uint32 limit);
 	void	DisableDownloadLimit();
 	BOOL	AsyncSelect(long lEvent);
-	//MORPH - Changed by SiRoB, Show busyTime
-	/*
 	virtual bool IsBusy() const			{return m_bBusy;}
-	*/
-	virtual bool IsBusy() const			{return m_dwBusy!=0;}
 	virtual bool HasQueues() const		{return (sendbuffer || standartpacket_queue.GetCount() > 0 || controlpacket_queue.GetCount() > 0);} // not trustworthy threaded? but it's ok if we don't get the correct result now and then
 
 	virtual UINT GetTimeOut() const;
@@ -81,22 +68,80 @@ public:
 
 	CString GetFullErrorMessage(DWORD dwError);
 
-	//DWORD GetLastCalledSend() { return lastCalledSend; }
+	DWORD GetLastCalledSend() { return lastCalledSend; }
     uint64 GetSentBytesCompleteFileSinceLastCallAndReset();
     uint64 GetSentBytesPartFileSinceLastCallAndReset();
+    //Xman unused
+    /*
     uint64 GetSentBytesControlPacketSinceLastCallAndReset();
+    */
+    //Xman end
     uint64 GetSentPayloadSinceLastCallAndReset();
     void TruncateQueues();
 
-	virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, true); };
-	virtual SocketSentBytes SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, false); };
+    virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, true); };
+    virtual SocketSentBytes SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, false); };
 
-    virtual	DWORD	GetBusyTimeSince() const { return m_dwBusy; }; //MORPH - Added by SiRoB, Show busyTime
-	virtual float	GetBusyRatioTime() const { return (float)(m_dwBusyDelta+(m_dwBusy?GetTickCount()-m_dwBusy:0))/(1+m_dwBusyDelta+(m_dwBusy?GetTickCount()-m_dwBusy:0)+m_dwNotBusyDelta+(m_dwNotBusy?GetTickCount()-m_dwNotBusy:0)); };
-#if !defined DONT_USE_SOCKET_BUFFERING
-		uint32	GetSendBufferSize() { return m_uCurrentSendBufferSize; }; //MORPH - 
-		uint32	GetRecvBufferSize() { return m_uCurrentRecvBufferSize; }; //MORPH - 
-#endif
+
+	//Xman Xtreme Upload
+	/*
+    uint32	GetNeededBytes();
+	*/
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	CUpDownClient*	client; // Quick and dirty
+	// Maella end
+
+	//Xman Full Chunk
+	//bool StandardPacketQueueIsEmpty() const {return standartpacket_queue.IsEmpty()!=0;}
+	bool StandardPacketQueueIsEmpty() const {return standartpacket_queue.IsEmpty()!=0 && (sendbuffer==NULL || sendbuffer!=NULL && m_currentPacket_is_controlpacket==true);} //Xman 4.3
+	//remark: this method isn't threadsave at uploadclient... but there is no need for
+	// this method is threadsave at uploadbandwidththrottler!
+
+	//Xman include ACK
+	//zz_fly
+	//netfinity: Special case when socket is closing but data still in buffer, need to empty buffer or deadlock forever
+	/*
+	void ProcessReceiveData();
+	*/
+	void ProcessReceiveData(int nErrorCode = 0);
+	//zz_fly end
+
+	//Xman count block/success send
+	typedef CList<float> BlockHistory;
+	BlockHistory m_blockhistory;
+	float avg_block_ratio; //the average block of last 20 seconds
+	float sum_blockhistory; //the sum of all stored ratio samples
+
+	uint32 blockedsendcount;
+	uint32 sendcount;
+	uint32 blockedsendcount_overall;
+	uint32 sendcount_overall;
+
+	float GetBlockRatio_overall() const {return sendcount_overall>0 ? 100.0f*blockedsendcount_overall/sendcount_overall : 0.0f;}
+
+	float GetBlockRatio() const {return avg_block_ratio;}
+	float GetandStepBlockRatio() {
+			float newsample  = sendcount>0 ? 100.0f*blockedsendcount/sendcount : 0.0f;
+			m_blockhistory.AddHead(newsample);
+			sum_blockhistory += newsample;
+			if(m_blockhistory.GetSize()>HISTORY_SIZE) // ~ 20 seconds
+			{
+				const float& substract = m_blockhistory.RemoveTail(); //susbtract the old element
+				sum_blockhistory -= substract;
+				if(sum_blockhistory<0)
+					sum_blockhistory=0; //fix possible rounding error
+			}
+			blockedsendcount=0;
+			sendcount=0;
+			avg_block_ratio = sum_blockhistory / m_blockhistory.GetSize();
+			return avg_block_ratio;
+	}
+	//Xman end count block/success send
+
+	//Xman 
+	//Threadsafe Statechange
+	void			SetConnectedState(const uint8 state);
+
 #ifdef _DEBUG
 	// Diagnostic Support
 	virtual void AssertValid() const;
@@ -112,12 +157,16 @@ protected:
 	virtual void	OnClose(int nErrorCode);
 	virtual void	OnSend(int nErrorCode);	
 	virtual void	OnReceive(int nErrorCode);
-	void	OnReceive(int nErrorCode, bool bAddACK); //MORPH take download ack overhead into account
+	//Xman
+	virtual void	OnConnect(int nErrorCode); // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	//Xman end
+
 	uint8	byConnected;
 	UINT	m_uTimeOut;
 	bool	m_bProxyConnectFailed;
 	CAsyncProxySocketLayer* m_pProxyLayer;
 	CString m_strLastProxyError;
+
 private:
     virtual SocketSentBytes Send(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
 	void	ClearQueues();	
@@ -126,11 +175,9 @@ private:
     uint32 GetNextFragSize(uint32 current, uint32 minFragSize);
     bool    HasSent() { return m_hasSent; }
 
-#if !defined DONT_USE_SOCKET_BUFFERING
-    uint32	GetNeededBytes(const uint32 sendblen, const uint32 sendblenWithoutControlPacket, const bool currentPacket_is_controlpacket, const DWORD lastCalledSend);
-#else
-	uint32	GetNeededBytes(const char* sendbuffer, const uint32 sendblen, const uint32 sent, const bool currentPacket_is_controlpacket, const DWORD lastCalledSend);
-#endif
+	//Xman Code Improvement
+	bool	isreadyforsending;
+
 	// Download (pseudo) rate control	
 	uint32	downloadLimit;
 	bool	downloadLimitEnable;
@@ -145,67 +192,36 @@ private:
 	uint32  pendingPacketSize;
 
 	// Upload control
-
-    // NOTE: These variables are only allowed to be accessed from the Send() method (and methods
-    //       called from Send()), which is only called from UploadBandwidthThrottler. They are
-    //       accessed WITHOUT LOCKING in that method, so it is important that they are only called
-    //       from one thread.
-#if !defined DONT_USE_SOCKET_BUFFERING
-	CList<BufferedPacket*> m_currentPacket_in_buffer_list;
-#else
-	bool m_currentPacket_is_controlpacket;
-	bool m_currentPackageIsFromPartFile;
-#endif
-	
 	char*	sendbuffer;
-#if !defined DONT_USE_SOCKET_BUFFERING
-	uint32	m_uCurrentRecvBufferSize;
-	uint32	m_uCurrentSendBufferSize;
-	uint32	currentBufferSize;
-#endif
-
 	uint32	sendblen;
-#if !defined DONT_USE_SOCKET_BUFFERING
-	uint32 sendblenWithoutControlPacket; //Used to know if a controlpacket is already buffered
-#else
-	uint32 m_actualPayloadSize;
-#endif
 	uint32	sent;
-#if defined DONT_USE_SOCKET_BUFFERING
-	uint32 m_actualPayloadSizeSentForThisPacket;
-#endif
-    DWORD lastCalledSend;
 
-    bool m_bAccelerateUpload;
-	uint32 lastFinishedStandard;
-    // End Send() access only
-
-    CCriticalSection sendLocker;
-	
-    // NOTE: These variables are only allowed to be accessed when the accesser has the sendLocker lock.
 	CTypedPtrList<CPtrList, Packet*> controlpacket_queue;
 	CList<StandardPacketQueueEntry> standartpacket_queue;
-    bool m_bConnectionIsReadyForSend;
-    // End sendLocker access only
-
-	CCriticalSection statsLocker;
-
-    // NOTE: These variables are only allowed to be accessed when the accesser has the statsLocker lock.
+    bool m_currentPacket_is_controlpacket;
+    CCriticalSection sendLocker;
     uint64 m_numberOfSentBytesCompleteFile;
     uint64 m_numberOfSentBytesPartFile;
+    //Xman unused
+    /*
     uint64 m_numberOfSentBytesControlPacket;
-
-    uint32 m_actualPayloadSizeSent;
-    // End statsLocker access only
-
-    CCriticalSection busyLocker;
-	//MORPH - Changed by SiRoB, Upload Splitting Class
+    */
+    //Xman end
+    bool m_currentPackageIsFromPartFile;
+	//Xman unused
 	/*
-	bool m_bBusy;
+	bool	m_bAccelerateUpload;
 	*/
-	DWORD m_dwBusy;
-	DWORD m_dwBusyDelta;
-    DWORD m_dwNotBusy;
-	DWORD m_dwNotBusyDelta;
+	//Xman end
+    DWORD lastCalledSend;
+    DWORD lastSent; 
+	//Xman unused
+	/*
+	uint32	lastFinishedStandard;
+	*/
+	//Xman end
+    uint32 m_actualPayloadSize;
+    uint32 m_actualPayloadSizeSent;
+    bool m_bBusy;
     bool m_hasSent;
 };

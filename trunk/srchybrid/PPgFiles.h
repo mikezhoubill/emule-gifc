@@ -34,4 +34,6 @@ protected:
 	afx_msg void OnHelp();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
 	afx_msg void OnDestroy();
+public:
+	afx_msg void OnBnClickedRememberdownloaded(); //Xman remove unused AICH-hashes
 };

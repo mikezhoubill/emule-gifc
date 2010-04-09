@@ -1,4 +1,4 @@
-// $Id: misc_support.cpp,v 1.3 2008/01/16 10:32:49 stulleamgym Exp $
+// $Id: misc_support.cpp,v 1.2 2008/10/07 17:20:33 stulleamgym Exp $
 
 // id3lib: a C++ library for creating and manipulating id3v1/v2 tags
 // Copyright 1999, 2000  Scott Thomas Haug

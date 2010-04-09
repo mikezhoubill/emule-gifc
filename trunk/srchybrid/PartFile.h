@@ -17,10 +17,7 @@
 #include "KnownFile.h"
 #include "DeadSourceList.h"
 #include "CorruptionBlackBox.h"
-
-// khaos::kmod+ Save/Load Sources
-#include "SourceSaver.h" //<<-- enkeyDEV(Ottavio84) -New SLS-
-// khaos::kmod-
+#include "SourceSaver.h"	// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
 
 enum EPartFileStatus{
 	PS_READY			= 0,
@@ -38,9 +35,11 @@ enum EPartFileStatus{
 #define PR_VERYLOW			4 // I Had to change this because it didn't save negative number correctly.. Had to modify the sort function for this change..
 #define PR_LOW				0 //*
 #define PR_NORMAL			1 // Don't change this - needed for edonkey clients and server!
-#define	PR_HIGH				2 //*
+#define PR_HIGH				2 //*
 #define PR_VERYHIGH			3
 #define PR_AUTO				5 //UAP Hunter
+#define PR_POWER			6 //Xman PowerRelease
+
 
 //#define BUFFER_SIZE_LIMIT 500000 // Max bytes before forcing a flush
 
@@ -74,8 +73,8 @@ enum EPartFileOp{
 	PFOP_NONE = 0,
 	PFOP_HASHING,
 	PFOP_COPYING,
-	PFOP_UNCOMPRESSING,
-	PFOP_SR13_IMPORTPARTS //MORPH - Added by SiRoB, Import Part
+	PFOP_UNCOMPRESSING
+	,PFOP_SR13_IMPORTPARTS //MORPH - Added by SiRoB, Import Parts - added by zz_fly
 };
 
 class CSearchFile;
@@ -107,14 +106,18 @@ struct PartFileBufferedData
 	uint64 end;						// Barry - This is the end offset of the data
 	Requested_Block_Struct *block;	// Barry - This is the requested block that this data relates to
 };
+
+//Xman
+// BEGIN SiRoB: Flush Thread
 struct FlushDone_Struct
 {
 	bool	bIncreasedFile;
 	bool	bForceICH;
 	bool*	changedPart;
 };
+// END SiRoB: Flush Thread
 
-//MORPH START - Added by Stulle, Source cache [Xman]
+//Xman sourcecache
 enum ESourceFrom;
 struct PartfileSourceCache
 {
@@ -123,15 +126,16 @@ struct PartfileSourceCache
 	uint32			dwServerIP;
 	uint16			nServerPort;
 	uchar			achUserHash[16];
-	uint8			byCryptOptions;
 	bool			withuserhash;
 	bool			ed2kIDFlag;
+	uint8			byCryptOptions;
 	ESourceFrom		sourcefrom;
 	uint32			expires;
 };
 #define	SOURCECACHEPROCESSLOOP	MIN2MS(1)	//every one minute
 #define SOURCECACHELIFETIME		MIN2MS(30)	//expires after 30 minutes
-//MORPH END   - Added by Stulle, Source cache [Xman]
+//Xman end
+
 
 typedef CTypedPtrList<CPtrList, CUpDownClient*> CUpDownClientPtrList;
 
@@ -140,8 +144,11 @@ class CPartFile : public CKnownFile
 	DECLARE_DYNAMIC(CPartFile)
 
 	friend class CPartFileConvert;
+	//Xman
 	friend class CPartHashThread;	// SLUGFILLER: SafeHash
-	friend class CPartFileFlushThread;	//MORPH - Flush Thread
+
+	friend class CPartFileFlushThread; //Xman Flush Thread
+
 public:
 	CPartFile(UINT cat = 0);
 	CPartFile(CSearchFile* searchresult, UINT cat = 0);
@@ -177,51 +184,62 @@ public:
 	CTime	GetCrCFileDate() const { return CTime(m_tCreated); }
 	uint32	GetCrFileDate() const { return m_tCreated; }
 
-	void	InitializeFromLink(CED2KFileLink* fileLink, UINT cat=0);
-	//MORPH START - Changed by Stulle, No zz ratio for http traffic
+	void	InitializeFromLink(CED2KFileLink* fileLink, UINT cat = 0);
+	// Maella -New bandwidth control-
 	/*
-	uint32	Process(uint32 reducedownload, UINT icounter, uint32 friendReduceddownload);
+	uint32	Process(uint32 reducedownload, UINT icounter);
 	*/
-	uint32	Process(uint32 reducedownload, UINT icounter, uint32 friendReduceddownload,uint32 httpReduceddownload);
-	//MORPH END   - Changed by Stulle, No zz ratio for http traffic
+	uint32	Process(uint32 maxammount, bool isLimited, bool fullProcess); // in byte, not in percent
+	// Maella end
+	//Xman end	
+
 	EPartFileLoadResult	LoadPartFile(LPCTSTR in_directory, LPCTSTR filename, EPartFileFormat* pOutCheckFileFormat = NULL); //filename = *.part.met
 	EPartFileLoadResult	ImportShareazaTempfile(LPCTSTR in_directory,LPCTSTR in_filename, EPartFileFormat* pOutCheckFileFormat = NULL);
 
 	bool	SavePartFile(bool bDontOverrideBak = false);
 	void	PartFileHashFinished(CKnownFile* result);
-	bool	HashSinglePart(UINT partnumber); // true = ok , false = corrupted //MORPH - Flush Thread
-	// SLUGFILLER: SafeHash - replaced old handlers, full hash checker remains for file completion
+	bool	HashSinglePart(UINT partnumber); // true = ok , false = corrupted
+
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - replaced old handlers, full hash checker remains for file completion
 	void	PartHashFinished(UINT partnumber, bool corrupt);
 	void	PartHashFinishedAICHRecover(UINT partnumber, bool corrupt);
 	bool	IsPartShareable(UINT partnumber) const;
 	bool	IsRangeShareable(uint64 start, uint64 end) const;
-	//MORPH END   - Added by SiRoB, SLUGFILLER: SafeHash
-
+	// END SLUGFILLER: SafeHash
 
 	void	AddGap(uint64 start, uint64 end);
 	void	FillGap(uint64 start, uint64 end);
 	void	DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/;
-	virtual void	DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool	 bFlat) /*const*/;
+	virtual void	DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool	 bFlat) const;
 	bool	IsComplete(uint64 start, uint64 end, bool bIgnoreBufferedData) const;
 	bool	IsPureGap(uint64 start, uint64 end) const;
 	bool	IsAlreadyRequested(uint64 start, uint64 end, bool bCheckBuffers = false) const;
     bool    ShrinkToAvoidAlreadyRequested(uint64& start, uint64& end) const;
 	bool	IsCorruptedPart(UINT partnumber) const;
-	//MORPH START - Enhanced DBR
+	
+	//Xman Dynamic block request (netfinity/morph/Xman)
+	//zz_fly :: remove unused code :: start
+	/*
 	uint64	GetRemainingAvailableData(const uint8* srcstatus) const;
 	uint64	GetRemainingAvailableData(const CUpDownClient* sender) const;
-	//MORPH END   - Enhanced DBR
+	*/
+	//zz_fly :: remove unused code :: end
+	uint32  GetDownloadSpeedInPart(uint16 forpart, CUpDownClient* current_source) const;
+	//Xman end
+
 	uint64	GetTotalGapSizeInRange(uint64 uRangeStart, uint64 uRangeEnd) const;
 	uint64	GetTotalGapSizeInPart(UINT uPart) const;
 	void	UpdateCompletedInfos();
-	//void	UpdateCompletedInfos(uint64 uTotalGaps); //MORPH - Optimization, completedsize
+	void	UpdateCompletedInfos(uint64 uTotalGaps);
 	virtual void	UpdatePartsInfo();
 
-	bool	GetNextRequestedBlock(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count) /*const*/;
-	//MORPH START - Added by SiRoB, ICS Optional
-	bool	GetNextRequestedBlockICS(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count);
-	//MORPH END   - Added by SiRoB, ICS Optional
-	void	WritePartStatus(CSafeMemFile* file, CUpDownClient* client = NULL) /*const*/; // SLUGFILLER: hideOS
+	//Xman chunk chooser
+	//bool	GetNextRequestedBlock(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count) /*const*/;
+	bool	GetNextRequestedBlock_Maella(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count) /*const*/;
+	bool	GetNextRequestedBlock_zz(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count) /*const*/;
+	//Xman end
+	void	WritePartStatus(CSafeMemFile* file) const;
 	void	WriteCompleteSourcesCount(CSafeMemFile* file) const;
 	void	AddSources(CSafeMemFile* sources,uint32 serverip, uint16 serverport, bool bWithObfuscationAndHash);
 	void	AddSource(LPCTSTR pszURL, uint32 nIP);
@@ -232,12 +250,12 @@ public:
 	void	_SetStatus(EPartFileStatus eStatus);	// set status and do *not* update GUI
 	void	NotifyStatusChange();
 	bool	IsStopped() const { return stopped; }
-	bool	GetCompletionError() const { return m_bCompletionError;}
+	bool	GetCompletionError() const { return m_bCompletionError; }
 	EMFileSize  GetCompletedSize() const { return completedsize; }
 	CString getPartfileStatus() const;
 	int		getPartfileStatusRang() const;
 	void	SetActive(bool bActive);
-	
+
 	uint8	GetDownPriority() const { return m_iDownPriority; }
 	void	SetDownPriority(uint8 iNewDownPriority, bool resort = true);
 	bool	IsAutoDownPriority(void) const { return m_bAutoDownPriority; }
@@ -249,27 +267,33 @@ public:
 	UINT	GetSrcStatisticsValue(EDownloadState nDLState) const;
 	UINT	GetTransferringSrcCount() const;
 	uint64	GetTransferred() const { return m_uTransferred; }
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	uint32	GetDatarate() const { return datarate; }
+	*/
+	//Xman end
 	float	GetPercentCompleted() const { return percentcompleted; }
 	UINT	GetNotCurrentSourcesCount() const;
 	int		GetValidSourcesCount() const;
-	//MORPH START - Added by SiRoB, Source Counts Are Cached derivated from Khaos
-	UINT	GetAvailableSrcCount() const;
-	//MORPH END   - Added by SiRoB, Source Counts Are Cached derivated from Khaos
 	bool	IsArchive(bool onlyPreviewable = false) const; // Barry - Also want to preview archives
     bool    IsPreviewableFileType() const;
 	time_t	getTimeRemaining() const;
 	time_t	getTimeRemainingSimple() const;
-	time_t	GetDlActiveTime() const; //vs2005
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	GetDlActiveTime() const;
+	*/
+	time_t	GetDlActiveTime() const;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 
 	// Barry - Added as replacement for BlockReceived to buffer data before writing to disk
 	uint32	WriteToBuffer(uint64 transize, const BYTE *data, uint64 start, uint64 end, Requested_Block_Struct *block, const CUpDownClient* client);
 	void	FlushBuffer(bool forcewait=false, bool bForceICH = false, bool bNoAICH = false);
-	//MORPH START - Added by SiRoB, Flush Thread
-	void	WriteToDisk();
+	//Xman
+	// BEGIN SiRoB: Flush Thread
 	void	FlushDone();
-	//MORPH END   - Added by SiRoB, Flush Thread
-
+	// END SiRoB: Flush Thread
 	// Barry - This will invert the gap list, up to caller to delete gaps when done
 	// 'Gaps' returned are really the filled areas, and guaranteed to be in order
 	void	GetFilledList(CTypedPtrList<CPtrList, Gap_Struct*> *filled) const;
@@ -277,9 +301,7 @@ public:
 	// Barry - Added to prevent list containing deleted blocks on shutdown
 	void	RemoveAllRequestedBlocks(void);
 	bool	RemoveBlockFromList(uint64 start, uint64 end);
-	bool	RemoveBlockFromList(const Requested_Block_Struct* block); //MORPH - Optimization
 	bool	IsInRequestedBlockList(const Requested_Block_Struct* block) const;
-	void	AddRequestedBlock(Requested_Block_Struct* block);
 	void	RemoveAllSources(bool bTryToSwap);
 
 	bool	CanOpenFile() const;
@@ -304,7 +326,7 @@ public:
 	void	UpdateAvailablePartsCount();
 
 	uint32	GetLastAnsweredTime() const	{ return m_ClientSrcAnswered; }
-	void	SetLastAnsweredTime()			{ m_ClientSrcAnswered = ::GetTickCount(); }
+	void	SetLastAnsweredTime() { m_ClientSrcAnswered = ::GetTickCount(); }
 	void	SetLastAnsweredTimeTimeout();
 
 	uint64	GetCorruptionLoss() const { return m_uCorruptionLoss; }
@@ -317,18 +339,25 @@ public:
 	void	AddDownloadingSource(CUpDownClient* client);
 	void	RemoveDownloadingSource(CUpDownClient* client);
 
+	//Xman Xtreme Downloadmanager: Auto-A4AF-check
+	bool	IsA4AFAuto() const { return m_is_A4AF_auto; }
+	void	SetA4AFAuto(bool in) { m_is_A4AF_auto = in; }
+	//Xman end
+
 	CString GetProgressString(uint16 size) const;
 	CString GetInfoSummary() const;
 
 //	int		GetCommonFilePenalty() const;
 	void	UpdateDisplayedInfo(bool force = false);
 
+	// Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	UINT	GetCategory() const;
+	UINT	GetConstCategory() const;  //Xman checkmark to catogory at contextmenu of downloadlist
 	void	SetCategory(UINT cat);
 	bool	CheckShowItemInGivenCat(int inCategory) /*const*/;
 
 	uint8*	MMCreatePartStatus();
-	
+
 	//preview
 	virtual bool GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth,void* pSender);
 	virtual void GrabbingFinished(CxImage** imgResults, uint8 nFramesGrabbed, void* pSender);
@@ -336,13 +365,15 @@ public:
 	void	FlushBuffersExceptionHandler(CFileException* error);
 	void	FlushBuffersExceptionHandler();
 
-	void	PerformFirstHash();		// SLUGFILLER: SafeHash
 	void	PerformFileCompleteEnd(DWORD dwResult);
+	//Xman
+	void	PerformFirstHash();		// SLUGFILLER: SafeHash
+
 
 	void	SetFileOp(EPartFileOp eFileOp);
-	EPartFileOp GetFileOp() const { return m_eFileOp; }
+	EPartFileOp GetFileOp() const							{ return m_eFileOp; }
 	void	SetFileOpProgress(UINT uProgress);
-	UINT	GetFileOpProgress() const { return m_uFileOpProgress; }
+	UINT	GetFileOpProgress() const						{ return m_uFileOpProgress; }
 
 	void	RequestAICHRecovery(UINT nPart);
 	void	AICHRecoveryDataAvailable(UINT nPart);
@@ -363,48 +394,88 @@ public:
 	bool	srcarevisible;				// used for downloadlistctrl
 	bool	hashsetneeded;
 	uint8	m_TotalSearchesKad;
-    bool    AllowSwapForSourceExchange() { return ::GetTickCount()-lastSwapForSourceExchangeTick > 30*1000; } // ZZ:DownloadManager
-    void    SetSwapForSourceExchangeTick() { lastSwapForSourceExchangeTick = ::GetTickCount(); } // ZZ:DownloadManager
-
-	UINT	SetPrivateMaxSources(uint32 in)	{ return m_uMaxSources = in; } 
-	UINT	GetPrivateMaxSources() const	{ return m_uMaxSources; } 
+	//Xman Xtreme Downloadmanager
+	/*
+    bool    AllowSwapForSourceExchange()					{ return ::GetTickCount()-lastSwapForSourceExchangeTick > 30*1000; } // ZZ:DownloadManager
+    void    SetSwapForSourceExchangeTick()					{ lastSwapForSourceExchangeTick = ::GetTickCount(); } // ZZ:DownloadManager
+	*/
+	//Xman end
+	
+	UINT	SetPrivateMaxSources(uint32 in)					{ return m_uMaxSources = in; } 
+	UINT	GetPrivateMaxSources() const					{ return m_uMaxSources; } 
 	UINT	GetMaxSources() const;
 	UINT	GetMaxSourcePerFileSoft() const;
 	UINT	GetMaxSourcePerFileUDP() const;
 
-	bool    GetPreviewPrio() const { return m_bpreviewprio; }
-	void    SetPreviewPrio(bool in) { m_bpreviewprio=in; }
+    bool    GetPreviewPrio() const							{ return m_bpreviewprio; }
+	void    SetPreviewPrio(bool in)							{ m_bpreviewprio=in; }
 
-    /*MORPH*/static bool RightFileHasHigherPrio(const CPartFile* left, const CPartFile* right);
+	//Xman Xtreme Downloadmanager
+	/*
+    static bool RightFileHasHigherPrio(CPartFile* left, CPartFile* right);
+	*/
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	static bool RightFileHasHigherPrio(CPartFile* left, CPartFile* right, bool allow_go_over_hardlimit=false);
+	*/
+	static bool RightFileHasHigherPrio(const CPartFile* left, const CPartFile* right, bool allow_go_over_hardlimit=false);
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	//Xman end
 
 	CDeadSourceList	m_DeadSourceList;
-	//Morph Start - added by AndCycle, ICS
-	// enkeyDev: ICS
-	uint16* CalcDownloadingParts(const CUpDownClient* client); // Pawcio for enkeyDEV: ICS
-	void	WriteIncPartStatus(CSafeMemFile* file);
-    void    NewSrcIncPartsInfo();
-	uint64	GetPartSizeToDownload(uint16 partNumber);
-	// <--- enkeyDev: ICS
-	//Morph End - added by AndCycle, ICS
 
-	CArray<uint16,uint16> m_SrcpartFrequency; //MORPH - Added by SiRoB, Share Only The Need
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	void	CompDownloadRate();
+	uint32	GetDownloadDatarate() const {return m_nDownDatarate;}	
+	uint32	GetDownloadDatarate10() const {return m_nDownDatarate10;}	
+	// Maella end
 
-	// khaos::categorymod+
-	void	SetCatResumeOrder(UINT order)	{ m_catResumeOrder = order; SavePartFile(); }
-	UINT	GetCatResumeOrder() const				{ return m_catResumeOrder; }
-	// khaos::categorymod-
-	// khaos::accuratetimerem+
-	void	SetActivatedTick()				{ m_dwActivatedTick = GetTickCount(); }
-	DWORD	GetActivatedTick()				{ return m_dwActivatedTick; }
-	time_t	GetTimeRemainingAvg() const;
-	// khaos::accuratetimerem-
-	// khaos::kmod+ Advanced A4AF: Brute Force Features
-	bool	ForceAllA4AF()	const			{ return m_bForceAllA4AF; }
-	bool	ForceA4AFOff()	const			{ return m_bForceA4AFOff; }
-	void	SetForceAllA4AF(bool in)		{ m_bForceAllA4AF = in; }
-	void	SetForceA4AFOff(bool in)		{ m_bForceA4AFOff = in; }
-	// khaos::kmod-
-	bool	notSeenCompleteSource() const;
+	//Xman Xtreme Downloadmanager
+	void CalcAvgQr(UINT inqr,UINT oldqr);
+	UINT GetAvgQr() const {return m_avgqr;}
+	void	RemoveNoNeededPartsSources();
+	void	RemoveQueueFullSources();
+	void	RemoveLeecherSources(); //Xman Anti-Leecher
+	//Xman end
+
+	//Xman sourcecache
+	void	ProcessSourceCache();
+	void	AddToSourceCache(uint16 nPort, uint32 dwID, uint32 dwServerIP,uint16 nServerPort,ESourceFrom sourcefrom, bool ed2kIDFlag=false,  const uchar* achUserHash=NULL, uint8 byCryptOptions=0);
+	void	ClearSourceCache();
+	uint32	GetSourceCacheAmount() const { return m_sourcecache.GetCount();}
+	//Xman end
+
+	//Xman GlobalMaxHarlimit for fairness
+	bool	IsGlobalSourceAddAllowed();
+	bool	IsSourceSearchAllowed();
+	//Xman end
+
+	//Xman manual file allocation (Xanatos)
+	void	AllocateNeededSpace();
+	//zz_fly :: disable preallocate while eMule allocating, otherwise gui will freeze :: dolphin87 :: start
+	/*
+	const bool	IncompleteAllocateSpace() const	{ return ((m_hpartfile.m_hFile != INVALID_HANDLE_VALUE) && m_hpartfile.GetLength() < GetFileSize()); } 
+	*/
+	const bool  IncompleteAllocateSpace() const { return ((!IsAllocating()) && (m_hpartfile.m_hFile != INVALID_HANDLE_VALUE) && m_hpartfile.GetLength() < GetFileSize()); }
+	//zz_fly :: disable preallocate while eMule allocating :: end
+	//Xman end
+
+	//zz_fly :: Drop stalled downloads :: netfinity :: start
+	bool	FindAndDropStalledDownload(CUpDownClient* ignore_client) const;
+	uint64	GetUnrequestedSize() const;
+	//zz_fly :: Drop stalled downloads :: netfinity :: end
+
+#ifdef PRINT_STATISTIC
+	uint32	GetSavedSources()	{return m_sourcesaver.GetSavedSources();}
+	uint32	GetGapList()		{return gaplist.GetSize();}
+	uint32  GetRequestedBlocklist() {return requestedblocks_list.GetCount();}
+	uint32	GetSrcpartFrequency()	{return m_SrcpartFrequency.GetSize();}
+	uint32	GetBufferedData()		{return m_BufferedData_list.GetSize();}
+	uint32	GetA4AFsrclist()		{return A4AFsrclist.GetSize();}
+#endif
+
+
 #ifdef _DEBUG
 	// Diagnostic Support
 	virtual void AssertValid() const;
@@ -412,39 +483,60 @@ public:
 #endif
 
 protected:
+	//Xman Dynamic block request (netfinity/Xman)
+	/*
+	bool	GetNextEmptyBlockInPart(UINT partnumber, Requested_Block_Struct* result) const;
+	*/
 	bool	GetNextEmptyBlockInPart(UINT partnumber, Requested_Block_Struct* result, uint64 bytesToRequest = EMBLOCKSIZE) const;
+	//Xman end
 	void	CompleteFile(bool hashingdone);
 	void	CreatePartFile(UINT cat = 0);
 	void	Init();
-	// khaos::kmod+ Save/Load Sources
-	CSourceSaver m_sourcesaver; //<<-- enkeyDEV(Ottavio84) -New SLS-
-	// khaos::kmod-
+
 private:
+	//Xman Xtreme Downloadmanager
+	UINT	m_avgqr;
+	uint32	m_sumqr;
+	uint16	m_countqr;
+	//Xman end
 	BOOL 		PerformFileComplete(); // Lord KiRon
 	static UINT CompleteThreadProc(LPVOID pvParams); // Lord KiRon - Used as separate thread to complete file
 	static UINT AFX_CDECL AllocateSpaceThread(LPVOID lpParam);
 	void		CharFillRange(CString* buffer,uint32 start, uint32 end, char color) const;
+	//Xman
 	void		ParseICHResult();	// SLUGFILLER: SafeHash
+
 
 	CCorruptionBlackBox	m_CorruptionBlackBox;
 	static CBarShader s_LoadBar;
+	//Xman
+	/*
 	static CBarShader s_ChunkBar;
-	time_t	m_iLastPausePurge;
+	uint32	m_iLastPausePurge;
 	uint16	count;
+	*/
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	m_iLastPausePurge;
+	*/
+	time_t	m_iLastPausePurge;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	//Xman end
 	UINT	m_anStates[STATES_COUNT];
-	//MORPH START - Added by SiRoB, Cached stat
-	UINT	m_anStatesTemp[STATES_COUNT];
-	//MORPH END   - Added by SiRoB, Cached stat
-	uint64	m_uTotalGaps; //MORPH - Optimization, completedsize
-	EMFileSize  completedsize;
+	EMFileSize	completedsize;
 	uint64	m_uCorruptionLoss;
 	uint64	m_uCompressionGain;
 	uint32	m_uPartsSavedDueICH;
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	uint32	datarate;
-	CString	m_fullname;
-	CString	m_partmetfilename;
+	*/
+	//Xman end
+	CString m_fullname;
+	CString m_partmetfilename;
 	uint64	m_uTransferred;
-	UINT  m_uMaxSources;
+	UINT	m_uMaxSources;
 	bool	paused;
 	bool	stopped;
 	bool	insufficient;
@@ -455,80 +547,80 @@ private:
 	bool	newdate;	// indicates if there was a writeaccess to the .part file
 	uint32	lastpurgetime;
 	uint32	m_LastNoNeededCheck;
-public:  //morph
+	bool	m_is_A4AF_auto; //Xman Xtreme Downloadmanager: Auto-A4AF-check
 	CTypedPtrList<CPtrList, Gap_Struct*> gaplist;
-private:  //morph
 	CTypedPtrList<CPtrList, Requested_Block_Struct*> requestedblocks_list;
-	//MORPH - Moved by SiRoB, moved in public area du to Share Only The Need
-	/*
 	CArray<uint16,uint16> m_SrcpartFrequency;
-	*/
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CArray<bool,bool> m_PartsShareable;
-	int	m_PartsHashing;
+	uint16	m_PartsHashing;
 	CMutex	ICH_mut;	// ICH locks the file
 	CList<uint16,uint16>	m_ICHPartsComplete;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 	float	percentcompleted;
-	CList<UINT,UINT>	corrupted_list;
+	CList<uint16, uint16> corrupted_list;
 	uint32	m_ClientSrcAnswered;
 	UINT	availablePartsCount;
 	CWinThread* m_AllocateThread;
-	CWinThread* m_FlushThread; //MORPH - Flush Thread
 	DWORD	m_lastRefreshedDLDisplay;
 	CUpDownClientPtrList m_downloadingSourceList;
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+	CUpDownClientPtrList m_downloadingDeleteList;
+	void	DoDelayedDeletion();
+	volatile bool	m_sourceListChange; //Xman // Maella -New bandwidth control-
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
 	bool	m_bDeleteAfterAlloc;
     bool	m_bpreviewprio;
 	// Barry - Buffered data to be written
 	CTypedPtrList<CPtrList, PartFileBufferedData*> m_BufferedData_list;
 	uint64	m_nTotalBufferData;
-	uint32 m_nLastBufferFlushTime;
+	uint32	m_nLastBufferFlushTime;
 	UINT	m_category;
 	DWORD	m_dwFileAttributes;
 	time_t	m_tActivated;
-	time_t	m_nDlActiveTime; //vs2005
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	uint32	m_nDlActiveTime;
+	*/
+	time_t	m_nDlActiveTime;
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	uint32	m_tLastModified;	// last file modification time (NT's version of UTC), to be used for stats only!
 	uint32	m_tCreated;			// file creation time (NT's version of UTC), to be used for stats only!
     uint32	m_random_update_wait;	
 	volatile EPartFileOp m_eFileOp;
 	volatile UINT m_uFileOpProgress;
 
+	//Xman Xtreme Downloadmanager
+	/*
     DWORD   lastSwapForSourceExchangeTick; // ZZ:DownloadManaager
-	
-	//MORPH START - Added by SiRoB, Flush Thread
-public:
+
+};
+	*/
+	//Xman end
+
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	uint32 m_nDownDatarate;
+	uint32 m_nDownDatarate10;
+	// Maella end
+
+	// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+	CSourceSaver m_sourcesaver; 
+	// Xman end
+
+	//Xman sourcecache
+	CList<PartfileSourceCache>	m_sourcecache;
+	uint32						m_lastSoureCacheProcesstime;
+	//Xman end
+
+	//Xman
+	//MORPH Added by SiRoB, Flush Thread
 	FlushDone_Struct* m_FlushSetting;
-private:
-	CCriticalSection m_BufferedData_list_Locker;
-	//MORPH END   - Added by SiRoB, Flush Thread
+	CPartFileFlushThread* m_FlushThread; 
+	//Xman end
 
-	// khaos::categorymod+
-	UINT	m_catResumeOrder;
-	// khaos::categorymod-
-	// khaos::accuratetimerem+
-	uint32	m_nSecondsActive;
-	uint64	m_I64uInitialBytes;
-	DWORD	m_dwActivatedTick;
-	// khaos::accuratetimerem-
-	// khaos::kmod+ Advanced A4AF: Force A4AF
-	bool	m_bForceAllA4AF;
-	bool	m_bForceA4AFOff;
-	// khaos::kmod-
-	//MORPH START - Added by SiRoB,  SharedStatusBar CPU Optimisation
-	bool	InChangedSharedStatusBar;
-	CBitmap m_bitmapSharedStatusBar;
-	int		lastSize;
-	bool	lastonlygreyrect;
-	bool	lastbFlat;
-	//MORPH END - Added by SiRoB,  SharedStatusBar CPU Optimisation
-
-	//Morph Start - added by AndCycle, ICS
-    // enkeyDev: ICS
-    CArray<uint16,uint16> m_SrcIncPartFrequency;
-    // <--- enkeyDev: ICS
-    //Morph End - added by AndCycle, ICS
-
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 private: 
 	UINT	m_uFileHardLimit; 
 public: 
@@ -537,52 +629,9 @@ public:
 	void	SetPassiveHL(UINT m_uSourcesDif)	{m_uFileHardLimit = GetSourceCount() + m_uSourcesDif;};
 	UINT	GetFileHardLimit() const {return m_uFileHardLimit;}
 	void	InitHL();
-	bool	IsSrcReqOrAddAllowed();
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
-	//MORPH START - Added by Stulle, Source cache [Xman]
-	void	ProcessSourceCache();
-	void	AddToSourceCache(uint16 nPort, uint32 dwID, uint32 dwServerIP,uint16 nServerPort,ESourceFrom sourcefrom, bool ed2kIDFlag=false,  const uchar* achUserHash=NULL, const uint8 byCryptOptions = 0);
-	void	ClearSourceCache();
-	uint32	GetSourceCacheAmount() const { return m_sourcecache.GetCount();}
-private:
-	CList<PartfileSourceCache>	m_sourcecache;
-	uint32						m_lastSoureCacheProcesstime;
-	//MORPH END   - Added by Stulle, Source cache [Xman]
-
-	// EastShare Start - FollowTheMajority by AndCycle
-private:
-	// ==> Set and save Follow the Majority per file - Stulle
-	/*
-	bool	m_bFollowTheMajority;
-	*/
-	// <== Set and save Follow the Majority per file - Stulle
-	CMap<CUpDownClient*, CUpDownClient*, CString, CString> m_mapSrcFilename;
-	CMap<CString, LPCTSTR, int, int> m_mapFilenameCount;
-public:
-	void	UpdateSourceFileName(CUpDownClient* src);
-	void	RemoveSourceFileName(CUpDownClient* src);
-	// ==> Set and save Follow the Majority per file - Stulle
-	/*
-	bool	DoFollowTheMajority() const { return this->m_bFollowTheMajority; }
-	void	SetFollowTheMajority(bool val) { this->m_bFollowTheMajority = val; }
-	void	InvertFollowTheMajority() {m_bFollowTheMajority = !m_bFollowTheMajority;}
-	*/
-	// <== Set and save Follow the Majority per file - Stulle
-	// EastShare End   - FollowTheMajority by AndCycle
-
-	// ==> Average Queue Ranking [Xman] - Stulle
-public:
-	void CalcAvgQr(UINT inqr,UINT oldqr);
-	UINT GetAvgQr() const {return m_avgqr;}
-private:
-	UINT	m_avgqr;
-	uint32	m_sumqr;
-	UINT	m_countqr;
-	// <== Average Queue Ranking [Xman] - Stulle
-
-	// ==> drop sources - Stulle
-public:
+	// ==> File Settings [sivka/Stulle] - Stulle
 	bool	GetEnableAutoDropNNS() const {return m_EnableAutoDropNNS;}
 	DWORD	GetAutoNNS_Timer() const {return m_AutoNNS_Timer;}
 	uint16	GetMaxRemoveNNSLimit() const {return m_MaxRemoveNNSLimit;}
@@ -593,9 +642,8 @@ public:
 	DWORD	GetAutoHQRS_Timer() const {return m_AutoHQRS_Timer;}
 	uint16	GetMaxRemoveQRS() const {return m_MaxRemoveQRS;}
 	uint16	GetMaxRemoveQRSLimit() const {return m_MaxRemoveQRSLimit;}
+	bool	GetHQRXman() const {return m_bHQRXman;}
 	bool	GetGlobalHL() const {return m_bGlobalHL;} // Global Source Limit (customize for files) - Stulle
-	bool	GetHQRXman() const {return m_bHQRXman;} // store scarangel setting - Stulle
-	int		GetFollowTheMajority() const { return m_iFollowTheMajority; } // Set and save Follow the Majority per file - Stulle
 	void	SetEnableAutoDropNNS(bool in){m_EnableAutoDropNNS=in;}
 	void	SetAutoNNS_Timer(DWORD in){m_AutoNNS_Timer=in;}
 	void	SetMaxRemoveNNSLimit(uint16 in){m_MaxRemoveNNSLimit=in;}
@@ -606,16 +654,8 @@ public:
 	void	SetAutoHQRS_Timer(DWORD in){m_AutoHQRS_Timer=in;}
 	void	SetMaxRemoveQRS(uint16 in){m_MaxRemoveQRS=in;}
 	void	SetMaxRemoveQRSLimit(uint16 in){m_MaxRemoveQRSLimit=in;}
+	void	SetHQRXman(bool in){m_bHQRXman=in;}
 	void	SetGlobalHL(bool in){m_bGlobalHL=in;} // Global Source Limit (customize for files) - Stulle
-	void	SetHQRXman(bool in){m_bHQRXman=in;} // store scarangel setting - Stulle
-	void	SetFollowTheMajority(int val) { m_iFollowTheMajority = val; } // Set and save Follow the Majority per file - Stulle
-	void	RemoveLow2LowIPSourcesManual();
-	void	RemoveUnknownErrorBannedSourcesManual();
-	void	RemoveNoNeededSourcesManual();
-	void	RemoveFullQueueSourcesManual();
-	void	RemoveHighQRSourcesManual();
-	void	CleanUp_NNS_FQS_HQRS_NONE_ERROR_BANNED_LOWTOLOWIP_Sources();
-	void	RemoveLeechers();
 
 private:
 	bool	m_EnableAutoDropNNS;
@@ -628,31 +668,64 @@ private:
 	DWORD	m_AutoHQRS_Timer;
 	uint16	m_MaxRemoveQRS;
 	uint16	m_MaxRemoveQRSLimit;
+	bool	m_bHQRXman;
 	bool	m_bGlobalHL; // Global Source Limit (customize for files) - Stulle
-	bool	m_bHQRXman; // store scarangel setting - Stulle
-	int		m_iFollowTheMajority; // Set and save Follow the Majority per file - Stulle
+	// <== File Settings [sivka/Stulle] - Stulle
+
+	// ==> customized source dropping - Stulle
 	DWORD	m_TimerForAutoNNS;
 	DWORD	m_TimerForAutoFQS;
 	DWORD	m_TimerForAutoHQRS;
-	UINT	m_RemoteQueueRank_Old;
-	UINT	m_RemoteQueueRank_New;
-	// <== drop sources - Stulle
-
-public:
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	int		GetPfStyle() const;
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	uint16	m_RemoteQueueRank_Old;
+	uint16	m_RemoteQueueRank_New;
+	// <== customized source dropping - Stulle
 
 	// ==> show # of dropped sources - Stulle
+public:
 	uint16	GetShowDroppedSrc() const {return m_ShowDroppedSrc;}
 private:
 	uint16	m_ShowDroppedSrc;
 	// <== show # of dropped sources - Stulle
+
+	// ==> advanced manual dropping - Stulle
+public:
+	void	RemoveLow2LowIPSourcesManual();
+	void	RemoveUnknownErrorBannedSourcesManual();
+	void	RemoveHighQRSourcesManualSivka();
+	void	RemoveHighQRSourcesManualXman();
+	void	CleanUp_NNS_FQS_NONE_ERROR_BANNED_LOWTOLOWIP_Sources();
+	// <== advanced manual dropping - Stulle
+
+	// ==> Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
+	UINT	GetAvailableSrcCount() const;
+private:
+	UINT	m_anStatesTemp[STATES_COUNT];
+	// <== Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	UINT	m_catResumeOrder;
+public:
+	void	SetCatResumeOrder(UINT order)	{ m_catResumeOrder = order; SavePartFile(); }
+	UINT	GetCatResumeOrder() const				{ return m_catResumeOrder; }
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
+	int		GetPfStyle() const; // Design Settings [eWombat/Stulle] - Stulle
+
+	// ==> Follow The Majority [AndCycle/Stulle] - Stulle
+private:
+	int	m_iFollowTheMajority;
+	CMap<CUpDownClient*, CUpDownClient*, CString, CString> m_mapSrcFilename;
+	CMap<CString, LPCTSTR, int, int> m_mapFilenameCount;
+public:
+	void	UpdateSourceFileName(CUpDownClient* src);
+	void	RemoveSourceFileName(CUpDownClient* src);
+	int		GetFollowTheMajority() const { return m_iFollowTheMajority; }
+	void	SetFollowTheMajority(int val) { m_iFollowTheMajority = val; }
+	// <== Follow The Majority [AndCycle/Stulle] - Stulle
 };
 
-// SLUGFILLER: SafeHash
+//Xman
+// BEGIN SLUGFILLER: SafeHash
 class CPartHashThread : public CWinThread
 {
 	DECLARE_DYNCREATE(CPartHashThread)
@@ -661,8 +734,8 @@ protected:
 public:
 	virtual	BOOL	InitInstance() {return true;}
 	virtual int		Run();
-	int	SetFirstHash(CPartFile* pOwner);
-	void	SetSinglePartHash(CPartFile* pOwner, UINT part, bool ICHused = false, bool AICHRecover = false);
+	uint16	SetFirstHash(CPartFile* pOwner);
+	void	SetSinglePartHash(CPartFile* pOwner, uint16 part, bool ICHused = false, bool AICHRecover = false);
 private:
 	CPartFile*				m_pOwner;
 	bool					m_ICHused;
@@ -672,8 +745,9 @@ private:
 	CArray<uint16,uint16>	m_PartsToHash;
 	CArray<uchar*,uchar*>	m_DesiredHashes;
 };
-// SLUGFILLER: SafeHash
-//MORPH START - Added by SiRoB, Flush Thread
+// END SLUGFILLER: SafeHash
+
+// BEGIN SiRoB: Flush Thread
 class CPartFileFlushThread : public CWinThread
 {
 	DECLARE_DYNCREATE(CPartFileFlushThread)
@@ -683,10 +757,7 @@ public:
 	virtual	BOOL	InitInstance() {return true;}
 	virtual int		Run();
 	void	SetPartFile(CPartFile* pOwner);
-	void	StopFlush();
 private:
 	CPartFile*				m_partfile;
-	CEvent					pauseEvent;
-	bool			doRun;
 };
-//MORPH END   - Added by SiRoB, Flush Thread
+// END SiRoB: Flush Thread

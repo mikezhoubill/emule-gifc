@@ -64,9 +64,7 @@ public:
 	// GUI is not initially updated 
 	bool	AddSingleSharedFile(const CString& rstrFilePath, bool bNoUpdate = false); // includes updating sharing preferences, calls CheckAndAddSingleSharedFile afterwards
 	// ==> Automatic shared files updater [MoNKi] - Stulle
-#ifdef ASFU
 	bool	AddSingleSharedFile(const CString& rstrFilePath, bool bNoUpdate, int &iDoAsfuReset); // includes updating sharing preferences, calls CheckAndAddSingleSharedFile afterwards
-#endif
 	// <== Automatic shared files updater [MoNKi] - Stulle
 	bool	AddSingleSharedDirectory(const CString& rstrFilePath, bool bNoUpdate = false); 
 	bool	ExcludeFile(CString strFilePath);	// excludes a specific file from being shared and removes it from the list if it exists
@@ -92,17 +90,20 @@ public:
 
 	void	HashFailed(UnknownFile_Struct* hashed);		// SLUGFILLER: SafeHash
 	void	FileHashingFinished(CKnownFile* file);
-	void	UpdatePartsInfo(); //MORPH - Added by SiRoB, POWERSHARE Limit
-	DWORD	GetLastTimeFileMapUpdated() { return m_dwFile_map_updated; }; //MORPH - Added by SiRoB, Optimization requpfile
+
+	//Xman advanced upload-priority
+	void CalculateUploadPriority(bool force=false);
+	void CalculateUploadPriority_Standard();
+	float m_lastavgPercent;
+	uint32 m_avg_virtual_sources;
+	uint32 m_avg_client_on_uploadqueue;
+	//Xman end
 
 	CMutex	m_mutWriteList;
 
 protected:
 	bool	AddFile(CKnownFile* pFile);
-  /* old code
 	void	AddFilesFromDirectory(const CString& rstrDirectory);
-  */
-	void	AddFilesFromDirectory(const CString& rstrDirectory, bool bWithSubdir = false);	// SLUGFILLER: shareSubdir
 	void	FindSharedFiles();
 	
 	void	HashNextFile();
@@ -110,21 +111,11 @@ protected:
 	void	RemoveFromHashing(CKnownFile* hashed);
 	void	LoadSingleSharedFilesList();
 
-	// SLUGFILLER: shareSubdir
-	/*
 	void	CheckAndAddSingleFile(const CFileFind& ff);
-	*/
-	void	CheckAndAddSingleFile(const CFileFind& ff, bool bWithSubdir = false);
-	// SLUGFILLER: shareSubdir
 	bool	CheckAndAddSingleFile(const CString& rstrFilePath); // add specific files without editing sharing preferences
 
 private:
-	//SLUGFILLER: shareSubdir - moved to public
-	/*
 	CMap<CCKey,const CCKey&,CKnownFile*,CKnownFile*> m_Files_map;
-	*/
-	//SLUGFILLER: shareSubdir - moved to public
-	DWORD m_dwFile_map_updated; //MORPH - Added by SiRoB, Optimization requpfile
 	CMap<CSKey,const CSKey&, bool, bool>			 m_UnsharedFiles_map;
 	CMapStringToString m_mapPseudoDirNames;
 	CPublishKeywordList* m_keywords;
@@ -132,11 +123,9 @@ private:
 	CTypedPtrList<CPtrList, UnknownFile_Struct*> currentlyhashing_list;	// SLUGFILLER: SafeHash
 	CServerConnect*		server;
 	CSharedFilesCtrl*	output;
-	//SLUGFILLER: shareSubdir - moved to public
-	/*
+public: // Automatic shared files updater [MoNKi] - Stulle
 	CStringList			m_liSingleSharedFiles;
-	*/
-	//SLUGFILLER: shareSubdir - moved to public
+private: // Automatic shared files updater [MoNKi] - Stulle
 	CStringList			m_liSingleExcludedFiles;
 
 	uint32 m_lastPublishED2K;
@@ -148,16 +137,10 @@ private:
 	uint32 m_lastPublishKadNotes;
 	bool bHaveSingleSharedFiles;
 
-// Mighty Knife: CRC32-Tag - Public method to lock the filelist to prevent it 
-// from being deleted; be careful using this not to produce deadlocks !
+	// ==> PowerShare [ZZ/MorphXT] - Stulle
 public:
-	CMutex FileListLockMutex;
-// [end] Mighty Knife
-
-	//SLUGFILLER: shareSubdir - moved to public
-	CMap<CCKey,const CCKey&,CKnownFile*,CKnownFile*> m_Files_map;
-	CStringList			m_liSingleSharedFiles;
-	//SLUGFILLER: shareSubdir - moved to public
+	void	UpdatePartsInfo(); //MORPH - Added by SiRoB, POWERSHARE Limit
+	// <== PowerShare [ZZ/MorphXT] - Stulle
 };
 
 class CAddFileThread : public CWinThread
@@ -170,17 +153,19 @@ public:
 	virtual int	Run();
 	void	SetValues(CSharedFileList* pOwner, LPCTSTR directory, LPCTSTR filename, LPCTSTR strSharedDir, CPartFile* partfile = NULL);
 
-	//MORPH START - Added by SiRoB, Import Parts [SR13]
+	//MORPH START - Added by SiRoB, Import Parts [SR13] - added by zz_fly
 	bool	SR13_ImportParts();
 	uint16	SetPartToImport(LPCTSTR import);
 	//MORPH END   - Added by SiRoB, Import Parts [SR13]
+
 private:
 	CSharedFileList* m_pOwner;
 	CString			 m_strDirectory;
 	CString			 m_strFilename;
 	CString			 m_strSharedDir;
 	CPartFile*		 m_partfile;
-	//MORPH START - Added by SiRoB, Import Parts [SR13]
+
+	//MORPH START - Added by SiRoB, Import Parts [SR13] - added by zz_fly
 	CString          m_strImport;
 	CArray<uint16,uint16>	m_PartsToImport;
 	//MORPH END   - Added by SiRoB, Import Parts [SR13]

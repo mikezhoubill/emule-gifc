@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="upnpLib80"
 	ProjectGUID="{313EDA74-70F6-481B-8F05-C49A16481905}"
 	RootNamespace="upnpLib"
@@ -55,170 +55,6 @@
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\ixml\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\inc&quot;;&quot;$(ProjectDir)\..\threadutil\inc&quot;;&quot;$(ProjectDir)\..\ixml\inc&quot;;..\..\pthreads\pthreads\inc"
 				PreprocessorDefinitions="UPNP_STATIC_LIB;INCLUDE_CLIENT_APIS;_WIN32;WIN32;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS"
-				StringPooling="true"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
-				BufferSecurityCheck="false"
-				EnableFunctionLevelLinking="false"
-				PrecompiledHeaderFile="$(OutDir)/upnpLib.pch"
-				AssemblerListingLocation="$(OutDir)/"
-				ObjectFile="$(OutDir)/"
-				ProgramDataBaseFileName="$(OutDir)/"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/upnpLib.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\ixml\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\inc&quot;;&quot;$(ProjectDir)\..\threadutil\inc&quot;;&quot;$(ProjectDir)\..\ixml\inc&quot;;&quot;$(ProjectDir)\..\..\pthreads\pthreads\inc&quot;"
-				PreprocessorDefinitions="UPNP_STATIC_LIB;INCLUDE_CLIENT_APIS;_WIN32;WIN32;_DEBUG;PTW32_STATIC_LIB;_CRT_SECURE_NO_WARNINGS"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				PrecompiledHeaderFile=".\Debug/upnpLib.pch"
-				AssemblerListingLocation=".\Debug/"
-				ObjectFile=".\Debug/"
-				ProgramDataBaseFileName=".\Debug/"
-				BrowseInformation="1"
-				WarningLevel="3"
-				SuppressStartupBanner="true"
-				DebugInformationFormat="4"
-				CompileAs="0"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				IgnoreAllDefaultLibraries="true"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-			/>
-		</Configuration>
-		<Configuration
-			Name="releasewin98|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="false"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="true"
-				SuppressStartupBanner="true"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/upnpLib.tlb"
-				HeaderFileName=""
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="1"
-				InlineFunctionExpansion="1"
-				EnableIntrinsicFunctions="false"
-				FavorSizeOrSpeed="2"
-				OmitFramePointers="true"
-				EnableFiberSafeOptimizations="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\ixml\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\src\inc&quot;;&quot;$(ProjectDir)\..\upnp\inc&quot;;&quot;$(ProjectDir)\..\threadutil\inc&quot;;&quot;$(ProjectDir)\..\ixml\inc&quot;;..\..\pthreads\pthreads\inc"
-				PreprocessorDefinitions="UPNP_STATIC_LIB;INCLUDE_CLIENT_APIS;_WIN32;WIN32;PTW32_STATIC_LIB"
 				StringPooling="true"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -364,26 +200,6 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						AdditionalIncludeDirectories=""
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="releasewin98|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						AdditionalIncludeDirectories="$(ProjectDir)\..\ixml\src\inc"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="debug80|Win32"
 					>
 					<Tool
@@ -404,26 +220,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -456,26 +252,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -492,26 +268,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -544,26 +300,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -580,26 +316,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -632,26 +348,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -668,26 +364,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -720,26 +396,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -756,26 +412,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -813,26 +449,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -849,26 +465,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -901,26 +497,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -945,26 +521,6 @@
 						/>
 					</FileConfiguration>
 					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
 						Name="debug80|Win32"
 						>
 						<Tool
@@ -981,26 +537,6 @@
 					>
 					<FileConfiguration
 						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="2"
-							AdditionalIncludeDirectories=""
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							Optimization="0"
-							AdditionalIncludeDirectories=""
-							BasicRuntimeChecks="3"
-							BrowseInformation="1"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="releasewin98|Win32"
 						>
 						<Tool
 							Name="VCCLCompilerTool"
@@ -1042,26 +578,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -1086,26 +602,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -1122,26 +618,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1179,26 +655,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -1223,26 +679,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -1259,26 +695,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -1320,26 +736,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="debug80|Win32"
 								>
 								<Tool
@@ -1361,26 +757,6 @@
 							>
 							<FileConfiguration
 								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1418,26 +794,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="debug80|Win32"
 								>
 								<Tool
@@ -1458,26 +814,6 @@
 								>
 								<FileConfiguration
 									Name="Release|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
 									>
 									<Tool
 										Name="VCCLCompilerTool"
@@ -1510,26 +846,6 @@
 									/>
 								</FileConfiguration>
 								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
 									Name="debug80|Win32"
 									>
 									<Tool
@@ -1546,26 +862,6 @@
 								>
 								<FileConfiguration
 									Name="Release|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
 									>
 									<Tool
 										Name="VCCLCompilerTool"
@@ -1598,26 +894,6 @@
 									/>
 								</FileConfiguration>
 								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
 									Name="debug80|Win32"
 									>
 									<Tool
@@ -1634,26 +910,6 @@
 								>
 								<FileConfiguration
 									Name="Release|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
 									>
 									<Tool
 										Name="VCCLCompilerTool"
@@ -1683,26 +939,6 @@
 								>
 								<FileConfiguration
 									Name="Release|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="2"
-										AdditionalIncludeDirectories=""
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="Debug|Win32"
-									>
-									<Tool
-										Name="VCCLCompilerTool"
-										Optimization="0"
-										AdditionalIncludeDirectories=""
-										BasicRuntimeChecks="3"
-										BrowseInformation="1"
-									/>
-								</FileConfiguration>
-								<FileConfiguration
-									Name="releasewin98|Win32"
 									>
 									<Tool
 										Name="VCCLCompilerTool"
@@ -1741,26 +977,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="debug80|Win32"
 								>
 								<Tool
@@ -1782,26 +998,6 @@
 							>
 							<FileConfiguration
 								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1834,26 +1030,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="debug80|Win32"
 								>
 								<Tool
@@ -1878,26 +1054,6 @@
 								/>
 							</FileConfiguration>
 							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
 								Name="debug80|Win32"
 								>
 								<Tool
@@ -1914,26 +1070,6 @@
 							>
 							<FileConfiguration
 								Name="Release|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="2"
-									AdditionalIncludeDirectories=""
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="Debug|Win32"
-								>
-								<Tool
-									Name="VCCLCompilerTool"
-									Optimization="0"
-									AdditionalIncludeDirectories=""
-									BasicRuntimeChecks="3"
-									BrowseInformation="1"
-								/>
-							</FileConfiguration>
-							<FileConfiguration
-								Name="releasewin98|Win32"
 								>
 								<Tool
 									Name="VCCLCompilerTool"
@@ -1972,26 +1108,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -2008,26 +1124,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2069,26 +1165,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -2113,26 +1189,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -2149,26 +1205,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2206,26 +1242,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -2247,26 +1263,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"
@@ -2299,26 +1295,6 @@
 							/>
 						</FileConfiguration>
 						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
 							Name="debug80|Win32"
 							>
 							<Tool
@@ -2335,26 +1311,6 @@
 						>
 						<FileConfiguration
 							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="2"
-								AdditionalIncludeDirectories=""
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								Optimization="0"
-								AdditionalIncludeDirectories=""
-								BasicRuntimeChecks="3"
-								BrowseInformation="1"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="releasewin98|Win32"
 							>
 							<Tool
 								Name="VCCLCompilerTool"

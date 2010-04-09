@@ -8,9 +8,9 @@
 * Redistribution is appreciated.
 *
 * $Workfile:$
-* $Revision: 1.10 $
+* $Revision:$
 * $Modtime:$
-* $Author: stulleamgym $
+* $Author:$
 *
 * Revision History:
 *	$History:$
@@ -27,10 +27,6 @@
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
-// MORPH START tabbed options
-#include "PreferencesDlg.h"
-#include "emuledlg.h"
-// MORPH END tabbed options
 
 
 //-------------------------------------------------------------------
@@ -362,7 +358,7 @@ void CTreePropSheet::RefillPageTree()
 
 		// Create an item in the tree for the page
 		HTREEITEM	hItem = CreatePageTreeItem(ti.pszText);
-//		ASSERT(hItem);	//MORPH - tabbed options. 
+		ASSERT(hItem);
 		if (hItem)
 		{
 			m_pwndPageTree->SetItemData(hItem, nPage);
@@ -400,9 +396,6 @@ HTREEITEM CTreePropSheet::CreatePageTreeItem(LPCTSTR lpszPath, HTREEITEM hParent
 	}
 
 	// If item with that text does not already exist, create a new one
-	// MORPH START tabbed options [leuk_he]
-	if (strTopMostItem != "Multi user" && strTopMostItem != "NT Service"  )   { // MORPH leuk_he:run as ntservice v1..
-	// MORPH END tabbed options [leuk_he]
 	if (!hItem)
 	{
 		hItem = m_pwndPageTree->InsertItem(strTopMostItem, hParent);
@@ -413,10 +406,9 @@ HTREEITEM CTreePropSheet::CreatePageTreeItem(LPCTSTR lpszPath, HTREEITEM hParent
 	}
 	if (!hItem)
 	{
-		// ASSERT(FALSE); //MORPH tabbed  options
+		ASSERT(FALSE);
 		return NULL;
 	}
-	} // Morph tabbed options. 
 
 	if (strPath.IsEmpty())
 		return hItem;
@@ -992,16 +984,7 @@ void CTreePropSheet::OnPageTreeSelChanging(NMHDR *pNotifyStruct, LRESULT *plResu
 	if (nPage<0 || (unsigned)nPage>=m_pwndPageTree->GetCount())
 		bResult = KillActiveCurrentPage();
 	else
-		// MORPH START tabbed options
-	{
-		if (nPage == theApp.emuledlg->preferenceswnd->Webserver && theApp.emuledlg->preferenceswnd->ActivePageWebServer >= 1)
-			nPage = theApp.emuledlg->preferenceswnd->ActivePageWebServer;
-
-        //original line:
 		bResult = SetActivePage(nPage);
-	}
-		// MORPH ENDtabbed options
-
 
 	if (!bResult)
 		// prevent selection to change

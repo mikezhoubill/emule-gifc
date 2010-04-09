@@ -1,11 +1,8 @@
 #pragma once
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 
-/* MORPH START leuk_he tooltipped
+#include "NumEdit.h" // Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+
 class CPPgConnection : public CPropertyPage
-*/
-class CPPgConnection : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgConnection)
 
@@ -21,11 +18,29 @@ public:
 
 protected:
 	bool guardian;
+	//Xman
+	/*
 	CSliderCtrl m_ctlMaxDown;
+	*/
+	//Xman end
 	CSliderCtrl m_ctlMaxUp;
 
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	CNumEdit m_maxUpload;
+	CNumEdit m_maxUploadCapacity; // for Graph, Quick speed selector
+	CNumEdit m_maxDownload;
+	CNumEdit m_maxDownloadCapacity; // for Graph, Quick speed selector
+	// Maella end
+
+	//Xman Xtreme Upload
+	void CalculateMaxUpSlotSpeed();
+
 	void ShowLimitValues();
+	//Xman
+	/*
 	void SetRateSliderTicks(CSliderCtrl& rRate);
+	*/
+	//Xman end
 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
@@ -36,7 +51,11 @@ protected:
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnSettingsChange()					{ SetModified(); }
 	afx_msg void OnEnChangeUDPDisable();
+	//Xman
+	/*
 	afx_msg void OnLimiterChange();
+	*/
+	//Xman end
 	afx_msg void OnBnClickedWizard();
 	afx_msg void OnBnClickedNetworkKademlia();
 	afx_msg void OnHelp();
@@ -46,17 +65,6 @@ protected:
 	afx_msg void OnEnChangeTCP();
 	afx_msg void OnEnChangeUDP();
 	afx_msg void OnEnChangePorts(uint8 istcpport);
-
-//MORPH START - Added by SiRoB, [MoNKi: -Random Ports-]
-private:
-	afx_msg void OnRandomPortsChange();
-	CEdit m_minRndPort;
-	CEdit m_maxRndPort;
-	CSpinButtonCtrl m_minRndPortSpin;
-	CSpinButtonCtrl m_maxRndPortSpin;
-//MORPH END   - Added by SiRoB, [MoNKi: -Random Ports-]
-// MORPH START leuk_he zzratio active warning
-	CStatic	m_ZZratioIcon;
-// MORPH END
-
+	//Xman Xtreme Upload
+	afx_msg void OnEnKillfocusMaxup();
 };

@@ -454,7 +454,8 @@ CSearchFile* CSearchList::DetachNextFile(uint32 nSearchID)
 
 bool CSearchList::AddToList(CSearchFile* toadd, bool bClientResponse, uint32 dwFromUDPServerIP)
 {
-	// MORPH START SLUGFILLER: searchCatch
+	//Xman
+	// SLUGFILLER: searchCatch
 	CPartFile *file = theApp.downloadqueue->GetFileByID(toadd->GetFileHash());
 	if (file){
 		if (toadd->GetClientID() && toadd->GetClientPort()){
@@ -469,7 +470,7 @@ bool CSearchList::AddToList(CSearchFile* toadd, bool bClientResponse, uint32 dwF
 			}
 		}
 	}
-	// MORPH END SLUGFILLER: searchCatch
+	// SLUGFILLER: searchCatch
 
 	if (!bClientResponse && !m_strResultFileType.IsEmpty() && _tcscmp(m_strResultFileType, toadd->GetFileType()) != 0)
 	{
@@ -1751,92 +1752,3 @@ void CSearchList::LoadSearches(){
 		return;
 	}
 }
-
-//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-CString CSearchList::GetWapList(CString linePattern,int sortby,bool asc, int start, int max, bool &more) const {
-	CString buffer;
-	CString temp;
-	CArray<CSearchFile*, CSearchFile*> sortarray;
-	int swap;
-	bool inserted;
-
-	// insertsort
-	CSearchFile* sf1;
-	CSearchFile* sf2;
-	for (POSITION pos = m_listFileLists.GetHeadPosition(); pos !=0;) {
-		SearchListsStruct* listCur = m_listFileLists.GetNext(pos);
-
-		for(POSITION pos2 = listCur->m_listSearchFiles.GetHeadPosition(); pos2 != NULL; )
-		{
-			inserted=false;
-			sf1 = listCur->m_listSearchFiles.GetNext(pos2);
-		
-			if (sf1->GetListParent()!=NULL) continue;		
-			
-			for (uint16 i1=0;i1<sortarray.GetCount();++i1) {
-				sf2 = sortarray.GetAt(i1);
-				
-				switch (sortby) {
-					case 0: swap=sf1->GetFileName().CompareNoCase(sf2->GetFileName()); break;
-					case 1: swap=CompareUnsigned64(sf1->GetFileSize(),sf2->GetFileSize());break;
-					case 2: swap=CString(sf1->GetFileHash()).CompareNoCase(CString(sf2->GetFileHash())); break;
-					case 3: swap=sf1->GetSourceCount()-sf2->GetSourceCount(); break;
-					default:swap=0; //leuk_he suppress warning
-				}
-				if (!asc) swap=0-swap;
-				if (swap<0) {inserted=true; sortarray.InsertAt(i1,sf1);break;}
-			}
-			if (!inserted) sortarray.Add(sf1);
-		}
-	}
-	
-	int endpos;
-
-	endpos = start + max;
-
-	if (endpos>sortarray.GetCount())
-		endpos=sortarray.GetCount();
-
-	if (start>sortarray.GetCount()){
-		start=endpos-max;
-		if (start<0) start=0;
-	}
-
-	for (int i=start;i<endpos;++i) {
-		const CSearchFile* sf = sortarray.GetAt(i);
-
-		// colorize
-		CString coloraddon;
-		CString coloraddonE;
-		CKnownFile* sameFile = theApp.sharedfiles->GetFileByID(sf->GetFileHash());
-		if (!sameFile)
-			sameFile = theApp.downloadqueue->GetFileByID(sf->GetFileHash());
-
-		if (sameFile) {
-			if (sameFile->IsPartFile())
-				coloraddon = _T("<b>");
-			else
-				coloraddon = _T("");
-		}
-		if (coloraddon.GetLength()>0)
-			coloraddonE = _T("</b>");
-
-		CString strHash(EncodeBase16(sf->GetFileHash(),16));
-		temp.Format(linePattern,
-					coloraddon + StringLimit(sf->GetFileName(),70) + coloraddonE,
-					CastItoXBytes(sf->GetFileSize()),
-					strHash,
-					sf->GetSourceCount(),
-					strHash);
-
-		buffer.Append(temp);
-	}
-	
-	if(endpos<sortarray.GetCount())
-		more=true;
-	else
-		more=false;
-
-	return buffer;
-}
-//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]

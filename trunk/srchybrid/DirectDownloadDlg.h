@@ -46,7 +46,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnEnKillfocusElink();
 	afx_msg void OnEnUpdateElink();
-	//MORPH START - Added by SiRoB, Selection category support
-	afx_msg void OnNMClickCats(NMHDR *pNMHDR, LRESULT *pResult);
- 	//MORPH END   - Added by SiRoB, Selection category support
+	afx_msg void OnNMClickCats(NMHDR *pNMHDR, LRESULT *pResult); // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 };

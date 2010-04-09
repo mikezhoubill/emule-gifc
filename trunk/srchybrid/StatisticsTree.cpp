@@ -33,6 +33,8 @@
 #include "OtherFunctions.h"
 #include "Log.h"
 #include "StringConversion.h"
+//Xman
+#include "opcodes.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -46,8 +48,11 @@ BEGIN_MESSAGE_MAP(CStatisticsTree, CTreeCtrl)
 	ON_WM_LBUTTONUP()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_CONTEXTMENU()
-	ON_WM_MEASUREITEM() // XP Style Menu [Xanatos] - Stulle
 	ON_NOTIFY_REFLECT(TVN_ITEMEXPANDED, OnItemExpanded)
+	// ==> XP Style Menu [Xanatos] - Stulle
+	ON_WM_MEASUREITEM()
+	ON_WM_MENUCHAR()
+	// <== XP Style Menu [Xanatos] - Stulle
 END_MESSAGE_MAP()
 
 CStatisticsTree::CStatisticsTree()
@@ -159,7 +164,7 @@ void CStatisticsTree::DoMenu(CPoint doWhere, UINT nFlags)
 	/*
 	mnuHTML.AddMenuTitle(NULL, true);
 	*/
-	mnuHTML.AddMenuTitle(GetResString(IDS_STATS_MNUTREEHTML), true, false);
+	mnuHTML.AddMenuTitle(NULL, true, false);
 	// <== XP Style Menu [Xanatos] - Stulle
 	mnuHTML.AppendMenu(MF_STRING, MP_STATTREE_HTMLCOPYSEL, GetResString(IDS_STATS_MNUTREECPYSEL), _T("COPY"));
 	mnuHTML.AppendMenu(MF_STRING, MP_STATTREE_HTMLCOPYVIS, GetResString(IDS_STATS_MNUTREECPYVIS), _T("COPYVISIBLE"));
@@ -363,12 +368,17 @@ CString CStatisticsTree::GetHTML(bool onlyVisible, HTREEITEM theItem, int theIte
 
 	CString	strBuffer;
 	if (firstItem)
-		//MORPH START - Changed by SiRoB, [itsonlyme: -modname-]
+		//Xman // Maella -Support for tag ET_MOD_VERSION 0x55
 		/*
 		strBuffer.Format(_T("<font face=\"Tahoma,Verdana,Courier New,Helvetica\" size=\"2\">\r\n<b>eMule v%s %s [%s]</b>\r\n<br /><br />\r\n"), theApp.m_strCurVersionLong, GetResString(IDS_SF_STATISTICS), thePrefs.GetUserNick());
 		*/
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		strBuffer.Format(_T("<font face=\"Tahoma,Verdana,Courier New,Helvetica\" size=\"2\">\r\n<b>eMule v%s %s [%s]</b>\r\n<br /><br />\r\n"), theApp.m_strCurVersionLong + _T(" ") + MOD_VERSION, GetResString(IDS_SF_STATISTICS), thePrefs.GetUserNick());
+		*/
 		strBuffer.Format(_T("<font face=\"Tahoma,Verdana,Courier New,Helvetica\" size=\"2\">\r\n<b>eMule v%s [%s] %s [%s]</b>\r\n<br /><br />\r\n"), theApp.m_strCurVersionLong, theApp.m_strModLongVersion, GetResString(IDS_SF_STATISTICS), thePrefs.GetUserNick());
-		//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-]
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		//Xman end
 
 	while (hCurrent != NULL)
 	{
@@ -448,12 +458,17 @@ CString CStatisticsTree::GetText(bool onlyVisible, HTREEITEM theItem, int theIte
 
 	CString	strBuffer;
 	if (bPrintHeader)
-		//MORPH START - Changed by SiRoB, [itsonlyme: -modname-]
+		//Xman // Maella -Support for tag ET_MOD_VERSION 0x55
 		/*
 		strBuffer.Format(_T("eMule v%s %s [%s]\r\n\r\n"), theApp.m_strCurVersionLong, GetResString(IDS_SF_STATISTICS) ,thePrefs.GetUserNick());
 		*/
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		strBuffer.Format(_T("eMule v%s %s [%s]\r\n\r\n"), theApp.m_strCurVersionLong + _T(" ") + MOD_VERSION, GetResString(IDS_SF_STATISTICS) ,thePrefs.GetUserNick()); //Xman // Maella -Support for tag ET_MOD_VERSION 0x55
+		*/
 		strBuffer.Format(_T("eMule v%s [%s] %s [%s]\r\n\r\n"), theApp.m_strCurVersionLong,theApp.m_strModLongVersion, GetResString(IDS_SF_STATISTICS) ,thePrefs.GetUserNick());
-		//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-]
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		//Xman end
 
 	while (hCurrent != NULL)
 	{
@@ -791,81 +806,39 @@ int CStatisticsTree::ApplyExpandedMask(CString theMask, HTREEITEM theItem, int t
 	}
 	return theStringIndex;
 }
-//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-//	This is the primary function for generating basic WML output of the statistics tree.
-//	It is recursive.
-CString CStatisticsTree::GetWML(bool onlyVisible, bool onlyBold, bool noRecursive, HTREEITEM theItem, int theItemLevel, bool firstItem)
+
+//Xman extended stats (taken from emule plus)
+void CStatisticsTree::DeleteChildItems (HTREEITEM parentItem)
 {
-	CString		strBuffer, strItem, stheItemPos;
-	HTREEITEM	hCurrent;
-	
-	strBuffer.Empty();
-	//MORPH START - Changed by SiRoB, [itsonlyme: -modname-]
-	/*
-	if (firstItem) strBuffer.Format(_T("<b>eMule v%s %s [%s]</b>\r\n<br/><br/>\r\n"), theApp.m_strCurVersionLong, GetResString(IDS_SF_STATISTICS), thePrefs.GetUserNick());
-	*/
-	if (firstItem) strBuffer.Format(_T("<b>eMule v%s [%s] %s [%s]</b>\r\n<br/><br/>\r\n"), theApp.m_strCurVersionLong, theApp.m_strModLongVersion, GetResString(IDS_SF_STATISTICS), thePrefs.GetUserNick());
-	//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-]
-	if (theItem == NULL) {
-		if (!onlyVisible) theApp.emuledlg->statisticswnd->ShowStatistics(true);
-		hCurrent = GetRootItem();
-	}
-	else if (firstItem) {
-		if (ItemHasChildren(theItem)) hCurrent = theItem; // Copy Branch issued for item with children, use item.
-		else hCurrent = GetParentItem(theItem); // Copy Branch issued for item with no children, use parent.
-	}
-	else hCurrent = theItem; // This function has been recursed.
-
-	while (hCurrent != NULL)
+	if (ItemHasChildren(parentItem))
 	{
-		if((IsBold(hCurrent) && onlyBold) || !onlyBold){
-			strItem = GetItemText(hCurrent);
-
-			for (int i = 0; i < theItemLevel; i++) strBuffer += _T("...");
-			if (ItemHasChildren(hCurrent)){
-				stheItemPos.Format(_T("%p"),hCurrent);
-				strBuffer += _T("<b><a href=\"./?ses=[Session]&amp;w=stats&amp;show=") + stheItemPos + _T("\">") + strItem + _T("</a></b><br/>");
-			}else
-				strBuffer += strItem + _T("<br/>");
+		HTREEITEM hNextItem;
+		HTREEITEM hChildItem = GetChildItem(parentItem);
+		while (hChildItem != NULL)
+		{
+			hNextItem = GetNextItem(hChildItem, TVGN_NEXT);
+			DeleteItem(hChildItem);
+			hChildItem = hNextItem;
 		}
-		if (!noRecursive && ItemHasChildren(hCurrent) && (!onlyVisible || IsExpanded(hCurrent)))
-			strBuffer += (CString) GetWML(onlyVisible, onlyBold, false, GetChildItem(hCurrent), theItemLevel+1, false);
-		hCurrent = GetNextItem(hCurrent, TVGN_NEXT);
 	}
-	return strBuffer;
 }
+//Xman end
 
-bool CStatisticsTree::ItemExist(HTREEITEM item, HTREEITEM curItem)
-{
-	if (item == NULL) return false;
-
-	HTREEITEM	hCurrent;
-	bool found=false;
-
-	if(curItem==NULL)
-		hCurrent = GetRootItem();
-	else
-		hCurrent = curItem;
-
-	while (hCurrent != NULL && found == false)
-	{
-		if(hCurrent == item) found = true;
-		
-		if(!found && ItemHasChildren(hCurrent))
-			found = ItemExist(item, GetChildItem(hCurrent));
-
-		if(!found) hCurrent = GetNextItem(hCurrent, TVGN_NEXT);
-	}
-	return found;
-}
-//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]
 // ==> XP Style Menu [Xanatos] - Stulle
 void CStatisticsTree::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct) 
 {
 	HMENU hMenu = AfxGetThreadState()->m_hTrackingMenu;
 	if(CMenu *pMenu = CMenu::FromHandle(hMenu))
-	pMenu->MeasureItem(lpMeasureItemStruct);
+		pMenu->MeasureItem(lpMeasureItemStruct);
 	
 	CTreeCtrl::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+}
+
+LRESULT CStatisticsTree::OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu) 
+{
+	if (pMenu->IsKindOf(RUNTIME_CLASS(CTitleMenu)) )
+		return CTitleMenu::OnMenuChar(nChar, nFlags, pMenu);
+
+	return CTreeCtrl::OnMenuChar(nChar, nFlags, pMenu);
 }
 // <== XP Style Menu [Xanatos] - Stulle

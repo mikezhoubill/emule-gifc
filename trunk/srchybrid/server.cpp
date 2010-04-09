@@ -32,7 +32,6 @@ static char THIS_FILE[] = __FILE__;
 CServer::CServer(const ServerMet_Struct* in_data)
 {
 	port = in_data->port;
-	realport = 0;//Morph - added by AndCycle, aux Ports, by lugdunummaster
 	ip = in_data->ip;
 	_tcscpy(ipfull, ipstr(ip));
 	files = 0;
@@ -64,8 +63,6 @@ CServer::CServer(const ServerMet_Struct* in_data)
 CServer::CServer(uint16 in_port, LPCTSTR i_addr)
 {
 	port = in_port;
-	realport = 0;//Morph - added by AndCycle, aux Ports, by lugdunummaster
-
 	if ((ip = inet_addr(CT2CA(i_addr))) == INADDR_NONE && _tcscmp(i_addr, _T("255.255.255.255")) != 0){
 		m_strDynIP = i_addr;
 		ip = 0;
@@ -105,7 +102,6 @@ CServer::CServer(const CServer* pOld)
 	_tcscpy(ipfull, pOld->ipfull);
 	files = pOld->files;
 	users = pOld->users;
-	realport = pOld->realport;//Morph - added by AndCycle, aux Ports, by lugdunummaster
 	m_uPreference = pOld->m_uPreference;
 	ping = pOld->ping;
 	failedcount = pOld->failedcount;
@@ -257,12 +253,6 @@ bool CServer::AddTagFromFile(CFileDataIO* servermet)
 			if (tag->IsInt())
 				users = tag->GetInt();
 		}
-		//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-		else if (tag->GetNameID()==0 && !CmpED2KTagName(tag->GetName(),"auxportslist")){
-			ASSERT( tag->IsStr() );
-			if (tag->IsStr())	realport = (uint16)_tstoi(tag->GetStr());
-		}
-		//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 		else{
 			TRACE(_T("***Unknown tag in server.met: %s\n"), tag->GetFullInfo());
 		}
@@ -273,7 +263,16 @@ bool CServer::AddTagFromFile(CFileDataIO* servermet)
 
 void CServer::SetListName(LPCTSTR newname)
 {
+	// Maella -Security fix- (Xman)
+	/*
 	m_strName = newname;
+	*/
+	if (newname){
+		CString filteredName = newname;
+		filteredName.Replace('%', ' ');
+		m_strName = filteredName;
+	}
+	//Xman end
 }
 
 void CServer::SetDescription(LPCTSTR newname)
@@ -327,14 +326,7 @@ uint32 CServer::GetServerKeyUDP(bool bForce) const{
 }
 
 void CServer::SetServerKeyUDP(uint32 dwServerKeyUDP){
-	// MORPH lh require obfuscated server connection  modified
-	/* old code:
 	ASSERT( theApp.GetPublicIP() != 0 || dwServerKeyUDP == 0 );
-   */
-   // we need a server key for the first connect BEFORE we gat a valid ip
-   // optimization: determine ip in a different way (upnp or adapter)
-// NOTE: this assert fires on disconnect from hibernation????? 
-	ASSERT( ((theApp.GetPublicIP() != 0) &&(!theApp.IsWaitingForCryptPingConnect())) || dwServerKeyUDP == 0 );	 // MORPH lh require obfuscated server connection  modified
 	m_dwServerKeyUDP = dwServerKeyUDP;
 	m_dwIPServerKeyUDP = theApp.GetPublicIP();
 }

@@ -21,23 +21,9 @@
 #include "RichEditCtrlX.h"
 #include "ClosableTabCtrl.h"
 #include "SplitterControl.h"
-//MORPH START - Added by SiRoB, XML News [O²]
-#include "types.h" // Added by N_OxYdE: XML News
-//MORPH END    - Added by SiRoB, XML News [O²]
-#include "MenuXP.h" // XP Style Menu [Xanatos] - Stulle
 
 class CHTRichEditCtrl;
 class CCustomAutoComplete;
-
-// Mighty Knife: News feeds
-// grrr, why is this d*mn "pug" implementation completely contained in a
-// .h-file and not splitted in a .h/.cpp pair... 
-// therefore we mustn't include the .h-file here, otherwise there will be linker
-// errors :(
-namespace pug {
-	class xml_node;
-}
-// [end] Mighty Knife
 
 class CServerWnd : public CResizableDialog
 {
@@ -60,18 +46,6 @@ public:
 	bool AddServer(uint16 uPort, CString strAddress, CString strName = _T(""), bool bShowErrorMB = true);
 	CString GetMyInfoString();
 
-	//MORPH START - Added by SiRoB, XML News [O²]
-	void ListFeeds();
-	void DownloadFeed();
-	void DownloadAllFeeds(); //Commander - Added: Update All Feeds at once
-	void ParseNewsNode(pug::xml_node _node, CString _xmlbuffer);
-	void ParseNewsFile(LPCTSTR strTempFilename);
-	void OnFeedListSelChange();
-	CArray<CString> aFeedUrls;
-	CArray<CString> aXMLUrls;
-	CArray<CString> aXMLNames;
-	//MORPH END   - Added by SiRoB, XML News [O²]
-
 // Dialog Data
 	enum { IDD = IDD_SERVER };
 
@@ -80,40 +54,16 @@ public:
 		PaneServerInfo	= 0, // those are CTabCtrl item indices
 		PaneLog			= 1,
 		PaneVerboseLog	= 2,
-		//MORPH START - Added by SiRoB, XML News [O²]
-		PaneNews 		= 3,
-		//MORPH END   - Added by SiRoB, XML News [O²]
-		//MORPH START - Added by SiRoB, Morph Log
-		PaneMorphLog	= 4
-		//MORPH END   - Added by SiRoB, Morph Log
+		PaneLeecherLog	= 3	 //Xman Anti-Leecher-Log
 	};
 
 	CServerListCtrl serverlistctrl;
 	CHTRichEditCtrl* servermsgbox;
 	CHTRichEditCtrl* logbox;
 	CHTRichEditCtrl* debuglog;
+	CHTRichEditCtrl* leecherlog; //Xman Anti-Leecher-Log
 	CClosableTabCtrl StatusSelector;
 	CSplitterControl m_wndSplitter;
-
-	//MORPH START - Added by SiRoB, XML News [O²]
-	CHTRichEditCtrl* newsmsgbox;
-	CComboBox m_feedlist;
-	afx_msg void OnEnLinkNewsBox(NMHDR *pNMHDR, LRESULT *pResult);
-	//MORPH END - Added by SiRoB, XML News [O²]
-	//MORPH START - Added by SiRoB, Morph Log
-	CHTRichEditCtrl* morphlog;
-	//MORPH END   - Added by SiRoB, Morph Log
-
-	// Mighty Knife: Context menu for editing news feeds
-	// ==> XP Style Menu [Xanatos] - Stulle
-	/*
-	CMenu m_FeedsMenu;
-	*/
-	CTitleMenu	m_FeedsMenu;
-	// <== XP Style Menu [Xanatos] - Stulle
-	void ReadXMLList (CStringList& _names, CStringList& _urls);
-	void WriteXMLList (CStringList& _names, CStringList& _urls);
-	// [end] Mighty Knife
 
 private:
 	void	DoResize(int delta);
@@ -134,9 +84,9 @@ private:
 	CHARFORMAT m_cfBold;
 	CCustomAutoComplete* m_pacServerMetURL;
 	CString m_strClickNewVersion;
-	//MORPH START - Added by SiRoB, New Version Check
-	CString m_strMorphNewVersion;
-	//MORPH END   - Added by SiRoB, New Version Check
+	//Xman versions check
+	CString m_strClickNewXtremeVersion;
+	//Xman end
 
 protected:
 	void SetAllIcons();
@@ -145,7 +95,6 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	virtual LRESULT DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam);
-	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam); //MORPH
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnBnClickedAddserver();
@@ -161,16 +110,12 @@ protected:
 	afx_msg void OnStnDblclickServlstIco();
 	afx_msg void OnSplitterMoved(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnBnClickedFeedchange(); //MORPH
-	afx_msg void OnBnClickedServerLists();
-
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	afx_msg void OnBnClickedServerLists(); // Links for Server list and nodes file [Stulle] - Stulle
+	// ==> Design Settings [eWombat/Stulle] - Max
 	CBrush m_brMyBrush;
 	HBRUSH hbr;
 	COLORREF clrSrvColor;
 public:
 	void OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

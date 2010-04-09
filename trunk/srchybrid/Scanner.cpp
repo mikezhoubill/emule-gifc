@@ -1,4 +1,4 @@
-#include "stdafx.h" //vs2005 //Fafner: vs2008: moved (precompiled header) - 080515
+#include "stdafx.h" // Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 
 #line 3 "d:\\Data\\Src\\eMule_CVS\\srchybrid\\Scanner.cpp"
 

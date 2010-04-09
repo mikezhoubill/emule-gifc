@@ -371,11 +371,12 @@ void CCreditsThread::InitFonts()
 	lf.lfHeight = 16;
 	lf.lfWeight = 700;
 	//lf.lfItalic = TRUE;
-	/* MORPH win95 is not supported, vs2008 does not support .win95
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	lf.lfQuality = afxIsWin95() ? NONANTIALIASED_QUALITY : ANTIALIASED_QUALITY;
 	*/
 	lf.lfQuality = ANTIALIASED_QUALITY;
-	// MORPH END
+	// <== Drop Win95 support [MorphXT] - Stulle
 	_tcscpy(lf.lfFaceName, _T("Arial"));
 	font2->CreateFontIndirect(&lf);
 	m_arFonts.Add(font2);
@@ -389,11 +390,12 @@ void CCreditsThread::InitFonts()
 	memset((void*)&lf, 0, sizeof(lf));
 	lf.lfHeight = 25;
 	lf.lfWeight = 900;
-	/* MORPH
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	lf.lfQuality = afxIsWin95() ? NONANTIALIASED_QUALITY : ANTIALIASED_QUALITY;
-	 */
+	*/
 	lf.lfQuality = ANTIALIASED_QUALITY;
-	// MORPH END
+	// <== Drop Win95 support [MorphXT] - Stulle
 	_tcscpy(lf.lfFaceName, _T("Arial"));
 	font3->CreateFontIndirect(&lf);
 	m_arFonts.Add(font3);
@@ -441,48 +443,13 @@ void CCreditsThread::InitText()
 
 	m_arCredits.Add(_T("03:00:eMule"));
 	sTmp.Format(_T("02:01:Version %s"),theApp.m_strCurVersionLong);
-	//MORPH START - Added by SiRoB, [itsonlyme: -modname-]
+	// ==> ModID [itsonlyme/SiRoB] - Stulle
 	sTmp += _T(" [") + theApp.m_strModLongVersion + _T("]");
-	//MORPH END   - Added by SiRoB, [itsonlyme: -modname-]
-
+	// <== ModID [itsonlyme/SiRoB] - Stulle
 	m_arCredits.Add(sTmp);
 	m_arCredits.Add(_T("01:06:Copyright (C) 2002-2009 Merkur"));
 	m_arCredits.Add(_T("S:50"));
-
-    //Commander - Added: MorphTeam - Start
-	m_arCredits.Add(_T("02:04:Morph Developers"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:AndCycle (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Commander (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:IceCream (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:JLEE (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Mighty Knife (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Milobac (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Morpheus (founder)(retired)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:SiRoB (retired)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Wistily (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Yun.SF3 (inactive)"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:Stulle"));
-	m_arCredits.Add(_T("S:5"));
-	m_arCredits.Add(_T("01:06:leuk_he"));
-	m_arCredits.Add(_T("S:5"));
-			// as required by the upnp library licence:
-	m_arCredits.Add(_T("01:06:morph contains some code that is "));
-	m_arCredits.Add(_T("01:06:(c) 2000-2003 Intel Corporation "));
-	m_arCredits.Add(_T("S:50"));
-    //Commander - Added: MorphTeam - End
-
-	m_arCredits.Add(_T("02:04:Official Developers")); //Commander - Modified: Make clear who belongs to the official Developers and who to the Mod ones
+	m_arCredits.Add(_T("02:04:Developers"));
 	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Unknown1"));
 	m_arCredits.Add(_T("S:5"));
@@ -490,8 +457,8 @@ void CCreditsThread::InitText()
 
 	m_arCredits.Add(_T("S:50"));
 
-	m_arCredits.Add(_T("02:04:Official Testers")); //Commander - Modified: Make clear who belongs to the official Developers and who to the Mod ones
-		m_arCredits.Add(_T("S:5"));
+	m_arCredits.Add(_T("02:04:Tester"));
+	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Monk"));
 	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Daan"));
@@ -516,7 +483,7 @@ void CCreditsThread::InitText()
 
 
 	m_arCredits.Add(_T("S:50"));
-	m_arCredits.Add(_T("02:04:Official Retired Members")); //Commander - Modified: Make clear who belongs to the official Developers and who to the Mod ones
+	m_arCredits.Add(_T("02:04:Retired Members"));
 	m_arCredits.Add(_T("S:5"));
 	m_arCredits.Add(_T("01:06:Merkur (the Founder)"));
 	m_arCredits.Add(_T("S:5"));
@@ -557,7 +524,7 @@ void CCreditsThread::InitText()
 	m_arCredits.Add(_T("02:07:into different languages:"));
 	m_arCredits.Add(_T("S:20"));
 	
-	
+
 	m_arCredits.Add(_T("01:06:Arabic: Dody"));
 	m_arCredits.Add(_T("S:05"));	
 	m_arCredits.Add(_T("01:06:Albanian: Besmir"));

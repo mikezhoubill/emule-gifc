@@ -22,7 +22,7 @@
 #include "SearchResultsWnd.h"
 #include "OtherFunctions.h"
 #include "HelpIDs.h"
-#include "NTService.h" // MORPH leuk_he:run as ntservice v1..
+#include "NTService.h" // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -107,13 +107,15 @@ int CSearchDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 void CSearchDlg::OnClose()
 {
 	SaveBarState(SEARCH_PARAMS_PROFILE);
-	// MORPH leuk_he:run as ntservice v1.. workarround a mfc bug
+
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workarround a mfc bug
 	if (RunningAsService()) {
 		DWORD dwProcessId;
 		DWORD dwThreadId= GetWindowThreadProcessId(m_hWnd,&dwProcessId);
 		EnumThreadWindows(dwThreadId, EnumProc,(LPARAM) dwThreadId);
 	}
-	// MORPH leuk_he:run as ntservice v1..
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	CFrameWnd::OnClose();
 }
@@ -339,13 +341,11 @@ BOOL CSearchDlg::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	theApp.ShowHelp(eMule_FAQ_GUI_Search);
 	return TRUE;
 }
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
 void CSearchDlg::OnBackcolor() 
 {
 	m_pwndResults->OnBackcolor();
 	m_pwndParams->OnBackcolor();
 	m_pwndParams->RedrawWindow();
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max

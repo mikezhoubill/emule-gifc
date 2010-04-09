@@ -19,7 +19,7 @@
 class CTag;
 class CFileDataIO;
 
-struct IPRange_Struct2; //EastShare - added by AndCycle, IP to Country
+struct Country_Struct; //EastShare - added by AndCycle, IP to Country
 
 #pragma pack(1)
 struct ServerMet_Struct {
@@ -77,14 +77,7 @@ public:
 
 	LPCTSTR	GetFullIP() const						{return ipfull;}
 	LPCTSTR	GetAddress() const;
-	//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-	/*
 	uint16	GetPort() const							{return port;}
-	*/
-	uint16	GetPort() const							{return realport ? realport : port;}
-	uint16	GetConnPort() const						{return port;}
-	void    SetPort(uint16 val)						{ realport = val;}
-	//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 
 	uint32	GetFiles() const						{return files;}
 	void	SetFileCount(uint32 in_files)			{files = in_files;}
@@ -188,7 +181,6 @@ private:
 	TCHAR		ipfull[3+1+3+1+3+1+3+1]; // 16
 	uint32		ip;
 	uint16		port;
-	uint16		realport;//Morph - added by AndCycle, aux Ports, by lugdunummaster
 	bool		staticservermember;
 	bool		m_bCryptPingReplyPending;
 	uint32		failedcount; 
@@ -201,18 +193,15 @@ private:
 	uint16		m_nObfuscationPortTCP;
 	uint16		m_nObfuscationPortUDP;
 	uint32		m_dwRealLastPingedTime;
-// MORPH START dont send more than softlimit files 
-	uint32     m_uPublishedfiles ;
-    uint32     m_uLastpublishTick ;
-// MORPH END dont send more than softlimit files 
 
-//EastShare Start - added by AndCycle, IP to Country
+	//EastShare Start - added by AndCycle, IP to Country
 public:
 	CString	GetCountryName() const;
 	int		GetCountryFlagIndex() const;
 	void	ResetIP2Country();
 
 private:
-	struct	IPRange_Struct2* m_structServerCountry;
- //EastShare End - added by AndCycle, IP to Country
+	/*struct*/	Country_Struct* m_structServerCountry;
+	//EastShare End - added by AndCycle, IP to Country
+
 };

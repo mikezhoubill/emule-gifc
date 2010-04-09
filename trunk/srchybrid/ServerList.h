@@ -69,9 +69,6 @@ public:
 	UINT		GetDeletedServerCount() const { return delservercount; }
 
     bool        GiveServersForTraceRoute();
-	//EastShare Start - PreferShareAll by AndCycle
-	void		PushBackNoShare();	// SLUGFILLER: preferShareAll
-	//EastShare End - PreferShareAll by AndCycle
 
 	void		CheckForExpiredUDPKeys();
 #ifdef _DEBUG
@@ -87,8 +84,9 @@ private:
 	CTypedPtrList<CPtrList, CServer*> list;
 	UINT		delservercount;
 	DWORD		m_nLastSaved;
-//EastShare Start - added by AndCycle, IP to Country
+
+	//EastShare Start - added by AndCycle, IP to Country
 public:
 	void ResetIP2Country();
-//EastShare End - added by AndCycle, IP to Country
+	//EastShare End - added by AndCycle, IP to Country
 };

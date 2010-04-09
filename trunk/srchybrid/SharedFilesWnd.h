@@ -22,7 +22,7 @@
 #include "SharedDirsTreeCtrl.h"
 #include "SplitterControl.h"
 #include "EditDelayed.h"
-#include "HistoryListCtrl.h" //MORPH - Added, Downloaded History [Monki/Xman]
+#include "HistoryListCtrl.h" //Xman [MoNKi: -Downloaded History-]
 
 class CSharedFilesWnd : public CResizableDialog
 {
@@ -34,13 +34,12 @@ public:
 
 	void Localize();
 	void SetToolTipsDelay(DWORD dwDelay);
-	//MORPH START - Changed, Downloaded History [Monki/Xman]
-#ifdef NO_HISTORY
+	//Xman [MoNKi: -Downloaded History-]
+	/*
 	void ShowSelectedFilesSummary();
-#else
+	*/
 	void ShowSelectedFilesSummary(bool bHistory =false);
-#endif
-	//MORPH END   - Changed, Downloaded History [Monki/Xman]
+	//Xman end
 	void Reload(bool bForceTreeReload = false);
 	uint32	GetFilterColumn() const				{ return m_nFilterColumn; }
 	void OnVolumesChanged()						{ m_ctlSharedDirTree.OnVolumesChanged(); }
@@ -84,24 +83,19 @@ protected:
 	afx_msg void OnStnDblClickFilesIco();
 	afx_msg void OnSysColorChange();
 	afx_msg void OnTvnSelChangedSharedDirsTree(NMHDR *pNMHDR, LRESULT *pResult);
-	//MORPH START - Added, Downloaded History [Monki/Xman]
-#ifndef NO_HISTORY
-	afx_msg void OnShowWindow( BOOL bShow,UINT nStatus  );
+	afx_msg void OnShowWindow( BOOL bShow,UINT nStatus  ); //Xman [MoNKi: -Downloaded History-]
+	//Xman [MoNKi: -Downloaded History-]
 public:
 	CHistoryListCtrl historylistctrl;
 protected:
 	afx_msg void OnLvnItemActivateHistorylist(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMClickHistorylist(NMHDR *pNMHDR, LRESULT *pResult);
-#endif
-	//MORPH END   - Added, Downloaded History [Monki/Xman]
-
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	//Xman end
+	// ==> Design Settings [eWombat/Stulle] - Max
 	CBrush m_brMyBrush;
 	HBRUSH hbr;	
 	COLORREF crSharedColor;
 public:
 	void OnBackcolor(); 
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

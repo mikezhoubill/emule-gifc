@@ -61,7 +61,12 @@
 #include "Log.h"
 #include "CollectionViewDialog.h"
 #include "Collection.h"
-#include "SharedFilesWnd.h" //MORPH - Added, Downloaded History [Monki/Xman]
+//Xman
+#include "BandWidthControl.h"
+#include "ClientCredits.h"
+
+#include "SharedFilesWnd.h" //Xman [MoNKi: -Downloaded History-]
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -74,17 +79,27 @@ static char THIS_FILE[] = __FILE__;
 #define PROGRESS_HEIGHT 3
 
 CBarShader CPartFile::s_LoadBar(PROGRESS_HEIGHT); // Barry - was 5
+//Xman
+/*
 CBarShader CPartFile::s_ChunkBar(16); 
+*/
+//Xman end
 
 IMPLEMENT_DYNAMIC(CPartFile, CKnownFile)
 
 CPartFile::CPartFile(UINT ucat)
+// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+:	m_sourcesaver(this) 
+// Xman end
 {
 	Init();
 	m_category=ucat;
 }
 
 CPartFile::CPartFile(CSearchFile* searchresult, UINT cat)
+// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+:	m_sourcesaver(this) 
+// Xman end
 {
 	Init();
 
@@ -164,6 +179,9 @@ CPartFile::CPartFile(CSearchFile* searchresult, UINT cat)
 }
 
 CPartFile::CPartFile(CString edonkeylink, UINT cat)
+// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+:	m_sourcesaver(this) 
+// Xman end
 {
 	CED2KLink* pLink = 0;
 	try {
@@ -226,6 +244,9 @@ void CPartFile::InitializeFromLink(CED2KFileLink* fileLink, UINT cat)
 }
 
 CPartFile::CPartFile(CED2KFileLink* fileLink, UINT cat)
+// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+:	m_sourcesaver(this) 
+// Xman end
 {
 	InitializeFromLink(fileLink,cat);
 }
@@ -242,7 +263,12 @@ void CPartFile::Init(){
 	insufficient = false;
 	m_bCompletionError = false;
 	m_uTransferred = 0;
-	m_iLastPausePurge = (uint32)time(NULL); // vs2005
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	m_iLastPausePurge = time(NULL);
+	*/
+	m_iLastPausePurge = (uint32)time(NULL);
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	m_AllocateThread=NULL;
 	m_iAllocinfo = 0;
 	if(thePrefs.GetNewAutoDown()){
@@ -255,18 +281,26 @@ void CPartFile::Init(){
 	}
 	srcarevisible = false;
 	memset(m_anStates,0,sizeof(m_anStates));
+	//Xman
+	/*
 	datarate = 0;
+	*/
+	//Xman end
 	m_uMaxSources = 0;
 	hashsetneeded = true;
+	//Xman
+	/*
 	count = 0;
+	*/
+	//Xman end
 	percentcompleted = 0;
 	completedsize = (uint64)0;
-	m_uTotalGaps = (uint64)0;//MORPH - Optimization, completedsize
 	m_bPreviewing = false;
 	lastseencomplete = NULL;
 	availablePartsCount=0;
 	m_ClientSrcAnswered = 0;
 	m_LastNoNeededCheck = 0;
+	m_is_A4AF_auto=false; //Xman Xtreme Downloadmanager: Auto-A4AF-check
 	m_uRating = 0;
 	(void)m_strComment;
 	m_nTotalBufferData = 0;
@@ -293,38 +327,40 @@ void CPartFile::Init(){
 	m_tCreated = 0;
 	m_eFileOp = PFOP_NONE;
 	m_uFileOpProgress = 0;
-	m_PartsHashing = 0;		// SLUGFILLER: SafeHash
     m_bpreviewprio = false;
     m_random_update_wait = (uint32)(rand()/(RAND_MAX/1000));
-    lastSwapForSourceExchangeTick = ::GetTickCount();
-	m_DeadSourceList.Init(false);
-	//MORPH START - Added by SiRoB, Flush Thread
-	m_FlushThread = NULL;
-	m_FlushSetting = NULL;
-	//MORPH END   - Added by SiRoB, Flush Thread
-	// khaos::categorymod+
-	m_catResumeOrder=0;
-	// khaos::categorymod-
-	// khaos::accuratetimerem+
-	m_nSecondsActive = 0;
-	m_I64uInitialBytes = 0;
-	m_dwActivatedTick = 0;
-	// khaos::accuratetimerem-
-	// khaos::kmod+
-	m_bForceAllA4AF = false;
-	m_bForceA4AFOff = false;
-	// khaos::kmod-
-	//MORPH START - Added by SiRoB,  SharedStatusBar CPU Optimisation
-	InChangedSharedStatusBar = false;
-	//MORPH END   - Added by SiRoB,  SharedStatusBar CPU Optimisation
-	// ==> Set and save Follow the Majority per file - Stulle
+	//Xman
 	/*
-	m_bFollowTheMajority = thePrefs.IsFollowTheMajorityEnabled(); // EastShare       - FollowTheMajority by AndCycle
+    lastSwapForSourceExchangeTick = ::GetTickCount();
 	*/
-	m_iFollowTheMajority = -1;
-	// <== Set and save Follow the Majority per file - Stulle
+	//Xman end
+	m_DeadSourceList.Init(false);
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	// Maella end
+	// Maella -Downloading source list-
+	m_sourceListChange = false;
+	// Maella end
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	//Xman Xtreme Downloadmanager
+	m_avgqr=0;
+	m_sumqr=0;
+	m_countqr=0;
+	//Xman end
+
+	//Xman sourcecache
+	m_lastSoureCacheProcesstime=::GetTickCount();
+
+	//Xman
+	m_PartsHashing = 0;		// SLUGFILLER: SafeHash
+	// SiRoB: Flush Thread
+	m_FlushThread = NULL; 
+	m_FlushSetting = NULL;
+	//Xman end
+
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 	InitHL();
 	if(thePrefs.IsUseGlobalHL() &&
 		theApp.downloadqueue->GetPassiveMode())
@@ -333,17 +369,9 @@ void CPartFile::Init(){
 		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
 		AddDebugLogLine(true,_T("{GSL} New file added! Disabled PassiveMode!"));
 	}
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
-	m_lastSoureCacheProcesstime = ::GetTickCount(); //MORPH - Added by Stulle, Source cache [Xman]
-
-	// ==> Average Queue Ranking [Xman] - Stulle
-	m_avgqr=0;
-	m_sumqr=0;
-	m_countqr=0;
-	// <== Average Queue Ranking [Xman] - Stulle
-
-	// ==> drop sources - Stulle
+	// ==> File Settings [sivka/Stulle] - Stulle
 	m_EnableAutoDropNNS = 	thePrefs.GetEnableAutoDropNNSDefault();
 	m_AutoNNS_Timer		= 	thePrefs.GetAutoNNS_TimerDefault();
 	m_MaxRemoveNNSLimit = 	thePrefs.GetMaxRemoveNNSLimitDefault();
@@ -354,15 +382,22 @@ void CPartFile::Init(){
 	m_AutoHQRS_Timer	= 	thePrefs.GetAutoHQRS_TimerDefault();
 	m_MaxRemoveQRS		= 	thePrefs.GetMaxRemoveQRSDefault();
 	m_MaxRemoveQRSLimit = 	thePrefs.GetMaxRemoveQRSLimitDefault();
+	m_bHQRXman          =	thePrefs.GetHQRXmanDefault();
 	m_bGlobalHL			=	thePrefs.GetGlobalHlDefault(); // Global Source Limit (customize for files) - Stulle
-	
+	// <== File Settings [sivka/Stulle] - Stulle
+
+	// ==> customized source dropping - Stulle
 	m_TimerForAutoNNS = 0;
 	m_TimerForAutoFQS = 0;
 	m_TimerForAutoHQRS = 0;
 	m_RemoteQueueRank_Old = 0xFFFF;
-	// <== drop sources - Stulle
+	// <== customized source dropping - Stulle
 
 	m_ShowDroppedSrc = 0; // show # of dropped sources - Stulle
+
+	m_catResumeOrder=0; // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
+	m_iFollowTheMajority = -1; // Follow The Majority [AndCycle/Stulle] - Stulle
 }
 
 CPartFile::~CPartFile()
@@ -372,12 +407,9 @@ CPartFile::~CPartFile()
 		if (m_AllocateThread != NULL){
 			HANDLE hThread = m_AllocateThread->m_hThread;
 			// 2 minutes to let the thread finish
-			m_AllocateThread->SetThreadPriority(THREAD_PRIORITY_NORMAL);  // MORPH like flushthread
-			if (WaitForSingleObject(hThread, 120000) == WAIT_TIMEOUT){
+			if (WaitForSingleObject(hThread, 120000) == WAIT_TIMEOUT)
 				TerminateThread(hThread, 100);
-				ASSERT(0); // did this happen why? 
-			}
-       	}
+		}
 
 		if (m_hpartfile.m_hFile != INVALID_HANDLE_VALUE)
 			FlushBuffer(true);
@@ -385,12 +417,17 @@ CPartFile::~CPartFile()
 	catch(CFileException* e){
 		e->Delete();
 	}
-	ASSERT(m_FlushSetting == NULL); // flush was reported done but thread not properly ended?
 	
 	if (m_hpartfile.m_hFile != INVALID_HANDLE_VALUE){
 		// commit file and directory entry
 		m_hpartfile.Close();
 		// Update met file (with current directory entry)
+		//Xman 
+		if(m_FlushThread)
+			LogError(_T("Warning: Flushingthread running in function: %s for file: %s"), __FUNCTION__, GetFileName());
+		if(m_FlushSetting)
+			LogError(_T("Warning: Flushsetting in function: %s for file: %s"), __FUNCTION__, GetFileName());
+		//Xman end	
 		SavePartFile();
 	}
 
@@ -401,12 +438,16 @@ CPartFile::~CPartFile()
 	pos = m_BufferedData_list.GetHeadPosition();
 	while (pos){
 		PartFileBufferedData *item = m_BufferedData_list.GetNext(pos);
-		if (item->data) //MORPH - Flush Thread
 		delete[] item->data;
 		delete item;
 	}
+	// Maella -Extended clean-up II-
+	theApp.clientlist->CleanUp(this);
+	// Maella end
 
-	ClearSourceCache(); //MORPH - Added by Stulle, Source cache [Xman]
+	//Xman sourcecache
+	ClearSourceCache();
+
 }
 
 #ifdef _DEBUG
@@ -430,13 +471,24 @@ void CPartFile::AssertValid() const
 	CHECK_BOOL(srcarevisible);
 	CHECK_BOOL(hashsetneeded);
 	(void)m_iLastPausePurge;
+	//Xman
+	/*
 	(void)count;
+	*/
+	//Xman end
 	(void)m_anStates;
 	ASSERT( completedsize <= m_nFileSize );
 	(void)m_uCorruptionLoss;
 	(void)m_uCompressionGain;
 	(void)m_uPartsSavedDueICH; 
+	//Xman
+	/*
 	(void)datarate;
+	*/
+	//Xman end
+	(void)m_nDownDatarate; //Xman // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	(void)m_nDownDatarate10; //Xman // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	(void)m_sourceListChange; //Xman // Maella -New bandwidth control-
 	(void)m_fullname;
 	(void)m_partmetfilename;
 	(void)m_uTransferred;
@@ -450,6 +502,7 @@ void CPartFile::AssertValid() const
 	CHECK_BOOL(newdate);
 	(void)lastpurgetime;
 	(void)m_LastNoNeededCheck;
+	CHECK_BOOL(m_is_A4AF_auto); //Xman Xtreme Downloadmanager: Auto-A4AF-check
 	gaplist.AssertValid();
 	requestedblocks_list.AssertValid();
 	m_SrcpartFrequency.AssertValid();
@@ -458,16 +511,21 @@ void CPartFile::AssertValid() const
 	(void)availablePartsCount;
 	(void)m_ClientSrcAnswered;
 	(void)s_LoadBar;
+	//Xman
+	/*
 	(void)s_ChunkBar;
+	*/
+	//Xman end
 	(void)m_lastRefreshedDLDisplay;
 	m_downloadingSourceList.AssertValid();
+	m_downloadingDeleteList.AssertValid(); //zz_fly :: delayed deletion of downloading source :: Enig123
 	m_BufferedData_list.AssertValid();
 	(void)m_nTotalBufferData;
 	(void)m_nLastBufferFlushTime;
 	(void)m_category;
 	(void)m_dwFileAttributes;
 
-	// ==> drop sources - Stulle
+	// ==> File Settings [sivka/Stulle] - Stulle
 	CHECK_BOOL(m_EnableAutoDropNNS);
 	(void)m_AutoNNS_Timer;
 	(void)m_MaxRemoveNNSLimit;
@@ -478,15 +536,21 @@ void CPartFile::AssertValid() const
 	(void)m_AutoHQRS_Timer;
 	(void)m_MaxRemoveQRS;
 	(void)m_MaxRemoveQRSLimit;
+	CHECK_BOOL(m_bHQRXman);
+	CHECK_BOOL(m_bGlobalHL); // Global Source Limit (customize for files) - Stulle
+	// <== File Settings [sivka/Stulle] - Stulle
+
+	// ==> customized source dropping - Stulle
 	(void)m_TimerForAutoNNS;
 	(void)m_TimerForAutoFQS;
 	(void)m_TimerForAutoHQRS;
 	(void)m_RemoteQueueRank_Old;
 	(void)m_RemoteQueueRank_New;
-	CHECK_BOOL(m_bGlobalHL); // Global Source Limit (customize for files) - Stulle
-	// <== drop sources - Stulle
+	// <== customized source dropping - Stulle
 
 	(void)m_ShowDroppedSrc; // show # of dropped sources - Stulle
+
+	(void)m_iFollowTheMajority; // Follow The Majority [AndCycle/Stulle] - Stulle
 }
 
 void CPartFile::Dump(CDumpContext& dc) const
@@ -510,11 +574,11 @@ void CPartFile::CreatePartFile(UINT cat)
 	// use lowest free partfilenumber for free file (InterCeptor)
 	int i = 0; 
 	CString filename; 
-	do{ 
+	do{
 		i++; 
 		filename.Format(_T("%s\\%03i.part"), tempdirtouse, i); 
 	}
-	while(PathFileExists(filename));
+	while (PathFileExists(filename));
 	m_partmetfilename.Format(_T("%03i.part.met"), i); 
 	SetPath(tempdirtouse);
 	m_fullname.Format(_T("%s\\%s"), tempdirtouse, m_partmetfilename);
@@ -525,13 +589,10 @@ void CPartFile::CreatePartFile(UINT cat)
 	Gap_Struct* gap = new Gap_Struct;
 	gap->start = 0;
 	gap->end = m_nFileSize - (uint64)1;
-	m_uTotalGaps = m_nFileSize; //MORPH - Optimization, completedsize
 	gaplist.AddTail(gap);
 
 	CString partfull(RemoveFileExtension(m_fullname));
 	SetFilePath(partfull);
-	
-	//Fafner: note: CFile::osRandomAccess inflates XP's file cache beyond all limits and renders systems tight on mem virtually unusable - 080229
 	if (!m_hpartfile.Open(partfull,CFile::modeCreate|CFile::modeReadWrite|CFile::shareDenyWrite|CFile::osSequentialScan)){
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_CREATEPARTFILE));
 		SetStatus(PS_ERROR);
@@ -551,8 +612,14 @@ void CPartFile::CreatePartFile(UINT cat)
 
 		struct _stat fileinfo;
 		if (_tstat(partfull, &fileinfo) == 0){
-			m_tLastModified = (uint32)fileinfo.st_mtime; //vs2005
-			m_tCreated = (uint32)fileinfo.st_ctime; //vs2005
+			// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+			/*
+			m_tLastModified = fileinfo.st_mtime;
+			m_tCreated = fileinfo.st_ctime;
+			*/
+			m_tLastModified = (uint32)fileinfo.st_mtime;
+			m_tCreated = (uint32)fileinfo.st_ctime;
+			// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		}
 		else
 			AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), partfull, _tcserror(errno));
@@ -561,11 +628,16 @@ void CPartFile::CreatePartFile(UINT cat)
 	if (m_dwFileAttributes == INVALID_FILE_ATTRIBUTES)
 		m_dwFileAttributes = 0;
 
-	// SLUGFILLER: SafeHash - setting at the hotspot
-	if (hashlist.GetCount() == 0) { //MORPH - Changed by SiRoB, Fix ed2klink with hashset
-		if (GetED2KPartCount() > 1) {
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - setting at the hotspot
+	/*
+	if (GetED2KPartHashCount() == 0)
+		hashsetneeded = false;
+	*/
+	if (hashlist.GetCount() == 0) { //SiRoB: Fix ed2klink with hashset
+		if (GetED2KPartCount() > 1)
 			hashsetneeded = true;
-		} else {
+		else {
 			hashsetneeded = false;
 			uchar* cur_hash = new uchar[16];
 			md4cpy(cur_hash, m_abyFileHash);
@@ -577,18 +649,11 @@ void CPartFile::CreatePartFile(UINT cat)
 	m_PartsShareable.SetSize(GetPartCount());
 	for (uint32 i = 0; i < GetPartCount();i++)
 		m_PartsShareable[i] = false;
-	//SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	m_SrcpartFrequency.SetSize(GetPartCount());
 	for (UINT i = 0; i < GetPartCount();i++)
 		m_SrcpartFrequency[i] = 0;
-	//Morph Start - added by AndCycle, ICS
-	// enkeyDEV: ICS
-	m_SrcIncPartFrequency.SetSize(GetPartCount());
-	for (UINT i = 0; i < GetPartCount();i++)
-		m_SrcIncPartFrequency[i] = 0;
-	// enkeyDEV: ICS
-	//Morph End - added by AndCycle, ICS
 	paused = false;
 
 	if (thePrefs.AutoFilenameCleanup())
@@ -598,7 +663,7 @@ void CPartFile::CreatePartFile(UINT cat)
 	SetActive(theApp.IsConnected());
 }
 
-/*
+/* 
 * David: Lets try to import a Shareaza download ...
 *
 * The first part to get filename size and hash is easy 
@@ -719,6 +784,7 @@ EPartFileLoadResult CPartFile::ImportShareazaTempfile(LPCTSTR in_directory,LPCTS
 
 		if (pOutCheckFileFormat != NULL){
 			*pOutCheckFileFormat = PMT_SHAREAZA;
+			sdFile.Close(); //zz_fly :: bug fix :: DolphinX
 			return PLR_CHECKSUCCESS;
 		}
 
@@ -881,11 +947,13 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 	EPartFileFormat partmettype = PMT_UNKNOWN;
 
 	CMap<UINT, UINT, Gap_Struct*, Gap_Struct*> gap_map; // Slugfiller
-	//MORPH START - Added by SiRoB, Spreadbars
+
+	// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 	CMap<UINT,UINT,uint64,uint64> spread_start_map;
 	CMap<UINT,UINT,uint64,uint64> spread_end_map;
 	CMap<UINT,UINT,uint64,uint64> spread_count_map;
-	//MORPH END - Added by SiRoB, Spreadbars
+	// <== Spread bars [Slugfiller/MorphXT] - Stulle
+
 	m_uTransferred = 0;
 	m_partmetfilename = in_filename;
 	SetPath(in_directory);
@@ -948,7 +1016,12 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 				uchar gethash[16];
 				metFile.Seek(2, CFile::begin);
 				LoadDateFromFile(&metFile);
+				//Xman
+				/*
 				metFile.Read(gethash, 16);
+				*/
+				metFile.Read(&gethash, 16);
+				//Xman end
 				md4cpy(m_abyFileHash, gethash);
 			}
 		}
@@ -957,10 +1030,10 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 			LoadHashsetFromFile(&metFile, false);
 		}
 
-		//MORPH START - Added by SiRoB, Rescue CatResumeOrder
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 		bool bGotCatResumeOrder = false;
 		bool bGotA4AFFlag = false;
-		//MORPH END   - Added by SiRoB, Rescue CatResumeOrder
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 		UINT tagcount = metFile.ReadUInt32();
 		for (UINT j = 0; j < tagcount; j++){
 			CTag* newtag = new CTag(&metFile, false);
@@ -1086,7 +1159,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 						if (newtag->IsInt())
 						{
 						    SetLastPublishTimeKadSrc(newtag->GetInt(), 0);
-							if(GetLastPublishTimeKadSrc() > time(NULL)+KADEMLIAREPUBLISHTIMES)
+							if(GetLastPublishTimeKadSrc() > (uint32)time(NULL)+KADEMLIAREPUBLISHTIMES)
 							{
 								//There may be a posibility of an older client that saved a random number here.. This will check for that..
 								SetLastPublishTimeKadSrc(0,0);
@@ -1156,10 +1229,6 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 					// old tags: as long as they are not needed, take the chance to purge them
 					case FT_PERMISSIONS:
 						ASSERT( newtag->IsInt() );
-						//MORPH START - Added by SiRoB, xMule_MOD: showSharePermissions - load permissions
-						if (newtag->IsInt())
-							SetPermissions(newtag->GetInt());
-						//MORPH END   - Added by SiRoB, xMule_MOD: showSharePermissions - load permissions
 						delete newtag;
 						break;
 					case FT_KADLASTPUBLISHKEY:
@@ -1203,7 +1272,35 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 						delete newtag;
 						break;
 					}
-					// khaos::categorymod+
+
+					//Xman advanced upload-priority
+					case FT_NOTCOUNTEDTRANSFERREDLOW:
+					{
+						ASSERT( newtag->IsInt() );
+						if (newtag->IsInt())
+							statistic.m_unotcountedtransferred = newtag->GetInt();
+						delete newtag;
+						break;
+					}
+					case FT_NOTCOUNTEDTRANSFERREDHIGH:
+					{
+						ASSERT( newtag->IsInt() );
+						if (newtag->IsInt())
+							statistic.m_unotcountedtransferred = ((uint64)newtag->GetInt() << 32) | (UINT)statistic.m_unotcountedtransferred;
+						delete newtag;
+						break;
+					}
+					case FT_LASTDATAUPDATE:
+					{
+						ASSERT( newtag->IsInt() );
+						if (newtag->IsInt())
+							statistic.m_tlastdataupdate = newtag->GetInt();
+						delete newtag;
+						break;
+					}
+					//Xman end
+
+					// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 					case FT_CATRESUMEORDER:{
 						ASSERT( newtag->IsInt() );
 						if (newtag->IsInt()) {
@@ -1213,29 +1310,9 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 						delete newtag;
 						break;
 					}
-					// khaos::kmod+
-					case FT_A4AFON:{
-						if (!newtag->IsInt()) {
-							taglist.Add(newtag);
-							break;
-						}
-						m_bForceAllA4AF = (newtag->GetInt() == 1) ? true : false;
-						bGotA4AFFlag = true;
-						delete newtag;
-						break;
-					}
-					case FT_A4AFOFF:{
-						if (!newtag->IsInt()) {
-							taglist.Add(newtag);
-							break;
-						}
-						m_bForceA4AFOff = (newtag->GetInt() == 1) ? true : false;
-						delete newtag;
-						break;
-					}
-					// khaos::kmod-
-					default:{
-					    //MORPH START - Added by SiRoB, SpreadBars
+					// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+				    default:{
+						// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 						if (newtag->GetNameID()==0 && (newtag->GetName()[0]==FT_SPREADSTART || newtag->GetName()[0]==FT_SPREADEND || newtag->GetName()[0]==FT_SPREADCOUNT))
 						{
 							ASSERT( newtag->IsInt64(true) );
@@ -1252,7 +1329,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 							delete newtag;
 							break;
 						}
-						//MORPH END   - Added by SiRoB, SpreadBars
+						// <== Spread bars [Slugfiller/MorphXT] - Stulle
 					    if (newtag->GetNameID()==0 && (newtag->GetName()[0]==FT_GAPSTART || newtag->GetName()[0]==FT_GAPEND))
 						{
 							ASSERT( newtag->IsInt64(true) );
@@ -1274,33 +1351,6 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 							}
 						    delete newtag;
 					    }
-						//MORPH START - Added by SiRoB, Extra test
-						else if(newtag->GetNameID()==0 && newtag->IsInt() && newtag->GetName()){
-						//MORPH END   - Added by SiRoB, Extra test
-							//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-							if(CmpED2KTagName(newtag->GetName(), FT_POWERSHARE) == 0)
-								SetPowerShared((newtag->GetInt()<=3)?newtag->GetInt():-1);
-							//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-							//MORPH START - Added by SiRoB, POWERSHARE Limit
-							else if(CmpED2KTagName(newtag->GetName(), FT_POWERSHARE_LIMIT) == 0)
-								SetPowerShareLimit((newtag->GetInt()<=200)?newtag->GetInt():-1);
-							//MORPH END   - Added by SiRoB, POWERSHARE Limit
-							//MORPH START - Added by SiRoB, HIDEOS per file
-							else if(CmpED2KTagName(newtag->GetName(), FT_HIDEOS) == 0)
-								SetHideOS((newtag->GetInt()<=10)?newtag->GetInt():-1);
-							else if(CmpED2KTagName(newtag->GetName(), FT_SELECTIVE_CHUNK) == 0)
-								SetSelectiveChunk(newtag->GetInt()<=1?newtag->GetInt():-1);
-							//MORPH END   - Added by SiRoB, HIDEOS per file
-							//MORPH START - Added by SiRoB, SHARE_ONLY_THE_NEED
-							else if(CmpED2KTagName(newtag->GetName(), FT_SHAREONLYTHENEED) == 0)
-								SetShareOnlyTheNeed(newtag->GetInt()<=1?newtag->GetInt():-1);
-							//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED
-							// ==> Limit PS by amount of data uploaded - Stulle
-							else if(CmpED2KTagName(newtag->GetName(), FT_PS_AMOUNT_LIMIT) == 0)
-								SetPsAmountLimit(newtag->GetInt()<=MAX_PS_AMOUNT_LIMIT?newtag->GetInt():-1);
-							// <== Limit PS by amount of data uploaded - Stulle
-							delete newtag;
-						}
 					    else
 						    taglist.Add(newtag);
 				    }
@@ -1309,12 +1359,13 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 			else
 				delete newtag;
 		}
-		//MORPH START - Added by SiRoB, Rescue CatResumeOrder
+
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 		if (bGotCatResumeOrder == false && bGotA4AFFlag == true) {
 			m_catResumeOrder = m_uMaxSources;
 			m_uMaxSources = 0;
 		}
-		//MORPH END   - Added by SiRoB, Rescue CatResumeOrder
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 		// load the hashsets from the hybridstylepartmet
 		if (isnewstyle && pOutCheckFileFormat == NULL && (metFile.GetPosition()<metFile.GetLength()) ) {
@@ -1383,8 +1434,6 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 	}
 
 	// Now to flush the map into the list (Slugfiller)
-	m_uTotalGaps =0; //MORPH - Optimization, completedsize
-
 	for (POSITION pos = gap_map.GetStartPosition(); pos != NULL; ){
 		Gap_Struct* gap;
 		UINT gapkey;
@@ -1399,45 +1448,25 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 		// SLUGFILLER: SafeHash
 	}
 
-	//MORPH START - Added by SiRoB, SLUGFILLER: Spreadbars - Now to flush the map into the list
-	for (POSITION pos = spread_start_map.GetStartPosition(); pos != NULL; ){
-		UINT spreadkey;
-		uint64 spread_start;
-		uint64 spread_end;
-		uint64 spread_count;
-		spread_start_map.GetNextAssoc(pos, spreadkey, spread_start);
-		if (!spread_end_map.Lookup(spreadkey, spread_end))
-			continue;
-		if (!spread_count_map.Lookup(spreadkey, spread_count))
-			continue;
-		if (!spread_count || spread_start >= spread_end)
-			continue;
-		statistic.AddBlockTransferred(spread_start, spread_end, spread_count);	// All tags accounted for
-	}
-	//MORPH END   - Added by SiRoB, SLUGFILLER: Spreadbars
-
 	// verify corrupted parts list
 	POSITION posCorruptedPart = corrupted_list.GetHeadPosition();
 	while (posCorruptedPart)
 	{
 		POSITION posLast = posCorruptedPart;
 		UINT uCorruptedPart = corrupted_list.GetNext(posCorruptedPart);
-		//MORPH - Changed by SiRoB, No need to check the buffereddata
-		/*
 		if (IsComplete((uint64)uCorruptedPart*PARTSIZE, (uint64)(uCorruptedPart+1)*PARTSIZE-1, true))
-		*/
-		if (IsComplete((uint64)uCorruptedPart*PARTSIZE, (uint64)(uCorruptedPart+1)*PARTSIZE-1, false))
 			corrupted_list.RemoveAt(posLast);
 	}
 
 	//check if this is a backup
-	// SLUGFILLER: SafeHash - also update the partial name
 	if(_tcsicmp(_tcsrchr(m_fullname, _T('.')), PARTMET_TMP_EXT) == 0 || _tcsicmp(_tcsrchr(m_fullname, _T('.')), PARTMET_BAK_EXT) == 0)
-	{
+	{ //Xman
 		m_fullname = RemoveFileExtension(m_fullname);
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - also update the partial name
 		m_partmetfilename = RemoveFileExtension(m_partmetfilename);
 	}
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	// open permanent handle
 	CString searchpath(RemoveFileExtension(m_fullname));
@@ -1458,8 +1487,14 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 	// read part file creation time
 	struct _stat fileinfo;
 	if (_tstat(searchpath, &fileinfo) == 0){
+		// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		/*
+		m_tLastModified = fileinfo.st_mtime;
+		m_tCreated = fileinfo.st_ctime;
+		*/
 		m_tLastModified = (uint32)fileinfo.st_mtime;
 		m_tCreated = (uint32)fileinfo.st_ctime;
+		// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	}
 	else
 		AddDebugLogLine(false, _T("Failed to get file date for \"%s\" - %s"), searchpath, _tcserror(errno));
@@ -1480,7 +1515,8 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 		}
 		// SLUGFILLER: SafeHash
 
-		// SLUGFILLER: SafeHash - ignore loaded hash for 1-chunk files
+		//Xman
+		// BEGIN SLUGFILLER: SafeHash - ignore loaded hash for 1-chunk files
 		if (GetED2KPartCount() <= 1) {
 			for (UINT i = 0; i < (UINT)hashlist.GetSize(); i++)
 				delete[] hashlist[i];
@@ -1494,21 +1530,20 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 		m_PartsShareable.SetSize(GetPartCount());
 		for (UINT i = 0; i < GetPartCount();i++)
 			m_PartsShareable[i] = false;
-		//SLUGFILLER: SafeHash
+		// END SLUGFILLER: SafeHash
 
 		m_SrcpartFrequency.SetSize(GetPartCount());
-		for (UINT i = 0; i != GetPartCount();i++)
-			m_SrcpartFrequency[i] = 0;
-		//Morph Start - added by AndCycle, ICS
-		// enkeyDEV: ICS
-		m_SrcIncPartFrequency.SetSize(GetPartCount());
 		for (UINT i = 0; i < GetPartCount();i++)
-			m_SrcIncPartFrequency[i] = 0;
-		// enkeyDEV: ICS
-		//Morph End - added by AndCycle, ICS
+			m_SrcpartFrequency[i] = 0;
 		SetStatus(PS_EMPTY);
 		// check hashcount, filesatus etc
-		if (GetHashCount() != GetED2KPartCount()){	// SLUGFILLER: SafeHash - use GetED2KPartCount
+		//Xman
+		// SLUGFILLER: SafeHash - use GetED2KPartCount
+		/*
+		if (GetHashCount() != GetED2KPartHashCount()){
+		*/
+		if (GetHashCount() != GetED2KPartCount()){
+		//Xman end
 			ASSERT( hashlist.GetSize() == 0 );
 			hashsetneeded = true;
 			return PLR_LOADSUCCESS;
@@ -1516,11 +1551,7 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 		else {
 			hashsetneeded = false;
 			for (UINT i = 0; i < (UINT)hashlist.GetSize(); i++){
-				//MORPH - Changed by SiRoB, No need to check the buffereddata
-				/*
 				if (i < GetPartCount() && IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, true)){
-				*/
-				if (i < GetPartCount() && IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, false)){
 					SetStatus(PS_READY);
 					break;
 				}
@@ -1542,7 +1573,12 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 			catch(CException* ex){
 				ex->Delete();
 			}
-			time_t fdate = (UINT)filestatus.m_mtime.GetTime(); //vs2005
+			// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+			/*
+			uint32 fdate = (UINT)filestatus.m_mtime.GetTime();
+			*/
+			time_t fdate = (UINT)filestatus.m_mtime.GetTime();
+			// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 			if (fdate == 0)
 				fdate = (UINT)-1;
 			if (fdate == -1){
@@ -1557,20 +1593,35 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 				strFileInfo.Format(_T("%s (%s)"), GetFilePath(), GetFileName());
 				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_REHASH), strFileInfo);
 				// rehash
-				// SLUGFILLER: SafeHash
+				//Xman
+				// BEGIN SLUGFILLER: SafeHash
+				/*
+				SetStatus(PS_WAITINGFORHASH);
+				CAddFileThread* addfilethread = (CAddFileThread*) AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_NORMAL,0, CREATE_SUSPENDED);
+				if (addfilethread){
+					SetFileOp(PFOP_HASHING);
+					SetFileOpProgress(0);
+					addfilethread->SetValues(0, GetPath(), m_hpartfile.GetFileName(), _T(""), this);
+					addfilethread->ResumeThread();
+				*/
 				SetStatus(PS_EMPTY);	// no need to wait for hashes with the new system
 				CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-				m_PartsHashing += parthashthread->SetFirstHash(this);	// Only hashes completed parts, why hash gaps?
+				m_PartsHashing = m_PartsHashing + parthashthread->SetFirstHash(this);	// Only hashes completed parts, why hash gaps?
 				parthashthread->ResumeThread();
-				// SLUGFILLER: SafeHash
+				// END SLUGFILLER: SafeHash
 			}
-			//MORPH START - Added by SiRoB, SLUGFILLER: SafeHash - update completed, even though unchecked
+			//Xman
+			// BEGIN SiRoB, SLUGFILLER: SafeHash - update completed, even though unchecked
+			/*
+				else
+					SetStatus(PS_ERROR);
+			*/
 			else {
 				for (UINT i = 0; i < GetPartCount(); i++)
 					if (IsComplete((uint64)i*PARTSIZE,(uint64)(i+1)*PARTSIZE-1, false))
 						m_PartsShareable[i] = true;
-			}
-			//MORPH END   - Added by SiRoB, SLUGFILLER: SafeHash
+			// END SiRoB, SLUGFILLER: SafeHash
+		    }
 		}
 	}
 	catch(CFileException* error){
@@ -1587,18 +1638,17 @@ EPartFileLoadResult CPartFile::LoadPartFile(LPCTSTR in_directory,LPCTSTR in_file
 	}
 
 	UpdateCompletedInfos();
-	// khaos::accuratetimerem+
-	m_I64uInitialBytes = completedsize;
-	// khaos::accuratetimerem-
 	return PLR_LOADSUCCESS;
 }
 
 bool CPartFile::SavePartFile(bool bDontOverrideBak)
 {
+	//Xman
 	//MORPH - Flush Thread, no need to savepartfile now will be done when flushDone complet
 	if (m_FlushSetting)
 		return false;
 	//MORPH - Flush Thread, no need to savepartfile now will be done when flushDone complet
+
 	switch (status){
 		case PS_WAITINGFORHASH:
 		case PS_HASHING:
@@ -1616,26 +1666,49 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 		return false;
 	}
 
-	if (!m_PartsHashing){	// SLUGFILLER: SafeHash - don't update the file date unless all parts are hashed
-	  // get filedate
-	  CTime lwtime;
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - don't update the file date unless all parts are hashed
+	/*
+	// get filedate
+	CTime lwtime;
 	try{
 		ff.GetLastWriteTime(lwtime);
 	}
 	catch(CException* ex){
 		ex->Delete();
-	  }
+	}
 	m_tLastModified = (UINT)lwtime.GetTime();
 	if (m_tLastModified == 0)
 		m_tLastModified = (UINT)-1;
-	  m_tUtcLastModified = m_tLastModified;
-	  if (m_tUtcLastModified == -1){
-		  if (thePrefs.GetVerbose())
+	m_tUtcLastModified = m_tLastModified;
+	if (m_tUtcLastModified == -1){
+		if (thePrefs.GetVerbose())
 			AddDebugLogLine(false, _T("Failed to get file date of \"%s\" (%s)"), m_partmetfilename, GetFileName());
-	  }
-	  else
-		  AdjustNTFSDaylightFileTime(m_tUtcLastModified, ff.GetFilePath());
-	 }	// SLUGFILLER: SafeHash
+	}
+	else
+		AdjustNTFSDaylightFileTime(m_tUtcLastModified, ff.GetFilePath());
+	*/
+	if (!m_PartsHashing){
+		// get filedate
+		CTime lwtime;
+		try{
+			ff.GetLastWriteTime(lwtime);
+		}
+		catch(CException* ex){
+			ex->Delete();
+		}
+		m_tLastModified = (UINT)lwtime.GetTime();
+		if (m_tLastModified == 0)
+			m_tLastModified = (UINT)-1;
+		m_tUtcLastModified = m_tLastModified;
+		if (m_tUtcLastModified == -1){
+			if (thePrefs.GetVerbose())
+				AddDebugLogLine(false, _T("Failed to get file date of \"%s\" (%s)"), m_partmetfilename, GetFileName());
+		}
+		else
+			AdjustNTFSDaylightFileTime(m_tUtcLastModified, ff.GetFilePath());
+	}
+	// END SLUGFILLER: SafeHash
 	ff.Close();
 
 	CString strTmpFile(m_fullname);
@@ -1646,15 +1719,13 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 	CFileException fexp;
 	if (!file.Open(strTmpFile, CFile::modeWrite|CFile::modeCreate|CFile::typeBinary|CFile::shareDenyWrite, &fexp)){
 		CString strError;
-		strError.Format(GetResString(IDS_ERR_SAVEMET), strTmpFile, GetFileName());	 // MORPH: report strTmpFile not the .met file
+		strError.Format(GetResString(IDS_ERR_SAVEMET), m_partmetfilename, GetFileName());
 		TCHAR szError[MAX_CFEXP_ERRORMSG];
 		if (fexp.GetErrorMessage(szError, ARRSIZE(szError))){
 			strError += _T(" - ");
 			strError += szError;
-			ASSERT(0); // DEBUG: leuk_he:IF it fails i want to knwo what other thread is access this. 
 		}
 		LogError(_T("%s"), strError);
-		ASSERT(0); // leuk_he: if the creation of of part.met_tmp faild i want to know what other thread/callstack is writing this file.
 		return false;
 	}
 	setvbuf(file.m_pStream, NULL, _IOFBF, 16384);
@@ -1670,9 +1741,18 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 		//hash
 		file.WriteHash16(m_abyFileHash);
 		UINT parts = hashlist.GetCount();
-		file.WriteUInt16((uint16)parts);
-		for (UINT x = 0; x < parts; x++)
-			file.WriteHash16(hashlist[x]);
+		//Xman SafeHash compatibility fix
+		//with this patch we write the same format as official
+		if(parts > 1){
+		//Xman end
+			file.WriteUInt16((uint16)parts);
+			for (UINT x = 0; x < parts; x++)
+				file.WriteHash16(hashlist[x]);
+		//Xman SafeHash compatibility fix
+		//with this patch we write the same format as official
+		}else
+			file.WriteUInt16(0);
+		//Xman end
 
 		UINT uTagCount = 0;
 		ULONG uTagCountFilePos = (ULONG)file.GetPosition();
@@ -1723,11 +1803,12 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 		}
 
 		if (m_category){
-			//MORPH - Changed by SiRoB
+			// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			/*
 			CTag categorytag(FT_CATEGORY, m_category);
 			*/
 			CTag categorytag(FT_CATEGORY, (m_category+1 > (UINT)thePrefs.GetCatCount())?0:m_category);
+			// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			categorytag.WriteTagToFile(&file);
 			uTagCount++;
 		}
@@ -1785,8 +1866,8 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 			uTagCount++;
 		}
 
-		// SLUGFILLER: Spreadbars
-		if(GetSpreadbarSetStatus() > 0 || (GetSpreadbarSetStatus() == -1 ? thePrefs.GetSpreadbarSetStatus() > 0 : false)){//MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
+		// ==> Spread bars [Slugfiller/MorphXT] - Stulle
+		if(thePrefs.GetSpreadbarSetStatus()){
 			char sbnamebuffer[10];
 			char* sbnumber = &sbnamebuffer[1];
 			UINT i_sbpos = 0;
@@ -1801,17 +1882,12 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 					uint64 start = statistic.spreadlist.GetKeyAt(pos);
 					statistic.spreadlist.GetNext(pos);
 					ASSERT(pos != NULL);	// Last value should always be 0
-					if (pos == NULL) {
-						// this should no happen, but abort might prevent a crash?
-						DebugLog(LOG_MORPH|LOG_ERROR, _T("Error in spreadbarinfo for partfile (%s). No matching end to start = %lu"), GetFileName(), start);
-						break;
-					}
 					uint64 end = statistic.spreadlist.GetKeyAt(pos);
 					//MORPH - Smooth sample
 					if (end - start < EMBLOCKSIZE && count > hideOS)
 						continue;
 					//MORPH - Smooth sample
-					_itoa(i_sbpos,sbnumber,10); //Fafner: avoid C4996 (as in 0.49b vanilla) - 080731
+					_itoa(i_sbpos,sbnumber,10);
 					sbnamebuffer[0] = FT_SPREADSTART;
 					CTag(sbnamebuffer,start,true).WriteTagToFile(&file);
 					uTagCount++;
@@ -1836,7 +1912,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 					ASSERT(pos != NULL);	// Last value should always be 0
 					if (pos == NULL) {
 						// this should no happen, but abort might prevent a crash?
-						DebugLog(LOG_MORPH|LOG_ERROR, _T("Error in spreadbarinfo for partfile (%s). No matching end to start = %lu"), GetFileName(), start);
+						AddDebugLogLine(false, _T("Error in spreadbarinfo for partfile (%s). No matching end to start = %lu"), GetFileName(), start);
 						break;
 					}
 					uint32 end = (uint32)statistic.spreadlist.GetKeyAt(pos);
@@ -1844,7 +1920,7 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 					if (end - start < EMBLOCKSIZE && count > hideOS)
 						continue;
 					//MORPH - Smooth sample
-					_itoa(i_sbpos,sbnumber,10); //Fafner: avoid C4996 (as in 0.49b vanilla) - 080731
+					_itoa(i_sbpos,sbnumber,10);
 					sbnamebuffer[0] = FT_SPREADSTART;
 					CTag(sbnamebuffer,start).WriteTagToFile(&file);
 					uTagCount++;
@@ -1857,8 +1933,8 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 					i_sbpos++;
 				}
 			}
-		}//MORPH	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-		// SLUGFILLER: Spreadbars
+		}
+		// <== Spread bars [Slugfiller/MorphXT] - Stulle
 
 		// currupt part infos
         POSITION posCorruptedPart = corrupted_list.GetHeadPosition();
@@ -1885,71 +1961,11 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 			uTagCount++;
 		}
 
-		//MORPH START - Added by SiRoB, Show Permissions
-		// xMule_MOD: showSharePermissions - save permissions
-		if (GetPermissions()>=0){
-			CTag permtag(FT_PERMISSIONS, GetPermissions());
-			permtag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		//MORPH START - Added by SiRoB, Show Permissions
-		//MORPH START - Added by SiRoB, HIDEOS
-		if (GetHideOS()>=0){
-			CTag hideostag(FT_HIDEOS, GetHideOS());
-			hideostag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		if (GetSelectiveChunk()>=0){
-			CTag selectivechunktag(FT_SELECTIVE_CHUNK, GetSelectiveChunk());
-			selectivechunktag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		//MORPH END   - Added by SiRoB, HIDEOS
-		
-		// ==> Limit PS by amount of data uploaded - Stulle
-		if (GetPsAmountLimit()>=0){
-			CTag psamountlimittag(FT_PS_AMOUNT_LIMIT, GetPsAmountLimit());
-			psamountlimittag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		// <== Limit PS by amount of data uploaded - Stulle
-
-		//MORPH START - Added by SiRoB, SHARE_ONLY_THE_NEED
-		if (GetShareOnlyTheNeed()>=0){
-			CTag shareonlytheneedtag(FT_SHAREONLYTHENEED, GetShareOnlyTheNeed());
-			shareonlytheneedtag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED
-
-		//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-		if (GetPowerSharedMode()>=0){
-			CTag powersharetag(FT_POWERSHARE, GetPowerSharedMode());
-			powersharetag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-		//MORPH START - Added by SiRoB, POWERSHARE Limit
-		if (GetPowerShareLimit()>=0){
-			CTag powersharelimittag(FT_POWERSHARE_LIMIT, GetPowerShareLimit());
-			powersharelimittag.WriteTagToFile(&file);
-			uTagCount++;
-		}
-		//MORPH END   - Added by SiRoB, POWERSHARE Limit
-		// khaos::categorymod+
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 		CTag catresumetag(FT_CATRESUMEORDER, m_catResumeOrder );
 		catresumetag.WriteTagToFile(&file);
 		uTagCount++;
-
-		// khaos::kmod+ A4AF flags
-		CTag forceon(FT_A4AFON, (uint32)(m_bForceAllA4AF?1:0));
-		forceon.WriteTagToFile(&file);
-		uTagCount++;
-
-		CTag forceoff(FT_A4AFOFF, (uint32)(m_bForceA4AFOff?1:0));
-		forceoff.WriteTagToFile(&file);
-		uTagCount++;
-		// khaos::kmod-
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 		for (int j = 0; j < taglist.GetCount(); j++){
 			if (taglist[j]->IsStr() || taglist[j]->IsInt()){
@@ -1981,6 +1997,25 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 			i_pos++;
 		}
 
+		//Xman advanced upload-priority
+		if (statistic.m_unotcountedtransferred)
+		{
+			CTag stag1(FT_NOTCOUNTEDTRANSFERREDLOW, (uint32)statistic.m_unotcountedtransferred);
+			stag1.WriteTagToFile(&file);
+			uTagCount++;
+
+			CTag stag2(FT_NOTCOUNTEDTRANSFERREDHIGH, (uint32)(statistic.m_unotcountedtransferred >> 32));
+			stag2.WriteTagToFile(&file);
+			uTagCount++;
+		}
+		if (statistic.m_tlastdataupdate!=0)
+		{
+			CTag stag1(FT_LASTDATAUPDATE, statistic.m_tlastdataupdate);
+			stag1.WriteTagToFile(&file);
+			uTagCount++;
+		}
+		//Xman end
+
 		file.Seek(uTagCountFilePos, CFile::begin);
 		file.WriteUInt32(uTagCount);
 		file.SeekToEnd();
@@ -1991,6 +2026,35 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 				AfxThrowFileException(CFileException::hardIO, GetLastError(), file.GetFileName());
 		}
 		file.Close();
+		//zz_fly :: better .part.met file backup and recovery :: Enig123 :: Start
+		//note: whenever it crashed, we at least have one valid copy. although the valid copy is not new enough, but it is valid.
+		if( bDontOverrideBak || thePrefs.eMuleChrashedLastSession() )
+		{
+			//when bDontOverrideBak == true, .part.met was already corruptted, just remove it.
+			try {
+				CFile::Remove(m_fullname);
+			}
+			catch(CFileException* e){
+				e->Delete();
+			}
+		}
+		else
+		{
+			try {
+				CFile::Remove(m_fullname + PARTMET_BAK_EXT);
+			}
+			catch(CFileException* e){
+				e->Delete();
+			}
+			try {
+				CFile::Rename(m_fullname, m_fullname + PARTMET_BAK_EXT);
+			}
+			catch(CFileException* e){
+				e->Delete();
+			}
+		}
+		CFile::Rename(strTmpFile, m_fullname);
+		//zz_fly :: better .part.met file backup and recovery :: Enig123 :: End
 	}
 	catch(CFileException* error){
 		CString strError;
@@ -2008,7 +2072,8 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 		(void)_tremove(strTmpFile);
 		return false;
 	}
-
+	//zz_fly :: better .part.met file backup and recovery :: Enig123 :: Start
+	/* //not needed
 	// after successfully writing the temporary part.met file...
 	if (_tremove(m_fullname) != 0 && errno != ENOENT){
 		if (thePrefs.GetVerbose())
@@ -2035,25 +2100,73 @@ bool CPartFile::SavePartFile(bool bDontOverrideBak)
 		if (!bDontOverrideBak)
 			DebugLogError(_T("Failed to create backup of %s (%s) - %s"), m_fullname, GetFileName(), GetErrorMessage(GetLastError()));
 	}
-
+	*/
+	//zz_fly :: better .part.met file backup and recovery :: Enig123 :: End
 	return true;
 }
 
 void CPartFile::PartFileHashFinished(CKnownFile* result){
 	newdate = true;
 	bool errorfound = false;
-	// SLUGFILLER: SafeHash - one check for all
+	//zz_fly :: redundant code :: start
+	/*
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - one check for all
 	for (UINT i = 0; i < (UINT)hashlist.GetSize(); i++){
 		ASSERT( IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, true) == IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, false) );
 		if (i < GetPartCount() && IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, false)){
 			if (!(result->GetPartHash(i) && !md4cmp(result->GetPartHash(i), GetPartHash(i)))){
 				LogWarning(GetResString(IDS_ERR_FOUNDCORRUPTION), i+1, GetFileName());
-					AddGap((uint64)i*PARTSIZE, ((uint64)((uint64)(i + 1)*PARTSIZE - 1) >= m_nFileSize) ? ((uint64)m_nFileSize - 1) : ((uint64)(i + 1)*PARTSIZE - 1) );
+				AddGap((uint64)i*PARTSIZE, ((uint64)((uint64)(i + 1)*PARTSIZE - 1) >= m_nFileSize) ? ((uint64)m_nFileSize - 1) : ((uint64)(i + 1)*PARTSIZE - 1) );
 				errorfound = true;
 			}
 		}
 	}
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+	*/
+	//zz_fly :: redundant code :: end
+
+	// SLUGFILLER: SafeHash - use GetED2KPartCount
+	/*
+	if (GetED2KPartHashCount()==0 || GetHashCount()==0){
+	*/
+	if (GetED2KPartCount()==0 || GetHashCount()==0){
+	//Xman end
+		ASSERT( IsComplete(0, m_nFileSize - (uint64)1, true) == IsComplete(0, m_nFileSize - (uint64)1, false) );
+		if (IsComplete(0, m_nFileSize - (uint64)1, false)){
+			if (md4cmp(result->GetFileHash(), GetFileHash())){
+				LogWarning(GetResString(IDS_ERR_FOUNDCORRUPTION), 1, GetFileName());
+				AddGap(0, m_nFileSize - (uint64)1);
+				errorfound = true;
+			}
+			else{
+				//Xman
+				// SLUGFILLER: SafeHash - use GetED2KPartCount
+				/*
+				if (GetED2KPartHashCount() != GetHashCount()){
+					ASSERT( result->GetED2KPartHashCount() == GetED2KPartHashCount() );
+				*/
+				if (GetED2KPartCount() != GetHashCount()){
+					ASSERT( result->GetED2KPartCount() == GetED2KPartCount() );
+				//Xman end
+					if (SetHashset(result->GetHashset()))
+						hashsetneeded = false;
+				}
+			}
+		}
+	}
+	else{
+		for (UINT i = 0; i < (UINT)hashlist.GetSize(); i++){
+			ASSERT( IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, true) == IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, false) );
+			if (i < GetPartCount() && IsComplete((uint64)i*PARTSIZE, (uint64)(i + 1)*PARTSIZE - 1, false)){
+				if (!(result->GetPartHash(i) && !md4cmp(result->GetPartHash(i), GetPartHash(i)))){
+					LogWarning(GetResString(IDS_ERR_FOUNDCORRUPTION), i+1, GetFileName());
+					AddGap((uint64)i*PARTSIZE, ((uint64)((uint64)(i + 1)*PARTSIZE - 1) >= m_nFileSize) ? ((uint64)m_nFileSize - 1) : ((uint64)(i + 1)*PARTSIZE - 1) );
+					errorfound = true;
+				}
+			}
+		}
+	}
 	if (!errorfound && result->GetAICHHashset()->GetStatus() == AICH_HASHSETCOMPLETE && status == PS_COMPLETING){
 		delete m_pAICHHashSet;
 		m_pAICHHashSet = result->GetAICHHashset();
@@ -2061,8 +2174,6 @@ void CPartFile::PartFileHashFinished(CKnownFile* result){
 		m_pAICHHashSet->SetOwner(this);
 	}
 	else if (status == PS_COMPLETING){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(false, _T("Failed to store new AICH Hashset for completed file %s"), GetFileName());
 	}
 
@@ -2101,18 +2212,15 @@ void CPartFile::AddGap(uint64 start, uint64 end)
 	for (pos1 = gaplist.GetHeadPosition();(pos2 = pos1) != NULL;){
 		Gap_Struct* cur_gap = gaplist.GetNext(pos1);
 		if (cur_gap->start >= start && cur_gap->end <= end){ // this gap is inside the new gap - delete
-			m_uTotalGaps -= cur_gap->end - cur_gap->start + 1; //MORPH - Optimization, completedsize
 			gaplist.RemoveAt(pos2);
 			delete cur_gap;
 		}
 		else if (cur_gap->start >= start && cur_gap->start <= end){// a part of this gap is in the new gap - extend limit and delete
-			m_uTotalGaps -= cur_gap->end - cur_gap->start + 1; //MORPH - Optimization, completedsize
 			end = cur_gap->end;
 			gaplist.RemoveAt(pos2);
 			delete cur_gap;
 		}
 		else if (cur_gap->end <= end && cur_gap->end >= start){// a part of this gap is in the new gap - extend limit and delete
-			m_uTotalGaps -= cur_gap->end - cur_gap->start + 1; //MORPH - Optimization, completedsize
 			start = cur_gap->start;
 			gaplist.RemoveAt(pos2);
 			delete cur_gap;
@@ -2121,12 +2229,16 @@ void CPartFile::AddGap(uint64 start, uint64 end)
 			return;
 		}
 	}
-	m_uTotalGaps += end - start + 1; //MORPH - Optimization, completedsize
 	Gap_Struct* new_gap = new Gap_Struct;
 	new_gap->start = start;
 	new_gap->end = end;
 	gaplist.AddTail(new_gap);
+	//Xman Code Improvement:
+	//no need to do this, because of Maella Code
+	/*
 	UpdateDisplayedInfo();
+	*/
+	//Xman end
 	newdate = true;
 }
 
@@ -2150,22 +2262,18 @@ bool CPartFile::IsComplete(uint64 start, uint64 end, bool bIgnoreBufferedData) c
 	}
 
 	if (bIgnoreBufferedData){
-		((CPartFile*)this)->m_BufferedData_list_Locker.Lock(); //MORPH - Flush Thread
 		for (POSITION pos = m_BufferedData_list.GetHeadPosition();pos != 0;)
 		{
 			const PartFileBufferedData* cur_gap = m_BufferedData_list.GetNext(pos);
-			if (cur_gap->data) //MORPH - Flush Thread
 			if (   (cur_gap->start >= start          && cur_gap->end   <= end)
 				|| (cur_gap->start >= start          && cur_gap->start <= end)
 				|| (cur_gap->end   <= end            && cur_gap->end   >= start)
 				|| (start          >= cur_gap->start && end            <= cur_gap->end)
 			)	// should be equal to if (start <= cur_gap->end  && end >= cur_gap->start)
 			{
-				((CPartFile*)this)->m_BufferedData_list_Locker.Unlock();//MORPH - Flush Thread
 				return false;	
 			}
 		}
-		((CPartFile*)this)->m_BufferedData_list_Locker.Unlock();//MORPH - Flush Thread
 	}
 	return true;
 }
@@ -2260,66 +2368,6 @@ bool CPartFile::ShrinkToAvoidAlreadyRequested(uint64& start, uint64& end) const
 	return true;
 }
 
-//MORPH - Enhanced DBR
-uint64 CPartFile::GetRemainingAvailableData(const CUpDownClient* sender) const
-{
-	const uint8* srcstatus = sender->GetPartStatus(this);
-	if (srcstatus)
-		return GetRemainingAvailableData(srcstatus);
-	return 0;
-}
-uint64 CPartFile::GetRemainingAvailableData(const uint8* srcstatus) const
-{
-	uint64 uTotalGapSizeInCommun = 0;
-	POSITION pos = gaplist.GetHeadPosition();
-	while (pos)
-	{
-		const Gap_Struct* pGap = gaplist.GetNext(pos);
-		uint16 i = (uint16)(pGap->start/PARTSIZE);
-		uint16 end_chunk = (uint16)(pGap->end/PARTSIZE);
-		if (i == end_chunk) {
-			if (srcstatus[i]&SC_AVAILABLE)
-				uTotalGapSizeInCommun += pGap->end - pGap->start + 1;
-		} 
-		else {
-			if (srcstatus[i]&SC_AVAILABLE)
-				uTotalGapSizeInCommun += PARTSIZE - pGap->start%PARTSIZE;
-			while (++i < end_chunk) {
-				if ((srcstatus[i]&SC_AVAILABLE))
-					uTotalGapSizeInCommun += PARTSIZE;
-			}
-			if (srcstatus[end_chunk]&SC_AVAILABLE)
-				uTotalGapSizeInCommun += pGap->end%PARTSIZE + 1;
-		}
-	}
-	for (POSITION pos = requestedblocks_list.GetHeadPosition(); pos != NULL;) {
-		const Requested_Block_Struct* block = requestedblocks_list.GetNext(pos);
-		uint16 i = (uint16)(block->StartOffset/PARTSIZE);
-		uint16 end_chunk = (uint16)(block->EndOffset/PARTSIZE);
-		if (i == end_chunk) {
-			if (srcstatus[i]&SC_AVAILABLE)
-				uTotalGapSizeInCommun -= block->transferred;
-		} else {
-			uint64 reservedblock = PARTSIZE - block->StartOffset%PARTSIZE;
-			if (reservedblock > block->transferred) {
-				if (srcstatus[i]&SC_AVAILABLE)
-					uTotalGapSizeInCommun -= block->transferred;
-				reservedblock = 0;
-			} else
-				reservedblock = block->transferred - reservedblock;
-			while (++i < end_chunk) {
-				if (srcstatus[i]&SC_AVAILABLE)
-					uTotalGapSizeInCommun -= reservedblock;
-				reservedblock = 0;
-			}
-			if (srcstatus[end_chunk]&SC_AVAILABLE)
-				uTotalGapSizeInCommun -= block->EndOffset%PARTSIZE + 1 - reservedblock;
-		}
-	}
-	return uTotalGapSizeInCommun;
-}
-//MORPH - Enhanced DBR
-
 uint64 CPartFile::GetTotalGapSizeInRange(uint64 uRangeStart, uint64 uRangeEnd) const
 {
 	ASSERT( uRangeStart <= uRangeEnd );
@@ -2365,8 +2413,12 @@ uint64 CPartFile::GetTotalGapSizeInPart(UINT uPart) const
 	return GetTotalGapSizeInRange(uRangeStart, uRangeEnd);
 }
 
-// netfinity: DynamicBlockRequests - Added bytesToRequest
+//Xman Dynamic block request (netfinity/morph)
+/*
+bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *result) const
+*/
 bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct *result, uint64 bytesToRequest) const
+//Xman end
 {
 	Gap_Struct *firstGap;
 	Gap_Struct *currentGap;
@@ -2415,30 +2467,21 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 
 		// Find end, keeping within the max block size and the part limit
 		end = firstGap->end;
-		//MORPH - Enhanced DBR 
-		/*
 		blockLimit = partStart + (uint64)((UINT)(start - partStart)/EMBLOCKSIZE + 1)*EMBLOCKSIZE - 1;
-        */
-		blockLimit = partStart + (uint64)((UINT)(start - partStart)/(3*EMBLOCKSIZE) + 1)*(3*EMBLOCKSIZE) - 1;
 		if (end > blockLimit)
 			end = blockLimit;
 		if (end > partEnd)
 			end = partEnd;
-	
-		// If this gap has not already been requested, we have found a valid entry
-		// BEGIN netfinity: DynamicBlockRequests - Reduce bytes to request
-#if !defined DONT_USE_DBR
+    
+		//Xman Dynamic block request (netfinity/Xman)
 		bytesToRequest -= bytesToRequest % 10240; 
 		if (bytesToRequest < 10240) bytesToRequest = 10240;
-		//MORPH - Enhanced DBR 
-		/*
 		else if (bytesToRequest > EMBLOCKSIZE) bytesToRequest = EMBLOCKSIZE;
-		*/
-		else if (bytesToRequest > 3*EMBLOCKSIZE) bytesToRequest = 3*EMBLOCKSIZE;
 		if((start + bytesToRequest) <= end && (end - start) > (bytesToRequest + 3072)) // Avoid creating small fragments
 			end = start + bytesToRequest - 1;
-#endif
-		// END netfinity: DynamicBlockRequests - Reduce bytes to request
+		//Xman end
+
+		// If this gap has not already been requested, we have found a valid entry
 		if (!IsAlreadyRequested(start, end, true))
 		{
 			// Was this block to be returned
@@ -2458,11 +2501,11 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 
             bool shrinkSucceeded = ShrinkToAvoidAlreadyRequested(tempStart, tempEnd);
             if(shrinkSucceeded) {
-				//MORPH START - Removed by Stulle, prevent spamming the verbose log
+				//Xman 
 				/*
                 AddDebugLogLine(false, _T("Shrunk interval to prevent collision with already requested block: Old interval %I64u-%I64u. New interval: %I64u-%I64u. File %s."), start, end, tempStart, tempEnd, GetFileName());
 				*/
-				//MORPH END   - Removed by Stulle, prevent spamming the verbose log
+				//Xman end
 
                 // Was this block to be returned
 			    if (result != NULL)
@@ -2474,9 +2517,9 @@ bool CPartFile::GetNextEmptyBlockInPart(UINT partNumber, Requested_Block_Struct 
 			    }
 			    return true;
             } else {
-				// Reposition to end of that gap
-				start = end + 1;
-			}
+			    // Reposition to end of that gap
+			    start = end + 1;
+		    }
 		}
 
 		// If tried all gaps then break out of the loop
@@ -2496,20 +2539,16 @@ void CPartFile::FillGap(uint64 start, uint64 end)
 	for (pos1 = gaplist.GetHeadPosition();(pos2 = pos1) != NULL;){
 		Gap_Struct* cur_gap = gaplist.GetNext(pos1);
 		if (cur_gap->start >= start && cur_gap->end <= end){ // our part fills this gap completly
-			m_uTotalGaps -= cur_gap->end - cur_gap->start + 1; //MORPH - Optimization, completedsize
 			gaplist.RemoveAt(pos2);
 			delete cur_gap;
 		}
 		else if (cur_gap->start >= start && cur_gap->start <= end){// a part of this gap is in the part - set limit
-			m_uTotalGaps -= end - cur_gap->start + 1; //MORPH - Optimization, completedsize
 			cur_gap->start = end+1;
 		}
 		else if (cur_gap->end <= end && cur_gap->end >= start){// a part of this gap is in the part - set limit
-			m_uTotalGaps -= cur_gap->end - start + 1; //MORPH - Optimization, completedsize
 			cur_gap->end = start-1;
 		}
 		else if (start >= cur_gap->start && end <= cur_gap->end){
-			m_uTotalGaps -= end - start + 1; //MORPH - Optimization, completedsize
 			uint64 buffer = cur_gap->end;
 			cur_gap->end = start-1;
 			cur_gap = new Gap_Struct;
@@ -2520,13 +2559,16 @@ void CPartFile::FillGap(uint64 start, uint64 end)
 		}
 	}
 
+	//Xman Code Improvement:
+	//no need to do this, because of Maella Code
+	/*
 	UpdateCompletedInfos();
 	UpdateDisplayedInfo();
+	*/
+	//Xman end
 	newdate = true;
 }
 
-//MORPH - Optimization, completedsize
-/*
 void CPartFile::UpdateCompletedInfos()
 {
    	uint64 allgaps = 0; 
@@ -2557,120 +2599,119 @@ void CPartFile::UpdateCompletedInfos(uint64 uTotalGaps)
 		completedsize = m_nFileSize;
 	}
 }
-*/
-void CPartFile::UpdateCompletedInfos()
+
+//Xman -Code Improvement-
+/*
+void CPartFile::DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool bFlat) const
 {
-#ifdef _DEBUG
-	uint64 uTotalGaps = 0; 
-
-	for (POSITION pos = gaplist.GetHeadPosition();pos !=  0;){ 
-		const Gap_Struct* cur_gap = gaplist.GetNext(pos);
-		uTotalGaps += cur_gap->end - cur_gap->start + 1;
-	}
-	if (uTotalGaps > m_nFileSize){
-		ASSERT(0);
-		uTotalGaps = m_nFileSize;
-	}
-	ASSERT(uTotalGaps == m_uTotalGaps);
-#endif
-
-	if (gaplist.GetCount() || requestedblocks_list.GetCount()){ 
-		// 'percentcompleted' is only used in GUI, round down to avoid showing "100%" in case 
-		// we actually have only "99.9%"
-		percentcompleted = (float)(floor((1.0 - (double)m_uTotalGaps/(uint64)m_nFileSize) * 1000.0) / 10.0);
-		completedsize = m_nFileSize - m_uTotalGaps;
-	} 
-	else{
-		percentcompleted = 100.0F;
-		completedsize = m_nFileSize;
-	}
-}
-
-//MORPH START - Modified by SiRoB, Reduce ShareStatusBar CPU consumption
-void CPartFile::DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool bFlat) /*const*/
-{ 
 	if( !IsPartFile() )
 	{
 		CKnownFile::DrawShareStatusBar( dc, rect, onlygreyrect, bFlat );
 		return;
 	}
-	int iWidth=rect->right - rect->left;
-	if (iWidth <= 0)	return;
-	int iHeight=rect->bottom - rect->top;
-	if (m_bitmapSharedStatusBar == (HBITMAP)NULL)
-		VERIFY(m_bitmapSharedStatusBar.CreateBitmap(1, 1, 1, 8, NULL)); 
-	CDC cdcStatus;
-	HGDIOBJ hOldBitmap;
-	cdcStatus.CreateCompatibleDC(dc);
-	if(!InChangedSharedStatusBar || lastSize!=iWidth || lastonlygreyrect!=onlygreyrect || lastbFlat!=bFlat){
-		InChangedSharedStatusBar = true;
-		lastSize=iWidth;
-		lastonlygreyrect=onlygreyrect;
-		lastbFlat=bFlat;
-		m_bitmapSharedStatusBar.DeleteObject(); 
-		m_bitmapSharedStatusBar.CreateCompatibleBitmap(dc,  iWidth, iHeight); 
-		m_bitmapSharedStatusBar.SetBitmapDimension(iWidth,  iHeight); 
-		hOldBitmap = cdcStatus.SelectObject(m_bitmapSharedStatusBar);
 
-		const COLORREF crNotShared = RGB(224, 224, 224);
-		s_ChunkBar.SetFileSize(GetFileSize());
-		s_ChunkBar.SetHeight(iHeight);
-		s_ChunkBar.SetWidth(iWidth);
-		s_ChunkBar.Fill(crNotShared); 
+    const COLORREF crNotShared = RGB(224, 224, 224);
+	s_ChunkBar.SetFileSize(GetFileSize());
+	s_ChunkBar.SetHeight(rect->bottom - rect->top);
+	s_ChunkBar.SetWidth(rect->right - rect->left);
+	s_ChunkBar.Fill(crNotShared);
 
-		if (!onlygreyrect && !m_SrcpartFrequency.IsEmpty()) { 
-			const COLORREF crMissing = RGB(255, 0, 0);
-			COLORREF crProgress;
-			COLORREF crHave;
-			COLORREF crPending;
-        	COLORREF crNooneAsked;
-			if(bFlat) { 
-				crProgress = RGB(0, 150, 0);
-				crHave = RGB(0, 0, 0);
-				crPending = RGB(255,208,0);
-			    crNooneAsked = RGB(0, 0, 0);
-			} else { 
-				crProgress = RGB(0, 224, 0);
-				crHave = RGB(104, 104, 104);
-				crPending = RGB(255, 208, 0);
-				crNooneAsked = RGB(104, 104, 104);
-			} 
-			for (uint16 i = 0; i < GetPartCount(); i++){
-            //MORPH - Changed by SiRoB, SafeHash
+	if (!onlygreyrect){
+    	const COLORREF crMissing = RGB(255, 0, 0);
+		COLORREF crProgress;
+		COLORREF crHave;
+		COLORREF crPending;
+        COLORREF crNooneAsked;
+		if(bFlat) { 
+			crProgress = RGB(0, 150, 0);
+			crHave = RGB(0, 0, 0);
+			crPending = RGB(255,208,0);
+		    crNooneAsked = RGB(0, 0, 0);
+		} else { 
+			crProgress = RGB(0, 224, 0);
+			crHave = RGB(104, 104, 104);
+			crPending = RGB(255, 208, 0);
+		    crNooneAsked = RGB(104, 104, 104);
+		}
+		for (UINT i = 0; i < GetPartCount(); i++){
+            if(IsComplete((uint64)i*PARTSIZE,((uint64)(i+1)*PARTSIZE)-1, true)) {
+                if(GetStatus() != PS_PAUSED || m_ClientUploadList.GetSize() > 0 || m_nCompleteSourcesCountHi > 0) {
+                    uint32 frequency;
+                    if(GetStatus() != PS_PAUSED && !m_SrcpartFrequency.IsEmpty()) {
+                        frequency = m_SrcpartFrequency[i];
+                    } else if(!m_AvailPartFrequency.IsEmpty()) {
+                        frequency = max(m_AvailPartFrequency[i], m_nCompleteSourcesCountLo);
+                    } else {
+                        frequency = m_nCompleteSourcesCountLo;
+                    }
+
+    			    if(frequency > 0 ){
+				        COLORREF color = RGB(0, (22*(frequency-1) >= 210) ? 0 : 210-(22*(frequency-1)), 255);
+				        s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),color);
+                    } else {
+			            s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crMissing);
+                    }
+                } else {
+				    s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crNooneAsked);
+                }
+			}
+		}
+	}
+   	s_ChunkBar.Draw(dc, rect->left, rect->top, bFlat); 
+} 
+
+*/
+void CPartFile::DrawShareStatusBar(CDC* dc, LPCRECT rect, bool onlygreyrect, bool bFlat) const
+{
+	if( !IsPartFile() )
+	{
+		CKnownFile::DrawShareStatusBar( dc, rect, onlygreyrect, bFlat );
+		return;
+	}
+
+	const COLORREF crNotShared = RGB(224, 224, 224);
+	// Set Size
+	CBarShader chunkBar(rect->bottom - rect->top, rect->right - rect->left);
+	chunkBar.SetFileSize(this->GetFileSize());	
+	chunkBar.Fill(crNotShared); 
+
+
+	if (!onlygreyrect){
+		const COLORREF crMissing = RGB(255, 0, 0);
+		const COLORREF crNooneAsked = (bFlat) ? RGB(0, 0, 0) : RGB(104, 104, 104);
+		for (UINT i = 0; i < GetPartCount(); i++){
+			//Xman
+			//MORPH - Changed by SiRoB, SafeHash
 			/*
 			if(IsComplete((uint64)i*PARTSIZE,((uint64)(i+1)*PARTSIZE)-1, true)) {
 			*/
 			if(IsPartShareable(i)) {
-    	            if(GetStatus() != PS_PAUSED || m_ClientUploadList.GetSize() > 0 || m_nCompleteSourcesCountHi > 0) {
-    	                uint32 frequency;
-    	                if(GetStatus() != PS_PAUSED && !m_SrcpartFrequency.IsEmpty()) {
-    	                    frequency = m_SrcpartFrequency[i];
-    	                } else if(!m_AvailPartFrequency.IsEmpty()) {
-    	                    frequency = max(m_AvailPartFrequency[i], m_nCompleteSourcesCountLo);
-    	                } else {
-    	                    frequency = m_nCompleteSourcesCountLo;
-    	                }
-
-    				    if(frequency > 0 ){
-				        COLORREF color = RGB(0, (22*(frequency-1) >= 210) ? 0 : 210-(22*(frequency-1)), 255);
-				        s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),color);
-	                    } else {
-			            s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crMissing);
-	                    }
-	                } else {
-					        s_ChunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crNooneAsked);
+				if(GetStatus() != PS_PAUSED || m_ClientUploadList.GetSize() > 0 || m_nCompleteSourcesCountHi > 0) {
+					uint32 frequency;
+					if(GetStatus() != PS_PAUSED && !m_SrcpartFrequency.IsEmpty()) {
+						frequency = m_SrcpartFrequency[i];
+					} else if(!m_AvailPartFrequency.IsEmpty()) {
+						frequency = max(m_AvailPartFrequency[i], m_nCompleteSourcesCountLo);
+					} else {
+						frequency = m_nCompleteSourcesCountLo;
 					}
+
+					if(frequency > 0 ){
+						const COLORREF color = RGB(0, (22*(frequency-1) >= 210) ? 0 : 210-(22*(frequency-1)), 255);
+						chunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),color);
+					} else {
+						chunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crMissing);
+					}
+				} else {
+					chunkBar.FillRange(PARTSIZE*(uint64)(i),PARTSIZE*(uint64)(i+1),crNooneAsked);
 				}
 			}
 		}
-   		s_ChunkBar.Draw(&cdcStatus, 0, 0, bFlat);
 	}
-	else
-		hOldBitmap = cdcStatus.SelectObject(m_bitmapSharedStatusBar);
-	dc->BitBlt(rect->left,rect->top,iWidth,iHeight,&cdcStatus,0,0,SRCCOPY);
-	cdcStatus.SelectObject(hOldBitmap);
+   	chunkBar.Draw(dc, rect->left, rect->top, bFlat); 
 } 
 
+//Xman Maella -Code Improvement-
 void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 {
 	COLORREF crProgress;
@@ -2678,11 +2719,7 @@ void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 	COLORREF crHave;
 	COLORREF crPending;
 	COLORREF crMissing;
-	//--- xrmb:confirmedDownload ---
-	COLORREF crUnconfirmed = RGB(255, 210, 0);
-	//--- :xrmb ---
-	COLORREF crDot;	//MORPH - Added by IceCream, SLUGFILLER: chunkDots
-	COLORREF crStartedButIncomplete;
+	COLORREF crStartedButIncomplete; //Xman: from zz: other color for incomplete chunks
 	EPartFileStatus eVirtualState = GetStatus();
 	bool notgray = eVirtualState == PS_EMPTY || eVirtualState == PS_READY;
 
@@ -2701,95 +2738,107 @@ void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 			crHave = RGB(128, 128, 128);
 			crPending = RGB(128, 128, 0);
 		}
-        crStartedButIncomplete = RGB(128, 128, 128);
-        crDot = RGB(128, 128, 128);
+		crStartedButIncomplete = RGB(160, 160, 160); //Xman: from zz: other color for incomplete chunks
 	}
 	else
 	{
-        if (bFlat) {
+		if (bFlat)
+			crProgress = RGB(0, 150, 0);
+		else
 			crProgress = RGB(0, 224, 0);
-            crDot = RGB(128, 128, 128);
-        } else {
-			crProgress = RGB(0, 224, 0);
-            crDot = RGB(255, 255, 255);
-        }
 		crProgressBk = RGB(224, 224, 224);
-		if(notgray) {
+		if (notgray) {
+			crStartedButIncomplete = RGB(160, 160, 160); //Xman: from zz: other color for incomplete chunks
 			crMissing = RGB(255, 0, 0);
-			if(bFlat) {
+			if (bFlat) {
 				crHave = RGB(0, 0, 0);
-				crPending = RGB(255,208,0);
+				crPending = RGB(255, 208, 0);
 			} else {
 				crHave = RGB(104, 104, 104);
 				crPending = RGB(255, 208, 0);
 			}
-            crStartedButIncomplete = RGB(160, 160, 160);
 		} else {
+			crStartedButIncomplete = RGB(140, 140, 140); //Xman: from zz: other color for incomplete chunks
 			crMissing = RGB(191, 64, 64);
-			if(bFlat) {
+			if (bFlat) {
 				crHave = RGB(64, 64, 64);
-				crPending = RGB(191,168,64);
+				crPending = RGB(191, 168, 64);
 			} else {
 				crHave = RGB(116, 116, 116);
 				crPending = RGB(191, 168, 64);
 			}
-            crStartedButIncomplete = RGB(140, 140, 140);
 		}
 	}
 
+	//Xman Maella -Code Improvement-
+	/*
 	s_ChunkBar.SetHeight(rect->bottom - rect->top);
 	s_ChunkBar.SetWidth(rect->right - rect->left);
 	s_ChunkBar.SetFileSize(m_nFileSize);
 	s_ChunkBar.Fill(crHave);
-
-    for(uint64 haveSlice = 0; haveSlice < GetFileSize(); haveSlice+=PARTSIZE) {
-        	if(!IsComplete(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()), false)) {
-        		if(IsAlreadyRequested(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()))) {
-    	        s_ChunkBar.FillRange(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()), crProgress);
-            } else {
-    	        s_ChunkBar.FillRange(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()), crStartedButIncomplete);
-            }
-        }
-    }
+	*/
+	// Set Size
+	CBarShader chunkBar(rect->bottom - rect->top, rect->right - rect->left);
+	chunkBar.SetFileSize(GetFileSize());	
+	//Xman end
 
 	if (status == PS_COMPLETE || status == PS_COMPLETING)
 	{
+		//Xman Maella -Code Improvement-
+		/*
 		s_ChunkBar.FillRange(0, m_nFileSize, crProgress);
 		s_ChunkBar.Draw(dc, rect->left, rect->top, bFlat);
+		*/
+		chunkBar.Fill(crProgress);
+		chunkBar.Draw(dc, rect->left, rect->top, bFlat);
 		percentcompleted = 100.0F;
 		completedsize = m_nFileSize;
 	}
 	else if (eVirtualState == PS_INSUFFICIENT || status == PS_ERROR)
 	{
+		chunkBar.Fill(crHave);//Xman Maella -Code Improvement-
 		int iOldBkColor = dc->SetBkColor(RGB(255, 255, 0));
 		if (theApp.m_brushBackwardDiagonal.m_hObject)
-		dc->FillRect(rect, &theApp.m_brushBackwardDiagonal);
+			dc->FillRect(rect, &theApp.m_brushBackwardDiagonal);
 		else
 			dc->FillSolidRect(rect, RGB(255, 255, 0));
 		dc->SetBkColor(iOldBkColor);
 
+		//Xman Code Improvement
+		//No need to update here, because we already update every sescond (Maella Code)
+		/*
 		UpdateCompletedInfos();
+		*/
 	}
 	else
 	{
+		chunkBar.Fill(crHave); //Xman Maella -Code Improvement-
+
+		//Xman: from zz: other color for incomplete chunks
+		for(uint64 haveSlice = 0; haveSlice < GetFileSize(); haveSlice+=PARTSIZE) {
+			if(!IsComplete(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()), false))
+				chunkBar.FillRange(haveSlice, min(haveSlice+(PARTSIZE-1), GetFileSize()), crStartedButIncomplete);
+		}
+		//Xman end
+
 	    // red gaps
 	    uint64 allgaps = 0;
-		for (POSITION pos = gaplist.GetHeadPosition();pos !=  0;){
-			const Gap_Struct* cur_gap = gaplist.GetNext(pos);
-			allgaps += cur_gap->end - cur_gap->start + 1;
-			bool gapdone = false;
+	    for (POSITION pos = gaplist.GetHeadPosition();pos !=  0;){
+		    const Gap_Struct* cur_gap = gaplist.GetNext(pos);
+		    allgaps += cur_gap->end - cur_gap->start + 1;
+		    bool gapdone = false;
 		    uint64 gapstart = cur_gap->start;
 		    uint64 gapend = cur_gap->end;
 		    for (UINT i = 0; i < GetPartCount(); i++){
 			    if (gapstart >= (uint64)i*PARTSIZE && gapstart <= (uint64)(i+1)*PARTSIZE - 1){ // is in this part?
 				    if (gapend <= (uint64)(i+1)*PARTSIZE - 1)
-						gapdone = true;
-					else
+					    gapdone = true;
+				    else
 					    gapend = (uint64)(i+1)*PARTSIZE - 1; // and next part
-
+    
 				    // paint
-					COLORREF color;
-					if (m_SrcpartFrequency.GetCount() >= (INT_PTR)i && m_SrcpartFrequency[(uint16)i])
+				    COLORREF color;
+				    if (m_SrcpartFrequency.GetCount() >= (INT_PTR)i && m_SrcpartFrequency[(uint16)i])
 				    {
 						if (g_bLowColorDesktop)
 						{
@@ -2805,7 +2854,7 @@ void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 						}
 						else
 						{
-							if(notgray)
+							if (notgray)
 								color = RGB(0,
 											(210 - 22*(m_SrcpartFrequency[(uint16)i] - 1) <  0) ?  0 : 210 - 22*(m_SrcpartFrequency[(uint16)i] - 1),
 											255);
@@ -2814,121 +2863,82 @@ void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 											(169 - 11*(m_SrcpartFrequency[(uint16)i] - 1) < 64) ? 64 : 169 - 11*(m_SrcpartFrequency[(uint16)i] - 1),
 											191);
 						}
-					}
-					else
-						color = crMissing;
-					s_ChunkBar.FillRange(gapstart, gapend + 1,  color); //Fafner: vs2005 freeze? (called from here) - 080317
-
-					if (gapdone) // finished?
-						break;
-					else{
-						gapstart = gapend + 1;
-						gapend = cur_gap->end;
-					}
-				}
-			}
-		}
-
+				    }
+				    else
+					    color = crMissing;
+				    //Xman Maella -Code Improvement-
+				    /*
+				    s_ChunkBar.FillRange(gapstart, gapend + 1, color);
+				    */
+				    chunkBar.FillRange(gapstart, gapend + 1,  color);
+				    //Xman end
+    
+				    if (gapdone) // finished?
+					    break;
+				    else{
+					    gapstart = gapend + 1;
+					    gapend = cur_gap->end;
+				    }
+			    }
+		    }
+	    }
+    
 	    // yellow pending parts
-		for (POSITION pos = requestedblocks_list.GetHeadPosition();pos !=  0;){
-			const Requested_Block_Struct* block =  requestedblocks_list.GetNext(pos);
-			    s_ChunkBar.FillRange(block->StartOffset + block->transferred, block->EndOffset + 1, crPending);
-		}
+	    for (POSITION pos = requestedblocks_list.GetHeadPosition();pos !=  0;){
+		    const Requested_Block_Struct* block = requestedblocks_list.GetNext(pos);
+		    //Xman Maella -Code Improvement-
+		    /*
+		    s_ChunkBar.FillRange(block->StartOffset + block->transferred, block->EndOffset + 1, crPending);
+		    */
+		    chunkBar.FillRange(block->StartOffset + block->transferred, block->EndOffset + 1, crPending);
+		    //Xman end
+	    }
+    
+	    //Xman Maella -Code Improvement-
+	    /*
+	    s_ChunkBar.Draw(dc, rect->left, rect->top, bFlat);
+	    */
+	    chunkBar.Draw(dc, rect->left, rect->top, bFlat);
+	    //Xman end
+    
+	    // green progress
+	    float blockpixel = (float)(rect->right - rect->left)/(float)m_nFileSize;
+	    RECT gaprect;
+	    gaprect.top = rect->top;
+	    gaprect.bottom = gaprect.top + PROGRESS_HEIGHT;
+	    gaprect.left = rect->left;
+    
+	    if (!bFlat) {
+		    s_LoadBar.SetWidth((int)( (uint64)(m_nFileSize - allgaps)*blockpixel + 0.5F));
+		    s_LoadBar.Fill(crProgress);
+		    s_LoadBar.Draw(dc, gaprect.left, gaprect.top, false);
+	    } else {
+		    gaprect.right = rect->left + (uint32)((uint64)(m_nFileSize - allgaps)*blockpixel + 0.5F);
+		    //Xman Code Improvement: FillSolidRect
+		    /*
+		    dc->FillRect(&gaprect, &CBrush(crProgress));
+		    */
+		    dc->FillSolidRect(&gaprect, crProgress);
+		    //Xman end
+		    //draw gray progress only if flat
+		    gaprect.left = gaprect.right;
+		    gaprect.right = rect->right;
+		    //Xman Code Improvement: FillSolidRect
+		    /*
+		    dc->FillRect(&gaprect, &CBrush(crProgressBk));
+		    */
+		    dc->FillSolidRect(&gaprect, crProgressBk);
+		    //Xman end
+	    }
+    
+	    //Xman Code Improvement
+	    //No need to update here, because we already update every sescond (Maella Code)
+	    /*
+	    UpdateCompletedInfos(allgaps);
+	    */
+	    //Xman end
+    }
 
-		s_ChunkBar.Draw(dc, rect->left, rect->top, bFlat);
-
-		// green progress
-		RECT gaprect;
-		gaprect.top = rect->top;
-		gaprect.bottom = gaprect.top + PROGRESS_HEIGHT;
-		gaprect.left = rect->left;
-
-		//MORPH START - Added by IceCream --- xrmb:confirmedDownload ---
-		float	percentconfirmed;
-		uint64  confirmedsize;
-		if((gaplist.GetCount() || requestedblocks_list.GetCount()))
-		{
-			// all this here should be done in the Process, not in the drawing!!! its a waste of cpu time, or maybe not :)
-			UINT	completedParts=0;
-			confirmedsize=0;
-			for(UINT i=0; i<GetPartCount(); i++)
-			{
-				uint64	end=(uint64)(i+1)*PARTSIZE-1;
-				bool	lastChunk=false;
-				//--- last part? ---
-				if(end>m_nFileSize)
-				{
-					end=(uint64)m_nFileSize;
-					lastChunk=true;
-				}
-
-				//MORPH - Changed by SiRoB, SafeHash
-				/*
-				if(IsComplete((uint64)i*PARTSIZE, end))
-				*/
-				if(IsRangeShareable((uint64)i*PARTSIZE, end))
-				{
-					completedParts++;
-
-					if(lastChunk==false)
-						confirmedsize+=(uint64)PARTSIZE;
-					else
-						confirmedsize+=(uint64)m_nFileSize % PARTSIZE;
-				}
-			}
-		
-			percentconfirmed = (float)(floor(((double)confirmedsize/(uint64)m_nFileSize) * 1000.0) / 10.0);
-		}
-		else 
-		{
-			percentconfirmed = 100.0F;
-			confirmedsize = (uint64)m_nFileSize;
-		}
-
-	    //UpdateCompletedInfos(allgaps); //MORPH - Optimization, completedsize
-
-		uint32	w=rect->right-rect->left+1;
-		uint32	wc=(uint32)(percentconfirmed/100*w+0.5f);
-		uint32	wp=(uint32)(percentcompleted/100*w+0.5f);
-
-		if(!bFlat) {
-			s_LoadBar.SetWidth(wp);
-			s_LoadBar.SetFileSize(completedsize);
-			s_LoadBar.Fill(crUnconfirmed);
-			s_LoadBar.FillRange(0, confirmedsize, crProgress);
-			s_LoadBar.Draw(dc, gaprect.left, gaprect.top, false);
-			if(thePrefs.m_bEnableChunkDots){ //EastShare - Added by Pretender, Option for ChunkDots
-				// SLUGFILLER: chunkDots
-				s_LoadBar.SetWidth(1);
-				s_LoadBar.SetFileSize((uint64)1);
-				s_LoadBar.Fill(crDot);
-				for(ULONGLONG i=PARTSIZE; i<m_nFileSize; i+=PARTSIZE)
-					s_LoadBar.Draw(dc, gaprect.left+(int)((double)i*w/(uint64)m_nFileSize), gaprect.top, false);
-				// SLUGFILLER: chunkDots
-			} //EastShare - Added by Pretender, Option for ChunkDots
-		} else {
-			gaprect.right = rect->left+wc;
-			dc->FillRect(&gaprect, &CBrush(crProgress));
-			gaprect.left = gaprect.right;
-			gaprect.right = rect->left+wp;
-			dc->FillRect(&gaprect, &CBrush(crUnconfirmed));
-			//draw gray progress only if flat
-			gaprect.left = gaprect.right;
-			gaprect.right = rect->right;
-			dc->FillRect(&gaprect, &CBrush(crProgressBk));
-		
-			if (thePrefs.m_bEnableChunkDots){ //EastShare - Added by Pretender, Option for ChunkDots
-				// SLUGFILLER: chunkDots
-				for(uint64 i=PARTSIZE; i<(uint64)m_nFileSize; i+=PARTSIZE){
-					gaprect.left = gaprect.right = (LONG)(rect->left+(uint64)((float)i*w/(uint64)m_nFileSize));
-					gaprect.right++;
-					dc->FillRect(&gaprect, &CBrush(crDot));
-				}
-				// SLUGFILLER: chunkDots
-			} //EastShare - Added by Pretender, Option for ChunkDots
-		}
-	}
-	//MORPH END   - Added by IceCream--- :xrmb ---
 	// additionally show any file op progress (needed for PS_COMPLETING and PS_WAITINGFORHASH)
 	if (GetFileOp() != PFOP_NONE)
 	{
@@ -2946,81 +2956,47 @@ void CPartFile::DrawStatusBar(CDC* dc, LPCRECT rect, bool bFlat) /*const*/
 		else
 		{
 			rcFileOpProgress.right = rcFileOpProgress.left + (UINT)(GetFileOpProgress()*blockpixel + 0.5F);
+			//Xman Code Improvement: FillSolidRect
+			/*
 			dc->FillRect(&rcFileOpProgress, &CBrush(RGB(255,208,0)));
+			*/
+			dc->FillSolidRect(&rcFileOpProgress, RGB(255,208,0));
+			//Xman end
 			rcFileOpProgress.left = rcFileOpProgress.right;
 			rcFileOpProgress.right = rect->right;
+			//Xman Code Improvement: FillSolidRect
+			/*
 			dc->FillRect(&rcFileOpProgress, &CBrush(crProgressBk));
+			*/
+			dc->FillSolidRect(&rcFileOpProgress, crProgressBk);
+			//Xman end
 		}
 	}
 }
+//Xman end
 
-// SLUGFILLER: hideOS
-//MORPH - Revised, static client m_npartcount
-void CPartFile::WritePartStatus(CSafeMemFile* file, CUpDownClient* client) /*const*/
+
+
+void CPartFile::WritePartStatus(CSafeMemFile* file) const
 {
-	CArray<uint64> partspread;
-	UINT hideOS = HideOSInWork();
-	UINT SOTN = ((GetShareOnlyTheNeed()>=0)?GetShareOnlyTheNeed():thePrefs.GetShareOnlyTheNeed());
-	UINT parts = GetPartCount();
-	if ((hideOS || SOTN) && client) {
-		//MORPH START - Added by SiRoB, See chunk that we hide
-		if (client->m_abyUpPartStatus == NULL) {
-			client->SetPartCount((uint16)parts);
-			client->m_abyUpPartStatus = new uint8[parts];
-			memset(client->m_abyUpPartStatus,0,parts);
-		}
-		//MORPH END   - Added by SiRoB, See chunk that we hide
-		CalcPartSpread(partspread, client);
-		if (!hideOS)
-			hideOS = 1;
-	} else {	// simpler to set as 0 than to create another loop...
-		partspread.SetSize(parts);
-		for (UINT i = 0; i < parts; i++)
-			partspread[i] = 0;
-		hideOS = 1;
-	}
-	// SLUGFILLER: hideOS
-
 	UINT uED2KPartCount = GetED2KPartCount();
 	file->WriteUInt16((uint16)uED2KPartCount);
-	uint16 uPart = 0;
-	while (uPart != uED2KPartCount){
-		uint8 towrite = 0;
-		for (uint8 i = 0; i < 8; i++){
-			if (uPart < parts) {
-				if (partspread[uPart] < hideOS)	// SLUGFILLER: hideOS
-				{//MORPH - Added by SiRoB, See chunk that we hide
-					if (IsPartShareable(uPart)) {	// SLUGFILLER: SafeHash
-						towrite |= (1<<i);
-						//MORPH START - Added by SiRoB, See chunk that we hide
-						if (client && client->m_abyUpPartStatus)
-							client->m_abyUpPartStatus[uPart] &= SC_AVAILABLE;
-						//MORPH END   - Added by SiRoB, See chunk that we hide
-					}
-				}
-			}
-			++uPart;
-			if (uPart == uED2KPartCount)
-				break;
-		}
-		file->WriteUInt8(towrite);
-	}
-}
-
-//Morph Start - added by AndCycle, ICS
-// enkeyDEV: ICS
-void CPartFile::WriteIncPartStatus(CSafeMemFile* file){
-	UINT uED2KPartCount = GetED2KPartCount();
-	file->WriteUInt16((uint16)uED2KPartCount);
+	
 	UINT uPart = 0;
 	while (uPart != uED2KPartCount)
 	{
 		uint8 towrite = 0;
 		for (UINT i = 0; i < 8; i++)
 		{
-			if (uPart < GetPartCount() && !IsPureGap((uint64)uPart*PARTSIZE, (uint64)(uPart + 1)*PARTSIZE - 1))
-				towrite |= (1<<i);
-			++uPart;
+			//Xman
+			// SLUGFILLER: SafeHash
+			/*
+			if (uPart < GetPartCount() && IsComplete((uint64)uPart*PARTSIZE, (uint64)(uPart + 1)*PARTSIZE - 1, true))
+			*/
+			if (uPart < GetPartCount() && IsPartShareable(uPart))
+			//Xman end
+				towrite |= (1 << i);
+			uPart++;
 			if (uPart == uED2KPartCount)
 				break;
 		}
@@ -3028,19 +3004,16 @@ void CPartFile::WriteIncPartStatus(CSafeMemFile* file){
 	}
 }
 
-// <--- enkeyDEV: ICS
-//Morph End - added by AndCycle, ICS
-
 void CPartFile::WriteCompleteSourcesCount(CSafeMemFile* file) const
 {
 	file->WriteUInt16(m_nCompleteSourcesCount);
 }
 
-//MORPH START - Changed by SiRoB, Source Counts Are Cached derivated from Khaos
+// ==> Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 /*
 int CPartFile::GetValidSourcesCount() const
 {
-	int counter=0;
+	int counter = 0;
 	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;){
 		EDownloadState nDLState = srclist.GetNext(pos)->GetDownloadState();
 		if (nDLState==DS_ONQUEUE || nDLState==DS_DOWNLOADING || nDLState==DS_CONNECTED || nDLState==DS_REMOTEQUEUEFULL)
@@ -3072,7 +3045,7 @@ UINT CPartFile::GetAvailableSrcCount() const
 {
 	return m_anStates[DS_ONQUEUE]+m_anStates[DS_DOWNLOADING];
 }
-//MORPH END - Changed by SiRoB, Source Counts Are Cached derivated from Khaos
+// <== Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 
 uint64 CPartFile::GetNeededSpace() const
 {
@@ -3092,24 +3065,58 @@ EPartFileStatus CPartFile::GetStatus(bool ignorepause) const
 }
 
 void CPartFile::AddDownloadingSource(CUpDownClient* client){
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+	POSITION pos2 = m_downloadingDeleteList.Find(client); //for security, delete it from m_downloadingDeleteList first
+	if(pos2)
+		m_downloadingDeleteList.RemoveAt(pos2);
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
 	if(pos == NULL){
 		m_downloadingSourceList.AddTail(client);
 		theApp.emuledlg->transferwnd->downloadclientsctrl.AddClient(client);
+		//Xman
+		// Maella -New bandwidth control-
+		// We need to detect a change in the source list
+		// It's necessary for the download 'balancing' (see ::Process)
+		m_sourceListChange = true;
+		//Xman end
 	}
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+	else if(pos2)	//the source had been deleted, but still in m_downloadingSourceList (delayed deletion).
+		theApp.emuledlg->transferwnd->downloadclientsctrl.AddClient(client); //only need to add it to downloadclientsctrl
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
 }
 
 void CPartFile::RemoveDownloadingSource(CUpDownClient* client){
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+	if(m_downloadingDeleteList.Find(client) != NULL) //already trying to delete
+		return;
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+
 	POSITION pos = m_downloadingSourceList.Find(client); // to be sure
 	if(pos != NULL){
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+		/*
 		m_downloadingSourceList.RemoveAt(pos);
+		*/
+		m_downloadingDeleteList.AddTail(client);
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
 		theApp.emuledlg->transferwnd->downloadclientsctrl.RemoveClient(client);
+		//Xman
+		// Maella -New bandwidth control-
+		// We need to detect a change in the source list
+		// It's necessary for the download 'balancing' (see ::Process)
+		m_sourceListChange = true;
+		//Xman end
 	}
 }
 
-//MORPH START - Changed by Stulle, No zz ratio for http traffic
-uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, uint32 friendReduceddownload, uint32 httpReudcedDownload)
-//MORPH START - Changed by Stulle, No zz ratio for http traffic
+//Xman
+// Maella -New bandwidth control-
+//uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/)
+uint32 CPartFile::Process(uint32 maxammount, bool isLimited, bool fullProcess)
+//Xman end
 {
 	if (thePrefs.m_iDbgHeap >= 2)
 		ASSERT_VALID(this);
@@ -3118,9 +3125,38 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 	DWORD dwCurTick = ::GetTickCount();
 	if (dwCurTick < m_nLastBufferFlushTime)
 	{
-		ASSERT( false );
+		//ASSERT( false ); //zz_fly :: Xman make a jitter in this value
 		m_nLastBufferFlushTime = dwCurTick;
 	}
+
+	// ==> Control download priority [tommy_gun/iONiX] - MyTh88
+	if(GetDownPriority() != thePrefs.GetBowlfishPrioNewValue() ||
+		IsAutoDownPriority())
+	{
+		if((thePrefs.GetBowlfishPrioPercent() && GetPercentCompleted() >= (float)thePrefs.GetBowlfishPrioPercentValue())
+			|| (thePrefs.GetBowlfishPrioSize() && (GetFileSize()-GetCompletedSize()) <= ((uint64)(thePrefs.GetBowlfishPrioSizeValue()<<20))))
+		{
+			//CString newPriority;
+			SetAutoDownPriority(false);
+			switch(thePrefs.GetBowlfishPrioNewValue())
+			{
+				case 0:
+					//newPriority.Format(_T("%s"), GetResString(IDS_PRIOLOW));
+					SetDownPriority(PR_LOW);
+					break;
+				case 1:
+					//newPriority.Format(_T("%s"), GetResString(IDS_PRIONORMAL));
+					SetDownPriority(PR_NORMAL);
+					break;
+				case 2:
+					//newPriority.Format(_T("%s"), GetResString(IDS_PRIOHIGH));
+					SetDownPriority(PR_HIGH);
+					break;
+			}
+			//theApp.emuledlg->AddModLogLine (true,2,GetResString(IDS_BF_PRIO_LOG_PERCENT), this->GetFileName(), newPriority, this->GetPercentCompleted());
+		}
+	}
+	// <== Control download priority [tommy_gun/iONiX] - MyTh88
 
 	// If buffer size exceeds limit, or if not written within time limit, flush data
 	if ((m_nTotalBufferData > thePrefs.GetFileBufferSize()) || (dwCurTick > (m_nLastBufferFlushTime + thePrefs.GetFileBufferTimeLimit())))
@@ -3130,7 +3166,9 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 			FlushBuffer();
 	}
 
-	uint32 datarateX = 0; //MORPH - Changed by SiRoB,  -Fix-
+	// Maella -New bandwidth control-
+	/*
+	datarate = 0;
 
 	// calculate datarate, set limit etc.
 	if(icounter < 10)
@@ -3148,29 +3186,17 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 				{
 					cur_src->CheckDownloadTimeout();
 					cur_datarate = cur_src->CalculateDownloadRate();
-					datarateX+=cur_datarate;//MORPH - Changed by SiRoB,  -Fix-
-
-					uint32 curClientReducedDownload = reducedownload;
-                    if(cur_src->IsFriend() && cur_src->GetFriendSlot()) {
-                        curClientReducedDownload = friendReduceddownload;
-                    }
-					//MORPH START - Changed by Stulle, No zz ratio for http traffic
-					if(cur_src->IsEd2kClient() == false) {
-						curClientReducedDownload = httpReudcedDownload;
-					}
-					//MORPH END   - Changed by Stulle, No zz ratio for http traffic
-
-					if(curClientReducedDownload && cur_src->GetDownloadState() == DS_DOWNLOADING)
+					datarate+=cur_datarate;
+					if(reducedownload)
 					{
-						uint32 limit = curClientReducedDownload*cur_datarate/1000;
-							
-						if(limit<1000 && curClientReducedDownload == 200)
+						uint32 limit = reducedownload*cur_datarate/1000;
+						if(limit<1000 && reducedownload == 200)
 							limit +=1000;
-						else if(limit<200 && cur_datarate == 0 && curClientReducedDownload >= 100)
+						else if(limit<200 && cur_datarate == 0 && reducedownload >= 100)
 							limit = 200;
-						else if(limit<60 && cur_datarate < 600 && curClientReducedDownload >= 97)
+						else if(limit<60 && cur_datarate < 600 && reducedownload >= 97)
 							limit = 60;
-						else if(limit<20 && cur_datarate < 200 && curClientReducedDownload >= 93)
+						else if(limit<20 && cur_datarate < 200 && reducedownload >= 93)
 							limit = 20;
 						else if(limit<1)
 							limit = 1;
@@ -3184,49 +3210,182 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 	}
 	else
 	{
-		// ==> Control download priority [tommy_gun/iONiX] - Stulle
-		if(GetDownPriority() != thePrefs.GetBowlfishPrioNewValue() ||
-			IsAutoDownPriority())
+	*/
+	uint32 receivedBlockTotal = 0;
+	// Remark: A client could be removed from the list during the 
+	//         processing or the entries swapped.
+	// Check if the list has been modified during the processing
+	m_sourceListChange = false;
+	DoDelayedDeletion(); //zz_fly :: delayed deletion of downloading source :: Enig123
+
+	POSITION pos = m_downloadingSourceList.GetHeadPosition();
+	for(int i = 0; i < m_downloadingSourceList.GetCount() && pos != NULL; i++){
+		POSITION cur_pos = pos;
+		CUpDownClient* cur_src = m_downloadingSourceList.GetNext(pos);
+		//CUpDownClient* next_src = (pos) ? m_downloadingSourceList.GetAt(pos) : NULL; //zz_fly :: fix crash especially in case drop stalled download activated :: Enig123
+#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+		if (thePrefs.m_iDbgHeap >= 2)
+			ASSERT_VALID( cur_src );
+#endif
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+		if (m_downloadingDeleteList.Find(cur_src)) 
+			continue;
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+
+		if(cur_src->GetDownloadState() != DS_DOWNLOADING){ 
+			ASSERT(FALSE); // Should never happend
+			RemoveDownloadingSource(cur_src); // => security
+		}
+		else
 		{
-			if((thePrefs.GetBowlfishPrioPercent() && GetPercentCompleted() >= (float)thePrefs.GetBowlfishPrioPercentValue())
-				|| (thePrefs.GetBowlfishPrioSize() && (GetFileSize()-GetCompletedSize()) <= ((uint64)(thePrefs.GetBowlfishPrioSizeValue()<<20))))
+			//Xman remark: moved the CheckDownloadTimeout to fullprocess
+			//because it causes a sourceListChange... a sourceListChange should be avoided...
+			//because we go over some function if m_sourceListChange and are not full accurate in this case
+			//a sourceListChange can still occur on exception
+			//cur_src->CheckDownloadTimeout();
+			//
+			if (cur_src->socket==NULL)
 			{
-				//CString newPriority;
-				SetAutoDownPriority(false);
-				switch(thePrefs.GetBowlfishPrioNewValue())
-				{
-					case 0:
-						//newPriority.Format(_T("%s"), GetResString(IDS_PRIOLOW));
-						SetDownPriority(PR_LOW);
-						break;
-					case 1:
-						//newPriority.Format(_T("%s"), GetResString(IDS_PRIONORMAL));
-						SetDownPriority(PR_NORMAL);
-						break;
-					case 2:
-						//newPriority.Format(_T("%s"), GetResString(IDS_PRIOHIGH));
-						SetDownPriority(PR_HIGH);
-						break;
+				continue;
+			}
+			if(isLimited == false){
+				// Always call this method to avoid a flag (enabled/disable)
+					cur_src->socket->DisableDownloadLimit();
+					// In case of an exception, the instance of the client might have been deleted
+					//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+					/*
+					if (m_sourceListChange == false && cur_src->IsDownloadingFromPeerCache() && cur_src->m_pPCDownSocket && cur_src->m_pPCDownSocket->IsConnected())
+					*/
+					if ((m_sourceListChange == false || m_downloadingDeleteList.Find(cur_src) == NULL) && cur_src->IsDownloadingFromPeerCache() && cur_src->m_pPCDownSocket && cur_src->m_pPCDownSocket->IsConnected())
+					//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+						cur_src->m_pPCDownSocket->DisableDownloadLimit();
+			}
+			else {
+				if(maxammount > 6){ // let room for header size
+					// Maella -Overhead compensation (pseudo full upload rate control)-
+					uint64 receivedBlock;
+					//Xman avoid the silly window syndrome
+					/*
+					The fast sender will quickly fill the receiver's TCP window.
+					The receiver then reads N bytes, N being a relatively small number
+					compared to the network frame size. A naïve stack will immediately send
+					an ACK to the sender to tell it that there are now N bytes available in
+					its TCP window. This will cause the sender to send N bytes of data; 
+					since N is smaller than the frame size, there's relatively more protocol
+					overhead in the packet compared to a full frame. Because the receiver is
+					slow, the TCP window stays very small, and thus hurts throughput because
+					the ratio of protocol overhead to application data goes up.
+					*/
+					uint32 tempmaxamount;
+					if(maxammount % MAXFRAGSIZE == 0) {
+						tempmaxamount=maxammount;
+					} else {
+						tempmaxamount= MAXFRAGSIZE*(maxammount/MAXFRAGSIZE+1);
+					}
+
+					
+					// Use the global statistic to measure the amount of data (cleaner than a call back)
+					receivedBlock = theApp.pBandWidthControl->GeteMuleIn();
+					cur_src->socket->SetDownloadLimit(tempmaxamount); // Trig OnReceive() (go-n-stop mode)							
+					// In case of an exception, the instance of the client might have been deleted
+					//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+					/*
+					if (m_sourceListChange == false && cur_src->IsDownloadingFromPeerCache() && cur_src->m_pPCDownSocket && cur_src->m_pPCDownSocket->IsConnected())
+					*/
+					if ((m_sourceListChange == false || m_downloadingDeleteList.Find(cur_src) == NULL) && cur_src->IsDownloadingFromPeerCache() && cur_src->m_pPCDownSocket && cur_src->m_pPCDownSocket->IsConnected())
+					//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+						cur_src->m_pPCDownSocket->SetDownloadLimit(tempmaxamount);
+					receivedBlock = theApp.pBandWidthControl->GeteMuleIn() - receivedBlock;
+					//Xman end: avoid the silly window syndrome
+					// Maella end
+					if(receivedBlock > 0){
+						if(maxammount > (uint32)receivedBlock){
+							receivedBlockTotal += (uint32)receivedBlock;
+							maxammount -= (uint32)receivedBlock;
+						} else {
+							// Necessary because IP + TCP overhead
+							receivedBlockTotal += (uint32)receivedBlock;
+							maxammount = 0;
+						}
+
+						// Try to 'balance' the download between clients.
+						// Move the 'downloader' at the end of the list.
+						//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+						/*
+						if(m_sourceListChange == false && cur_src->GetDownloadState() == DS_DOWNLOADING){
+						*/
+						if((m_sourceListChange == false || m_downloadingDeleteList.Find(cur_src) == NULL) && cur_src->GetDownloadState() == DS_DOWNLOADING){
+						//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+							m_downloadingSourceList.RemoveAt(cur_pos);
+							m_downloadingSourceList.AddTail(cur_src);
+						}
+					}							
 				}
-				//theApp.emuledlg->AddModLogLine (true,2,GetResString(IDS_BF_PRIO_LOG_PERCENT), this->GetFileName(), newPriority, this->GetPercentCompleted());
+				//Xman avoid the silly window syndrome
+				// In case of an exception, the instance of the client might have been deleted
+				//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+				/*
+				if(m_sourceListChange == false &&
+				*/
+				if((m_sourceListChange == false || m_downloadingDeleteList.Find(cur_src) == NULL) &&
+				//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+					cur_src->socket != NULL && 
+					cur_src->GetDownloadState() == DS_DOWNLOADING){
+						// Block OnReceive() (go-n-stop mode)	
+						cur_src->socket->SetDownloadLimit(0);
+						if (cur_src->IsDownloadingFromPeerCache() && cur_src->m_pPCDownSocket && cur_src->m_pPCDownSocket->IsConnected())
+							cur_src->m_pPCDownSocket->SetDownloadLimit(0);
+					}
+				//Xman end: avoid the silly window syndrome
 			}
 		}
-		// <== Control download priority [tommy_gun/iONiX] - Stulle
+		//zz_fly :: fix crash especially in case drop stalled download activated :: Enig123 :: start
+		//note: when SourceListChanged, pos may invalid, give a valid pos if possible.
+		/* //these code is ok, but we have another solution
+		if (m_sourceListChange) {
+			POSITION posTemp = NULL;
+			if (next_src) {
+				posTemp = m_downloadingSourceList.Find(next_src);
+			}
+			if (posTemp == NULL) { //next_src has been deleted
+				posTemp = m_downloadingSourceList.Find(cur_src);
+				if (posTemp != NULL)
+					m_downloadingSourceList.GetNext(posTemp);
+				else //next_src and cur_src have been deleted, it is better to break
+					break;
+			}
+			if (posTemp != NULL)
+				pos = posTemp;
+		}
+		*/
+		//zz_fly :: end
+	}
+	//zz_fly :: delayed deletion of downloading source :: Enig123 :: start
+	/* //one cleanup is enough, save cpu cycle
+	if (m_sourceListChange)
+		DoDelayedDeletion();
+	*/
+	//zz_fly :: end
 
+
+	if(fullProcess)
+	{
+		// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+		m_sourcesaver.Process();
+		// Xman end
 		bool downloadingbefore=m_anStates[DS_DOWNLOADING]>0;
 		// -khaos--+++> Moved this here, otherwise we were setting our permanent variables to 0 every tenth of a second...
-		
-		//MORPH START - Changed by SiRoB, Source Counts Are Cached derivated from Khaos
+		// ==> Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 		/*
 		memset(m_anStates,0,sizeof(m_anStates));
 		*/
 		memset(m_anStatesTemp,0,sizeof(m_anStatesTemp));
-		//MORPH END   - Added by SiRoB, Source Counts Are Cached derivated from Khaos
+		// <== Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 		memset(src_stats,0,sizeof(src_stats));
 		memset(net_stats,0,sizeof(net_stats));
 		UINT nCountForState;
 
-		m_RemoteQueueRank_New = m_MaxRemoveQRS; // drop sources - Stulle
+		m_RemoteQueueRank_New = m_MaxRemoveQRS; // customized source dropping - Stulle
 		uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
 
 		for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;)
@@ -3262,50 +3421,36 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 			if (cur_src->GetKadPort())
 				net_stats[1]++;
 
-			//MORPH START - Changed by SiRoB, Source Counts Are Cached derivated from Khaos
+			// ==> Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 			/*
 			ASSERT( nCountForState < sizeof(m_anStates)/sizeof(m_anStates[0]) );
 			m_anStates[nCountForState]++;
 			*/
 			ASSERT( nCountForState < sizeof(m_anStatesTemp)/sizeof(m_anStatesTemp[0]) );
 			m_anStatesTemp[nCountForState]++;
-			//MORPH END   - Changed by SiRoB, Source Counts Are Cached derivated from Khaos
-
-			// ==> Inform Clients after IP Change - Stulle
-			// Here we are informing all sources about the IP change!
-			if(cur_src->GetSendIP())
-				cur_src->SendIPChange();
-			// <== Inform Clients after IP Change - Stulle
+			// <== Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 
 			switch (cur_src->GetDownloadState())
 			{
 				case DS_DOWNLOADING:{
+					//Xman
+					/*
 					ASSERT( cur_src->socket );
 					if (cur_src->socket)
 					{
 						cur_src->CheckDownloadTimeout();
 						uint32 cur_datarate = cur_src->CalculateDownloadRate();
-						datarateX += cur_datarate; //MORPH - Changed by SiRoB,  -Fix-
-						uint32 curClientReducedDownload = reducedownload;
-	                    if(cur_src->IsFriend() && cur_src->GetFriendSlot()) {
-                    	    curClientReducedDownload = friendReduceddownload;
-                    	}
-						//MORPH START - Changed by Stulle, No zz ratio for http traffic
-						if(cur_src->IsEd2kClient() == false) {
-							curClientReducedDownload = httpReudcedDownload;
-						}
-						//MORPH END   - Changed by Stulle, No zz ratio for http traffic
-						if (curClientReducedDownload && cur_src->GetDownloadState() == DS_DOWNLOADING)
+						datarate += cur_datarate;
+						if (reducedownload && cur_src->GetDownloadState() == DS_DOWNLOADING)
 						{
-							uint32 limit = curClientReducedDownload*cur_datarate/1000; //(uint32)(((float)reducedownload/100)*cur_datarate)/10;		
-							
-							if (limit < 1000 && curClientReducedDownload == 200)
+							uint32 limit = reducedownload*cur_datarate/1000; //(uint32)(((float)reducedownload/100)*cur_datarate)/10;		
+							if (limit < 1000 && reducedownload == 200)
 								limit += 1000;
-							else if(limit<200 && cur_datarate == 0 && curClientReducedDownload >= 100)
+							else if(limit<200 && cur_datarate == 0 && reducedownload >= 100)
 								limit = 200;
-							else if(limit<60 && cur_datarate < 600 && curClientReducedDownload >= 97)
+							else if(limit<60 && cur_datarate < 600 && reducedownload >= 97)
 								limit = 60;
-							else if(limit<20 && cur_datarate < 200 && curClientReducedDownload >= 93)
+							else if(limit<20 && cur_datarate < 200 && reducedownload >= 93)
 								limit = 20;
 							else if (limit < 1)
 								limit = 1;
@@ -3320,28 +3465,18 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 								cur_src->m_pPCDownSocket->DisableDownloadLimit();
 						}
 					}
-					if(!cur_src->dwStartDLTime){
-						cur_src->uiStartDLCount++;
-						cur_src->dwStartDLTime = dwCurTick;
-					}
-					else
-						cur_src->dwTotalDLTime -= cur_src->dwSessionDLTime;
-
-					cur_src->dwSessionDLTime = dwCurTick - cur_src->dwStartDLTime;
-					cur_src->dwTotalDLTime += cur_src->dwSessionDLTime;
-					//SLAHAM: ADDED Show Downloading Time <=
+					*/
+					//Xman end
+					cur_src->CheckDownloadTimeout(); //Xman 5.0 moved to here
 					break;
 				}
 				// Do nothing with this client..
 				case DS_BANNED:
-					break;	
-				case DS_ERROR:
-				cur_src->dwStartDLTime = 0; //SLAHAM: ADDED Show Downloading Time
-					break;	
+				case DS_ERROR: //Xman
+					break;
 				// Check if something has changed with our or their ID state..
 				case DS_LOWTOLOWIP:
 				{
-					cur_src->dwStartDLTime = 0; //SLAHAM: ADDED Show Downloading Time
 					// To Mods, please stop instantly removing these sources..
 					// This causes sources to pop in and out creating extra overhead!
 					//Make sure this source is still a LowID Client..
@@ -3351,85 +3486,144 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 						if( !theApp.CanDoCallback( cur_src ) )
 						{
 							//If we are almost maxed on sources, slowly remove these client to see if we can find a better source.
-							// ==> auto drop immunity - Stulle
-							/*
 							if( ((dwCurTick - lastpurgetime) > SEC2MS(30)) && (this->GetSourceCount() >= (GetMaxSources()*.8 )) )
-							*/
-							if( ((dwCurTick - lastpurgetime) > SEC2MS(30)) && theApp.GetReAskTick() < dwCurTick && (this->GetSourceCount() >= (GetMaxSources()*.8 )) )
-							// <== auto drop immunity - Stulle
 							{
-								// ==> drop sources - Stulle
-								/*
-						theApp.downloadqueue->RemoveSource( cur_src );
-								*/
-								theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true);
-								// <== drop sources - Stulle
+								theApp.downloadqueue->RemoveSource( cur_src );
 								m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-						lastpurgetime = dwCurTick;
+								lastpurgetime = dwCurTick;
 							}
-						break;
-					}
+							break;
+						}
 					}
 					// This should no longer be a LOWTOLOWIP..
 					cur_src->SetDownloadState(DS_ONQUEUE);
-						break;
+					break;
 				}
 				case DS_NONEEDEDPARTS:
-				{
-					cur_src->dwStartDLTime = 0; //SLAHAM: ADDDED Show Downloading Time
+				{ 
+					//Xman
+					/*
 					// To Mods, please stop instantly removing these sources..
 					// This causes sources to pop in and out creating extra overhead!
-					// ==> drop sources - Stulle
-					/*
 					if( (dwCurTick - lastpurgetime) > SEC2MS(40) ){
 						lastpurgetime = dwCurTick;
-						//we only delete them if reaching the limit
+						// we only delete them if reaching the limit
 						if (GetSourceCount() >= (GetMaxSources()*.8 )){
 							theApp.downloadqueue->RemoveSource( cur_src );
 							break;
 						}			
 					}
-					*/
-					if(m_EnableAutoDropNNS && theApp.GetReAskTick() < dwCurTick) // auto drop immunity - Stulle
-					{
-							if(dwCurTick > (m_TimerForAutoNNS + m_AutoNNS_Timer)
-							&& GetSourceCount() > ((GetMaxSources() * m_MaxRemoveNNSLimit)/100))
-							{
-								if(!cur_src->SwapToAnotherFile( _T("Removed: NoNeededSources"), true, true, true , NULL )) // fix for sivka's version by Cyrex2001
-								theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-								m_TimerForAutoNNS = dwCurTick;
-								m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-								break;
-							}
-					}
-					// <== drop sources - Stulle
 					// doubled reasktime for no needed parts - save connections and traffic
                     if (cur_src->GetTimeUntilReask() > 0)
 						break; 
 
                     cur_src->SwapToAnotherFile(_T("A4AF for NNP file. CPartFile::Process()"), true, false, false, NULL, true, true); // ZZ:DownloadManager
 					// Recheck this client to see if still NNP.. Set to DS_NONE so that we force a TCP reask next time..
-					cur_src->SetDownloadState(DS_NONE);
-					break; 
+    				cur_src->SetDownloadState(DS_NONE);
+					break;
+					*/
+					// ==> customized source dropping - Stulle
+					/*
+					// we try to purge noneeded source, even without reaching the limit
+					if( cur_src->GetDownloadState() == DS_NONEEDEDPARTS && (dwCurTick - lastpurgetime) > 35000 ){ //Xman changed to 30
+						if( !cur_src->SwapToAnotherFile( true , false, false , NULL ) ){
+							//however we only delete them if reaching the limit
+							if (GetSourceCount() >= (GetMaxSources()*.8 )){
+								if(thePrefs.GetLogDrop())
+									AddDebugLogLine(false, _T("-o- NNP dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+								cur_src->droptime=dwCurTick;
+								theApp.downloadqueue->RemoveSource( cur_src );
+								lastpurgetime = dwCurTick;
+								break; //Johnny-B - nothing more to do here (good eye!)
+							}			
+						}
+						else{
+							if(thePrefs.GetLogA4AF())
+								AddDebugLogLine(false, _T("-o- NNP swapped client: %s, %s, from %s to %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+							cur_src->DontSwapTo(this);
+							lastpurgetime = dwCurTick;
+							break;
+						}
+					}
+
+					// doubled reasktime for no needed parts - save connections and traffic
+					// Maella -Spread Request- (idea SlugFiller)
+					if(!((cur_src->GetNextTCPAskedTime() == 0) //Xman -Reask sources after IP change- v4
+						|| (dwCurTick - cur_src->GetLastAskedTime()) > 2 * cur_src->GetJitteredFileReaskTime()))
+						break; 
+					// Maella end
+					//Xman end
+					*/
+					// we try to purge noneeded source, even without reaching the limit
+					if( cur_src->GetDownloadState() == DS_NONEEDEDPARTS && dwCurTick > (m_TimerForAutoNNS + m_AutoNNS_Timer) ){
+						if( !cur_src->SwapToAnotherFile( true , false, false , NULL ) ){
+							//however we only delete them if reaching the limit
+							if (m_EnableAutoDropNNS && GetSourceCount() >= ((GetMaxSources() * m_MaxRemoveNNSLimit)/100)){
+								if(thePrefs.GetLogDrop())
+									AddDebugLogLine(false, _T("-o- NNP dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+								cur_src->droptime=dwCurTick;
+								theApp.downloadqueue->RemoveSource( cur_src );
+								m_TimerForAutoNNS = dwCurTick;
+								m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+								break;
+							}			
+						}
+						else{
+							if(thePrefs.GetLogA4AF())
+								AddDebugLogLine(false, _T("-o- NNP swapped client: %s, %s, from %s to %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+							cur_src->DontSwapTo(this);
+							m_TimerForAutoNNS = dwCurTick;
+							break;
+						}
+					}
+
+					// doubled reasktime for no needed parts - save connections and traffic
+					// Maella -Spread Request- (idea SlugFiller)
+					// ==> Timer for ReAsk File Sources [Stulle] - Stulle
+					/*
+					if(!((cur_src->GetNextTCPAskedTime() == 0) //Xman -Reask sources after IP change- v4
+						|| (dwCurTick - cur_src->GetLastAskedTime()) > 2 * cur_src->GetJitteredFileReaskTime()))
+					*/
+					//when we increase the time between reasks doubling the time isn't all that great
+					//so instead of producing values far greater than 60 minutes we just use an unjittered
+					//and doubled FILEREASKTIME + half a minute = max possible jittered reask time
+					//this should prevent anything weird
+					uint32 uNNPwaittime = cur_src->GetJitteredFileReaskTime();
+					if(thePrefs.GetReAskTimeDif() > 0 && cur_src->GetModClient() != MOD_SCAR && cur_src->GetModClient() != MOD_MEPHISTO && cur_src->GetModClient() != MOD_XTREME)
+						uNNPwaittime = 2 * (FILEREASKTIME + SEC2MS(30));
+					if(!((cur_src->GetNextTCPAskedTime() == 0) //Xman -Reask sources after IP change- v4
+						|| (dwCurTick - cur_src->GetLastAskedTime()) > uNNPwaittime))
+					// <== Timer for ReAsk File Sources [Stulle] - Stulle
+						break; 
+					// Maella end
+					// <== customized source dropping - Stulle
 				}
 				case DS_ONQUEUE:
 				{
-					cur_src->dwStartDLTime = 0; //SLAHAM: ADDED Show Downloading Time
+					//Xman
+					/*
 					// To Mods, please stop instantly removing these sources..
 					// This causes sources to pop in and out creating extra overhead!
-
-					// ==> drop sources - Stulle
-					if(cur_src->GetRemoteQueueRank() > m_RemoteQueueRank_New)
-						m_RemoteQueueRank_New = cur_src->GetRemoteQueueRank();
-					// <== drop sources - Stulle
-
-					//MORPH START - Added by schnulli900, filter clients with failed downloads [Xman]
-					if(thePrefs.GetFilterClientFailedDown() && cur_src->m_uFailedDownloads>=3)
+					if( cur_src->IsRemoteQueueFull() ) 
 					{
-						cur_src->SetDownloadState(DS_ERROR, _T("Morph Filter-Failed-Download-Clients")); //force the delete
-						DebugLog(LOG_MORPH, _T("Morph Filter-Failed-Download-Clients: Client %s "), cur_src->DbgGetClientInfo());
+						if( ((dwCurTick - lastpurgetime) > MIN2MS(1)) && (GetSourceCount() >= (GetMaxSources()*.8 )) )
+						{
+							theApp.downloadqueue->RemoveSource( cur_src );
+							lastpurgetime = dwCurTick;
+							break;
+						}
+					}
+					//Give up to 1 min for UDP to respond.. If we are within one min of TCP reask, do not try..
+					if (theApp.IsConnected() && cur_src->GetTimeUntilReask() < MIN2MS(2) && cur_src->GetTimeUntilReask() > SEC2MS(1) && ::GetTickCount()-cur_src->getLastTriedToConnectTime() > 20*60*1000) // ZZ:DownloadManager (one resk timestamp for each file)
+						cur_src->UDPReaskForDownload();
+					*/
+					//Xman filter clients with failed downloads
+					if(cur_src->m_faileddownloads>=3 && thePrefs.GetAntiLeecher())
+					{
+						cur_src->SetDownloadState(DS_ERROR, _T("XTREME Failed-Download-Ban")); //force the delete
+						AddLeecherLogLine(false, _T("XTREME Failed-Download-Ban: Client %s "), cur_src->DbgGetClientInfo());			
 						theApp.ipfilter->AddIPTemporary(ntohl(cur_src->GetConnectIP()));
-						if(cur_src->Disconnected(_T("Morph Filter-Failed-Download-Clients")))
+						if(cur_src->Disconnected(_T("XTREME Failed-Download-Ban")))
 							delete cur_src;
 						else
 							//if it's a friend it isn't deleted->remove it
@@ -3437,60 +3631,197 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 						break;
 					}
 					else 
-					//MORPH END   - Added by schnulli900, filter clients with failed downloads [Xman]
-					if( cur_src->IsRemoteQueueFull() )
-					{
-						// ==> drop sources - Stulle
+						//Xman end 					
+						//Xman Xtreme Downloadmanager
+						// ==> customized source dropping - Stulle
 						/*
-						if( ((dwCurTick - lastpurgetime) > MIN2MS(1)) && (GetSourceCount() >= (GetMaxSources()*.8 )) )
-						{
-							theApp.downloadqueue->RemoveSource( cur_src );
-							lastpurgetime = dwCurTick;
-							break;
+						if(GetSourceCount() >= (0.8 * GetMaxSources())  )
+						{ 
+							//it's droptime
+							//FullQueue
+							if(cur_src->IsRemoteQueueFull() == true && (cur_src->GetLastFileAskedTime(this) + (8*60*1000))<dwCurTick && !(cur_src->socket && cur_src->socket->IsConnected()) && (dwCurTick - lastpurgetime) > 45000 ) //if socket, it can be, that we receive the QR later
+							{
+								if( !cur_src->SwapToAnotherFile( true , false, false , NULL ))
+								{
+									// Purge
+									if(thePrefs.GetLogDrop())
+										AddDebugLogLine(false, _T("-o- FQ dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+									cur_src->droptime=dwCurTick;
+									theApp.downloadqueue->RemoveSource(cur_src);
+									lastpurgetime = dwCurTick;
+									break;
+								}
+								else
+								{
+									if(thePrefs.GetLogA4AF())
+										AddDebugLogLine(false, _T("-o- FQ swapped client: %s, %s, from %s to %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+									cur_src->DontSwapTo(this);
+									lastpurgetime = dwCurTick;
+									break;
+								}
+							}
+							else
+								/* //Xman4.5: leechers should have been deleted earlier
+								//Leechers:
+								if(cur_src->IsBanned() && (dwCurTick - lastpurgetime > 35000) ) 
+								{
+									// Purge
+									if(thePrefs.GetLogDrop())
+										AddDebugLogLine(false, _T("-o- banned dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+									cur_src->droptime=dwCurTick;
+									theApp.downloadqueue->RemoveSource(cur_src);
+									lastpurgetime = dwCurTick;
+									break;
+								}
+								else *//*
+									//Non emules:
+									if(cur_src->IsEmuleClient() == false && (dwCurTick - cur_src->enterqueuetime>(60*60*1000)) && cur_src->GetTransferredDown()<1000000 && (dwCurTick - lastpurgetime > 60000) ) //if socket, it can be, that we receive the QR later
+									{
+										// Purge
+										if(thePrefs.GetLogDrop())
+											AddDebugLogLine(false, _T("-o- non emule dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+										cur_src->droptime=dwCurTick;
+										theApp.downloadqueue->RemoveSource(cur_src);
+										lastpurgetime = dwCurTick;
+										break;
+									}
+									else
+										//High QR:
+										if(cur_src->IsEmuleClient() && cur_src->Credits() && cur_src->credits->GetMyScoreRatio(cur_src->GetIP())<1.5f && (dwCurTick - cur_src->enterqueuetime>(90*60*1000)) && cur_src->GetRemoteQueueRank()>2000 && cur_src->GetRemoteQueueRank()>(GetAvgQr()*2+400) && (dwCurTick - lastpurgetime > 65000) ) 
+										{
+											UINT rqr=cur_src->GetRemoteQueueRank();
+											if( !cur_src->SwapToAnotherFile( true , false, false , NULL ))
+											{
+												// Purge
+												if(thePrefs.GetLogDrop())
+													AddDebugLogLine(false, _T("-o- HQR(%u) dropped client: %s, %s, from %s"), rqr, cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+												cur_src->droptime=dwCurTick;
+												theApp.downloadqueue->RemoveSource(cur_src);
+												lastpurgetime = dwCurTick;
+												break;
+											}
+											else
+											{
+												if(thePrefs.GetLogA4AF())
+													AddDebugLogLine(false, _T("-o- HQR(%u) swapped client: %s, %s, from %s to %s"),rqr, cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+												cur_src->DontSwapTo(this);
+												lastpurgetime = dwCurTick;
+												break;
+											}
+										}
 						}
+						//Xman end
 						*/
-						if(m_EnableAutoDropFQS && theApp.GetReAskTick() < dwCurTick) // auto drop immunity - Stulle
+						if(cur_src->IsRemoteQueueFull())
 						{
-							if(dwCurTick > (m_TimerForAutoFQS + m_AutoFQS_Timer)
-							&& GetSourceCount() > ((GetMaxSources() * m_MaxRemoveFQSLimit)/100))
+							if(m_EnableAutoDropFQS &&
+								GetSourceCount() > ((GetMaxSources() * m_MaxRemoveFQSLimit)/100) &&
+								(cur_src->GetLastFileAskedTime(this) + (8*60*1000))<dwCurTick &&
+								!(cur_src->socket && cur_src->socket->IsConnected()) &&
+								dwCurTick > (m_TimerForAutoFQS + m_AutoFQS_Timer))
 							{
-								theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/); //modified by sivka
-								m_TimerForAutoFQS = dwCurTick;
-								m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-								break;
+								if( !cur_src->SwapToAnotherFile( true , false, false , NULL ))
+								{
+									// Purge
+									if(thePrefs.GetLogDrop())
+										AddDebugLogLine(false, _T("-o- FQ dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+									cur_src->droptime=dwCurTick;
+									theApp.downloadqueue->RemoveSource(cur_src);
+									m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+									m_TimerForAutoFQS = dwCurTick;
+									break;
+								}
+								else
+								{
+									if(thePrefs.GetLogA4AF())
+										AddDebugLogLine(false, _T("-o- FQ swapped client: %s, %s, from %s to %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+									cur_src->DontSwapTo(this);
+									m_TimerForAutoFQS = dwCurTick;
+									break;
+								}
 							}
-
 						}
-						// <== drop sources - Stulle
-					}
-
-					// ==> drop sources - Stulle
-					else if(cur_src->GetRemoteQueueRank() > m_MaxRemoveQRS)
-					{
-						if(m_EnableAutoDropQRS && theApp.GetReAskTick() < dwCurTick) // auto drop immunity - Stulle
+						else
 						{
-							if( dwCurTick > (m_TimerForAutoHQRS + m_AutoHQRS_Timer)
-							&& GetSourceCount() > ((GetMaxSources() * m_MaxRemoveQRSLimit)/100)
-							&& m_RemoteQueueRank_New >= m_RemoteQueueRank_Old)
+							if( m_EnableAutoDropQRS &&
+								m_bHQRXman &&
+								cur_src->IsEmuleClient() == false &&
+								(dwCurTick - cur_src->enterqueuetime>(60*60*1000)) &&
+								cur_src->GetTransferredDown()<1000000 &&
+								dwCurTick > (m_TimerForAutoHQRS + m_AutoHQRS_Timer) )
 							{
-								theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
+								// Purge
+								if(thePrefs.GetLogDrop())
+									AddDebugLogLine(false, _T("-o- non emule dropped client: %s, %s, from %s"), cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+								cur_src->droptime=dwCurTick;
+								theApp.downloadqueue->RemoveSource(cur_src);
 								m_TimerForAutoHQRS = dwCurTick;
-								m_RemoteQueueRank_Old = 0xFFFF;
-								m_RemoteQueueRank_New = m_MaxRemoveQRS;
 								m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
 								break;
 							}
+							else
+							{
+								//High QR:
+								if(m_EnableAutoDropQRS &&
+									GetSourceCount() > ((GetMaxSources() * m_MaxRemoveQRSLimit)/100) &&
+									dwCurTick > (m_TimerForAutoHQRS + m_AutoHQRS_Timer) &&
+									(m_bHQRXman &&
+										cur_src->IsEmuleClient() &&
+										cur_src->Credits() && cur_src->credits->GetMyScoreRatio(cur_src->GetIP())<1.5f &&
+										(dwCurTick - cur_src->enterqueuetime>(90*60*1000)) &&
+										cur_src->GetRemoteQueueRank()>2000 &&
+										cur_src->GetRemoteQueueRank()>(GetAvgQr()*2+400)) ||
+									(!m_bHQRXman &&
+										cur_src->GetRemoteQueueRank() > m_MaxRemoveQRS &&
+										m_RemoteQueueRank_New >= m_RemoteQueueRank_Old)
+									)
+								{
+									UINT rqr=cur_src->GetRemoteQueueRank();
+									if( !cur_src->SwapToAnotherFile( true , false, false , NULL ))
+									{
+										// Purge
+										if(thePrefs.GetLogDrop())
+											AddDebugLogLine(false, _T("-o- HQR(%u) dropped client: %s, %s, from %s"), rqr, cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName());
+										cur_src->droptime=dwCurTick;
+										theApp.downloadqueue->RemoveSource(cur_src);
+										m_TimerForAutoHQRS = dwCurTick;
+										m_RemoteQueueRank_Old = 0xFFFF;
+										m_RemoteQueueRank_New = m_MaxRemoveQRS;
+										m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+										break;
+									}
+									else
+									{
+										if(thePrefs.GetLogA4AF())
+											AddDebugLogLine(false, _T("-o- HQR(%u) swapped client: %s, %s, from %s to %s"),rqr, cur_src->DbgGetFullClientSoftVer(), cur_src->GetUserName(), this->GetFileName(), cur_src->GetRequestFile()->GetFileName());
+										cur_src->DontSwapTo(this);
+										m_TimerForAutoHQRS = dwCurTick;
+										break;
+									}
+								}
+							}
 						}
-					}
-					// <== drop sources - Stulle
+						// <== customized source dropping - Stulle
 
-					//EastShare Start - Added by AndCycle, Only download complete files v2.1 (shadow)
-					if (cur_src->GetTimeUntilReask() && notSeenCompleteSource())
-						break;//shadow#(onlydownloadcompletefiles)
-					//EastShare End - Added by AndCycle, Only download complete files v2.1 (shadow)
-					//Give up to 1 min for UDP to respond.. If we are within on min on TCP, do not try..
-					if (theApp.IsConnected() && cur_src->GetTimeUntilReask() < MIN2MS(2) && cur_src->GetTimeUntilReask() > SEC2MS(1) && ::GetTickCount()-cur_src->getLastTriedToConnectTime() > 20*60*1000) // ZZ:DownloadManager (one resk timestamp for each file)
-						cur_src->UDPReaskForDownload();
+						// Maella -Unnecessary Protocol Overload-
+						// Maella -Spread Request- (idea SlugFiller)					
+						if(theApp.IsConnected() == true){
+							// Check if a refresh is required for the download session with a cheap UDP
+							if((cur_src->GetLastAskedTime() != 0) &&
+								(cur_src->GetNextTCPAskedTime() > dwCurTick + (10*60000)) &&
+								// 55 seconds for two attempts to refresh the download session with UDP
+								(dwCurTick - cur_src->GetLastAskedTime() < cur_src->GetJitteredFileReaskTime() &&
+								(dwCurTick - cur_src->GetLastAskedTime() > cur_src->GetJitteredFileReaskTime() - 55000))){
+
+									// Send a OP_REASKFILEPING (UDP) to refresh the download session
+									// The refresh of the download session is necessary to stay in the remote queue
+									// => see CUpDownClient::SetLastUpRequest() and MAX_PURGEQUEUETIME
+									cur_src->UDPReaskForDownload();
+								}
+
+						}
+						// Maella end
+					//Xman end
 				}
 				case DS_CONNECTING:
 				case DS_TOOMANYCONNS:
@@ -3499,31 +3830,86 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 				case DS_WAITCALLBACK:
 				case DS_WAITCALLBACKKAD:
 				{
-					cur_src->dwStartDLTime = 0; //SLAHAM: ADDED Show Downloading Time
+					// Maella -Spread Request- (idea SlugFiller)
+					// Maella -Unnecessary Protocol Overload-
+					/*
 					if (theApp.IsConnected() && cur_src->GetTimeUntilReask() == 0 && ::GetTickCount()-cur_src->getLastTriedToConnectTime() > 20*60*1000) // ZZ:DownloadManager (one resk timestamp for each file)
 					{
 						if(!cur_src->AskForDownload()) // NOTE: This may *delete* the client!!
 							break; //I left this break here just as a reminder just in case re rearange things..
 					}
+					*/
+					if(theApp.IsConnected() == true){ 
+						// Check if a refresh is required for the download session with TCP
+						if((cur_src->GetLastAskedTime() == 0) || // Never asked before
+							(cur_src->GetNextTCPAskedTime() <= dwCurTick) || // Full refresh with TCP is required
+							(cur_src->socket != NULL && // Take advantage of the current connection
+							cur_src->socket->IsConnected() == true && 
+							//nächste TCP ist in weniger als 10 minuten
+							(cur_src->GetNextTCPAskedTime() - (10*60000) < dwCurTick ||
+							//Xman falls socket, dann darf der TCP-request immer stattfinden, wenn nächster request in 2 Minuten wäre
+							//aber nicht falls wir noch auf UDP-Antwort warten
+							(cur_src->UDPPacketPending()==false && (cur_src->GetLastAskedTime() + cur_src->GetJitteredFileReaskTime() - MIN2MS(2) < dwCurTick)) ||
+							//client antwortet nicht auf UDP also schau nicht auf NextTCPAskedTime
+							//sondern wann mu?das nächste mal abgefragt werden - 10 Minuten
+							//Xman better using of existing connections
+							((cur_src->HasTooManyFailedUDP() || cur_src->HasLowID()) && (cur_src->GetLastAskedTime() + cur_src->GetJitteredFileReaskTime() - (10*60000) < dwCurTick))) && 
+							//letzte mal tcp-ask nach diesem file war vor 10 minuten:
+							cur_src->GetLastFileAskedTime(this) + MIN_REQUESTTIME + 60000 < dwCurTick) || 
+							//29 minuten seit dem lezten fragen(überhaupt) sind vorbei: UDP failed
+							(dwCurTick - cur_src->GetLastAskedTime() > cur_src->GetJitteredFileReaskTime())){ // Time since last refresh (UDP or TCP elapsed)
+
+								// Initialize or refresh the download session with an expensive TCP session
+								// The refresh of the download session is necessary to stay in the remote queue
+								// => see CUpDownClient::SetLastUpRequest() and MAX_PURGEQUEUETIME
+								if(!cur_src->AskForDownload()) // NOTE: This may *delete* the client!!
+									break; //I left this break here just as a reminder just in case re rearange things..
+							}
+					}
+					// Maella end
 					break;
 				}
 			}
 		}
+
+		m_RemoteQueueRank_Old = m_RemoteQueueRank_New; // customized source dropping - Stulle
+		m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+		
+		//Xman Xtreme Downloadmanager: Auto-A4AF-check
+		if (IsA4AFAuto() && ((!m_LastNoNeededCheck) || (dwCurTick - m_LastNoNeededCheck > (PURGESOURCESWAPSTOP + SEC2MS(5)))) )
+		{
+			m_LastNoNeededCheck = dwCurTick;
+
+			for (POSITION pos = A4AFsrclist.GetHeadPosition(); pos !=NULL; ) {				
+				CUpDownClient *cur_source = A4AFsrclist.GetNext(pos);
+				if( cur_source->GetDownloadState() != DS_DOWNLOADING
+					&& cur_source->GetRequestFile() 
+					&& ( (!cur_source->GetRequestFile()->IsA4AFAuto()) || cur_source->GetDownloadState() == DS_NONEEDEDPARTS)
+					&& !cur_source->IsSwapSuspended(this) 
+					&& GetSourceCount()<GetMaxSources())	//Xman 4.2
+				{
+						CPartFile* oldfile = cur_source->GetRequestFile();
+						if (cur_source->SwapToAnotherFile(false, false, false, this)){
+							cur_source->DontSwapTo(oldfile);
+						}
+					}
+			}
+		}
+		//Xman end
+		
+
 		if (downloadingbefore!=(m_anStates[DS_DOWNLOADING]>0))
 			NotifyStatusChange();
- 		//MORPH START - Changed by SiRoB, Cached stat
-		memcpy(m_anStates,m_anStatesTemp,sizeof(m_anStates));
-		//MORPH END   - Changed by SiRoB, Cached stat
+ 
+		memcpy(m_anStates,m_anStatesTemp,sizeof(m_anStates)); // Source Counts Are Cached derivated from Khaos [SiRoB] - Stulle
 
-		m_RemoteQueueRank_Old = m_RemoteQueueRank_New; // drop sources - Stulle
-		m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-		//MORPH START - Modified by Stulle, Global Source Limit
+		//Xman GlobalMaxHarlimit for fairness
 		/*
 		if( GetMaxSourcePerFileUDP() > GetSourceCount()){
 		*/
-		if( GetMaxSourcePerFileUDP() > GetSourceCount() && IsSrcReqOrAddAllowed()){
-		//MORPH END   - Modified by Stulle, Global Source Limit
+		if( GetMaxSourcePerFileUDP() > GetSourceCount() && IsSourceSearchAllowed())
+		{
+		//Xman end
 			if (theApp.downloadqueue->DoKademliaFileRequest() && (Kademlia::CKademlia::GetTotalFile() < KADEMLIATOTALFILE) && (dwCurTick > m_LastSearchTimeKad) &&  Kademlia::CKademlia::IsConnected() && theApp.IsConnected() && !stopped){ //Once we can handle lowID users in Kad, we remove the second IsConnected
 				//Kademlia
 				theApp.downloadqueue->SetLastKademliaFileRequest();
@@ -3538,7 +3924,7 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 						pSearch->SetGUIName(GetFileName());
 						SetKadFileSearchID(pSearch->GetSearchID());
 					}
-						else
+					else
 						SetKadFileSearchID(0);
 				}
 			}
@@ -3553,48 +3939,61 @@ uint32 CPartFile::Process(uint32 reducedownload, UINT icounter/*in percent*/, ui
 
 		// check if we want new sources from server
 		if ( !m_bLocalSrcReqQueued && ((!m_LastSearchTime) || (dwCurTick - m_LastSearchTime) > SERVERREASKTIME) && theApp.serverconnect->IsConnected()
+			//Xman GlobalMaxHarlimit for fairness
+			/*
 			&& GetMaxSourcePerFileSoft() > GetSourceCount() && !stopped
-			&& IsSrcReqOrAddAllowed() // MORPH - Added by Stulle, Global Source Limit
+			*/
+			&& GetMaxSourcePerFileSoft() > GetSourceCount() && !stopped && IsSourceSearchAllowed()
+			//Xman end
 			&& (!IsLargeFile() || (theApp.serverconnect->GetCurrentServer() != NULL && theApp.serverconnect->GetCurrentServer()->SupportsLargeFilesTCP())))
 		{
 			m_bLocalSrcReqQueued = true;
 			theApp.downloadqueue->SendLocalSrcRequest(this);
 		}
 
+		//Xman
+		/*
 		count++;
 		if (count == 3){
 			count = 0;
-			// khaos::kmod+ Save/Load Sources
-			if (thePrefs.UseSaveLoadSources())
-				m_sourcesaver.Process(this); //<<-- enkeyDEV(Ottavio84) -New SLS-
-			// khaos::kmod-
 			UpdateAutoDownPriority();
 			UpdateDisplayedInfo();
 			UpdateCompletedInfos();
 		}
 	}
+		*/
+		//Xman end
 
 	if ( GetSrcStatisticsValue(DS_DOWNLOADING) != nOldTransSourceCount ){
-		//MORPH START - Changed by SiRoB, Khaos Categorie
-		/*
+			// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+			/*
 		if (theApp.emuledlg->transferwnd->downloadlistctrl.curTab == 0)
-			theApp.emuledlg->transferwnd->downloadlistctrl.ChangeCategory(0);
+			theApp.emuledlg->transferwnd->downloadlistctrl.ChangeCategory(0); 
+			*/
+			int curselcat = theApp.emuledlg->transferwnd->downloadlistctrl.curTab;
+			Category_Struct* cat = thePrefs.GetCategory(curselcat);
+			if (cat && cat->viewfilters.nFromCats == 0)
+				theApp.emuledlg->transferwnd->downloadlistctrl.ChangeCategory(curselcat);
+			// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+		//Xman
+		/*
 		else
-		*/
-		int curselcat = theApp.emuledlg->transferwnd->downloadlistctrl.curTab;
-		Category_Struct* cat = thePrefs.GetCategory(curselcat);
-		if (cat && cat->viewfilters.nFromCats == 0)
-			theApp.emuledlg->transferwnd->downloadlistctrl.ChangeCategory(curselcat);
-		else
-		//MORPH END - Changed by SiRoB, Khaos Categorie
 			UpdateDisplayedInfo(true);
-		// khaos::categorymod-
-		if (thePrefs.ShowCatTabInfos())
+		*/
+		//Xman end
+		if (thePrefs.ShowCatTabInfos() )
 			theApp.emuledlg->transferwnd->UpdateCatTabTitles();
 	}
 
-	return datarate = datarateX;//MORPH - Changed by SiRoB,  -Fix-
+	//Xman
+	/*
+	return datarate;
+	*/
+	}
+	return receivedBlockTotal;
+	//Xman end
 }
+//Xman end //Maella end
 
 bool CPartFile::CanAddSource(uint32 userid, uint16 port, uint32 serverip, uint16 serverport, UINT* pdebug_lowiddropped, bool Ed2kID)
 {
@@ -3605,22 +4004,14 @@ bool CPartFile::CanAddSource(uint32 userid, uint16 port, uint32 serverip, uint16
 		if(IsLowID(userid))
 			hybridID = userid;
 		else
-		hybridID = ntohl(userid);
+			hybridID = ntohl(userid);
 	}
 	else
 	{
 		hybridID = userid;
 		if(!IsLowID(userid))
-		userid = ntohl(userid);
+			userid = ntohl(userid);
 	}
-
-	// ==> drop sources - Stulle
-	if(theApp.clientlist->DontAskThisIP(userid)){
-		//if(thePrefs.GetLogBannedClients())
-		//	theApp.emuledlg->AddDebugLogLine(false, "DONT ASK THIS IP=%s! CPartFile::CanAddSource() ignored!", ipstr(userid));
-		return false;
-	}
-	// <== drop sources - Stulle
 
 	// MOD Note: Do not change this part - Merkur
 	if (theApp.serverconnect->IsConnected())
@@ -3660,10 +4051,16 @@ void CPartFile::AddSources(CSafeMemFile* sources, uint32 serverip, uint16 server
 {
 	UINT count = sources->ReadUInt8();
 
+	bool stopKadSearch=false; //Xman sourcecache
+
 	UINT debug_lowiddropped = 0;
 	UINT debug_possiblesources = 0;
 	uchar achUserHash[16];
+	//Xman sourcecache
+	/*
 	bool bSkip = false;
+	*/
+	//Xman end
 	for (UINT i = 0; i < count; i++)
 	{
 		uint32 userid = sources->ReadUInt32();
@@ -3682,16 +4079,13 @@ void CPartFile::AddSources(CSafeMemFile* sources, uint32 serverip, uint16 server
 		}
 		
 		// since we may received multiple search source UDP results we have to "consume" all data of that packet
-		//MORPH START - Modified by Stulle, Source cache [Xman]
+		//Xman sourcecache
 		/*
 		if (stopped || bSkip)
-			continue;
 		*/
-		if (stopped || bSkip) {
-			AddToSourceCache(port,userid,serverip,serverport,SF_CACHE_SERVER,true,((byCryptOptions & 0x80) != 0)?achUserHash:NULL, byCryptOptions);
+		if (stopped)
+		//Xman end
 			continue;
-		}
-		//MORPH END   - Modified by Stulle, Source cache [Xman]
 
 		// check the HighID(IP) - "Filter LAN IPs" and "IPfilter" the received sources IP addresses
 		if (!IsLowID(userid))
@@ -3713,7 +4107,12 @@ void CPartFile::AddSources(CSafeMemFile* sources, uint32 serverip, uint16 server
 #ifdef _DEBUG
 				if (thePrefs.GetLogBannedClients()){
 					CUpDownClient* pClient = theApp.clientlist->FindClientByIP(userid);
+					//Xman Code Fix
+					/*
 					AddDebugLogLine(false, _T("Ignored source (IP=%s) received from server - banned client %s"), ipstr(userid), pClient->DbgGetClientInfo());
+					*/
+					AddDebugLogLine(false, _T("Ignored source (IP=%s) received from server - banned client %s"), ipstr(userid), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+					//Xman end
 				}
 #endif
 				continue;
@@ -3728,12 +4127,30 @@ void CPartFile::AddSources(CSafeMemFile* sources, uint32 serverip, uint16 server
 			continue;
 		}
 
-		//MORPH START - Modified by Stulle, Global Source Limit
+		//Xman filter out unreachable LowID-sources
+		if(IsLowID(userid) )
+		{
+			if(serverip==0 || serverport==0)
+			{
+				AddDebugLogLine(false, _T("--> wrong source received (no server given) (AddSources)"));
+				continue;
+			}
+			else if(!theApp.serverconnect->IsLocalServer(serverip,serverport))
+			{
+				//see baseclient->trytoconnect() we can't connect to this sources
+				AddDebugLogLine(false, _T("--> wrong source received (not our server) (AddSources)"));
+				continue;
+			}
+		}
+		//Xman end
+
+		//Xman surcecache
+		//Xman GlobalMaxHarlimit for fairness
 		/*
 		if( GetMaxSources() > this->GetSourceCount() )
 		*/
-		if( GetMaxSources() > this->GetSourceCount() && IsSrcReqOrAddAllowed() )
-		//MORPH END   - Modified by Stulle, Global Source Limit
+		if( GetMaxSources() > this->GetSourceCount() && IsGlobalSourceAddAllowed())
+		//Xman end
 		{
 			debug_possiblesources++;
 			CUpDownClient* newsource = new CUpDownClient(this,port,userid,serverip,serverport,true);
@@ -3745,17 +4162,27 @@ void CPartFile::AddSources(CSafeMemFile* sources, uint32 serverip, uint16 server
 		}
 		else
 		{
-			//MORPH START - Modified by Stulle, Source cache [Xman]
-			AddToSourceCache(port,userid,serverip,serverport,SF_CACHE_SERVER,true,((byCryptOptions & 0x80) != 0)?achUserHash:NULL, byCryptOptions);
-			//MORPH END   - Modified by Stulle, Source cache [Xman]
 			// since we may received multiple search source UDP results we have to "consume" all data of that packet
+			//Xman sourcecache
+			/*
 			bSkip = true;
 			if(GetKadFileSearchID())
 				Kademlia::CSearchManager::StopSearch(GetKadFileSearchID(), false);
 			continue;
+			*/
+			if ((byCryptOptions & 0x80) != 0)
+				AddToSourceCache(port,userid,serverip,serverport,SF_SERVER,true,achUserHash,byCryptOptions);
+			else
+				AddToSourceCache(port,userid,serverip,serverport,SF_SERVER,true,NULL,byCryptOptions);
+			if(stopKadSearch==false && GetKadFileSearchID())
+			{
+				Kademlia::CSearchManager::StopSearch(GetKadFileSearchID(), false);
+				stopKadSearch=true;
+			}
+			//Xman end
 		}
 	}
-	if ( thePrefs.GetDebugSourceExchange() )
+	if (thePrefs.GetDebugSourceExchange())
 		AddDebugLogLine(false, _T("SXRecv: Server source response; Count=%u, Dropped=%u, PossibleSources=%u, File=\"%s\""), count, debug_lowiddropped, debug_possiblesources, GetFileName());
 }
 
@@ -3775,7 +4202,6 @@ void CPartFile::AddSource(LPCTSTR pszURL, uint32 nIP)
 	{
 		if (thePrefs.GetLogFilteredIPs())
 			AddDebugLogLine(false, _T("Ignored URL source (IP=%s) \"%s\" - IP filter (%s)"), ipstr(nIP), pszURL, theApp.ipfilter->GetLastHit());
-		theStats.filteredclients++; //MORPH - Added by SiRoB, To comptabilise ipfiltered
 		return;
 	}
 
@@ -3827,69 +4253,55 @@ void CPartFile::UpdatePartsInfo()
 	// Reset part counters
 	if ((UINT)m_SrcpartFrequency.GetSize() < partcount)
 		m_SrcpartFrequency.SetSize(partcount);
-	//MORPH START - Added by SiRoB, ICS merged into partstatus
-	if ((UINT)m_SrcIncPartFrequency.GetSize() < partcount)
-		m_SrcIncPartFrequency.SetSize(partcount);
-	//MORPH END   - Added by SiRoB, ICS merged into partstatus
 	for (UINT i = 0; i < partcount; i++)
-		m_SrcpartFrequency[i] = m_SrcIncPartFrequency[i] = 0; //MORPH - Changed by SiRoB, ICS merged into partstatus
-
-	CArray<uint16,uint16> count;
+		m_SrcpartFrequency[i] = 0;
+	
+	CArray<uint16, uint16> count;
 	if (flag)
 		count.SetSize(0, srclist.GetSize());
-	//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-	UINT iCompleteSourcesCountInfoReceived = 0;
-	//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-	//MORPH START - Changed by SiRoB, ICS merged into partstatus
 	for (POSITION pos = srclist.GetHeadPosition(); pos != 0; )
 	{
-		const CUpDownClient* cur_src = srclist.GetNext(pos);
-		const uint8* srcPartStatus = cur_src->GetPartStatus();
-		if(srcPartStatus) 
-		{
+		CUpDownClient* cur_src = srclist.GetNext(pos);
+
+		//Xman better chunk selection
+		//use different weight
+		uint16 weight=2;
+		if(cur_src->GetDownloadState()==DS_ONQUEUE && (cur_src->IsLeecher() || cur_src->IsRemoteQueueFull() || cur_src->GetRemoteQueueRank()>4000)) //Xman Anti-Leecher
+			weight=1;
+		//Xman end
+
+		if( cur_src->GetPartStatus() )
+		{		
 			for (UINT i = 0; i < partcount; i++)
 			{
-				if (srcPartStatus[i]&SC_AVAILABLE)
-					++m_SrcpartFrequency[i];
-				else if (srcPartStatus[i]==SC_PARTIAL)
-					++m_SrcIncPartFrequency[i];
+				if (cur_src->IsPartAvailable(i))
+					//Xman better chunk selection
+					/*
+					m_SrcpartFrequency[i] += 1;
+					*/
+					m_SrcpartFrequency[i] = m_SrcpartFrequency[i] + (uint16)weight;
+					//Xman end
 			}
 			if ( flag )
 			{
-				count.Add(cur_src->GetUpCompleteSourcesCount());
+				//Xman Code Improvement
+				//for complete sources the value isn't up to date btw. we don't have this value
+				if(cur_src->HasFileComplete()==false && cur_src->m_abyUpPartStatus)
+				//Xman end
+					count.Add(cur_src->GetUpCompleteSourcesCount());
 			}
-			//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-			if (cur_src->GetUpCompleteSourcesCount()>0)
-				++iCompleteSourcesCountInfoReceived;
-			//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
 		}
 	}
-	//MORPH START - Added by SiRoB, Keep A4AF infos
-	for (POSITION pos = A4AFsrclist.GetHeadPosition(); pos != 0; )
+
+	//Xman better chunk selection
+	//at this point we have double weight -->reduce to normal (division by 2)
+	for(UINT i = 0; i < partcount; i++)
 	{
-		const CUpDownClient* cur_src = A4AFsrclist.GetNext(pos);
-		const uint8* thisAbyPartStatus = cur_src->GetPartStatus(this);
-		if(thisAbyPartStatus)
-		{
-			for (UINT i = 0; i < partcount; i++)
-			{
-				if (thisAbyPartStatus[i]&SC_AVAILABLE)
-					++m_SrcpartFrequency[i];
-				else if (thisAbyPartStatus[i]==SC_PARTIAL)
-					++m_SrcIncPartFrequency[i];
-			}
-			if ( flag )
-			{
-				count.Add(cur_src->GetUpCompleteSourcesCount(this));
-			}
-			//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-			if (cur_src->GetUpCompleteSourcesCount(this)>0)
-				++iCompleteSourcesCountInfoReceived;
-			//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-		}
+		if(m_SrcpartFrequency[i]>1)
+			m_SrcpartFrequency[i] = m_SrcpartFrequency[i]>>1; //nothing else than  m_SrcpartFrequency[i]/2; 
 	}
-	//MORPH END   - Added by SiRoB, Keep A4AF infos
-	//MORPH END   - Changed by SiRoB, ICS merged into partstatus
+	//Xman end
+
 
 	if (flag)
 	{
@@ -3897,12 +4309,16 @@ void CPartFile::UpdatePartsInfo()
 	
 		for (UINT i = 0; i < partcount; i++)
 		{
-			if( !i )
+			if (!i)
 				m_nCompleteSourcesCount = m_SrcpartFrequency[i];
 			else if( m_nCompleteSourcesCount > m_SrcpartFrequency[i])
 				m_nCompleteSourcesCount = m_SrcpartFrequency[i];
 		}
 	
+		//Xman show virtual sources
+		m_nVirtualCompleteSourcesCount=m_nCompleteSourcesCount;
+		//Xman end
+
 		count.Add(m_nCompleteSourcesCount);
 	
 		int n = count.GetSize();
@@ -3945,8 +4361,13 @@ void CPartFile::UpdatePartsInfo()
 					m_nCompleteSourcesCountLo = m_nCompleteSourcesCount;
 				else
 					m_nCompleteSourcesCountLo = (uint16)((float)(count.GetAt(i)*.8)+(float)(m_nCompleteSourcesCount*.2));
+				//Xman Code Fix moved down
+				/*
 				m_nCompleteSourcesCount= m_nCompleteSourcesCountLo;
+				*/
+				//Xman end
 				m_nCompleteSourcesCountHi= (uint16)((float)(count.GetAt(j)*.8)+(float)(m_nCompleteSourcesCount*.2));
+				m_nCompleteSourcesCount= m_nCompleteSourcesCountLo; //Xman Code Fix
 				if( m_nCompleteSourcesCountHi < m_nCompleteSourcesCount )
 					m_nCompleteSourcesCountHi = m_nCompleteSourcesCount;
 			}
@@ -3963,347 +4384,22 @@ void CPartFile::UpdatePartsInfo()
 				m_nCompleteSourcesCount= (uint16)((float)(count.GetAt(j)*.8)+(float)(m_nCompleteSourcesCount*.2));
 				if( m_nCompleteSourcesCount < m_nCompleteSourcesCountLo )
 					m_nCompleteSourcesCount = m_nCompleteSourcesCountLo;
+				//Xman Code Fix: must use m_nCompleteSourcesCountLo instead of m_nCompleteSourcesCount
+				/*
 				m_nCompleteSourcesCountHi= (uint16)((float)(count.GetAt(k)*.8)+(float)(m_nCompleteSourcesCount*.2));
+				*/
+				m_nCompleteSourcesCountHi= (uint16)((float)(count.GetAt(k)*.8)+(float)(m_nCompleteSourcesCountLo*.2));
+				//Xman end
 				if( m_nCompleteSourcesCountHi < m_nCompleteSourcesCount )
 					m_nCompleteSourcesCountHi = m_nCompleteSourcesCount;
 			}
 		}
 		m_nCompleteSourcesTime = time(NULL) + (60);
 	}
-	//MORPH START - Added by SiRoB, Avoid misusing of powersharing
-	m_nVirtualCompleteSourcesCount = (uint16)-1;
-	for (UINT i = 0; i < partcount; i++){
-		if(m_nVirtualCompleteSourcesCount > m_SrcpartFrequency[i])
-			m_nVirtualCompleteSourcesCount = m_SrcpartFrequency[i];
-	}
-	// ==> Limit PS by amount of data uploaded - Stulle
-	/*
-	UpdatePowerShareLimit(m_nVirtualCompleteSourcesCount<=5, iCompleteSourcesCountInfoReceived>1 && m_anStates[DS_TOOMANYCONNS]==0 && m_anStates[DS_CONNECTING]==0 && m_nVirtualCompleteSourcesCount==1, m_nCompleteSourcesCountHi>((GetPowerShareLimit()>=0)?GetPowerShareLimit():thePrefs.GetPowerShareLimit()));
-	*/
-	int iPsAmountLimit = (GetPsAmountLimit()>=0 ? GetPsAmountLimit() : thePrefs.GetPsAmountLimit());
-	int iPowerShareLimit = (GetPowerShareLimit()>=0 ? GetPowerShareLimit() : thePrefs.GetPowerShareLimit());
-	bool bPowerShareLimit = true;
-	if(iPsAmountLimit>0)
-	{
-		if((((double)statistic.GetAllTimeTransferred())/((double)GetFileSize())) < (((double)iPsAmountLimit)/100.0f))
-			bPowerShareLimit = false;
-	}
-	if(iPowerShareLimit > 0)
-		bPowerShareLimit = (m_nCompleteSourcesCountHi > iPowerShareLimit);
-	UpdatePowerShareLimit(m_nVirtualCompleteSourcesCount<=5, iCompleteSourcesCountInfoReceived>1 && m_anStates[DS_TOOMANYCONNS]==0 && m_anStates[DS_CONNECTING]==0 && m_nVirtualCompleteSourcesCount==1,bPowerShareLimit);
-	// <== Limit PS by amount of data uploaded - Stulle
-	//MORPH END   - Added by SiRoB, Avoid misusing of powersharing
-	//MORPH START - Added by SiRoB, Avoid misusing of HideOS
-	SetHideOSAuthorized(m_nVirtualCompleteSourcesCount>1);
-	//MORPH END   - Added by SiRoB, Avoid misusing of HideOS
 	UpdateDisplayedInfo();
-	//MORPH START - Added by SiRoB,  SharedStatusBar CPU Optimisation
-	InChangedSharedStatusBar = false;
-	//MORPH END   - Added by SiRoB,  SharedStatusBar CPU Optimisation
-}
+}	
 
-//Morph Start - added by AndCycle, ICS
-// enkeyDEV: ICS - Intelligent Chunk Selection
-
-void CPartFile::NewSrcIncPartsInfo()
-{
-	UINT partcount = GetPartCount();
-
-	if ((UINT)m_SrcIncPartFrequency.GetSize() < partcount)
-		m_SrcIncPartFrequency.SetSize(partcount);
-
-	for(UINT i = 0; i < partcount; i++)
-		m_SrcIncPartFrequency[i] = 0;
-
-	for (POSITION pos = srclist.GetHeadPosition(); pos != NULL;){
-		const CUpDownClient* cur_src = srclist.GetNext(pos);
-		
-		if (cur_src->GetIncompletePartVersion()) {
-			const uint8* srcstatus = cur_src->GetPartStatus();
-			if (srcstatus) {
-				for (UINT i = 0; i < partcount; i++) {
-					if (srcstatus[i]==SC_PARTIAL)
-						m_SrcIncPartFrequency[i] +=1;
-				}
-			}
-		}
-	}
-	//MORPH START - Added by SiRoB, Keep A4AF infos
-	for (POSITION pos = A4AFsrclist.GetHeadPosition(); pos != 0; )
-	{
-		const CUpDownClient* cur_src = A4AFsrclist.GetNext(pos);
-		if (cur_src->GetIncompletePartVersion()) {
-			const uint8* thisAbyPartStatus = cur_src->GetPartStatus(this);
-			if(thisAbyPartStatus)
-			{
-				for (UINT i = 0; i < partcount; i++)
-				{
-					if (thisAbyPartStatus[i]==SC_PARTIAL)
-						++m_SrcIncPartFrequency[i];
-				}
-			}
-		}
-	}
-	//MORPH END   - Added by SiRoB, Keep A4AF infos
-	//UpdateDisplayedInfo(); // Not displayed
-}
-
-uint64 CPartFile::GetPartSizeToDownload(uint16 partNumber)
-{
-	Gap_Struct *currentGap;
-	uint64 total, gap_start, gap_end, partStart, partEnd;
-
-	total = 0;
-	partStart = (uint64)(PARTSIZE * partNumber);
-	partEnd = min(partStart + PARTSIZE, GetFileSize());
-
-	for (POSITION pos = gaplist.GetHeadPosition(); pos != 0; gaplist.GetNext(pos))
-	{
-		currentGap = gaplist.GetAt(pos);
-
-		if ((currentGap->start < partEnd) && (currentGap->end >= partStart))
-		{
-			gap_start = max(currentGap->start, partStart);
-			gap_end = min(currentGap->end + 1, partEnd);
-			total += (gap_end - gap_start); // I'm not sure this works: do gaps overlap?
-		}
-	}
-
-	return min(total, partEnd - partStart); // This to limit errors: see note above
-}
-
-#define	CM_RELEASE_MODE			1
-#define	CM_SPREAD_MODE			2
-#define	CM_SHARE_MODE			3
-
-#define	CM_SPREAD_MINSRC		10
-#define	CM_SHARE_MINSRC			25
-#define CM_MAX_SRC_CHUNK		3
-
-bool CPartFile::GetNextRequestedBlockICS(CUpDownClient* sender, Requested_Block_Struct** newblocks, uint16* count)
-{
-	//MORPH - Removed by SiRoB, ICS Optional
-	/*
-	if (!(*count)) return false;					// added as in 29a
-	if (!(sender->GetPartStatus())) return false;	// added as in 29a
-	*/
-	// Select mode: RELEASE, SPREAD or SHARE
-	uint8 ics_filemode = 0;
-
-	// BEGIN netfinty: Dynamic Block Requests
-	uint64	bytesPerRequest = EMBLOCKSIZE;
-#if !defined DONT_USE_DBR
-	//MORPH START - Enhanced DBR
-	/*
-	uint64 bytesLeftToDownload = GetFileSize() - GetCompletedSize();
-	uint32	fileDatarate = max(GetDatarate(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at atleast 3 kB/s
-	uint32	sourceDatarate = max(sender->GetDownloadDatarate(), 10); // Always assume client is uploading at atleast 10 B/s
-	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take atleast 10 seconds to complete
-	bytesPerRequest = (sourceDatarate * timeToFileCompletion) / 2;
-	*/
-	uint64	bytesLeftToDownload = GetRemainingAvailableData(sender);
-	uint32	fileDatarate = max(GetDatarate(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at atleast 3 kB/s
-	uint32	sourceDatarate = max(sender->GetDownloadDatarateAVG(), 10); // Always assume client is uploading at atleast 10 B/s
-	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take atleast 10 seconds to complete
-	bytesPerRequest = min(max(sender->GetSessionPayloadDown(), 10240), sourceDatarate * timeToFileCompletion / 2);
-	//MORPH END   - Enhanced DBR
-
-	if (!sender->IsEmuleClient()) { // to prevent aborted download for non emule client that do not support huge downloaded block
-		if (bytesPerRequest > EMBLOCKSIZE) {
-			*count = min((uint16)ceil((double)bytesPerRequest/EMBLOCKSIZE), *count);
-			bytesPerRequest = EMBLOCKSIZE;
-		} else {
-			*count = min(2,*count);
-		}
-	} else if (bytesPerRequest > 3*EMBLOCKSIZE) {
-		*count = min((uint16)ceil((double)bytesPerRequest/(3*EMBLOCKSIZE)), *count);
-		bytesPerRequest = 3*EMBLOCKSIZE;
-	} else {
-		*count = min(2,*count);
-	}
-
-
-	if (bytesPerRequest < 10240)
-	{
-		// Let an other client request this packet if we are close to completion and source is slow
-		// Use the true file datarate here, otherwise we might get stuck in NNP state
-		if (!requestedblocks_list.IsEmpty() && timeToFileCompletion < 30 && bytesPerRequest < 3400 && 5 * sourceDatarate < GetDatarate())
-		{
-			DebugLog(_T("No request block given as source is slow and file near completion!"));
-			return false;
-		}
-		bytesPerRequest = 10240;
-	}
-#endif
-	// BEGIN netfinty: Dynamic Block Requests
-
-	uint16	part_idx;
-	uint16	min_src = (uint16)-1;
-
-	if (m_SrcpartFrequency.GetCount() < GetPartCount())
-		min_src = 0;
-	else
-		for (part_idx = 0; part_idx < GetPartCount(); ++part_idx)
-			if (m_SrcpartFrequency[part_idx] < min_src)
-				min_src = m_SrcpartFrequency[part_idx];
-
-	if (min_src <= CM_SPREAD_MINSRC)		ics_filemode = CM_RELEASE_MODE;
-	else if (min_src <= CM_SHARE_MINSRC)	ics_filemode = CM_SPREAD_MODE;
-	else									ics_filemode = CM_SHARE_MODE;
-		
-	// Chunk list ordered by preference
-
-	CList<uint16,uint16> chunk_list;
-	CList<uint32,uint32> chunk_pref;
-	uint32 c_pref;
-	uint32 complete_src;
-	uint32 incomplete_src;
-	uint32 first_last_mod;
-	uint32 size2transfer;
-	uint16* partsDownloading = CalcDownloadingParts(sender); //Pawcio for enkeyDEV -ICS-
-
-	for (part_idx = 0; part_idx < GetPartCount(); ++part_idx)
-	{
-		if (sender->IsPartAvailable(part_idx) && GetNextEmptyBlockInPart(part_idx, 0))
-		{
-			complete_src = 0;
-			incomplete_src = 0;
-			first_last_mod = 0;
-
-			// Chunk priority modifiers
-			if (ics_filemode != CM_SHARE_MODE)
-			{
-				complete_src = m_SrcpartFrequency.GetCount() > part_idx ? m_SrcpartFrequency[part_idx] : 0;
-				incomplete_src = m_SrcIncPartFrequency.GetCount() > part_idx ? m_SrcIncPartFrequency[part_idx] : 0;
-			}
-			if (ics_filemode != CM_RELEASE_MODE)
-			{
-				if (part_idx == 0 || part_idx == (GetPartCount() - 1))		first_last_mod = 2;
-				else if (part_idx == 1 || part_idx == (GetPartCount() - 2))	first_last_mod = 1;
-				else														first_last_mod = 0;
-				//MORPH START - Changed by SiRoB, Preview like in 0.44b
-                /*
-				if (!thePrefs.GetPreviewPrio())								first_last_mod = 0;
-				*/
-				const bool isPreviewEnable = (thePrefs.GetPreviewPrio() || thePrefs.IsExtControlsEnabled() && GetPreviewPrio()) && IsPreviewableFileType();
-				if (!isPreviewEnable)								first_last_mod = 0;
-				//MORPH END   - Changed by SiRoB, Preview like in 0.44b
-			}
-			size2transfer = (uint32)GetPartSizeToDownload(part_idx);
-
-			size2transfer = min(((size2transfer + (partsDownloading ? (uint64)PARTSIZE * partsDownloading[part_idx] / CM_MAX_SRC_CHUNK : (uint64)0) + 0xff) >> 8), 0xFFFF);
-
-			switch (ics_filemode)
-			{
-			case CM_RELEASE_MODE:
-				complete_src = min(complete_src, 0xFF);
-				incomplete_src = min(incomplete_src, 0xFF);
-				c_pref = size2transfer | (incomplete_src << 16) | (complete_src << 24);
-				break;
-			case CM_SPREAD_MODE:
-				complete_src = min(complete_src, 0xFF);
-				incomplete_src = min(incomplete_src, 0x3F);
-				c_pref = first_last_mod | (incomplete_src << 2) | (complete_src << 8) | (size2transfer << 16);
-				break;
-			case CM_SHARE_MODE:
-				c_pref = first_last_mod | (size2transfer << 16);
-				break;
-			}
-
-			if (partsDownloading && partsDownloading[part_idx] >= ceil((float)size2transfer * CM_MAX_SRC_CHUNK / (float)PARTSIZE)) //Pawcio for enkeyDEV -ICS-
-				c_pref |= 0xFF000000;
-			// Ordered insertion
-
-			POSITION c_ins_point = chunk_list.GetHeadPosition();
-			POSITION p_ins_point = chunk_pref.GetHeadPosition();
-
-			while (c_ins_point && p_ins_point && chunk_pref.GetAt(p_ins_point) < c_pref)
-			{
-				chunk_list.GetNext(c_ins_point);
-				chunk_pref.GetNext(p_ins_point);
-			}
-
-			if (c_ins_point)
-			{
-				int eq_count = 0;
-				POSITION p_eq_point = p_ins_point;
-				while (p_eq_point != 0 && chunk_pref.GetAt(p_eq_point) == c_pref)
-				{
-					++eq_count;
-					chunk_pref.GetNext(p_eq_point);
-				}
-				if (eq_count) // insert in random position
-				{
-					uint16 randomness = (uint16)floor(((float)rand()/RAND_MAX)*eq_count);
-					while (randomness)
-					{
-						chunk_list.GetNext(c_ins_point);
-						chunk_pref.GetNext(p_ins_point);
-						--randomness;
-					}
-				}
-
-			} // END if c_ins_point
-
-			if (c_ins_point) // null ptr would add to head, I need to add to tail
-			{
-				chunk_list.InsertBefore(c_ins_point, part_idx);
-				chunk_pref.InsertBefore(p_ins_point, c_pref);
-			}
-			else
-			{
-				chunk_list.AddTail(part_idx);
-				chunk_pref.AddTail(c_pref);
-			}
-
-		} // END if part downloadable
-	} // END for every chunk
-
-	if (partsDownloading)
-		delete[] partsDownloading; //Pawcio for enkeyDEV -ICS-
-
-	//Pawcio for enkeyDEV -ICS-
-	if(sender->m_lastPartAsked != 0xffff && sender->IsPartAvailable(sender->m_lastPartAsked) && GetNextEmptyBlockInPart(sender->m_lastPartAsked, 0)){
-		chunk_list.AddHead(sender->m_lastPartAsked);
-		chunk_pref.AddHead((uint32) 0);
-	} 
-	else {
-		sender->m_lastPartAsked = 0xffff;
-	}
-
-	uint16 requestedCount = *count;
-	uint16 newblockcount = 0;
-	*count = 0;
-
-	if (chunk_list.IsEmpty()) return false;
-
-	Requested_Block_Struct* block = new Requested_Block_Struct;
-	for (POSITION scan_chunks = chunk_list.GetHeadPosition(); scan_chunks; chunk_list.GetNext(scan_chunks))
-	{
-		sender->m_lastPartAsked = chunk_list.GetAt(scan_chunks);
-		//MORPH - Changed by SiRoB, netfinty: Dynamic Block Requests
-		while(GetNextEmptyBlockInPart(chunk_list.GetAt(scan_chunks),block,bytesPerRequest))
-		{
-			requestedblocks_list.AddTail(block);
-			newblocks[newblockcount] = block;
-			newblockcount++;
-			*count = newblockcount;
-			if (newblockcount == requestedCount)
-				return true;
-			block = new Requested_Block_Struct;
-		}
-	}
-	delete block;
-
-	if (!(*count)) return false; // useless, just to be sure
-	return true;
-}
-
-// <--- enkeyDEV: ICS - Intelligent Chunk Selection
-//Morph End - added by AndCycle, ICS
-
-
-bool  CPartFile::RemoveBlockFromList(uint64 start,uint64 end)
+bool CPartFile::RemoveBlockFromList(uint64 start, uint64 end)
 {
 	ASSERT( start <= end );
 
@@ -4318,20 +4414,6 @@ bool  CPartFile::RemoveBlockFromList(uint64 start,uint64 end)
 	}
 	return bResult;
 }
-//MORPH START - Optimization
-bool  CPartFile::RemoveBlockFromList(const Requested_Block_Struct* pblock)
-{
-	for (POSITION pos = requestedblocks_list.GetHeadPosition(); pos != NULL; ){
-		POSITION posLast = pos;
-		Requested_Block_Struct* block = requestedblocks_list.GetNext(pos);
-		if (block == pblock){
-			requestedblocks_list.RemoveAt(posLast);
-			return true;
-		}
-	}
-	return false;
-}
-//MORPH END  - Optimization
 
 bool CPartFile::IsInRequestedBlockList(const Requested_Block_Struct* block) const
 {
@@ -4349,12 +4431,23 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 	if(GetKadFileSearchID())
 		Kademlia::CSearchManager::StopSearch(GetKadFileSearchID(), false);
 
-	if( srcarevisible )
+	if (srcarevisible)
 		theApp.emuledlg->transferwnd->downloadlistctrl.HideSources(this);
 	
 	if (!bIsHashingDone){
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		m_nDownDatarate = 0;
+		m_nDownDatarate10 = 0;
+		// Maella end
+
 		SetStatus(PS_COMPLETING);
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		/*
 		datarate = 0;
+		*/
+		//Xman end
 		CAddFileThread* addfilethread = (CAddFileThread*) AfxBeginThread(RUNTIME_CLASS(CAddFileThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
 		if (addfilethread){
 			SetFileOp(PFOP_HASHING);
@@ -4374,6 +4467,7 @@ void CPartFile::CompleteFile(bool bIsHashingDone)
 	else{
 		StopFile();
 		SetStatus(PS_COMPLETING);
+		m_is_A4AF_auto=false; //Xman Xtreme Downloadmanager: Auto-A4AF-check
 		CWinThread *pThread = AfxBeginThread(CompleteThreadProc, this, THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED); // Lord KiRon - using threads for file completion
 		if (pThread){
 			SetFileOp(PFOP_COPYING);
@@ -4396,11 +4490,13 @@ UINT CPartFile::CompleteThreadProc(LPVOID pvParams)
 { 
 	DbgSetThreadName("PartFileComplete");
 	InitThreadLocale();
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+
 	CPartFile* pFile = (CPartFile*)pvParams;
 	if (!pFile)
 		return (UINT)-1; 
@@ -4630,20 +4726,20 @@ BOOL CPartFile::PerformFileComplete()
 	}
 	free(newfilename);
 
+	// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+	m_sourcesaver.DeleteFile();
+	// Xman end
+
 	DWORD dwMoveResult;
 	if ((dwMoveResult = MoveCompletedPartFile(strPartfilename, strNewname, this)) != ERROR_SUCCESS)
 	{
 		theApp.QueueLogLine(true,GetResString(IDS_ERR_COMPLETIONFAILED) + _T(" - \"%s\": ") + GetErrorMessage(dwMoveResult), GetFileName(), strNewname);
 		// If the destination file path is too long, the default system error message may not be helpful for user to know what failed.
 		if (strNewname.GetLength() >= MAX_PATH)
-				theApp.QueueLogLine(true,GetResString(IDS_ERR_COMPLETIONFAILED) + _T(" - \"%s\": Path too long"),GetFileName(), strNewname);
+			theApp.QueueLogLine(true,GetResString(IDS_ERR_COMPLETIONFAILED) + _T(" - \"%s\": Path too long"),GetFileName(), strNewname);
 
 		paused = true;
 		stopped = true;
-		//MORPH START - Added by SiRoB, Make the permanent handle open again
-		if (!m_hpartfile.Open(strPartfilename, CFile::modeReadWrite|CFile::shareDenyWrite|CFile::osSequentialScan))
-			LogError(LOG_STATUSBAR, _T("Failed to reopen partfile: %s"),strPartfilename);
-		//MORPH END   - Added by SiRoB, Make the permanent handle open again
 		SetStatus(PS_ERROR);
 		m_bCompletionError = true;
 		SetFileOp(PFOP_NONE);
@@ -4663,27 +4759,28 @@ BOOL CPartFile::PerformFileComplete()
 	struct _stat st;
 	if (_tstat(strNewname, &st) == 0)
 	{
+		// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		/*
+		m_tLastModified = st.st_mtime;
+		*/
 		m_tLastModified = (uint32)st.st_mtime;
+		// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		m_tUtcLastModified = m_tLastModified;
 		AdjustNTFSDaylightFileTime(m_tUtcLastModified, strNewname);
 	}
 
 	// remove part.met file
 	if (_tremove(m_fullname))
-		theApp.QueueLogLine(true,GetResString(IDS_ERR_DELETEFAILED) + _T(" - ") + CString(_tcserror(errno)),m_fullname);
-	// khaos::kmod+ Save/Load Sources
-	else
-		m_sourcesaver.DeleteFile(this); //<<-- enkeyDEV(Ottavio84) -New SLS-
-	// khaos::kmod-
+		theApp.QueueLogLine(true, GetResString(IDS_ERR_DELETEFAILED) + _T(" - ") + CString(_tcserror(errno)), m_fullname);
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 	if(thePrefs.IsUseGlobalHL() && theApp.downloadqueue->GetPassiveMode())
 	{
 		theApp.downloadqueue->SetPassiveMode(false);
 		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
 		AddDebugLogLine(true,_T("{GSL} File completed! Disabled PassiveMode!"));
 	}
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
 	// remove backup files
 	CString BAKName(m_fullname);
@@ -4719,28 +4816,26 @@ BOOL CPartFile::PerformFileComplete()
 // main thread!
 void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 {
-	CKnownFile* test = theApp.sharedfiles->GetFileByID(GetFileHash()); 	// SLUGFILLER: mergeKnown
-	bool isShared = theApp.sharedfiles && (test == NULL || test == this); 	// SLUGFILLER: mergeKnown
 	// >> add by Ken
 	bool isGIFCFile = IsGIFCFileName(GetFileName());
 	// << add by Ken
 	if (dwResult & FILE_COMPLETION_THREAD_SUCCESS)
 	{
 		SetStatus(PS_COMPLETE); // (set status and) update status-modification related GUI elements
-		ClearSourceCache(); //MORPH - Added by Stulle, Source cache [Xman]
 
-		//MORPH START - Added, Downloaded History [Monki/Xman]
-#ifndef NO_HISTORY
+		//Xman [MoNKi: -Downloaded History-] //Xman moved here
 		if(theApp.emuledlg && theApp.emuledlg->IsRunning()
 		// >> add by Ken
 		&& !isGIFCFile)
 		// << add by Ken
 			theApp.emuledlg->sharedfileswnd->historylistctrl.AddFile(this);
-#endif
-		//MORPH END   - Added, Downloaded History [Monki/Xman]
+		//Xman end
 
-		if (isShared)	// SLUGFILLER: mergeKnown
-			theApp.knownfiles->SafeAddKFile(this);
+		//Xman sourcecache
+		ClearSourceCache();
+		//Xman end
+
+		theApp.knownfiles->SafeAddKFile(this);
 		theApp.downloadqueue->RemoveFile(this);
 		// >> add by Ken
 		if (!isGIFCFile)
@@ -4762,8 +4857,12 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 		UpdateMetaDataTags();
 
 		// republish that file to the ed2k-server to update the 'FT_COMPLETE_SOURCES' counter on the server.
-		if (isShared)	// SLUGFILLER: mergeKnown
-			theApp.sharedfiles->RepublishFile(this);
+		theApp.sharedfiles->RepublishFile(this);
+
+		//Xman x4.1 to be sure
+		// Maella -Extended clean-up II-
+		theApp.clientlist->CleanUp(this);
+		// Maella end
 
 		// give visual response
 		Log(LOG_SUCCESS | LOG_STATUSBAR, GetResString(IDS_DOWNLOADDONE), GetFileName());
@@ -4775,7 +4874,12 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 			strFilePath.ReleaseBuffer();
 			Log(LOG_STATUSBAR, GetResString(IDS_DOWNLOADRENAMED), strFilePath);
 		}
+		//Xman Code Improvement for HasCollectionExtention
+		/*
 		if(!m_pCollection && CCollection::HasCollectionExtention(GetFileName()))
+		*/
+		if(!m_pCollection && HasCollectionExtenesion_Xtreme())
+		//Xman end
 		{
 			m_pCollection = new CCollection();
 			if(!m_pCollection->InitCollectionFromFile(GetFilePath(), GetFileName()))
@@ -4784,17 +4888,19 @@ void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 				m_pCollection = NULL;
 			}
 		}
+		//Xman advanced upload-priority
+		//don't wait for the next request, update now!
+		m_nCompleteSourcesTime=0;
+		UpdatePartsInfo(); 
+		//Xman end
 	}
 
 	theApp.downloadqueue->StartNextFileIfPrefs(GetCategory());
-
-	// SLUGFILLER: mergeKnown
-	if (!isShared)
-		delete this;
-	// SLUGFILLER: mergeKnown
 }
 
 void  CPartFile::RemoveAllSources(bool bTryToSwap){
+	//Xman Xtreme Downloadmanager
+	/*
 	POSITION pos1,pos2;
 	for( pos1 = srclist.GetHeadPosition(); ( pos2 = pos1 ) != NULL; ){
 		srclist.GetNext(pos1);
@@ -4805,8 +4911,18 @@ void  CPartFile::RemoveAllSources(bool bTryToSwap){
 		else
 			theApp.downloadqueue->RemoveSource(srclist.GetAt(pos2), false);
 	}
+	*/
+	for(POSITION pos = srclist.GetHeadPosition(); pos != NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos);
+		if (bTryToSwap){
+			if (!cur_src->SwapToAnotherFile(true, true, true, NULL, false, true) ) //Xman x4.1 allow go over hardlimit at this case
+				theApp.downloadqueue->RemoveSource(cur_src, false);
+		}
+		else
+			theApp.downloadqueue->RemoveSource(cur_src, false);
+	}
+	//Xman end
 	UpdatePartsInfo(); 
-	NewSrcIncPartsInfo(); // enkeyDEV: ICS //Morph - added by AndCycle, ICS
 	UpdateAvailablePartsCount();
 
 	//[enkeyDEV(Ottavio84) -A4AF-]
@@ -4862,10 +4978,6 @@ void CPartFile::DeleteFile(){
 
 	if (_tremove(m_fullname))
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_DELETE) + _T(" - ") + CString(_tcserror(errno)), m_fullname);
-	// khaos::kmod+ Save/Load Sources
-	else
-		m_sourcesaver.DeleteFile(this); //<<-- enkeyDEV(Ottavio84) -New SLS-
-	// khaos::kmod-
 	CString partfilename(RemoveFileExtension(m_fullname));
 	if (_tremove(partfilename))
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_DELETE) + _T(" - ") + CString(_tcserror(errno)), partfilename);
@@ -4875,16 +4987,22 @@ void CPartFile::DeleteFile(){
 	if (_taccess(BAKName, 0) == 0 && !::DeleteFile(BAKName))
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_DELETE) + _T(" - ") + GetErrorMessage(GetLastError()), BAKName);
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 	if(thePrefs.IsUseGlobalHL() && theApp.downloadqueue->GetPassiveMode())
 	{
 		theApp.downloadqueue->SetPassiveMode(false);
 		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
 		AddDebugLogLine(true,_T("{GSL} File deleted! Disabled PassiveMode!"));
 	}
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
-	ClearSourceCache(); //MORPH - Added by Stulle, Source cache [Xman]
+	// Xman -New Save/load Sources- enkeyDEV(Ottavio84)
+	m_sourcesaver.DeleteFile();
+	// Xman end
+
+	//Xman sourcecache
+	ClearSourceCache();
+	//Xman end
 
 	BAKName = m_fullname;
 	BAKName.Append(PARTMET_TMP_EXT);
@@ -4948,7 +5066,7 @@ bool CPartFile::IsArchive(bool onlyPreviewable) const
 }
 
 bool CPartFile::IsPreviewableFileType() const {
-    return IsArchive(true) || IsMovie() || IsMusic();
+    return IsArchive(true) || IsMovie();
 }
 
 void CPartFile::SetDownPriority(uint8 np, bool resort)
@@ -5011,32 +5129,35 @@ void CPartFile::StopFile(bool bCancel, bool resort)
 	m_TotalSearchesKad = 0;
 	RemoveAllSources(true);
 
-	//MORPH START - Added by Stulle, Source cache [Xman]
-	ClearSourceCache(); //only to avoid holding *maybe* not usful data in memory
-	//MORPH END   - Added by Stulle, Source cache [Xman]
-
+	//Xman sourcecache
+	ClearSourceCache(); //only to avoid holding *maybe* not usful data in memory 
+	//Xman end
 	paused = true;
 	stopped = true;
 	insufficient = false;
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	datarate = 0;
+	*/
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	// Maella end
 	memset(m_anStates,0,sizeof(m_anStates));
 	memset(src_stats,0,sizeof(src_stats));	//Xman Bugfix
 	memset(net_stats,0,sizeof(net_stats));	//Xman Bugfix
 
-	//EastShare Start - Added by AndCycle, Only download complete files v2.1 (shadow)
-	if ((status!=PS_COMPLETE)&&(status!=PS_COMPLETING)) lastseencomplete = NULL;//shadow#(onlydownloadcompletefiles)
-	//EastShare End - Added by AndCycle, Only download complete files v2.1 (shadow)
 	if (!bCancel)
 		FlushBuffer(true);
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 	if(thePrefs.IsUseGlobalHL() && theApp.downloadqueue->GetPassiveMode())
 	{
 		theApp.downloadqueue->SetPassiveMode(false);
 		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
 		AddDebugLogLine(true,_T("{GSL} File stopped! Disabled PassiveMode!"));
 	}
-	//MORPH END   - Added by Stulle, Global Source Limit
+	// <== Global Source Limit [Max/Stulle] - Stulle
 
     if(resort) {
 	    theApp.downloadqueue->SortByPriority();
@@ -5078,7 +5199,12 @@ void CPartFile::PauseFile(bool bInsufficient, bool resort)
 
 	// if file is already in 'paused' or 'insufficient' state, do not refresh the purge time
 	if (!paused && !insufficient)
+		// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		/*
+		m_iLastPausePurge = time(NULL);
+		*/
 		m_iLastPausePurge = (uint32)time(NULL);
+		// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	theApp.downloadqueue->RemoveLocalServerRequest(this);
 
 	if(GetKadFileSearchID())
@@ -5099,7 +5225,12 @@ void CPartFile::PauseFile(bool bInsufficient, bool resort)
 		if (cur_src->GetDownloadState() == DS_DOWNLOADING)
 		{
 			cur_src->SendCancelTransfer(packet);
+			// Maella -Download Stop Reason-
+			/*
 			cur_src->SetDownloadState(DS_ONQUEUE, _T("You cancelled the download. Sending OP_CANCELTRANSFER"));
+			*/
+			cur_src->SetDownloadState(DS_ONQUEUE, _T("You cancelled the download. Sending OP_CANCELTRANSFER"), CUpDownClient::DSR_PAUSED);
+			//Xman end
 		}
 	}
 	delete packet;
@@ -5115,7 +5246,15 @@ void CPartFile::PauseFile(bool bInsufficient, bool resort)
 		insufficient = false;
 	}
 	NotifyStatusChange();
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	datarate = 0;
+	*/
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	// Maella end
+
 	m_anStates[DS_DOWNLOADING] = 0; // -khaos--+++> Renamed var.
 	if (!bInsufficient)
 	{
@@ -5139,7 +5278,12 @@ void CPartFile::ResumeFile(bool resort)
 		return;
 	if (status==PS_ERROR && m_bCompletionError){
 		ASSERT( gaplist.IsEmpty() );
-		if (gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushSetting) { //MORPH - Changed by SiRoB, Flush Thread
+		//Xman - MORPH - Changed by SiRoB, Flush Thread
+		/*
+		if (gaplist.IsEmpty()){
+		*/
+		if (gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushThread) {
+		//Xman end
 			// rehashing the file could probably be avoided, but better be in the safe side..
 			m_bCompletionError = false;
 			CompleteFile(false);
@@ -5149,16 +5293,15 @@ void CPartFile::ResumeFile(bool resort)
 	paused = false;
 	stopped = false;
 
-	//MORPH START - Added by Stulle, Global Source Limit
+	// ==> Global Source Limit [Max/Stulle] - Stulle
 	InitHL();
-	if(thePrefs.IsUseGlobalHL() && theApp.downloadqueue->GetPassiveMode())
+	if(thePrefs.IsUseGlobalHL() && (thePrefs.GetGlobalHlAll() || m_bGlobalHL) && theApp.downloadqueue->GetPassiveMode())
 	{
 		theApp.downloadqueue->SetPassiveMode(false);
 		theApp.downloadqueue->SetUpdateHlTime(50000); // 50 sec
 		AddDebugLogLine(true,_T("{GSL} New file resumed! Disabled PassiveMode!"));
 	}
-	//MORPH END   - Added by Stulle, Global Source Limit
-
+	// <== Global Source Limit [Max/Stulle] - Stulle
 	SetActive(theApp.IsConnected());
 	m_LastSearchTime = 0;
     if(resort) {
@@ -5186,7 +5329,7 @@ void CPartFile::ResumeFileInsufficient()
 
 CString CPartFile::getPartfileStatus() const
 {
-	//MORPH START - Added by SiRoB, Import Parts
+	//MORPH START - Added by SiRoB, Import Parts - added by zz_fly
 	if (GetFileOp() == PFOP_SR13_IMPORTPARTS)
 		return _T("Importing part");
 	//MORPH END  - Added by SiRoB, Import Parts
@@ -5260,9 +5403,17 @@ int CPartFile::getPartfileStatusRang() const
 
 time_t CPartFile::getTimeRemainingSimple() const
 {
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	if (GetDatarate() == 0)
 		return -1;
 	return (time_t)((uint64)(GetFileSize() - GetCompletedSize()) / (uint64)GetDatarate());
+	*/
+	if (GetDownloadDatarate10() == 0)
+		return -1;
+	return (time_t)((uint64)(GetFileSize() - GetCompletedSize()) / (uint64)GetDownloadDatarate10());
+	//Xman end
 }
 
 time_t CPartFile::getTimeRemaining() const
@@ -5270,9 +5421,17 @@ time_t CPartFile::getTimeRemaining() const
 	EMFileSize completesize = GetCompletedSize();
 	time_t simple = -1;
 	time_t estimate = -1;
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
 	if( GetDatarate() > 0 )
 	{
 		simple = (time_t)((uint64)(GetFileSize() - completesize) / (uint64)GetDatarate());
+	*/
+	if( GetDownloadDatarate10() > 0 )
+	{
+		simple = (time_t)((uint64)(GetFileSize() - completesize) / (uint64)GetDownloadDatarate10());
+	//Xman end
 	}
 	if( GetDlActiveTime() && completesize >= (uint64)512000 )
 		estimate = (time_t)((uint64)(GetFileSize() - completesize) / ((double)completesize / (double)GetDlActiveTime()));
@@ -5301,26 +5460,6 @@ time_t CPartFile::getTimeRemaining() const
 		return -1;
 	return estimate;
 }
-
-// khaos::accuratetimerem+
-time_t CPartFile::GetTimeRemainingAvg() const
-{
-	UINT nCompletedSince = (UINT)((uint64)GetCompletedSize() - m_I64uInitialBytes);
-	UINT nSecondsActive = m_nSecondsActive;
-
-	if (m_dwActivatedTick > 0)
-		nSecondsActive += (UINT) ((GetTickCount() - m_dwActivatedTick) / 1000);
-	
-	if (nCompletedSince > 0 && nSecondsActive > 0)
-	{
-		//MORPH - Modified by SiRoB, HotFix to avoid overflow.
-		//double nDataRateAvg = (double)(nCompletedSince / nSecondsActive);
-		double nDataRateAvg = (double)nCompletedSince / (double)nSecondsActive;
-		return (time_t)((double)(GetFileSize() - GetCompletedSize()) / nDataRateAvg);
-	}
-	return -1;
-}
-// khaos::accuratetimerem-
 
 void CPartFile::PreviewFile()
 {
@@ -5392,18 +5531,11 @@ bool CPartFile::IsReadyForPreview() const
 		return true; 
 	}
 
-	//MORPH START - Added by SiRoB, preview music file
-	if (IsMusic())
-		if (GetStatus() != PS_COMPLETE &&  GetStatus() != PS_COMPLETING && (uint64)GetFileSize()>1024 && (uint64)GetCompletedSize()>1024 && ((GetFreeDiskSpaceX(GetTempPath()) + 100000000) > (2*(uint64)GetFileSize())))
-			return true;
-	//MORPH END   - Added by SiRoB, preview music file
-	
 	if (thePrefs.IsMoviePreviewBackup())
 	{
-		//MORPH - Changed by SiRoB, Authorize preview of files with 2 chunk available
-		return !( GetStatus(true) != PS_READY 
-				|| m_bPreviewing || GetPartCount() < 2 || !IsMovie() || (GetFreeDiskSpaceX(GetTempPath()) + 100000000) < GetFileSize()
-				|| ( !IsComplete(0,PARTSIZE-1, false) || !IsComplete(PARTSIZE*(uint64)(GetPartCount()-1),GetFileSize()-(uint64)1, false)));
+		return !( (GetStatus() != PS_READY && GetStatus() != PS_PAUSED) 
+				|| m_bPreviewing || GetPartCount() < 5 || !IsMovie() || (GetFreeDiskSpaceX(GetTempPath()) + 100000000) < GetFileSize()
+				|| ( !IsComplete(0,PARTSIZE-1, false) || !IsComplete(PARTSIZE*(uint64)(GetPartCount()-1),GetFileSize() - (uint64)1, false)));
 	}
 	else
 	{
@@ -5466,8 +5598,8 @@ bool CPartFile::IsReadyForPreview() const
 		    return true;
 		}
 		else{
-			return !(GetStatus(true) != PS_READY 
-				|| m_bPreviewing || GetPartCount() < 2 || !IsMovie() || !IsComplete(0,PARTSIZE-1, false)); 
+		    return !((GetStatus() != PS_READY && GetStatus() != PS_PAUSED) 
+				    || m_bPreviewing || GetPartCount() < 2 || !IsMovie() || !IsComplete(0,PARTSIZE-1, false)); 
 		}
 	}
 }
@@ -5482,12 +5614,6 @@ void CPartFile::UpdateAvailablePartsCount()
 				availablecounter++; 
 				break;
 			}
-			//MORPH START - Added by SiRoB, Take into account our available part
-			else if (IsPartShareable(ixPart)){
-				availablecounter++; 
-				break;
-			}
-			//MORPH END   - Added by SiRoB, Take into account our available part
 		}
 	}
 	if (iPartCount == availablecounter && availablePartsCount < iPartCount)
@@ -5497,6 +5623,9 @@ void CPartFile::UpdateAvailablePartsCount()
 
 Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byRequestedVersion, uint16 nRequestedOptions) const
 {
+	//Xman remark:
+	//we can exchange the sources of a paused file, if they become to old, the file will be stopped automatically
+	//a stopped file has no sources and we exchange the sources of our uploading list
 	if (!IsPartFile() || srclist.IsEmpty())
 		return CKnownFile::CreateSrcInfoPacket(forClient, byRequestedVersion, nRequestedOptions);
 
@@ -5517,8 +5646,12 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 		return NULL;
 	}
 
+	//Xman Code Improvement
+	//check for empty scrlist sufficient
+	/* 
 	if (!(GetStatus() == PS_READY || GetStatus() == PS_EMPTY))
 		return NULL;
+	*/
 
 	CSafeMemFile data(1024);
 	
@@ -5546,6 +5679,9 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 	data.WriteHash16(m_abyFileHash);
 	data.WriteUInt16((uint16)nCount);
 	
+	//Xman Code Improvement
+	const UINT scount=GetSourceCount();
+
 	bool bNeeded;
 	const uint8* reqstatus = forClient->GetUpPartStatus();
 	for (POSITION pos = srclist.GetHeadPosition();pos != 0;){
@@ -5553,6 +5689,9 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 		const CUpDownClient* cur_src = srclist.GetNext(pos);
 		if (cur_src->HasLowID() || !cur_src->IsValidSource())
 			continue;
+		if (scount >=100 && cur_src->IsRemoteQueueFull() && nCount>=5) //at least 5 sources
+			continue;
+		//Xman end
 		const uint8* srcstatus = cur_src->GetPartStatus();
 		if (srcstatus){
 			if (cur_src->GetPartCount() == GetPartCount()){
@@ -5560,11 +5699,7 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 					ASSERT( forClient->GetUpPartCount() == GetPartCount() );
 					// only send sources which have needed parts for this client
 					for (UINT x = 0; x < GetPartCount(); x++){
-						//MORPH - Changed by SiRoB, ICS merged into partstatus
-						/*
 						if (srcstatus[x] && !reqstatus[x]){
-						*/
-						if ((srcstatus[x]&SC_AVAILABLE) && !(reqstatus[x]&SC_AVAILABLE)){
 							bNeeded = true;
 							break;
 						}
@@ -5573,11 +5708,7 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 				else{
 					// We know this client is valid. But don't know the part count status.. So, currently we just send them.
 					for (UINT x = 0; x < GetPartCount(); x++){
-						//MORPH - Changed by SiRoB, ICS merged into partstatus
-						/*
 						if (srcstatus[x]){
-						*/
-						if (srcstatus[x]&SC_AVAILABLE){
 							bNeeded = true;
 							break;
 						}
@@ -5591,7 +5722,7 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 			}
 		}
 
-		if( bNeeded ){
+		if (bNeeded){
 			nCount++;
 			uint32 dwID;
 			if (byUsedVersion >= 3)
@@ -5630,9 +5761,9 @@ Packet* CPartFile::CreateSrcInfoPacket(const CUpDownClient* forClient, uint8 byR
 	Packet* result = new Packet(&data, OP_EMULEPROT);
 	result->opcode = bIsSX2Packet ? OP_ANSWERSOURCES2 : OP_ANSWERSOURCES;
 	// (1+)16+2+501*(4+2+4+2+16+1) = 14547 (14548) bytes max.
-	if ( result->size > 354 )
+	if (result->size > 354)
 		result->PackPacket();
-	if ( thePrefs.GetDebugSourceExchange() )
+	if (thePrefs.GetDebugSourceExchange())
 		AddDebugLogLine(false, _T("SXSend: Client source response SX2=%s, Version=%u; Count=%u, %s, File=\"%s\""), bIsSX2Packet ? _T("Yes") : _T("No"), byUsedVersion, nCount, forClient->DbgGetClientInfo(), GetFileName());
 	return result;
 }
@@ -5644,7 +5775,7 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 
 	UINT nCount = 0;
 
-	if (thePrefs.GetDebugSourceExchange()){
+	if (thePrefs.GetDebugSourceExchange()) {
 		CString strDbgClientInfo;
 		if (pClient)
 			strDbgClientInfo.Format(_T("%s, "), pClient->DbgGetClientInfo());
@@ -5659,7 +5790,7 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 		// chance in dealing with wrong source data, userhashs and finally duplicate sources.
 		nCount = sources->ReadUInt16();
 		UINT uDataSize = (UINT)(sources->GetLength() - sources->GetPosition());
-		//Checks if version 1 packet is correct size
+		// Checks if version 1 packet is correct size
 		if (nCount*(4+2+4+2) == uDataSize)
 		{
 			// Received v1 packet: Check if remote client supports at least v1
@@ -5671,10 +5802,10 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 					DebugLogWarning(_T("Received invalid SX packet (v%u, count=%u, size=%u), %sFile=\"%s\""), uClientSXVersion, nCount, uDataSize, strDbgClientInfo, GetFileName());
 				}
 				return;
-		}
+			}
 			uPacketSXVersion = 1;
 		}
-		//Checks if version 2&3 packet is correct size
+		// Checks if version 2&3 packet is correct size
 		else if (nCount*(4+2+4+2+16) == uDataSize)
 		{
 			// Received v2,v3 packet: Check if remote client supports at least v2
@@ -5686,7 +5817,7 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 					DebugLogWarning(_T("Received invalid SX packet (v%u, count=%u, size=%u), %sFile=\"%s\""), uClientSXVersion, nCount, uDataSize, strDbgClientInfo, GetFileName());
 				}
 				return;
-		}
+			}
 			if (uClientSXVersion == 2)
 				uPacketSXVersion = 2;
 			else
@@ -5801,20 +5932,30 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 				if (theApp.ipfilter->IsFiltered(dwIDED2K))
 				{
 					if (thePrefs.GetLogFilteredIPs())
+						//Xman show filename
+						/*
 						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - IP filter (%s)"), ipstr(dwIDED2K), theApp.ipfilter->GetLastHit());
+						*/
+						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - IP filter (%s)  for file: %s"), ipstr(dwIDED2K), theApp.ipfilter->GetLastHit(), GetFileName());
+						//Xman end
 					continue;
 				}
 				if (theApp.clientlist->IsBannedClient(dwIDED2K)){
 #ifdef _DEBUG
 					if (thePrefs.GetLogBannedClients()){
 						CUpDownClient* pClient = theApp.clientlist->FindClientByIP(dwIDED2K);
+						//Xman code fix
+						/*
 						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - banned client %s"), ipstr(dwIDED2K), pClient->DbgGetClientInfo());
+						*/
+						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - banned client %s"), ipstr(dwIDED2K), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+						//Xman end
 					}
 #endif
 					continue;
 				}
 			}
-	
+
 			// additionally check for LowID and own IP
 			if (!CanAddSource(dwID, nPort, dwServerIP, nServerPort, NULL, false))
 			{
@@ -5838,20 +5979,30 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 				if (theApp.ipfilter->IsFiltered(dwID))
 				{
 					if (thePrefs.GetLogFilteredIPs())
+						//Xman show filename
+						/*
 						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - IP filter (%s)"), ipstr(dwID), theApp.ipfilter->GetLastHit());
+						*/
+						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - IP filter (%s) for file: %s"), ipstr(dwID), theApp.ipfilter->GetLastHit(), GetFileName());
+						//Xman end
 					continue;
 				}
 				if (theApp.clientlist->IsBannedClient(dwID)){
 #ifdef _DEBUG
 					if (thePrefs.GetLogBannedClients()){
 						CUpDownClient* pClient = theApp.clientlist->FindClientByIP(dwID);
+						//Xman code fix
+						/*
 						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - banned client %s"), ipstr(dwID), pClient->DbgGetClientInfo());
+						*/
+						AddDebugLogLine(false, _T("Ignored source (IP=%s) received via source exchange - banned client %s"), ipstr(dwID), pClient ? pClient->DbgGetClientInfo() : _T("unknown"));
+						//Xman end
 					}
 #endif
 					continue;
 				}
 			}
-	
+
 			// additionally check for LowID and own IP
 			if (!CanAddSource(dwID, nPort, dwServerIP, nServerPort))
 			{
@@ -5861,18 +6012,26 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 			}
 		}
 
-		//MORPH START - Modified by Stulle, Global Source Limit
+		//Xman fix: filter sources we can't connect to
+		if(IsLowID(dwID) && dwServerIP==0)// unuseful source
+		{
+			AddDebugLogLine(false, _T("--> wrong source received from %s"), pClient->DbgGetClientInfo());
+			continue;
+		}
+		//Xman end
+
+		//Xman GlobalMaxHarlimit for fairness
 		/*
 		if (GetMaxSources() > GetSourceCount())
 		*/
-		if (GetMaxSources() > GetSourceCount() && IsSrcReqOrAddAllowed())
-		//MORPH END   - Modified by Stulle, Global Source Limit
+		if (GetMaxSources() > GetSourceCount() && IsGlobalSourceAddAllowed())
+		//Xman end
 		{
 			CUpDownClient* newsource;
 			if (uPacketSXVersion >= 3)
-				newsource = new CUpDownClient(this,nPort,dwID,dwServerIP,nServerPort,false);
+				newsource = new CUpDownClient(this, nPort, dwID, dwServerIP, nServerPort, false);
 			else
-				newsource = new CUpDownClient(this,nPort,dwID,dwServerIP,nServerPort,true);
+				newsource = new CUpDownClient(this, nPort, dwID, dwServerIP, nServerPort, true);
 			if (uPacketSXVersion >= 2)
 				newsource->SetUserHash(achUserHash);
 			if (uPacketSXVersion >= 4) {
@@ -5881,18 +6040,24 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 				//	AddDebugLogLine(false, _T("Received CryptLayer aware (%u) source from V4 Sourceexchange (%s)"), byCryptOptions, newsource->DbgGetClientInfo());
 			}
 			newsource->SetSourceFrom(SF_SOURCE_EXCHANGE);
-			theApp.downloadqueue->CheckAndAddSource(this,newsource);
+			theApp.downloadqueue->CheckAndAddSource(this, newsource);
 		} 
-		//MORPH START - Modified by Stulle, Source cache [Xman]
-		/*
-		else
-			break;
-		*/
 		else
 		{
-				AddToSourceCache(nPort,dwID,dwServerIP,nServerPort,SF_CACHE_SOURCE_EXCHANGE,(uPacketSXVersion<3),(uPacketSXVersion>=2)?achUserHash:NULL,byCryptOptions);
+			//Xman source cache
+			/*
+			break;
+			*/
+			if(uPacketSXVersion>=4)
+				AddToSourceCache(nPort,dwID,dwServerIP,nServerPort,SF_SOURCE_EXCHANGE,false,achUserHash, byCryptOptions);
+			else if(uPacketSXVersion>=3)
+				AddToSourceCache(nPort,dwID,dwServerIP,nServerPort,SF_SOURCE_EXCHANGE,false,achUserHash);
+			else if(uPacketSXVersion>=2)
+				AddToSourceCache(nPort,dwID,dwServerIP,nServerPort,SF_SOURCE_EXCHANGE,true,achUserHash);
+			else
+				AddToSourceCache(nPort,dwID,dwServerIP,nServerPort,SF_SOURCE_EXCHANGE,true);
+			//Xman end
 		}
-		//MORPH END   - Modified by Stulle, Source cache [Xman]
 	}
 }
 
@@ -5906,20 +6071,20 @@ void CPartFile::AddClientSources(CSafeMemFile* sources, uint8 uClientSXVersion, 
 */
 /* Barry - Replaces BlockReceived() 
 
-		Originally this only wrote to disk when a full 180k block 
-		had been received from a client, and only asked for data in 
-		180k blocks.
+           Originally this only wrote to disk when a full 180k block 
+           had been received from a client, and only asked for data in 
+		   180k blocks.
 
-		This meant that on average 90k was lost for every connection
-		to a client data source. That is a lot of wasted data.
+		   This meant that on average 90k was lost for every connection
+		   to a client data source. That is a lot of wasted data.
 
-		To reduce the lost data, packets are now written to a buffer
-		and flushed to disk regularly regardless of size downloaded.
-		This includes compressed packets.
+		   To reduce the lost data, packets are now written to a buffer
+		   and flushed to disk regularly regardless of size downloaded.
+		   This includes compressed packets.
 
-		Data is also requested only where gaps are, not in 180k blocks.
-		The requests will still not exceed 180k, but may be smaller to
-		fill a gap.
+		   Data is also requested only where gaps are, not in 180k blocks.
+		   The requests will still not exceed 180k, but may be smaller to
+		   fill a gap.
 */
 uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start, uint64 end, Requested_Block_Struct *block, 
 								const CUpDownClient* client)
@@ -5928,28 +6093,26 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 	ASSERT( start <= end );
 
 	// Increment transferred bytes counter for this file
-	if (client) //MORPH - Added by SiRoB, Import Part don't count as transfered
+
+	if (client) //MORPH - Added by SiRoB, Import Parts don't count as transfered - added by zz_fly
 		m_uTransferred += transize;
 
 	// This is needed a few times
 	uint32 lenData = (uint32)(end - start + 1);
 	ASSERT( (int)lenData > 0 && (uint64)(end - start + 1) == lenData);
 
-	if( lenData > transize ) {
+	if (lenData > transize) {
 		m_uCompressionGain += lenData - transize;
-		thePrefs.Add2SavedFromCompression(lenData-transize);
+		thePrefs.Add2SavedFromCompression(lenData - transize);
 	}
 
-	//MORPH - Optimization, don't check this twice only use the loop to write into gap 
 	// Occasionally packets are duplicated, no point writing it twice
-#ifdef _DEBUG
 	if (IsComplete(start, end, false))
 	{
 		if (thePrefs.GetVerbose())
 			AddDebugLogLine(false, _T("PrcBlkPkt: Already written block %s; File=%s; %s"), DbgGetBlockInfo(start, end), GetFileName(), client->DbgGetClientInfo());
 		return 0;
 	}
-#endif
 	// security sanitize check to make sure we do not write anything into an already hashed complete chunk
 	const uint64 nStartChunk = start / PARTSIZE;
 	const uint64 nEndChunk = end / PARTSIZE;
@@ -5965,8 +6128,25 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 		else
 			DEBUG_ONLY( DebugLogWarning(_T("PrcBlkPkt: Received data crosses chunk boundaries %s; File=%s; %s"), DbgGetBlockInfo(start, end), GetFileName(), client->DbgGetClientInfo()) );
 	}
+	
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
+	/*
+	// log transferinformation in our "blackbox"
+	m_CorruptionBlackBox.TransferredData(start, end, client);
 
-	// SLUGFILLER: SafeHash
+	// Create copy of data as new buffer
+	BYTE *buffer = new BYTE[lenData];
+	memcpy(buffer, data, lenData);
+
+	// Create a new buffered queue entry
+	PartFileBufferedData *item = new PartFileBufferedData;
+	item->data = buffer;
+	item->start = start;
+	item->end = end;
+	item->block = block;
+
+	*/
 	CSingleLock sLock(&ICH_mut,true);	// Wait for ICH result
 	ParseICHResult();	// Check result to prevent post-complete writing
 
@@ -5988,18 +6168,18 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 		uint32 lenDataClipped = (uint32)(item->end - item->start + 1);
 		ASSERT(lenDataClipped <= end - start + 1);
 		// log transferinformation in our "blackbox"
-		m_CorruptionBlackBox.TransferredData(item->start, item->end, client);
+		if(client) // SiRoB: Import Part
+			m_CorruptionBlackBox.TransferredData(item->start, item->end, client);
 
 		// Create copy of data as new buffer
 		BYTE *buffer = new BYTE[lenDataClipped];
 		memcpy(buffer, data+(item->start-start), lenDataClipped);
 		item->data = buffer;
-	// SLUGFILLER: SafeHash
+		// END SLUGFILLER: SafeHash
 
 		// Add to the queue in the correct position (most likely the end)
 		PartFileBufferedData *queueItem;
 		bool added = false;
-		m_BufferedData_list_Locker.Lock(); //MORPH - Flush Thread
 		POSITION pos = m_BufferedData_list.GetTailPosition();
 		while (pos != NULL)
 		{	
@@ -6011,40 +6191,54 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 				m_BufferedData_list.InsertAfter(posLast, item);
 				break;
 			}
-
 		}
 		if (!added)
 			m_BufferedData_list.AddHead(item);
-		m_nTotalBufferData += lenDataClipped;
-		m_BufferedData_list_Locker.Unlock(); //MORPH - Flush Thread
-	// SLUGFILLER: SafeHash
-		lenData += lenDataClipped;	// calculate actual added data
-		
-	}
-	// SLUGFILLER: SafeHash
 
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
+		lenData += lenDataClipped;	// calculate actual added data
+	}
+	// END SLUGFILLER: SafeHash
 	// Increment buffer size marker
-//	m_nTotalBufferData += lenData; //MORPH - Flush Thread, Moved above
+	m_nTotalBufferData += lenData;
 
 	// Mark this small section of the file as filled
-	FillGap(start, end);	// SLUGFILLER: SafeHash - clean coding, removed "item->"
+	//Xman
+	// SLUGFILLER: SafeHash - clean coding, removed "item->"
+	/*
+	FillGap(item->start, item->end);
+	*/
+	FillGap(start, end);
+	//Xman end
 
 	// Update the flushed mark on the requested block 
 	// The loop here is unfortunate but necessary to detect deleted blocks.
-	POSITION pos = requestedblocks_list.GetHeadPosition();	// SLUGFILLER: SafeHash
+	//Xman
+	// SLUGFILLER: SafeHash
+	/*
+	pos = requestedblocks_list.GetHeadPosition();
 	while (pos != NULL)
 	{	
-		// SLUGFILLER: SafeHash - clean coding, removed "item->"
-		if (requestedblocks_list.GetNext(pos) == block) {
+		if (requestedblocks_list.GetNext(pos) == item->block)
+			item->block->transferred += lenData;
+	}
+	*/
+	POSITION pos = requestedblocks_list.GetHeadPosition();
+	while (pos != NULL)
+	{	
+		// BEGIN SLUGFILLER: SafeHash - clean coding, removed "item->"
+		if (requestedblocks_list.GetNext(pos) == block){
 			block->transferred += lenData;
 			break; //MORPH - Optimization
 		}
-		// SLUGFILLER: SafeHash
+		// END SLUGFILLER: SafeHash
 	}
+	//Xman end
 
 	if (gaplist.IsEmpty())
 		FlushBuffer(true);
-	//MORPH START - Added by SiRoB, Import Parts
+	//MORPH START - Added by SiRoB, Import Parts - added by zz_fly
 	else if (GetStatus()!=PS_READY && GetStatus()!=PS_EMPTY)
 		FlushBuffer();
 	//MORPH END   - Added by SiRoB, Import Parts
@@ -6053,35 +6247,46 @@ uint32 CPartFile::WriteToBuffer(uint64 transize, const BYTE *data, uint64 start,
 	return lenData;
 }
 
+//Xman
+// BEGIN SiRoB: Flush Thread
+/*
+void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool bNoAICH)
+{
+	bool bIncreasedFile=false;
+
+	m_nLastBufferFlushTime = GetTickCount();
+*/
 void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 {
-	//MORPH START - Flush Thread
+	//MORPH START - Added by SiRoB, Flush Thread
 	if (forcewait) { //We need to wait for flush thread to terminate
 		CWinThread* pThread = m_FlushThread;
 		if (pThread != NULL) { //We are flushing something to disk
 			HANDLE hThread = pThread->m_hThread;
-			// 2 minutes to let the thread finish
-			pThread->SetThreadPriority(THREAD_PRIORITY_NORMAL); 
-			((CPartFileFlushThread*) m_FlushThread)->StopFlush();
-			if (WaitForSingleObject(hThread, 120000) == WAIT_TIMEOUT) {
-				AddDebugLogLine(true, _T("Flushing (force=true) failed.(%s)"), GetFileName(), m_nTotalBufferData, m_BufferedData_list.GetCount(), m_uTransferred, m_nLastBufferFlushTime);
+			//Xman queued disc-access for read/flushing-threads
+			if (WaitForSingleObject(hThread,  INFINITE) == WAIT_FAILED) {
 				TerminateThread(hThread, 100); // Should never happen
-				ASSERT(0);
+				theApp.ResumeNextDiscAccessThread();
+				AddDebugLogLine(false,_T("Strange error in flushing thread->FlushBuffer()"));
 			}
-			m_FlushThread = NULL;
+			//Xman end
 		}
 		if (m_FlushSetting != NULL) //We noramly flushed something to disk
 			FlushDone();
-	} else 
-	if (m_FlushSetting != NULL) { //Some thing is going to be flushed or already flushed 
-		                          //wait the window call back to call FlushDone()
+	} else if (m_FlushSetting != NULL) { //Some thing is going to be flushed or allready flushed wait the window call back to call FlushDone()
 		return;
 	}
-	//MORPH END   - Flush Thread
+	//MORPH END   - Added by SiRoB, Flush Thread
+	
+	//Xman Flush Thread improvement
+	bool forcedbecauseincreasing=false;
+	//Xman end
+
 	bool bIncreasedFile=false;
 
-	m_nLastBufferFlushTime = GetTickCount();
-	if (m_nTotalBufferData==0)
+	m_nLastBufferFlushTime = GetTickCount() + (rand()%20 * 500); //Xman Code Improvement: spread the flushing => + 0..10 seconds
+//Xman end
+	if (m_BufferedData_list.IsEmpty())
 		return;
 
 	if (m_AllocateThread!=NULL) {
@@ -6099,7 +6304,7 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 		ParseICHResult();	// Check result from ICH
 	}
 	// SLUGFILLER: SafeHash
-	
+
 	//if (thePrefs.GetVerbose())
 	//	AddDebugLogLine(false, _T("Flushing file %s - buffer size = %ld bytes (%ld queued items) transferred = %ld [time = %ld]"), GetFileName(), m_nTotalBufferData, m_BufferedData_list.GetCount(), m_uTransferred, m_nLastBufferFlushTime);
 
@@ -6111,29 +6316,6 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 
 	try
 	{
-		//MORPH START - Flush Thread
-		// SLUGFILLER: SafeHash
-		CSingleLock sLock(&ICH_mut,true);	// ICH locks the file - otherwise it may be written to while being checked
-		ParseICHResult();	// Check result from ICH
-		// SLUGFILLER: SafeHash
-
-		//Creating the Thread to flush to disk
-		m_FlushSetting = new FlushDone_Struct;
-		m_FlushSetting->bIncreasedFile = bIncreasedFile;
-		m_FlushSetting->bForceICH = bForceICH;
-		m_FlushSetting->changedPart = changedPart;
-		if (forcewait == false) {
-			if (m_FlushThread == NULL) {
-				m_FlushThread = AfxBeginThread(RUNTIME_CLASS(CPartFileFlushThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-				((CPartFileFlushThread*) m_FlushThread)->ResumeThread();
-			}
-			if (m_FlushThread) {
-				((CPartFileFlushThread*) m_FlushThread)->SetPartFile(this);
-				return;
-			}
-		}
-	
-		//MORPH END   - Flush Thread
 		bool bCheckDiskspace = thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace() > 0;
 		ULONGLONG uFreeDiskSpace = bCheckDiskspace ? GetFreeDiskSpaceX(GetTempPath()) : 0;
 
@@ -6147,11 +6329,16 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 				AfxThrowFileException(CFileException::diskFull, 0, m_hpartfile.GetFileName());
 		}
 
+		// SLUGFILLER: SafeHash
+		CSingleLock sLock(&ICH_mut,true);	// ICH locks the file - otherwise it may be written to while being checked
+		ParseICHResult();	// Check result from ICH
+		// SLUGFILLER: SafeHash
+
 		// Ensure file is big enough to write data to (the last item will be the furthest from the start)
 		PartFileBufferedData *item = m_BufferedData_list.GetTail();
 		if (m_hpartfile.GetLength() <= item->end)
 		{
-			uint64 newsize=thePrefs.GetAllocCompleteMode()? GetFileSize() : (item->end+1);
+			uint64 newsize = thePrefs.GetAllocCompleteMode() ? GetFileSize() : (item->end + 1);
 			ULONGLONG uIncrease = newsize - m_hpartfile.GetLength();
 
 			// Check free diskspace for normal files before increasing the file size
@@ -6164,7 +6351,13 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 			}
 
 			if (!IsNormalFile() || uIncrease<2097152) 
-				forcewait=true;
+			{
+				//Xman Flush Thread improvement
+				if(forcewait==false)
+					forcedbecauseincreasing=true;
+				//Xman end
+				forcewait=true;	// <2MB -> alloc it at once
+			} //Xman
 
 			// Allocate filesize
 			if (!forcewait) {
@@ -6174,7 +6367,7 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 					TRACE(_T("Failed to create alloc thread! -> allocate blocking\n"));
 					forcewait=true;
 				} else {
-					m_iAllocinfo= newsize;
+					m_iAllocinfo = newsize;
 					m_AllocateThread->ResumeThread();
 					delete[] changedPart;
 					return;
@@ -6191,18 +6384,11 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 		}
 
 		// Loop through queue
-		uint64 previouspos = (uint64)-1;
 		for (int i = m_BufferedData_list.GetCount(); i>0; i--)
 		{
 			// Get top item
 			item = m_BufferedData_list.GetHead();
-			//MORPH - Flush Thread
-			if (item->data == NULL) {
-				m_BufferedData_list.RemoveHead();
-				delete item;
-				continue;
-			}
-			//MORPH - Flush Thread
+
 			// This is needed a few times
 			uint32 lenData = (uint32)(item->end - item->start + 1);
 
@@ -6212,12 +6398,9 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 			// SLUGFILLER: SafeHash
 
 			// Go to the correct position in file and write block of data
-			
-			if (previouspos != item->start) //MORPH - Optimization
-				m_hpartfile.Seek(item->start, CFile::begin);
+			m_hpartfile.Seek(item->start, CFile::begin);
 			m_hpartfile.Write(item->data, lenData);
-			previouspos = item->end + 1; //MORPH - Optimization
-			
+
 			// Remove item from queue
 			m_BufferedData_list.RemoveHead();
 
@@ -6236,136 +6419,191 @@ void CPartFile::FlushBuffer(bool forcewait, bool bForceICH, bool /*bNoAICH*/)
 			m_hpartfile.SetLength(m_nFileSize);
 		}
 
+		//Xman
+		// BEGIN SiRoB: Flush Thread
+		/*
 		// Flush to disk
 		m_hpartfile.Flush();
 
+		// Check each part of the file
+		uint32 partRange = (UINT)((m_hpartfile.GetLength() % PARTSIZE > 0) ? ((m_hpartfile.GetLength() % PARTSIZE) - 1) : (PARTSIZE - 1));
+		for (int iPartNumber = partCount-1; iPartNumber >= 0; iPartNumber--)
+		{
+			UINT uPartNumber = iPartNumber; // help VC71...
+			if (changedPart[uPartNumber] == false)
+			{
+				// Any parts other than last must be full size
+				partRange = PARTSIZE - 1;
+				continue;
+			}
+
+			// Is this 9MB part complete
+			if (IsComplete(PARTSIZE * (uint64)uPartNumber, (PARTSIZE * (uint64)(uPartNumber + 1)) - 1, false))
+			{
+				// Is part corrupt
+				if (!HashSinglePart(uPartNumber))
+				{
+					LogWarning(LOG_STATUSBAR, GetResString(IDS_ERR_PARTCORRUPT), uPartNumber, GetFileName());
+					AddGap(PARTSIZE*(uint64)uPartNumber, PARTSIZE*(uint64)uPartNumber + partRange);
+
+					// add part to corrupted list, if not already there
+					if (!IsCorruptedPart(uPartNumber))
+						corrupted_list.AddTail((uint16)uPartNumber);
+
+					// request AICH recovery data
+					if (!bNoAICH)
+						RequestAICHRecovery((uint16)uPartNumber);
+
+					// update stats
+					m_uCorruptionLoss += (partRange + 1);
+					thePrefs.Add2LostFromCorruption(partRange + 1);
+				}
+				else
+				{
+					if (!hashsetneeded){
+						if (thePrefs.GetVerbose())
+							AddDebugLogLine(DLP_VERYLOW, false, _T("Finished part %u of \"%s\""), uPartNumber, GetFileName());
+					}
+
+					// tell the blackbox about the verified data
+					m_CorruptionBlackBox.VerifiedData(PARTSIZE*(uint64)uPartNumber, PARTSIZE*(uint64)uPartNumber + partRange);
+
+					// if this part was successfully completed (although ICH is active), remove from corrupted list
+					POSITION posCorrupted = corrupted_list.Find((uint16)uPartNumber);
+					if (posCorrupted)
+						corrupted_list.RemoveAt(posCorrupted);
+
+					if (status == PS_EMPTY)
+					{
+						if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
+						{
+							if (GetHashCount() == GetED2KPartHashCount() && !hashsetneeded)
+							{
+								// Successfully completed part, make it available for sharing
+								SetStatus(PS_READY);
+								theApp.sharedfiles->SafeAddKFile(this);
+							}
+						}
+					}
+				}
+			}
+			else if (IsCorruptedPart(uPartNumber) && (thePrefs.IsICHEnabled() || bForceICH))
+			{
+				// Try to recover with minimal loss
+				if (HashSinglePart(uPartNumber))
+				{
+					m_uPartsSavedDueICH++;
+					thePrefs.Add2SessionPartsSavedByICH(1);
+
+					uint32 uRecovered = (uint32)GetTotalGapSizeInPart(uPartNumber);
+					FillGap(PARTSIZE*(uint64)uPartNumber, PARTSIZE*(uint64)uPartNumber + partRange);
+					RemoveBlockFromList(PARTSIZE*(uint64)uPartNumber, PARTSIZE*(uint64)uPartNumber + partRange);
+
+					// tell the blackbox about the verified data
+					m_CorruptionBlackBox.VerifiedData(PARTSIZE*(uint64)uPartNumber, PARTSIZE*(uint64)uPartNumber + partRange);
+
+					// remove from corrupted list
+					POSITION posCorrupted = corrupted_list.Find((uint16)uPartNumber);
+					if (posCorrupted)
+						corrupted_list.RemoveAt(posCorrupted);
+
+					AddLogLine(true, GetResString(IDS_ICHWORKED), uPartNumber, GetFileName(), CastItoXBytes(uRecovered, false, false));
+
+					// correct file stats
+					if (m_uCorruptionLoss >= uRecovered) // check, in case the tag was not present in part.met
+						m_uCorruptionLoss -= uRecovered;
+					// here we can't know if we have to subtract the amount of recovered data from the session stats
+					// or the cumulative stats, so we subtract from where we can which leads eventuall to correct 
+					// total stats
+					if (thePrefs.sesLostFromCorruption >= uRecovered)
+						thePrefs.sesLostFromCorruption -= uRecovered;
+					else if (thePrefs.cumLostFromCorruption >= uRecovered)
+						thePrefs.cumLostFromCorruption -= uRecovered;
+
+					if (status == PS_EMPTY)
+					{
+						if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
+						{
+							if (GetHashCount() == GetED2KPartHashCount() && !hashsetneeded)
+							{
+								// Successfully recovered part, make it available for sharing
+								SetStatus(PS_READY);
+								theApp.sharedfiles->SafeAddKFile(this);
+							}
+						}
+					}
+				}
+			}
+
+			// Any parts other than last must be full size
+			partRange = PARTSIZE - 1;
+		}
+		*/
+		//Creating the Thread to flush to disk
+
+		m_FlushSetting = new FlushDone_Struct;
 		m_FlushSetting->bIncreasedFile = bIncreasedFile;
+		m_FlushSetting->bForceICH = bForceICH;
+		m_FlushSetting->changedPart = changedPart;
+		if (forcewait == false || forcedbecauseincreasing==true) //Xman Flush Thread improvement
+		{
+			m_FlushThread = (CPartFileFlushThread*) AfxBeginThread(RUNTIME_CLASS(CPartFileFlushThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
+			if (m_FlushThread) {
+				m_FlushThread->SetPartFile(this);
+				//Xman queued disc-access for read/flushing-threads
+				//m_FlushThread->ResumeThread();
+				theApp.AddNewDiscAccessThread(m_FlushThread);
+				//Xman end
+				return;
+			} else {
+				m_hpartfile.Flush();
+			}
+		} else {
+			m_hpartfile.Flush();
+		}
 		FlushDone();
 	}
 	catch (CFileException* error)
 	{
 		FlushBuffersExceptionHandler(error);	
 		delete[] changedPart;
-		if (m_FlushSetting) {
+		if (m_FlushSetting)
+		{
 			delete m_FlushSetting;
-			m_FlushSetting = NULL;
+			m_FlushSetting=NULL;
 		}
 	}
+#ifndef _DEBUG
 	catch(...)
 	{
 		FlushBuffersExceptionHandler();
 		delete[] changedPart;
-		if (m_FlushSetting) {
-			delete m_FlushSetting;
-			m_FlushSetting = NULL;
-		}
-	}
-}
-
-//MORPH START - Added by SiRoB, Flush Thread
-void CPartFile::WriteToDisk() { //Called by Flush Thread
-	bool bCheckDiskspace = thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace() > 0;
-	ULONGLONG uFreeDiskSpace = bCheckDiskspace ? GetFreeDiskSpaceX(GetTempPath()) : 0;
-
-	// Check free diskspace for compressed/sparse files before possibly increasing the file size
-	if (bCheckDiskspace && !IsNormalFile())
-	{
-		// Compressed/sparse files; regardless whether the file is increased in size, 
-		// check the amount of data which will be written
-		// would need to use disk cluster sizes for more accuracy	
-			if (m_nTotalBufferData + thePrefs.GetMinFreeDiskSpace() >= uFreeDiskSpace)
-			AfxThrowFileException(CFileException::diskFull, 0, m_hpartfile.GetFileName());
-	}
-
-	// Ensure file is big enough to write data to (the last item will be the furthest from the start)
-	m_BufferedData_list_Locker.Lock();
-	PartFileBufferedData *item = m_BufferedData_list.GetTail();
-	m_BufferedData_list_Locker.Unlock();
-	
-	if (m_hpartfile.GetLength() <= item->end)
-	{
-		uint64 newsize=thePrefs.GetAllocCompleteMode()? GetFileSize() : (item->end+1);
-		ULONGLONG uIncrease = newsize - m_hpartfile.GetLength();
-
-		// Check free diskspace for normal files before increasing the file size
-		if (bCheckDiskspace && IsNormalFile())
+		if (m_FlushSetting)
 		{
-			// Normal files; check if increasing the file would reduce the amount of min. free space beyond the limit
-			// would need to use disk cluster sizes for more accuracy
-			if (uIncrease + thePrefs.GetMinFreeDiskSpace() >= uFreeDiskSpace)
-				AfxThrowFileException(CFileException::diskFull, 0, m_hpartfile.GetFileName());
+			delete m_FlushSetting;
+			m_FlushSetting=NULL;
 		}
-
-		m_FlushSetting->bIncreasedFile = true;
-		// If this is a NTFS compressed file and the current block is the 1st one to be written and there is not 
-		// enough free disk space to hold the entire *uncompressed* file, windows throws a 'diskFull'!?
-		if (IsNormalFile())
-			m_hpartfile.SetLength(newsize); // allocate disk space (may throw 'diskFull')
 	}
-
-	// Loop through queue
-	uint64 previouspos = (uint64)-1;
-	bool *changedPart = m_FlushSetting->changedPart;
-	uint64 uWrotetodisk = 0;
-	m_BufferedData_list_Locker.Lock();
-	for (int i = m_BufferedData_list.GetCount(); i>0 && uWrotetodisk < thePrefs.GetFileBufferSize(); i--)
-	{
-		item = m_BufferedData_list.GetHead();
-		if (item->data == NULL) {
-			m_BufferedData_list.RemoveHead();
-			delete item;
-			continue;
-		}
-		m_BufferedData_list_Locker.Unlock();
-		// This is needed a few times
-		uint32 lenData = (uint32)(item->end - item->start + 1);
-
-		// SLUGFILLER: SafeHash - could be more than one part
-		for (uint32 curpart = (uint32)(item->start/PARTSIZE); curpart <= item->end/PARTSIZE; curpart++)
-			changedPart[curpart] = true;
-		// SLUGFILLER: SafeHash
-
-		// Go to the correct position in file and write block of data
-		
-		if (previouspos != item->start) //MORPH - Optimization
-			m_hpartfile.Seek(item->start, CFile::begin);
-		m_hpartfile.Write(item->data, lenData);
-		previouspos = item->end + 1; //MORPH - Optimization
-		
-		// Release memory used by this item
-		delete [] item->data;
-		item->data = NULL;
-		m_BufferedData_list_Locker.Lock();
-		// Decrease buffer size
-		m_nTotalBufferData -= lenData;
-		uWrotetodisk+=lenData;
-	}
-	m_BufferedData_list_Locker.Unlock();
-
-	// Partfile should never be too large
- 	if (m_hpartfile.GetLength() > m_nFileSize){
-		// it's "last chance" correction. the real bugfix has to be applied 'somewhere' else
-		TRACE(_T("Partfile \"%s\" is too large! Truncating %I64u bytes.\n"), GetFileName(), m_hpartfile.GetLength() - m_nFileSize);
-		m_hpartfile.SetLength(m_nFileSize);
-	}
-	// Flush to disk
-	m_hpartfile.Flush();
+#endif
 }
+
 void CPartFile::FlushDone()
 {
 	if (m_FlushSetting == NULL) //Already do in normal process
 		return;
+
 	// Check each part of the file
 	// Only if hashlist is available
 	if (hashlist.GetCount() == GetED2KPartCount()){
 		UINT partCount = GetPartCount();
 		// Check each part of the file
-		for (int partNumber = partCount-1; partNumber >= 0; partNumber--)
+		for (int iPartNumber = partCount-1; iPartNumber >= 0; iPartNumber--)
 		{
-			if (!m_FlushSetting->changedPart[partNumber])
+			UINT uPartNumber = iPartNumber; // help VC71...
+			if (!m_FlushSetting->changedPart[uPartNumber])
 				continue;
 			// Any parts other than last must be full size
-			if (!GetPartHash(partNumber)) {
+			if (!GetPartHash(uPartNumber)) {
 				LogError(LOG_STATUSBAR, GetResString(IDS_ERR_INCOMPLETEHASH), GetFileName());
 				hashsetneeded = true;
 				ASSERT(FALSE);	// If this fails, something was seriously wrong with the hashset loading or the check above
@@ -6376,38 +6614,46 @@ void CPartFile::FlushDone()
 			/*
 			if (IsComplete(PARTSIZE * (uint64)partNumber, (PARTSIZE * (uint64)(partNumber + 1)) - 1, false))
 			*/
-			if (IsComplete(PARTSIZE * (uint64)partNumber, (PARTSIZE * (uint64)(partNumber + 1)) - 1, true))
+			if (IsComplete(PARTSIZE * (uint64)uPartNumber, (PARTSIZE * (uint64)(uPartNumber + 1)) - 1, true))
 			{
 				// Is part corrupt
 				// Let's check in another thread
 				m_PartsHashing++;
-				if (theApp.emuledlg->IsRunning()) { //MORPH - Flush Thread
-				CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-				parthashthread->SetSinglePartHash(this, (uint16)partNumber);
-				parthashthread->ResumeThread();
-				//MORPH START - Flush Thread
-				} else { 
-					if (!HashSinglePart(partNumber))
-						PartHashFinished(partNumber, true);
-					else
-						PartHashFinished(partNumber, false);
+				if (theApp.emuledlg->IsRunning()) //Xman Flush Thread/Safehash (Morph)
+				{
+					CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
+					parthashthread->SetSinglePartHash(this, (uint16)uPartNumber);
+					parthashthread->ResumeThread();
 				}
-				//MORPH END   - Flush Thread
+				//Xman Flush Thread/Safehash (Morph)
+				else
+				{
+					//mono threaded at shutting down
+					if (!HashSinglePart(uPartNumber))
+						PartHashFinished(uPartNumber, true);
+					else
+						PartHashFinished(uPartNumber, false);
+				}
+				//Xman end
 			}
-			else if (IsCorruptedPart(partNumber) && (thePrefs.IsICHEnabled() || m_FlushSetting->bForceICH))
+			else if (IsCorruptedPart(uPartNumber) && (thePrefs.IsICHEnabled() || m_FlushSetting->bForceICH))
 			{
-				if (theApp.emuledlg->IsRunning()) { //MORPH - Flush Thread
-				CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-				parthashthread->SetSinglePartHash(this, (uint16)partNumber, true);	// Special case, doesn't increment hashing parts, since part isn't really complete
-				parthashthread->ResumeThread();
-				//MORPH START - Flush Thread
-				} else { 
-					if (!HashSinglePart(partNumber))
-						PartHashFinishedAICHRecover(partNumber, true);
-					else
-						PartHashFinishedAICHRecover(partNumber, false);
+				if (theApp.emuledlg->IsRunning()) //Xman Flush Thread/Safehash (Morph)
+				{
+					CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
+					parthashthread->SetSinglePartHash(this, (uint16)uPartNumber, true);	// Special case, doesn't increment hashing parts, since part isn't really complete
+					parthashthread->ResumeThread();
 				}
-				//MORPH END   - Flush Thread
+				//Xman Flush Thread/Safehash (Morph)
+				else
+				{
+					//mono threaded at shutting down
+					if (!HashSinglePart(uPartNumber))
+						PartHashFinishedAICHRecover(uPartNumber, true);
+					else
+						PartHashFinishedAICHRecover(uPartNumber, false);
+				}
+				//Xman end
 			}
 		}
 	}
@@ -6417,55 +6663,96 @@ void CPartFile::FlushDone()
 		hashsetneeded = true;
 	}
 	// SLUGFILLER: SafeHash
-	
-	// Update met file
-	//SavePartFile(); //MORPH - Flush Thread Moved Down
-	
-	if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
-	{
-		// SLUGFILLER: SafeHash remove - Don't perform file completion here
+	// END SiRoB: Flush Thread
+	//Xman end
 
-		// Check free diskspace
-		//
-		// Checking the free disk space again after the file was written could most likely be avoided, but because
-		// we do not use real physical disk allocation units for the free disk computations, it should be more safe
-		// and accurate to check the free disk space again, after file was written and buffers were flushed to disk.
-		//
-		// If useing a normal file, we could avoid the check disk space if the file was not increased.
-		// If useing a compressed or sparse file, we always have to check the space 
-		// regardless whether the file was increased in size or not.
-		bool bCheckDiskspace = thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace() > 0;
-		if (bCheckDiskspace && ((IsNormalFile() && m_FlushSetting->bIncreasedFile) || !IsNormalFile()))
+		// Update met file
+		//Xman MORPH - Flush Thread Moved Down
+		/*
+		SavePartFile();
+		*/
+		//Xman end
+
+		if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
 		{
-			switch(GetStatus())
+			// SLUGFILLER: SafeHash remove - Don't perform file completion here
+			/*
+			// Is this file finished?
+			if (gaplist.IsEmpty())
+				CompleteFile(false);
+			*/
+			//Xman emd
+
+			// Check free diskspace
+			//
+			// Checking the free disk space again after the file was written could most likely be avoided, but because
+			// we do not use real physical disk allocation units for the free disk computations, it should be more safe
+			// and accurate to check the free disk space again, after file was written and buffers were flushed to disk.
+			//
+			// If useing a normal file, we could avoid the check disk space if the file was not increased.
+			// If useing a compressed or sparse file, we always have to check the space 
+			// regardless whether the file was increased in size or not.
+			//Xman
+			// BEGIN SiRoB: Flush Thread
+			/*
+			if (bCheckDiskspace && ((IsNormalFile() && bIncreasedFile) || !IsNormalFile()))
+			*/
+			bool bCheckDiskspace = thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace() > 0;
+			if (bCheckDiskspace && ((IsNormalFile() && m_FlushSetting->bIncreasedFile) || !IsNormalFile()))
+			// END SiRoB: Flush Thread
+			//Xman end
 			{
-			case PS_PAUSED:
-			case PS_ERROR:
-			case PS_COMPLETING:
-			case PS_COMPLETE:
-				break;
-			default:
-				if (GetFreeDiskSpaceX(GetTempPath()) < thePrefs.GetMinFreeDiskSpace())
+				switch(GetStatus())
 				{
-					if (IsNormalFile())
+				case PS_PAUSED:
+				case PS_ERROR:
+				case PS_COMPLETING:
+				case PS_COMPLETE:
+					break;
+				default:
+					if (GetFreeDiskSpaceX(GetTempPath()) < thePrefs.GetMinFreeDiskSpace())
 					{
-						// Normal files: pause the file only if it would still grow
-						if (GetNeededSpace() > 0)
+						if (IsNormalFile())
+						{
+							// Normal files: pause the file only if it would still grow
+							if (GetNeededSpace() > 0)
+								PauseFile(true/*bInsufficient*/);
+						}
+						else
+						{
+							// Compressed/sparse files: always pause the file
 							PauseFile(true/*bInsufficient*/);
-					}
-					else
-					{
-						// Compressed/sparse files: always pause the file
-						PauseFile(true/*bInsufficient*/);
+						}
 					}
 				}
 			}
 		}
+	//Xman
+	// BEGIN SiRoB: Flush Thread
+	/*
 	}
+	catch (CFileException* error)
+	{
+		FlushBuffersExceptionHandler(error);	
+	}
+#ifndef _DEBUG
+	catch(...)
+	{
+		FlushBuffersExceptionHandler();
+	}
+#endif
+	delete[] changedPart;
+}
+	*/
 	delete[] m_FlushSetting->changedPart;
 	delete	m_FlushSetting;
 	m_FlushSetting = NULL;
 	// Update met file
+	//Xman 
+	if(m_FlushThread)
+		AddDebugLogLine(false, _T("Warning: Flushingthread running in function: %s for file: %s"), __FUNCTION__, GetFileName());
+	//Xman end		
+
 	SavePartFile();
 }
 
@@ -6473,12 +6760,8 @@ IMPLEMENT_DYNCREATE(CPartFileFlushThread, CWinThread)
 void CPartFileFlushThread::SetPartFile(CPartFile* partfile)
 {
 	m_partfile = partfile;
-	pauseEvent.SetEvent();
 }	
-void CPartFileFlushThread::StopFlush() {
-	doRun = false;
-	pauseEvent.SetEvent();
-}	
+
 int CPartFileFlushThread::Run()
 {
 	DbgSetThreadName("Partfile-Flushing");
@@ -6490,41 +6773,99 @@ int CPartFileFlushThread::Run()
 		return 0;
 	// SLUGFILLER: SafeHash
 
-	doRun = true;
-	pauseEvent.Lock();
-	
+
 	//theApp.QueueDebugLogLine(false,_T("FLUSH:Start (%s)"),m_partfile->GetFileName()/*, CastItoXBytes(myfile->m_iAllocinfo, false, false)*/ );
-	while(doRun) {
+
+	//Xman queued disc-access for read/flushing-threads
+	bool hastoresumenextthread=true;
+	//Xman end
+
 	try{
-		CSingleLock sLock1(&(theApp.hashing_mut), TRUE); //MORPH - Wait any Read/Write access (hashing or download stuff) before flushing
-		m_partfile->WriteToDisk();
+		//Xman queued disc-access for read/flushing-threads
+		//this is done for SafeHash to check the hashing-Mut
+		HANDLE mutexhandle=theApp.hashing_mut.m_hObject;
+		DWORD dwRet = ::WaitForSingleObject(mutexhandle, 0);
+		if (dwRet != WAIT_OBJECT_0 && dwRet != WAIT_ABANDONED)
+		{
+			//we didn't get the mutex
+			//don't wait, resume the next thread
+			theApp.ResumeNextDiscAccessThread();
+			hastoresumenextthread=false;
+		}
+		//Xman end
+		
+
+		CSingleLock sLock1(&(theApp.hashing_mut), TRUE); //SafeHash - wait a current hashing process end before read the chunk
+
+
+		// Flush to disk
+		m_partfile->m_hpartfile.Flush();
+
+		//Xman queued disc-access for read/flushing-threads
+		//if we already got the mutex, we lock it now two times ->must release one time
+		if(hastoresumenextthread)
+			::ReleaseMutex(mutexhandle);
+		//Xman end
+
+
+		sLock1.Unlock(); //Xman SafeHash - Unlock the mutex as fast as possible
+
+		//Xman queued disc-access for read/flushing-threads
+		if(hastoresumenextthread)
+		{
+			theApp.ResumeNextDiscAccessThread();
+			hastoresumenextthread=false;
+		}
+		//Xman end
+
 	}
 	catch (CFileException* error)
 	{
+		//Xman queued disc-access for read/flushing-threads
+		if(hastoresumenextthread)
+		{
+			theApp.ResumeNextDiscAccessThread();
+			hastoresumenextthread=false;
+		}
+		//Xman end
+
 		VERIFY( PostMessage(theApp.emuledlg->m_hWnd,TM_FILEALLOCEXC,(WPARAM)m_partfile,(LPARAM)error) );
+		delete[] m_partfile->m_FlushSetting->changedPart;
+		delete m_partfile->m_FlushSetting;
+		m_partfile->m_FlushSetting = NULL;
+		m_partfile->m_FlushThread = NULL;
 		return 1;
 	}
-#ifndef _DEBUG
 	catch(...)
 	{
+		//Xman queued disc-access for read/flushing-threads
+		if(hastoresumenextthread)
+		{
+			theApp.ResumeNextDiscAccessThread();
+			hastoresumenextthread=false;
+		}
+		//Xman end
+
 		VERIFY( PostMessage(theApp.emuledlg->m_hWnd,TM_FILEALLOCEXC,(WPARAM)m_partfile,0) );
+		delete[] m_partfile->m_FlushSetting->changedPart;
+		delete m_partfile->m_FlushSetting;
+		m_partfile->m_FlushSetting = NULL;
+		m_partfile->m_FlushThread = NULL;
 		return 2;
 	}
-#endif
+
+	m_partfile->m_FlushThread = NULL;
 	VERIFY( PostMessage(theApp.emuledlg->m_hWnd,TM_FLUSHDONE,0,(LPARAM)m_partfile) );
 	//theApp.QueueDebugLogLine(false,_T("FLUSH:End (%s)"),m_partfile->GetFileName());
-		pauseEvent.Lock();
-	}
+
+
 	return 0;
 }
-//MORPH END  - Added by SiRoB, Flush Thread
+// END SiRoB: Flush Thread
+//Xman end
+
 void CPartFile::FlushBuffersExceptionHandler(CFileException* error)
 {
-//MORPH START - Added by SiRoB, Flush Thread
-	delete[] m_FlushSetting->changedPart;
-	delete m_FlushSetting;
-	m_FlushSetting = NULL;
-//MORPH END   - Added by SiRoB, Flush Thread
 	if (thePrefs.IsCheckDiskspaceEnabled() && error->m_cause == CFileException::diskFull)
 	{
 		LogError(LOG_STATUSBAR, GetResString(IDS_ERR_OUTOFSPACE), GetFileName());
@@ -6534,15 +6875,15 @@ void CPartFile::FlushBuffersExceptionHandler(CFileException* error)
 			theApp.emuledlg->ShowNotifier(msg, TBN_IMPORTANTEVENT);
 		}
 
-			// 'CFileException::diskFull' is also used for 'not enough min. free space'
-			if (theApp.emuledlg->IsRunning())
-			{
-				if (thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace()==0)
-					theApp.downloadqueue->CheckDiskspace(true);
-				else
-					PauseFile(true/*bInsufficient*/);
-			}
+		// 'CFileException::diskFull' is also used for 'not enough min. free space'
+		if (theApp.emuledlg->IsRunning())
+		{
+			if (thePrefs.IsCheckDiskspaceEnabled() && thePrefs.GetMinFreeDiskSpace()==0)
+				theApp.downloadqueue->CheckDiskspace(true);
+			else
+				PauseFile(true/*bInsufficient*/);
 		}
+	}
 	else
 	{
 		if (thePrefs.IsErrorBeepEnabled())
@@ -6566,12 +6907,24 @@ void CPartFile::FlushBuffersExceptionHandler(CFileException* error)
 			SetStatus(PS_ERROR);
 		}
 		paused = true;
+		// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		/*
+		m_iLastPausePurge = time(NULL);
+		*/
 		m_iLastPausePurge = (uint32)time(NULL);
+		// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 		theApp.downloadqueue->RemoveLocalServerRequest(this);
+		//Xman
+		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+		/*
 		datarate = 0;
+		*/
+		m_nDownDatarate = 0;
+		m_nDownDatarate10 = 0;
+		// Maella end
 		m_anStates[DS_DOWNLOADING] = 0;
 	}
-	
+
 	if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
 		UpdateDisplayedInfo();
 
@@ -6579,29 +6932,46 @@ void CPartFile::FlushBuffersExceptionHandler(CFileException* error)
 }
 
 void CPartFile::FlushBuffersExceptionHandler()
-	{
-		ASSERT(0);
+{
+	ASSERT(0);
 	LogError(LOG_STATUSBAR, GetResString(IDS_ERR_WRITEERROR), GetFileName(), GetResString(IDS_UNKNOWN));
-		SetStatus(PS_ERROR);
-		paused = true;
+	SetStatus(PS_ERROR);
+	paused = true;
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	// Maella end
+
+		// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+		/*
+	m_iLastPausePurge = time(NULL);
+		*/
 		m_iLastPausePurge = (uint32)time(NULL);
-		theApp.downloadqueue->RemoveLocalServerRequest(this);
-		datarate = 0;
-		m_anStates[DS_DOWNLOADING] = 0;
-		if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
-			UpdateDisplayedInfo();
-	}
+		// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	theApp.downloadqueue->RemoveLocalServerRequest(this);
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	/*
+	datarate = 0;
+	*/
+	// Maella end
+	m_anStates[DS_DOWNLOADING] = 0;
+	if (theApp.emuledlg->IsRunning()) // may be called during shutdown!
+		UpdateDisplayedInfo();
+}
 
 UINT AFX_CDECL CPartFile::AllocateSpaceThread(LPVOID lpParam)
 {
 	DbgSetThreadName("Partfile-Allocate Space");
 	//InitThreadLocale(); //Performance killer
 
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	CPartFile* myfile=(CPartFile*)lpParam;
 	theApp.QueueDebugLogLine(false,_T("ALLOC:Start (%s) (%s)"),myfile->GetFileName(), CastItoXBytes(myfile->m_iAllocinfo, false, false) );
@@ -6631,7 +7001,6 @@ UINT AFX_CDECL CPartFile::AllocateSpaceThread(LPVOID lpParam)
 #ifndef _DEBUG
 	catch(...)
 	{
-
 		VERIFY( PostMessage(theApp.emuledlg->m_hWnd,TM_FILEALLOCEXC,(WPARAM)myfile,0) );
 		myfile->m_AllocateThread=NULL;
 		return 2;
@@ -6647,7 +7016,7 @@ UINT AFX_CDECL CPartFile::AllocateSpaceThread(LPVOID lpParam)
 // 'Gaps' returned are really the filled areas, and guaranteed to be in order
 void CPartFile::GetFilledList(CTypedPtrList<CPtrList, Gap_Struct*> *filled) const
 {
-	if (gaplist.GetHeadPosition() == NULL)
+	if (gaplist.GetHeadPosition() == NULL )
 		return;
 
 	Gap_Struct *gap=NULL;
@@ -6685,12 +7054,12 @@ void CPartFile::GetFilledList(CTypedPtrList<CPtrList, Gap_Struct*> *filled) cons
 		if (!finished)
 		{
 			if (best->start>0) {
-			// Invert this gap
-			gap = new Gap_Struct;
-			gap->start = start;
-			gap->end = best->start - 1;
+				// Invert this gap
+				gap = new Gap_Struct;
+				gap->start = start;
+				gap->end = best->start - 1;
 				filled->AddTail(gap);
-			start = best->end + 1;
+				start = best->end + 1;
 			} else 				
 				start = best->end + 1;
 
@@ -6707,8 +7076,12 @@ void CPartFile::GetFilledList(CTypedPtrList<CPtrList, Gap_Struct*> *filled) cons
 
 void CPartFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 {
+	//Xman no need for this because Maella Code Update every second
+	/*
 	bool bOldHasComment = m_bHasComment;
 	UINT uOldUserRatings = m_uUserRating;
+	*/
+	//Xman end
 
 	m_bHasComment = false;
 	UINT uRatings = 0;
@@ -6731,70 +7104,94 @@ void CPartFile::UpdateFileRatingCommentAvail(bool bForceUpdate)
 		if (!m_bHasComment && !entry->GetStrTagValue(TAG_DESCRIPTION).IsEmpty())
 			m_bHasComment = true;
 		UINT rating = (UINT)entry->GetIntTagValue(TAG_FILERATING);
-		if(rating!=0)
+		if (rating != 0)
 		{
 			uRatings++;
 			uUserRatings += rating;
 		}
 	}
 
-	if(uRatings)
+	if (uRatings)
 		m_uUserRating = (uint32)ROUND((float)uUserRatings / uRatings);
 	else
 		m_uUserRating = 0;
 
+	//Xman Code Improvement:
+	if(bForceUpdate)
+		UpdateDisplayedInfo(true);
+	//no need to do this, because of Maella Code
+	/*
 	if (bOldHasComment != m_bHasComment || uOldUserRatings != m_uUserRating || bForceUpdate)
 		UpdateDisplayedInfo(true);
+	*/
+	//Xman end
 }
 
-void CPartFile::UpdateDisplayedInfo(bool /*force*/)
+void CPartFile::UpdateDisplayedInfo(bool force)
 {
-	if (theApp.emuledlg->IsRunning()) {
-	//MORPH START - UpdateItemThread
-	/*
+	if (theApp.emuledlg->IsRunning()){
 		DWORD curTick = ::GetTickCount();
 
+		//Xman new improvement:
+		/*
         if(force || curTick-m_lastRefreshedDLDisplay > MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE+m_random_update_wait) {
 			theApp.emuledlg->transferwnd->downloadlistctrl.UpdateItem(this);
 			m_lastRefreshedDLDisplay = curTick;
 		}
-	*/
-
-	theApp.emuledlg->transferwnd->downloadlistctrl.UpdateItem(this);
-	//MORPH END  - UpdateItemThread
+		*/
+		if(force || curTick-m_lastRefreshedDLDisplay > 550){ // MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE+m_random_update_wait) {
+			theApp.emuledlg->transferwnd->downloadlistctrl.UpdateItem(this);
+			m_lastRefreshedDLDisplay = curTick;
+		}
+		//Xman end
+	}
 }
-}
 
-// khaos::kmod+ Make these settings for auto-priority customizable in preferences.
-//				For now, made them dynamic; because ADP should be relative given
-//				what it is currently used for.
-void CPartFile::UpdateAutoDownPriority()
-{
-	// Small optimization: Do not bother with all this if file is paused or stopped.
-	if( !IsAutoDownPriority() || GetStatus()==PS_PAUSED || IsStopped() )
+void CPartFile::UpdateAutoDownPriority(){
+	//Xman Code Improvement
+	/*
+	if( !IsAutoDownPriority() )
 		return;
-	UINT nHighestSC = theApp.downloadqueue->GetHighestAvailableSourceCount();
-	if ( GetAvailableSrcCount() > (nHighestSC * .40) ) {
+	if ( GetSourceCount() > 100 ){
 		SetDownPriority( PR_LOW );
 		return;
 	}
-	if ( GetAvailableSrcCount() > (nHighestSC * .20) ) {
+	if ( GetSourceCount() > 20 ){
+	*/
+	UINT sourcecount= GetSourceCount();
+	if( !IsAutoDownPriority() || sourcecount==0 ) 
+		return;
+	if ( sourcecount > 100 ){
+		SetDownPriority( PR_LOW );
+		return;
+	}
+	if ( sourcecount > 20 ){
+	//Xman end
 		SetDownPriority( PR_NORMAL );
 		return;
 	}
 	SetDownPriority( PR_HIGH );
 }
-// khaos::kmod-
 
+// Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 UINT CPartFile::GetCategory() const
 {
-	//MORPH - Changed by SiRoB
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	/*
-	if (m_category > (UINT)thePrefs.GetCatCount() - 1)
+	if (m_category > (UINT)(thePrefs.GetCatCount() - 1))
 		m_category = 0;
+	return m_category;
 	*/
 	return m_category > (UINT)(thePrefs.GetCatCount() - 1)?0:m_category;
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 }
+
+//Xman checkmark to catogory at contextmenu of downloadlist
+UINT CPartFile::GetConstCategory() const
+{
+	return m_category > (UINT)(thePrefs.GetCatCount() - 1) ? 0 : m_category;
+}
+//Xman end
 
 // Ornis: Creating progressive presentation of the partfilestatuses - for webdisplay
 CString CPartFile::GetProgressString(uint16 size) const
@@ -6820,38 +7217,38 @@ CString CPartFile::GetProgressString(uint16 size) const
 	if(GetStatus() == PS_COMPLETE || GetStatus() == PS_COMPLETING) {
 		CharFillRange(&my_ChunkBar,0,(uint32)((uint64)m_nFileSize*unit), crProgress);
 	} else
-	// red gaps
-	for (POSITION pos = gaplist.GetHeadPosition();pos !=  0;){
-		Gap_Struct* cur_gap = gaplist.GetNext(pos);
-		bool gapdone = false;
+	    // red gaps
+	    for (POSITION pos = gaplist.GetHeadPosition();pos !=  0;){
+		    Gap_Struct* cur_gap = gaplist.GetNext(pos);
+		    bool gapdone = false;
 		    uint64 gapstart = cur_gap->start;
 		    uint64 gapend = cur_gap->end;
 		    for (UINT i = 0; i < GetPartCount(); i++){
 			    if (gapstart >= (uint64)i*PARTSIZE && gapstart <=  (uint64)(i+1)*PARTSIZE){ // is in this part?
 				    if (gapend <= (uint64)(i+1)*PARTSIZE)
-					gapdone = true;
-				else{
+					    gapdone = true;
+				    else{
 					    gapend = (uint64)(i+1)*PARTSIZE; // and next part
-				}
-				// paint
-				uint8 color;
-				if (m_SrcpartFrequency.GetCount() >= (INT_PTR)i && m_SrcpartFrequency[(uint16)i])  // frequency?
-					//color = crWaiting;
-					color = m_SrcpartFrequency[(uint16)i] <  10 ? crWaiting[m_SrcpartFrequency[(uint16)i]/2]:crWaiting[5];
-				else
-					color = crMissing;
-
-				CharFillRange(&my_ChunkBar,(uint32)(gapstart*unit), (uint32)(gapend*unit + 1),  color);
-
-				if (gapdone) // finished?
-					break;
-				else{
-					gapstart = gapend;
-					gapend = cur_gap->end;
-				}
-			}
-		}
-	}
+				    }
+				    // paint
+				    uint8 color;
+				    if (m_SrcpartFrequency.GetCount() >= (INT_PTR)i && m_SrcpartFrequency[(uint16)i])  // frequency?
+					    //color = crWaiting;
+					    color = m_SrcpartFrequency[(uint16)i] <  10 ? crWaiting[m_SrcpartFrequency[(uint16)i]/2]:crWaiting[5];
+				    else
+					    color = crMissing;
+    
+				    CharFillRange(&my_ChunkBar,(uint32)(gapstart*unit), (uint32)(gapend*unit + 1),  color);
+    
+				    if (gapdone) // finished?
+					    break;
+				    else{
+					    gapstart = gapend;
+					    gapend = cur_gap->end;
+				    }
+			    }
+		    }
+	    }
 
 	// yellow pending parts
 	for (POSITION pos = requestedblocks_list.GetHeadPosition();pos !=  0;){
@@ -6862,16 +7259,16 @@ CString CPartFile::GetProgressString(uint16 size) const
 	return my_ChunkBar;
 }
 
-void CPartFile::CharFillRange(CString* buffer,uint32 start, uint32 end, char color) const
+void CPartFile::CharFillRange(CString* buffer, uint32 start, uint32 end, char color) const
 {
-	for (uint32 i=start;i<=end;i++)
-		buffer->SetAt(i,color);
+	for (uint32 i = start; i <= end;i++)
+		buffer->SetAt(i, color);
 }
 
 void CPartFile::SetCategory(UINT cat)
 {
 	m_category=cat;
-
+	
 // ZZ:DownloadManager -->
 	// set new prio
 	if (IsPartFile()){
@@ -6893,24 +7290,8 @@ void CPartFile::SetStatus(EPartFileStatus eStatus)
 	_SetStatus(eStatus);
 	if (theApp.emuledlg->IsRunning())
 	{
-		// khaos::accuratetimerem+
-		switch (status)
-		{
-			case PS_READY:
-			case PS_EMPTY:
-				if (m_dwActivatedTick == 0)
-					m_dwActivatedTick = GetTickCount();
-				break;
-			default:
-				if (m_dwActivatedTick != 0)
-				{
-					m_nSecondsActive += (uint32) ((GetTickCount() - m_dwActivatedTick) / 1000);
-					m_dwActivatedTick = 0;
-				}
-				break;
-		}
-		// khaos::accuratetimerem-
 		NotifyStatusChange();
+		UpdateCompletedInfos(); //Xman moved from Drawstatusbar, because we don't draw hidden rects
 		UpdateDisplayedInfo(true);
 		if (thePrefs.ShowCatTabInfos())
 			theApp.emuledlg->transferwnd->UpdateCatTabTitles();
@@ -6985,8 +7366,35 @@ struct Chunk {
 };
 #pragma pack()
 
+//Xman Dynamic block request
+uint32 CPartFile::GetDownloadSpeedInPart(uint16 forpart, CUpDownClient* current_source) const
+{
+	ASSERT(forpart!=(uint16)-1);
+	uint32 parttransferrate=0;
+	for(POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL;)
+	{
+		//CUpDownClient* cur_src = srclist.GetNext(pos); //why we iterate in srclist?
+		CUpDownClient* cur_src = m_downloadingSourceList.GetNext(pos);
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+		if (cur_src == NULL || m_downloadingDeleteList.Find(cur_src)) 
+			continue;
+		//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+		if(cur_src->m_lastPartAsked==forpart && cur_src!=current_source)
+		{
+			parttransferrate += cur_src->GetDownloadDatarate10();
+		}
+	}
+	return parttransferrate;
+}
+//Xman end
+
+//Xman Dynamic block request
+/*
 bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender, 
-									Requested_Block_Struct** newblocks, 
+*/
+bool CPartFile::GetNextRequestedBlock_zz(CUpDownClient* sender, 
+//Xman end
+                                      Requested_Block_Struct** newblocks, 
 									  uint16* count) /*const*/
 {
 	// The purpose of this function is to return a list of blocks (~180KB) to
@@ -7025,74 +7433,108 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 
     //AddDebugLogLine(DLP_VERYLOW, false, _T("Evaluating chunks for file: \"%s\" Client: %s"), GetFileName(), sender->DbgGetClientInfo());
     
-
-	//MORPH START - Added by SiRoB, ICS Optional
-	const bool isPreviewEnable = (thePrefs.GetPreviewPrio() || thePrefs.IsExtControlsEnabled() && GetPreviewPrio()) && IsPreviewableFileType();
-	uint16 countbackup = *count;
-	if(!isPreviewEnable && IsComplete(0,(uint64)PARTSIZE-1, false) && IsComplete((uint64)PARTSIZE*(GetPartCount()-1),GetFileSize()-(uint64)1, false) && thePrefs.UseICS() && GetNextRequestedBlockICS(sender,newblocks,count))
-		return true;
-	*count = countbackup;
-	//MORPH END   - Added by SiRoB, ICS Optional
-
 	// Define and create the list of the chunks to download
 	const uint16 partCount = GetPartCount();
 	CList<Chunk> chunksList(partCount);
 
-	// BEGIN netfinty: Dynamic Block Requests
-	uint64	bytesPerRequest = EMBLOCKSIZE;
-#if !defined DONT_USE_DBR
-	//MORPH START - Enhanced DBR
-	/*
-	uint64 bytesLeftToDownload = GetFileSize() - GetCompletedSize();
-	uint32	fileDatarate = max(GetDatarate(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at atleast 3 kB/s
-	uint32	sourceDatarate = max(sender->GetDownloadDatarate(), 10); // Always assume client is uploading at atleast 10 B/s
-	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take atleast 10 seconds to complete
-	bytesPerRequest = (sourceDatarate * timeToFileCompletion) / 2;
-	*/
-	uint64	bytesLeftToDownload = GetRemainingAvailableData(sender);
-	uint32	fileDatarate = max(GetDatarate(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at atleast 3 kB/s
-	uint32	sourceDatarate = max(sender->GetDownloadDatarateAVG(), 10); // Always assume client is uploading at atleast 10 B/s
-	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take atleast 10 seconds to complete
-	bytesPerRequest = min(max(sender->GetSessionPayloadDown(), 10240), sourceDatarate * timeToFileCompletion / 2);
-	//MORPH END   - Enhanced DBR
+    uint16 tempLastPartAsked = (uint16)-1;
+    if(sender->m_lastPartAsked != ((uint16)-1) && sender->GetClientSoft() == SO_EMULE && sender->GetVersion() < MAKE_CLIENT_VERSION(0, 43, 1)){
+        tempLastPartAsked = sender->m_lastPartAsked;
+    }
 
-	if (!sender->IsEmuleClient()) { // to prevent aborted download for non emule client that do not support huge downloaded block
-		*count = min((uint16)ceil((double)bytesPerRequest/EMBLOCKSIZE), *count); //MORPH - Added by SiRoB, Enhanced DBR
-		if (bytesPerRequest > EMBLOCKSIZE)
-			bytesPerRequest = EMBLOCKSIZE;
+	//Xman Dynamic block request (netfinity/Xman)
+	//uint16 countin=*count; //Xman for debug
+	uint64	bytesPerRequest = EMBLOCKSIZE;
+	//Xman 5.4.2: removed the faster chunk completion because: 
+	//e.g. downloading 2 different chunks from 2 different sources... there is no need 
+	//to reduce the blocksize for the slow source. It would only make sense if we know
+	//that both sources are downloading the same chunk ==>would need much more calculation
+	//also reducing the blocksize means more stress for the uploader. Only do it at the end of the download!
+	uint64	bytesLeftToDownload = GetFileSize()-GetCompletedSize();
+	uint32	fileDatarate = max(GetDownloadDatarate10(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at at least 3072 B/s 
+	uint32	sourceDatarate = max(sender->GetDownloadDatarate10(), 22); // Always assume client is uploading at at least 25 B/s //Xman changed from 10
+	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take at least 10 seconds to complete
+	bool	is_slow_source=false; 
+
+	bytesPerRequest = (sourceDatarate * timeToFileCompletion) >>1;
+
+	//uint64 bytesPerRequest_total=bytesPerRequest; //Xman for debug
+
+	uint16 remainingblocks = sender->GetRemainingBlocksToDownload();
+	
+	UINT blockstorequest;
+	if (bytesPerRequest > EMBLOCKSIZE) {
+		blockstorequest = (UINT)(bytesPerRequest/EMBLOCKSIZE);
+		bytesPerRequest = EMBLOCKSIZE;
 	}
-	if (bytesPerRequest > 3*EMBLOCKSIZE) {
-		*count = min((uint16)ceil((double)bytesPerRequest/(3*EMBLOCKSIZE)), *count); //MORPH - Added by SiRoB, Enhanced DBR
-		bytesPerRequest = 3*EMBLOCKSIZE;
-	}
+	else
+		blockstorequest = 1;
+	if(remainingblocks >= blockstorequest)
+		return false;
+
+	*count = (uint16)min(blockstorequest - remainingblocks , *count);
 
 	if (bytesPerRequest < 10240)
 	{
 		// Let an other client request this packet if we are close to completion and source is slow
 		// Use the true file datarate here, otherwise we might get stuck in NNP state
-		if (!requestedblocks_list.IsEmpty() && timeToFileCompletion < 30 && bytesPerRequest < 3400 && 5 * sourceDatarate < GetDatarate())
+		if (GetDownloadDatarate10()>0)
 		{
-			DebugLog(_T("No request block given as source is slow and file near completion!"));
-			return false;
+			uint32 realtimeToFileCompletion=(uint32)(bytesLeftToDownload/GetDownloadDatarate10());
+
+			if (!requestedblocks_list.IsEmpty() && realtimeToFileCompletion < 30 && bytesPerRequest < 3400 /* && 5 * sourceDatarate < GetDownloadDatarate10()*/)
+			{
+				is_slow_source=true;
+			}
 		}
 		bytesPerRequest = 10240;
 	}
-#endif
-	// BEGIN netfinty: Dynamic Block Requests
 
-	uint16 tempLastPartAsked = (uint16)-1;
-    if(sender->m_lastPartAsked != ((uint16)-1) && sender->GetClientSoft() == SO_EMULE && sender->GetVersion() < MAKE_CLIENT_VERSION(0, 43, 1)){
-        tempLastPartAsked = sender->m_lastPartAsked;
-    }
+	if(sender->GetDownTimeDifference(false)< 10001 && bytesLeftToDownload > 1024*1024 && bytesPerRequest <= 10240)  //we need 10 seconds until a proper Speed measurement
+	{
+		bytesPerRequest = 5*10240; //don´t let the first request become too short !!
+	}
+
+
+	//Xman for debug
+	//AddDebugLogLine(false, _T("DBR: Trying to request %u blocks(%u) of size(%u): %u for client:%s, file: %s"), *count, countin, (uint32)bytesPerRequest,(uint32)bytesPerRequest_total,  sender->DbgGetClientInfo(), GetFileName());
+	//AddDebugLogLine(false, _T("DBR+: bytesLeftToDownload:%u, timeToFileCompletion:%u, fileDatarate: %u, sourceDatarate=%u(%u), pending:%u"), (uint32)bytesLeftToDownload, timeToFileCompletion, fileDatarate, sourceDatarate,sender->GetDownloadDatarate(), sender->GetPendingBlockCount());
+
+
+	//prevent an endless loop
+	bool chunklist_initialized=false;
+
+	//Xman end
 
 	// Main loop
 	uint16 newBlockCount = 0;
 	while(newBlockCount != *count){
 		// Create a request block stucture if a chunk has been previously selected
-		if(tempLastPartAsked  != (uint16)-1){
+		if(tempLastPartAsked != (uint16)-1){
+			//Xman Dynamic block request
+			//a slow source could be dropped when there are fast sources and the fiel is near to completion
+			//but it could happen that we drop a slow source, although it is the only one which has the last part needed
+			//now I drop only if there are no other (and faster) clients uploading the wanted chunk
+			if (is_slow_source && 5 * sourceDatarate < GetDownloadSpeedInPart(tempLastPartAsked,sender) )
+			{
+				DebugLog(_T("No request block given as source is slow and chunk near completion! -->trying an other chunk"));
+				//return false;
+
+				// => Try to select another chunk
+				sender->m_lastPartAsked = tempLastPartAsked = (uint16)-1;
+			}
+			else
+			{
+			//Xman end
+
 			Requested_Block_Struct* pBlock = new Requested_Block_Struct;
+			//Xman Dynamic block request (netfinity/Xman)
+			/*
+			if(GetNextEmptyBlockInPart(tempLastPartAsked, pBlock) == true){
+			*/
 			if(GetNextEmptyBlockInPart(tempLastPartAsked, pBlock, bytesPerRequest) == true){
-				//AddDebugLogLine(false, _T("Got request block. Interval %i-%i. File %s. Client: %s"), pBlock->StartOffset, pBlock->EndOffset, GetFileName(), sender->DbgGetClientInfo());
+			//Xman end
+                //AddDebugLogLine(false, _T("Got request block. Interval %i-%i. File %s. Client: %s"), pBlock->StartOffset, pBlock->EndOffset, GetFileName(), sender->DbgGetClientInfo());
 				// Keep a track of all pending requested blocks
 				requestedblocks_list.AddTail(pBlock);
 				// Update list of blocks to return
@@ -7106,6 +7548,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 				// => Try to select another chunk
 				sender->m_lastPartAsked = tempLastPartAsked = (uint16)-1;
 			}
+			}//Xman Dynamic block request
 		}
 
 		// Check if a new chunk must be selected (e.g. download starting, previous chunk complete)
@@ -7113,9 +7556,14 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 
 			// Quantify all chunks (create list of chunks to download) 
 			// This is done only one time and only if it is necessary (=> CPU load)
+			//Xman Dynamic block request
+			/*
 			if(chunksList.IsEmpty() == TRUE){
+			*/
+			if(chunksList.IsEmpty() == TRUE && chunklist_initialized==false){
+			//Xman end
 				// Indentify the locally missing part(s) that this source has
-				for(uint16 i=0; i < partCount; i++){
+				for(uint16 i = 0; i < partCount; i++){
 					if(sender->IsPartAvailable(i) == true && GetNextEmptyBlockInPart(i, NULL) == true){
 						// Create a new entry for this chunk and add it to the list
 						Chunk newEntry;
@@ -7124,6 +7572,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 						chunksList.AddTail(newEntry);
 					}
 				}
+				chunklist_initialized = true; //Xman Dynamic block request	
 
 				// Check if any block(s) could be downloaded
 				if(chunksList.IsEmpty() == TRUE){
@@ -7188,7 +7637,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
                                 ASSERT(partSize >= (cur_gap->end - uStart + 1));
 								partSize -= cur_gap->end - uStart + 1;
 							}
-						else if(cur_gap->end >= uEnd) {
+							else if(cur_gap->end >= uEnd) {
 								partSize = 0;
 								break; // exit loop for()
 							}
@@ -7258,7 +7707,12 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
                             const CUpDownClient* downloadingClient = m_downloadingSourceList.GetNext(downloadingClientPos);
                             if(downloadingClient->IsPartAvailable(cur_chunk.part)) {
                                 transferringClientsScore--;
+                                //Xman
+                                /*
                                 totalDownloadDatarateForThisPart += downloadingClient->GetDownloadDatarate() + 500; // + 500 to make sure that a unstarted chunk available at two clients will end up just barely below 2000 (max limit)
+                                */
+                                totalDownloadDatarateForThisPart += downloadingClient->GetDownloadDatarate10() + 500; // + 500 to make sure that a unstarted chunk available at two clients will end up just barely below 2000 (max limit)
+                                //XMan end
                             }
                         }
 
@@ -7320,7 +7774,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
                                          ((partSize > 0) ? 0 : 500) +                 // Criterion 4
 										 (5*100 - (5*critCompletion)) +               // Criterion 4
                                          ((sameChunk == true) ? (uint16)0 : randomAdd) +  // Criterion 5
-                                         bandwidthScore;                             // Criterion 7
+                                         bandwidthScore;                              // Criterion 7
 					}
 					else { // common chunk
 						// 30000..30100  requested common chunks
@@ -7385,7 +7839,6 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 }
 // Maella end
 
-
 CString CPartFile::GetInfoSummary() const
 {
 	if (!IsPartFile())
@@ -7395,20 +7848,20 @@ CString CPartFile::GetInfoSummary() const
 
 	lsc.Format(_T("%s"), CastItoXBytes(GetCompletedSize(), false, false));
 	compl.Format(_T("%s"), CastItoXBytes(GetFileSize(), false, false));
-	buffer.Format(_T("%s/%s"),lsc,compl);
-	compl.Format(_T("%s: %s (%.1f%%)\n"),GetResString(IDS_DL_TRANSFCOMPL),buffer,GetPercentCompleted());
+	buffer.Format(_T("%s/%s"), lsc, compl);
+	compl.Format(_T("%s: %s (%.1f%%)\n"), GetResString(IDS_DL_TRANSFCOMPL), buffer, GetPercentCompleted());
 
 	if (lastseencomplete == NULL)
 		lsc.Format(_T("%s"), GetResString(IDS_NEVER));
 	else
-		lsc.Format(_T("%s"), lastseencomplete.Format( thePrefs.GetDateTimeFormat()));
+		lsc.Format(_T("%s"), lastseencomplete.Format(thePrefs.GetDateTimeFormat()));
 
 	float availability = 0.0F;
 	if (GetPartCount() != 0)
 		availability = (float)(GetAvailablePartCount() * 100.0 / GetPartCount());
 	
 	CString avail;
-		avail.Format(GetResString(IDS_AVAIL), GetPartCount(), GetAvailablePartCount(), availability);
+	avail.Format(GetResString(IDS_AVAIL), GetPartCount(), GetAvailablePartCount(), availability);
 
 	if (GetCFileDate() != NULL)
 		lastdwl.Format(_T("%s"), GetCFileDate().Format(thePrefs.GetDateTimeFormat()));
@@ -7416,16 +7869,16 @@ CString CPartFile::GetInfoSummary() const
 		lastdwl = GetResString(IDS_NEVER);
 	
 	CString sourcesinfo;
-		sourcesinfo.Format(GetResString(IDS_DL_SOURCES) + _T(": ") + GetResString(IDS_SOURCESINFO) + _T('\n'), GetSourceCount(), GetValidSourcesCount(), GetSrcStatisticsValue(DS_NONEEDEDPARTS), GetSrcA4AFCount());
+	sourcesinfo.Format(GetResString(IDS_DL_SOURCES) + _T(": ") + GetResString(IDS_SOURCESINFO) + _T('\n'), GetSourceCount(), GetValidSourcesCount(), GetSrcStatisticsValue(DS_NONEEDEDPARTS), GetSrcA4AFCount());
 		
 	// always show space on disk
-	CString sod=_T("  (")+GetResString(IDS_ONDISK) +CastItoXBytes(GetRealFileSize(), false, false)+_T(")");
+	CString sod = _T("  (") + GetResString(IDS_ONDISK) + CastItoXBytes(GetRealFileSize(), false, false) + _T(")");
 
 	CString status;
-	if (GetTransferringSrcCount()>0)
-		status.Format(GetResString(IDS_PARTINFOS2)+_T("\n"),GetTransferringSrcCount());
+	if (GetTransferringSrcCount() > 0)
+		status.Format(GetResString(IDS_PARTINFOS2) + _T("\n"), GetTransferringSrcCount());
 	else 
-		status.Format(_T("%s\n"),getPartfileStatus());
+		status.Format(_T("%s\n"), getPartfileStatus());
 
 	CString info;
 	info.Format(_T("%s\n")
@@ -7434,7 +7887,7 @@ CString CPartFile::GetInfoSummary() const
 		+ GetResString(IDS_FD_MET)+ _T(" %s\n")
 		+ GetResString(IDS_STATUS) + _T(": ") + status
 		+ _T("%s")
-		+sourcesinfo
+		+ sourcesinfo
 		+ _T("%s")
 		+ GetResString(IDS_LASTSEENCOMPL) + _T(' ') + lsc + _T('\n')
 		+ GetResString(IDS_FD_LASTCHANGE) + _T(' ') + lastdwl,
@@ -7447,7 +7900,7 @@ CString CPartFile::GetInfoSummary() const
 	return info;
 }
 
-bool CPartFile::GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth,void* pSender)
+bool CPartFile::GrabImage(uint8 nFramesToGrab, double dStartTime, bool bReduceColor, uint16 nMaxWidth, void* pSender)
 {
 	if (!IsPartFile()){
 		return CKnownFile::GrabImage(GetPath() + CString(_T("\\")) + GetFileName(),nFramesToGrab, dStartTime, bReduceColor, nMaxWidth, pSender);
@@ -7547,10 +8000,48 @@ AllcatTypes:
 	15  Pic
 	16  Program
 */
-// Rewritten.
-bool CPartFile::CheckShowItemInGivenCat(int inCategory)
+bool CPartFile::CheckShowItemInGivenCat(int inCategory) /*const*/
 {
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	int myfilter=thePrefs.GetCatFilter(inCategory);
 
+	// common cases
+	if (((UINT)inCategory == GetCategory() && myfilter == 0))
+		return true;
+	if (inCategory>0 && GetCategory()!=(UINT)inCategory && !thePrefs.GetCategory(inCategory)->care4all )
+		return false;
+
+
+	bool ret=true;
+	if ( myfilter > 0)
+	{
+		if (myfilter>=4 && myfilter<=8 && !IsPartFile())
+			ret=false;
+		else switch (myfilter)
+		{
+			case 1 : ret=(GetCategory() == 0);break;
+			case 2 : ret= (IsPartFile());break;
+			case 3 : ret= (!IsPartFile());break;
+			case 4 : ret= ((GetStatus()==PS_READY || GetStatus()==PS_EMPTY) && GetTransferringSrcCount()==0);break;
+			case 5 : ret= ((GetStatus()==PS_READY || GetStatus()==PS_EMPTY) && GetTransferringSrcCount()>0);break;
+			case 6 : ret= (GetStatus()==PS_ERROR);break;
+			case 7 : ret= (GetStatus()==PS_PAUSED || IsStopped() );break;
+			case 8 : ret=  lastseencomplete!=NULL ;break;
+			case 10 : ret= IsMovie();break;
+			case 11 : ret= (ED2KFT_AUDIO == GetED2KFileTypeID(GetFileName()));break;
+			case 12 : ret= IsArchive();break;
+			case 13 : ret= (ED2KFT_CDIMAGE == GetED2KFileTypeID(GetFileName()));break;
+			case 14 : ret= (ED2KFT_DOCUMENT == GetED2KFileTypeID(GetFileName()));break;
+			case 15 : ret= (ED2KFT_IMAGE == GetED2KFileTypeID(GetFileName()));break;
+			case 16 : ret= (ED2KFT_PROGRAM == GetED2KFileTypeID(GetFileName()));break;
+			case 18 : ret= RegularExpressionMatch(thePrefs.GetCategory(inCategory)->regexp ,GetFileName());break;
+			case 20 : ret= (ED2KFT_EMULECOLLECTION == GetED2KFileTypeID(GetFileName()));break;
+		}
+	}
+
+	return (thePrefs.GetCatFilterNeg(inCategory))?!ret:ret;
+	*/
 	Category_Struct* curCat = thePrefs.GetCategory(inCategory);
 	if (curCat == NULL)
 		return false;
@@ -7591,7 +8082,7 @@ bool CPartFile::CheckShowItemInGivenCat(int inCategory)
 		return false;
 	if (curCat->viewfilters.nTimeRemainingMin > 0 || curCat->viewfilters.nTimeRemainingMax > 0)
 	{
-		sint32 nTemp2 = (sint32)getTimeRemaining();
+		sint32 nTemp2 = getTimeRemaining();
 		if (nTemp2 < (sint32)curCat->viewfilters.nTimeRemainingMin || (curCat->viewfilters.nTimeRemainingMax != 0 && nTemp2 > (sint32)curCat->viewfilters.nTimeRemainingMax))
 			return false;
 	}
@@ -7603,13 +8094,13 @@ bool CPartFile::CheckShowItemInGivenCat(int inCategory)
 		return false;
 	if (!curCat->viewfilters.sAdvancedFilterMask.IsEmpty() && !theApp.downloadqueue->ApplyFilterMask(GetFileName(), inCategory))
 		return false;
-	//MORPH START - Added by SiRoB, Seen Complet filter
 	if (!curCat->viewfilters.bSeenComplet && lastseencomplete!=NULL)
 		return false;
-	//MORPH END   - Added by SiRoB, Seen Complet filter
 	return true;
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 }
-// khaos::categorymod-
+
+
 
 void CPartFile::SetFileName(LPCTSTR pszFileName, bool bReplaceInvalidFileSystemChars, bool bRemoveControlChars)
 {
@@ -7640,9 +8131,16 @@ void CPartFile::SetActive(bool bActive)
 	}
 }
 
-time_t CPartFile::GetDlActiveTime() const  //vs2005
+// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+/*
+uint32 CPartFile::GetDlActiveTime() const
 {
-	time_t nDlActiveTime = m_nDlActiveTime; //vs2005
+	uint32 nDlActiveTime = m_nDlActiveTime;
+*/
+time_t CPartFile::GetDlActiveTime() const
+{
+	time_t nDlActiveTime = m_nDlActiveTime;
+// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	if (m_tActivated != 0)
 		nDlActiveTime += time(NULL) - m_tActivated;
 	return nDlActiveTime;
@@ -7659,73 +8157,98 @@ void CPartFile::SetFileOpProgress(UINT uProgress)
 	m_uFileOpProgress = uProgress;
 }
 
-/*MORPH*/bool CPartFile::RightFileHasHigherPrio(const CPartFile* left, const CPartFile* right)
+//Xman Xtreme Downloadmanager
+/*
+bool CPartFile::RightFileHasHigherPrio(CPartFile* left, CPartFile* right)
+*/
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+/*
+bool CPartFile::RightFileHasHigherPrio(CPartFile* left,CPartFile* right, bool allow_go_over_hardlimit)
+*/
+bool CPartFile::RightFileHasHigherPrio(const CPartFile* left, const CPartFile* right, bool allow_go_over_hardlimit)
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+//Xmam end
 {
     if(!right) {
         return false;
     }
-	//MORPH START - Added by SiRoB, Avanced A4AF
-	if (!left) {
+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	if(!left) {
 		return true;
 	}
-	//MORPH END   - Added by SiRoB, Avanced A4AF
-	//MORPH START - Added by SiRoB, ForcedA4AF
-	bool btestForceA4AF = thePrefs.UseSmartA4AFSwapping();
-	if (btestForceA4AF)
-	{
-		if (right == theApp.downloadqueue->forcea4af_file)
-			return true;
-		else if (left == theApp.downloadqueue->forcea4af_file)
-			return false;
-	}
-	//MORPH END   - Added by SiRoB, ForcedA4AF
-	//MORPH START - Added by SiRoB, Avanced A4AF
-	UINT right_iA4AFMode = thePrefs.AdvancedA4AFMode();
-	if (right_iA4AFMode && thePrefs.GetCategory(right->GetCategory())->iAdvA4AFMode)
-		right_iA4AFMode = thePrefs.GetCategory(right->GetCategory())->iAdvA4AFMode;
-	UINT left_iA4AFMode = thePrefs.AdvancedA4AFMode();
-	if (left_iA4AFMode && thePrefs.GetCategory(left->GetCategory())->iAdvA4AFMode)
-		left_iA4AFMode = thePrefs.GetCategory(left->GetCategory())->iAdvA4AFMode;
-			
-	//MORPH END   - Added by SiRoB, Avanced A4AF
-	if(!left ||
-		//MORPH START - Added by SiRoB, ForcedA4AF
-		btestForceA4AF && (right->ForceA4AFOff() || left->ForceAllA4AF()) ||
-		(!btestForceA4AF || btestForceA4AF && !left->ForceA4AFOff()) &&
-		//MORPH END   - Added by SiRoB, ForcedA4AF
+
+	UINT right_dlMode = thePrefs.GetDlMode();
+	if (right_dlMode && thePrefs.GetCategory(right->GetCategory())->m_iDlMode)
+		right_dlMode = thePrefs.GetCategory(right->GetCategory())->m_iDlMode;
+	UINT left_dlMode = thePrefs.GetDlMode();
+	if (left_dlMode && thePrefs.GetCategory(left->GetCategory())->m_iDlMode)
+		left_dlMode = thePrefs.GetCategory(left->GetCategory())->m_iDlMode;
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
+	//Xman Xtreme Downloadmanager
+	if(allow_go_over_hardlimit==false && right->GetSourceCount() > right->GetMaxSources())
+		return false;
+	//Xman end
+
+    if(!left ||
+		//Xman Xtreme Downloadmanager: Auto-A4AF-check
+		!left->IsA4AFAuto() &&
 		(
-			thePrefs.GetCategory(right->GetCategory())->prio > thePrefs.GetCategory(left->GetCategory())->prio ||
-			thePrefs.GetCategory(right->GetCategory())->prio == thePrefs.GetCategory(left->GetCategory())->prio &&
-			(
-				//MORPH START - Added by SiRoB, Stacking A4AF
-				right_iA4AFMode == 2 && right->GetCatResumeOrder() < left->GetCatResumeOrder() ||
-				!(left_iA4AFMode == 2 && right->GetCatResumeOrder() > left->GetCatResumeOrder()) &&
+		  right->IsA4AFAuto() ||
+		  //Xman end
+       thePrefs.GetCategory(right->GetCategory())->prio > thePrefs.GetCategory(left->GetCategory())->prio ||
+       thePrefs.GetCategory(right->GetCategory())->prio == thePrefs.GetCategory(left->GetCategory())->prio &&
+       (
+			  // ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+			  /*
+           right->GetDownPriority() > left->GetDownPriority() ||
+           right->GetDownPriority() == left->GetDownPriority() &&
+           (
+               right->GetCategory() == left->GetCategory() && right->GetCategory() != 0 &&
+               (thePrefs.GetCategory(right->GetCategory())->downloadInAlphabeticalOrder && thePrefs.IsExtControlsEnabled()) && 
+               right->GetFileName() && left->GetFileName() &&
+               right->GetFileName().CompareNoCase(left->GetFileName()) < 0
+				  */
+				right_dlMode == 2 && right->GetCatResumeOrder() < left->GetCatResumeOrder() ||
+				!(left_dlMode == 2 && right->GetCatResumeOrder() > left->GetCatResumeOrder()) &&
 				(				
-					right_iA4AFMode == 2 && right->GetCatResumeOrder() == left->GetCatResumeOrder()
+					right_dlMode == 2 && right->GetCatResumeOrder() == left->GetCatResumeOrder()
 					||
-					right_iA4AFMode != 2
+					right_dlMode != 2
 				) &&
-				//MORPH END   - Added by SiRoB, Stacking A4AF		
 				(
 					right->GetDownPriority() > left->GetDownPriority() ||
 					right->GetDownPriority() == left->GetDownPriority() &&
 					(
 						right->GetCategory() == left->GetCategory() && right->GetCategory() != 0 &&
-						(thePrefs.GetCategory(right->GetCategory())->downloadInAlphabeticalOrder && thePrefs.IsExtControlsEnabled()) && 
+						(thePrefs.GetCategory(right->GetCategory())->m_iDlMode == 1/* && thePrefs.IsExtControlsEnabled()*/) && 
 						right->GetFileName() && left->GetFileName() &&
 						right->GetFileName().CompareNoCase(left->GetFileName()) < 0
-						//MORPH START - Added by SiRoB, Balancing A4AF
-						||
-						left_iA4AFMode != 0 &&
-						right->GetAvailableSrcCount() < left->GetAvailableSrcCount()
-						//MORPH END   - Added by SiRoB, Balancing A4AF
 					)
-				)
-			)
-		)
+			  // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+           )
+       )
+		) //Xman Xtreme Downloadmanager: Auto-A4AF-check
     ) {
         return true;
     } else {
+		//Xman Xtreme Downloadmanager
+		if(left->IsA4AFAuto()==right->IsA4AFAuto() && //Xman Xtreme Downloadmanager: Auto-A4AF-check
+			thePrefs.GetCategory(right->GetCategory())->prio == thePrefs.GetCategory(left->GetCategory())->prio
+			&& right->GetDownPriority() == left->GetDownPriority()
+			&& (right->GetCategory() != left->GetCategory()
+				// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+				/*
+				|| right->GetCategory() == left->GetCategory() && (!thePrefs.GetCategory(right->GetCategory())->downloadInAlphabeticalOrder || !thePrefs.IsExtControlsEnabled()))
+				*/
+				|| right->GetCategory() == left->GetCategory() && (!thePrefs.GetCategory(right->GetCategory())->m_iDlMode != 0/* || !thePrefs.IsExtControlsEnabled()*/))
+				// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+			&& right->GetSourceCount() < left->GetSourceCount()
+			)
+			return true;
+		else
+		//Xman end
         return false;
     }
 }
@@ -7733,24 +8256,18 @@ void CPartFile::SetFileOpProgress(UINT uProgress)
 void CPartFile::RequestAICHRecovery(UINT nPart)
 {
 	if (!m_pAICHHashSet->HasValidMasterHash() || (m_pAICHHashSet->GetStatus() != AICH_TRUSTED && m_pAICHHashSet->GetStatus() != AICH_VERIFIED)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Unable to request AICH Recoverydata because we have no trusted Masterhash"));
 		return;
 	}
 	if (GetFileSize() <= (uint64)EMBLOCKSIZE || GetFileSize() - PARTSIZE*(uint64)nPart <= (uint64)EMBLOCKSIZE)
 		return;
 	if (CAICHHashSet::IsClientRequestPending(this, (uint16)nPart)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("RequestAICHRecovery: Already a request for this part pending"));
 		return;
 	}
 
 	// first check if we have already the recoverydata, no need to rerequest it then
 	if (m_pAICHHashSet->IsPartDataAvailable((uint64)nPart*PARTSIZE)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Found PartRecoveryData in memory"));
 		AICHRecoveryDataAvailable(nPart);
 		return;
@@ -7773,8 +8290,6 @@ void CPartFile::RequestAICHRecovery(UINT nPart)
 		}
 	}
 	if ((cAICHClients | cAICHLowIDClients) == 0){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Unable to request AICH Recoverydata because found no client who supports it and has the same hash as the trusted one"));
 		return;
 	}
@@ -7808,8 +8323,6 @@ void CPartFile::RequestAICHRecovery(UINT nPart)
 		ASSERT( false );
 		return;
 	}
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-	if(thePrefs.GetLogICHEvents()) //JP log ICH events
 	AddDebugLogLine(DLP_DEFAULT, false, _T("Requesting AICH Hash (%s) from client %s"),cAICHClients? _T("HighId"):_T("LowID"), pClient->DbgGetClientInfo());
 	pClient->SendAICHRequest(this, (uint16)nPart);
 }
@@ -7828,9 +8341,12 @@ void CPartFile::AICHRecoveryDataAvailable(UINT nPart)
 	}	
 	// if the part was already ok, it would now be complete
 	if (IsComplete((uint64)nPart*PARTSIZE, (((uint64)nPart*PARTSIZE)+length)-1, true)){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
+		//Xman
+		/*
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: The part (%u) is already complete, canceling"));
+		*/
+		AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: The part (%u) is already complete, canceling"),nPart);
+		//Xman end
 		return;
 	}
 	
@@ -7838,8 +8354,6 @@ void CPartFile::AICHRecoveryDataAvailable(UINT nPart)
 
 	CAICHHashTree* pVerifiedHash = m_pAICHHashSet->m_pHashTree.FindHash((uint64)nPart*PARTSIZE, length);
 	if (pVerifiedHash == NULL || !pVerifiedHash->m_bHashValid){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: Unable to get verified hash from hashset (should never happen)"));
 		ASSERT( false );
 		return;
@@ -7855,8 +8369,6 @@ void CPartFile::AICHRecoveryDataAvailable(UINT nPart)
 	}
 
 	if (!htOurHash.m_bHashValid){
-// WebCache ////////////////////////////////////////////////////////////////////////////////////
-		if(thePrefs.GetLogICHEvents()) //JP log ICH events
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: Failed to retrieve AICH Hashset of corrupt part"));
 		ASSERT( false );
 		return;
@@ -7896,12 +8408,43 @@ void CPartFile::AICHRecoveryDataAvailable(UINT nPart)
 	if (IsComplete((uint64)nPart*PARTSIZE, (((uint64)nPart*PARTSIZE)+length)-1, true)){
 		// this is a bad, but it could probably happen under some rare circumstances
 		// make sure that MD4 agrres to this fact too
-		// SLUGFILLER: SafeHash - In another thread
+		//Xman
+		// BEGIN SLUGFILLER: SafeHash - In another thread
+		/*
+		if (!HashSinglePart(nPart)){
+			AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: The part (%u) got completed while recovering - but MD4 says it corrupt! Setting hashset to error state, deleting part"));
+			// now we are fu... unhappy
+			m_pAICHHashSet->SetStatus(AICH_ERROR);
+			AddGap(PARTSIZE*(uint64)nPart, (((uint64)nPart*PARTSIZE)+length)-1);
+			ASSERT( false );
+			return;
+		}
+		else{
+			AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: The part (%u) got completed while recovering and MD4 agrees"));
+			// alrighty not so bad
+			POSITION posCorrupted = corrupted_list.Find((uint16)nPart);
+			if (posCorrupted)
+				corrupted_list.RemoveAt(posCorrupted);
+			if (status == PS_EMPTY && theApp.emuledlg->IsRunning()){
+				if (GetHashCount() == GetED2KPartHashCount() && !hashsetneeded){
+					// Successfully recovered part, make it available for sharing
+					SetStatus(PS_READY);
+					theApp.sharedfiles->SafeAddKFile(this);
+				}
+			}
+
+			if (theApp.emuledlg->IsRunning()){
+				// Is this file finished?
+				if (gaplist.IsEmpty())
+					CompleteFile(false);
+			}
+		}
+		*/
 		m_PartsHashing++;
 		CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-		parthashthread->SetSinglePartHash(this, nPart, false, true);
+		parthashthread->SetSinglePartHash(this, (uint16)nPart, false, true);
 		parthashthread->ResumeThread();
-		// SLUGFILLER: SafeHash
+		// END SLUGFILLER: SafeHash
 	} // end sanity check
 	// Update met file
 	SavePartFile();
@@ -7910,10 +8453,16 @@ void CPartFile::AICHRecoveryDataAvailable(UINT nPart)
 	//AICH successfully recovered %s of %s from part %u for %s
 }
 
-//MORPH START - Modified by Stulle, Global Source Limit
+// ==> Global Source Limit [Max/Stulle] - Stulle
 /*
 UINT CPartFile::GetMaxSources() const
 {
+	//Xman Xtreme Mod
+	//hardlimit of 5 for emule collections
+	if(GetFileSize()< (uint64)MAXPRIORITYCOLL_SIZE && HasCollectionExtenesion_Xtreme() /*CCollection::HasCollectionExtention(GetFileName())*//*) //Xman Code Improvement for HasCollectionExtention
+		return 5;
+	//Xman end
+
 	// Ignore any specified 'max sources' value if not in 'extended mode' -> don't use a parameter which was once
 	// specified in GUI but can not be seen/modified any longer..
 	return (!thePrefs.IsExtControlsEnabled() || m_uMaxSources == 0) ? thePrefs.GetMaxSourcePerFileDefault() : m_uMaxSources;
@@ -7921,12 +8470,13 @@ UINT CPartFile::GetMaxSources() const
 */
 UINT CPartFile::GetMaxSources() const
 {
-	// ==> Global Source Limit (customize for files) - Stulle
-	/*
-	if(thePrefs.IsUseGlobalHL())
-	*/
+	//Xman Xtreme Mod
+	//hardlimit of 5 for emule collections
+	if(GetFileSize()< (uint64)MAXPRIORITYCOLL_SIZE && CCollection::HasCollectionExtention(GetFileName()))
+		return 5;
+	//Xman end
+
 	if(thePrefs.IsUseGlobalHL() && (thePrefs.GetGlobalHlAll() || m_bGlobalHL))
-	// <== Global Source Limit (customize for files) - Stulle
 	{
 		if(m_uFileHardLimit > 10)
 			return m_uFileHardLimit;
@@ -7934,27 +8484,30 @@ UINT CPartFile::GetMaxSources() const
 			return 10;
 	}
 
-	// using a " (xx) ? yy : zz " construct uses more cpu time!
 	if (!thePrefs.IsExtControlsEnabled() || m_uMaxSources == 0)
 		return thePrefs.GetMaxSourcePerFileDefault();
 
 	return m_uMaxSources;
 }
-//MORPH END   - Modified by Stulle, Global Source Limit
+// <== Global Source Limit [Max/Stulle] - Stulle
 
 UINT CPartFile::GetMaxSourcePerFileSoft() const
 {
-	//MORPH START - Modified by Stulle, Source cache [Xman]
+
+	//Xman Xtreme Downloadmanager
+	//Xman sourcecache
+	//because we uses our sources longer, we may allow a shorter XS
 	/*
 	UINT temp = ((UINT)GetMaxSources() * 9L) / 10;
 	*/
-	UINT temp = GetMaxSources();
-	if(temp>150)
-		temp = (UINT)(temp * 0.95f);
+	UINT temp;
+	UINT maxsources=GetMaxSources();
+	if(maxsources>150)
+		temp = (UINT)(maxsources*0.95f);
 	else
-		temp = (UINT)(temp * 0.90f);
-	//MORPH END - Modified by Stulle, Source cache [Xman]
-
+		temp = (UINT)(maxsources*0.9f);
+	//UINT temp = ((UINT)GetMaxSources() * 9L) / 10;
+	//Xman end
 	if (temp > MAX_SOURCES_FILE_SOFT)
 		return MAX_SOURCES_FILE_SOFT;
 	return temp;
@@ -8004,11 +8557,668 @@ void CPartFile::RefilterFileComments(){
 	UpdateFileRatingCommentAvail();
 }
 
-//MORPH START - Added by SiRoB, SLUGFILLER: SafeHash
+//Xman Dynamic block request
+bool CPartFile::GetNextRequestedBlock_Maella(CUpDownClient* sender, 
+									  Requested_Block_Struct** newblocks, 
+									  uint16* count) /*const*/
+{
+	// The purpose of this function is to return a list of blocks (~180KB) to
+	// download. To avoid a prematurely stop of the downloading, all blocks that 
+	// are requested from the same source must be located within the same 
+	// chunk (=> part ~9MB).
+	//  
+	// The selection of the chunk to download is one of the CRITICAL parts of the 
+	// edonkey network. The selection algorithm must insure the best spreading
+	// of files.
+	//  
+	// The selection is based on 4 criteria:
+	//  1.  Frequency of the chunk (availability), very rare chunks must be downloaded 
+	//      as quickly as possible to become a new available source.
+	//  2.  Parts used for preview (first + last chunk), preview or check a 
+	//      file (e.g. movie, mp3)
+	//  3.  Request state (downloading in process), try to ask each source for another 
+	//      chunk. Spread the requests between all sources.
+	//  4.  Completion (shortest-to-complete), partially retrieved chunks should be 
+	//      completed before starting to download other one.
+	//  
+	// The frequency criterion defines three zones: very rare (<10%), rare (<50%)
+	// and common (>30%). Inside each zone, the criteria have a specific ‘weight? used 
+	// to calculate the priority of chunks. The chunk(s) with the highest 
+	// priority (highest=0, lowest=0xffff) is/are selected first.
+	//  
+	//          very rare   (preview)       rare                      common
+	//    0% <---- +0 pt ----> 10% <----- +10000 pt -----> 50% <---- +20000 pt ----> 100%
+	// 1.  <------- frequency: +25*frequency pt ----------->
+	// 2.  <- preview: +1 pt --><-------------- preview: set to 10000 pt ------------->
+	// 3.                       <------ request: download in progress +20000 pt ------>
+	// 4a. <- completion: 0% +100, 25% +75 .. 100% +0 pt --><-- !req => completion --->
+	// 4b.                                                  <--- req => !completion -->
+	//  
+	// Unrolled, the priority scale is:
+	//  
+	// 0..xxxx       unrequested and requested very rare chunks
+	// 10000..1xxxx  unrequested rare chunks + unrequested preview chunks
+	// 20000..2xxxx  unrequested common chunks (priority to the most complete)
+	// 30000..3xxxx  requested rare chunks + requested preview chunks
+	// 40000..4xxxx  requested common chunks (priority to the least complete)
+	//
+	// This algorithm usually selects first the rarest chunk(s). However, partially
+	// complete chunk(s) that is/are close to completion may overtake the priority 
+	// (priority inversion).
+	// For the common chuncks, the algorithm tries to spread the dowload between
+	// the sources
+	//
+
+	// Check input parameters
+	if(count == 0)
+		return false;
+	if(sender->GetPartStatus() == NULL)
+		return false;
+
+	// Define and create the list of the chunks to download
+	const uint16 partCount = GetPartCount();
+	CList<Chunk> chunksList(partCount);
+
+
+	//Xman Dynamic block request (netfinity/Xman)
+	//uint16 countin=*count; //Xman for debug 
+	uint64	bytesPerRequest = EMBLOCKSIZE;
+	//Xman 5.4.2: removed the faster chunk completion because: 
+	//e.g. downloading 2 different chunks from 2 different sources... there is no need 
+	//to reduce the blocksize for the slow source. It would only make sense if we know
+	//that both sources are downloading the same chunk ==>would need much more calculation
+	//also reducing the blocksize means more stress for the uploader. Only do it at the end of the download!
+	uint64	bytesLeftToDownload = GetFileSize()-GetCompletedSize();
+	uint32	fileDatarate = max(GetDownloadDatarate10(), UPLOAD_CLIENT_DATARATE); // Always assume file is being downloaded at at least 3072 B/s 
+	uint32	sourceDatarate = max(sender->GetDownloadDatarate10(), 22); // Always assume client is uploading at at least 25 B/s //Xman changed from 10
+	uint32	timeToFileCompletion = max((uint32) (bytesLeftToDownload / (uint64) fileDatarate) + 1, 10); // Always assume it will take atleast 10 seconds to complete
+	bool	is_slow_source=false; 
+
+	bytesPerRequest = (sourceDatarate * timeToFileCompletion) >>1;
+
+	//uint64 bytesPerRequest_total=bytesPerRequest; //Xman for debug
+
+	uint16 remainingblocks = sender->GetRemainingBlocksToDownload();
+
+	UINT blockstorequest;
+	if (bytesPerRequest > EMBLOCKSIZE) {
+		blockstorequest = (UINT)(bytesPerRequest/EMBLOCKSIZE);
+		bytesPerRequest = EMBLOCKSIZE;
+	}
+	else
+		blockstorequest = 1;
+	if(remainingblocks >= blockstorequest)
+		return false;
+
+	*count = (uint16)min(blockstorequest - remainingblocks , *count);
+
+	if (bytesPerRequest < 10240)
+	{
+		// Let an other client request this packet if we are close to completion and source is slow
+		// Use the true file datarate here, otherwise we might get stuck in NNP state
+		if (GetDownloadDatarate10()>0)
+		{
+			uint32 realtimeToFileCompletion=(uint32)(bytesLeftToDownload/GetDownloadDatarate10());
+
+			if (!requestedblocks_list.IsEmpty() && realtimeToFileCompletion < 30 && bytesPerRequest < 3400 /* && 5 * sourceDatarate < GetDownloadDatarate10()*/)
+			{
+				is_slow_source=true;
+			}
+		}
+		bytesPerRequest = 10240;
+	}
+
+	if(sender->GetDownTimeDifference(false)< 10001 && bytesLeftToDownload > 1024*1024 && bytesPerRequest <= 10240)  //we need 10 seconds until a proper Speed measurement
+	{
+		bytesPerRequest = 5*10240; //don´t let the first request become too short !!
+	}
+
+
+	//Xman for debug
+	//AddDebugLogLine(false, _T("DBR: Trying to request %u blocks(%u) of size(%u): %u for client:%s, file: %s"), *count, countin, (uint32)bytesPerRequest,(uint32)bytesPerRequest_total,  sender->DbgGetClientInfo(), GetFileName());
+	//AddDebugLogLine(false, _T("DBR+: bytesLeftToDownload:%u, timeToFileCompletion:%u, fileDatarate: %u, sourceDatarate=%u(%u), pending:%u"), (uint32)bytesLeftToDownload, timeToFileCompletion, fileDatarate, sourceDatarate,sender->GetDownloadDatarate(), sender->GetPendingBlockCount());
+
+	//prevent an endless loop
+	bool chunklist_initialized=false;
+
+	//Xman end
+
+	// Main loop
+	uint16 newBlockCount = 0;
+	while(newBlockCount != *count){
+		// Create a request block stucture if a chunk has been previously selected
+		if(sender->m_lastPartAsked != (uint16)-1){
+			//Xman Dynamic block request
+			//a slow source could be dropped when there are fast sources and the fiel is near to completion
+			//but it could happen that we drop a slow source, although it is the only one which has the last part needed
+			//now I drop only if there are no other (and faster) clients uploading the wanted chunk
+			if (is_slow_source && 5 * sourceDatarate < GetDownloadSpeedInPart(sender->m_lastPartAsked,sender) )
+			{
+				DebugLog(_T("No request block given as source is slow and chunk near completion! -->trying an other chunk"));
+				//return false;
+
+				// => Try to select another chunk
+				sender->m_lastPartAsked = (uint16)-1;
+			}
+			else
+			{
+			//Xman end
+
+			Requested_Block_Struct* pBlock = new Requested_Block_Struct;
+			if(GetNextEmptyBlockInPart(sender->m_lastPartAsked, pBlock, bytesPerRequest) == true){ //Xman Dynamic block request (netfinity/Xman)
+				// Keep a track of all pending requested blocks
+				requestedblocks_list.AddTail(pBlock);
+				// Update list of blocks to return
+				newblocks[newBlockCount++] = pBlock;
+				// Skip end of loop (=> CPU load)
+				continue;
+			} 
+			else {
+				// All blocks for this chunk have been already requested
+				delete pBlock;
+				// => Try to select another chunk
+				sender->m_lastPartAsked = (uint16)-1;
+			}
+			}//Xman Dynamic block request
+		}
+
+		// Check if a new chunk must be selected (e.g. download starting, previous chunk complete)
+		if(sender->m_lastPartAsked == (uint16)-1){
+
+			// Quantify all chunks (create list of chunks to download) 
+			// This is done only one time and only if it is necessary (=> CPU load)
+			if(chunksList.IsEmpty() == TRUE && chunklist_initialized==false){ //Xman Dynamic block request
+				// Indentify the locally missing part(s) that this source has
+				for(uint16 i = 0; i < partCount; i++){
+					if(sender->IsPartAvailable(i) == true && GetNextEmptyBlockInPart(i, NULL) == true){
+						// Create a new entry for this chunk and add it to the list
+						Chunk newEntry;
+						newEntry.part = i;
+						newEntry.frequency = m_SrcpartFrequency[i];
+						chunksList.AddTail(newEntry);
+					}
+				}
+				chunklist_initialized = true; //Xman Dynamic block request
+
+				// Check if any block(s) could be downloaded
+				if(chunksList.IsEmpty() == TRUE){
+					break; // Exit main loop while()
+				}
+
+				// Define the bounds of the three zones (very rare, rare)
+				// more depending on available sources
+				uint8 modif=10;
+				if (GetSourceCount()>800) modif=2; else if (GetSourceCount()>200) modif=5;
+				//Xman better chunk selection
+				uint16 limit= (uint16)ceil((float)modif*GetSourceCount()/ 100) + 1; //Xman: better if we have very low sources
+				//if (limit==0) limit=1;
+
+				const uint16 veryRareBound = limit;
+				const uint16 rareBound = 2*limit;
+
+				// Cache Preview state (Criterion 2)
+				const bool isPreviewEnable = (thePrefs.GetPreviewPrio() || thePrefs.IsExtControlsEnabled() && GetPreviewPrio()) && IsPreviewableFileType();
+
+				// Collect and calculate criteria for all chunks
+				for(POSITION pos = chunksList.GetHeadPosition(); pos != NULL; ){
+					Chunk& cur_chunk = chunksList.GetNext(pos);
+
+					// Offsets of chunk
+					const uint64 uStart = (uint64)cur_chunk.part * PARTSIZE;
+					const uint64 uEnd  = ((GetFileSize() - (uint64)1) < (uStart + PARTSIZE - 1)) ? 
+						(GetFileSize() - (uint64)1) : (uStart + PARTSIZE - 1);
+					ASSERT( uStart <= uEnd );
+
+					// Criterion 2. Parts used for preview
+					// Remark: - We need to download the first part and the last part(s).
+					//        - When the last part is very small, it's necessary to 
+					//          download the two last parts.
+					bool critPreview = false;
+					if(isPreviewEnable == true){
+						if(cur_chunk.part == 0){
+							critPreview = true; // First chunk
+						}
+						else if(cur_chunk.part == partCount-1){
+							critPreview = true; // Last chunk 
+						}
+						else if(cur_chunk.part == partCount-2){
+							// Last chunk - 1 (only if last chunk is too small)
+							if( (GetFileSize() - uEnd) < (uint64)PARTSIZE/3){
+								critPreview = true; // Last chunk - 1
+							}
+						}
+					}
+
+					// Criterion 3. Request state (downloading in process from other source(s))
+					const bool critRequested = cur_chunk.frequency > veryRareBound &&  // => CPU load
+						IsAlreadyRequested(uStart, uEnd);
+
+					// Criterion 4. Completion
+					uint64 partSize = PARTSIZE;
+					for(POSITION pos = gaplist.GetHeadPosition(); pos != NULL; ) {
+						const Gap_Struct* cur_gap = gaplist.GetNext(pos);
+						// Check if Gap is into the limit
+						if(cur_gap->start < uStart) {
+							if(cur_gap->end > uStart && cur_gap->end < uEnd) {
+								partSize -= cur_gap->end - uStart + 1;
+							}
+							else if(cur_gap->end >= uEnd) {
+								partSize = 0;
+								break; // exit loop for()
+							}
+						}
+						else if(cur_gap->start <= uEnd) {
+							if(cur_gap->end < uEnd) {
+								partSize -= cur_gap->end - cur_gap->start + 1;
+							}
+							else {
+								partSize -= uEnd - cur_gap->start + 1;
+							}
+						}
+					}
+					const uint16 critCompletion = (uint16)(partSize/(PARTSIZE/100)); // in [%]
+
+					// Calculate priority with all criteria
+					if(cur_chunk.frequency <= veryRareBound){
+						// 0..xxxx unrequested + requested very rare chunks
+						cur_chunk.rank = (25 * cur_chunk.frequency) +      // Criterion 1
+							((critPreview == true) ? 0 : 1) + // Criterion 2
+							(100 - critCompletion);           // Criterion 4
+					}
+					else if(critPreview == true){
+						// 10000..10100  unrequested preview chunks
+						// 30000..30100  requested preview chunks
+						cur_chunk.rank = ((critRequested == false) ? 10000 : 30000) + // Criterion 3
+							(100 - critCompletion);                      // Criterion 4
+					}
+					else if(cur_chunk.frequency <= rareBound){
+						// 10101..1xxxx  unrequested rare chunks
+						// 30101..3xxxx  requested rare chunks
+						cur_chunk.rank = (25 * cur_chunk.frequency) +                 // Criterion 1 
+							((critRequested == false) ? 10101 : 30101) + // Criterion 3
+							(100 - critCompletion);                      // Criterion 4
+					}
+					else { // common chunk
+						if(critRequested == false){ // Criterion 3
+							// 20000..2xxxx  unrequested common chunks
+							cur_chunk.rank = 20000 +                // Criterion 3
+								(100 - critCompletion); // Criterion 4
+						}
+						else{
+							// 40000..4xxxx  requested common chunks
+							// Remark: The weight of the completion criterion is inversed
+							//         to spead the requests over the completing chunks. 
+							//         Without this, the chunk closest to completion will  
+							//         received every new sources.
+							cur_chunk.rank = 40000 +                // Criterion 3
+								(critCompletion);       // Criterion 4				
+						}
+					}
+				}
+			}
+
+			// Select the next chunk to download
+			if(chunksList.IsEmpty() == FALSE){
+				// Find and count the chunck(s) with the highest priority
+				uint16 count = 0; // Number of found chunks with same priority
+				uint16 rank = 0xffff; // Highest priority found
+				for(POSITION pos = chunksList.GetHeadPosition(); pos != NULL; ){
+					const Chunk& cur_chunk = chunksList.GetNext(pos);
+					if(cur_chunk.rank < rank){
+						count = 1;
+						rank = cur_chunk.rank;
+					}
+					else if(cur_chunk.rank == rank){
+						count++;
+					}
+				}
+
+				// Use a random access to avoid that everybody tries to download the 
+				// same chunks at the same time (=> spread the selected chunk among clients)
+				uint16 randomness = 1 + (uint16)((((uint32)rand()*(count-1))+(RAND_MAX/2))/RAND_MAX);
+				for(POSITION pos = chunksList.GetHeadPosition(); ; ){
+					POSITION cur_pos = pos;
+					const Chunk& cur_chunk = chunksList.GetNext(pos);
+					if(cur_chunk.rank == rank){
+						randomness--; 
+						if(randomness == 0){
+							// Selection process is over 
+							sender->m_lastPartAsked = cur_chunk.part;
+							// Remark: this list might be reused up to ?count?times
+							chunksList.RemoveAt(cur_pos);
+							break; // exit loop for()
+						}  
+					}
+				}
+			}
+			else {
+				// There is no remaining chunk to download
+				break; // Exit main loop while()
+			}
+		}
+	}
+	// Return the number of the blocks 
+	*count = newBlockCount;
+
+	// Return
+	return (newBlockCount > 0);
+}
+// Maella end
+
+//zz_fly :: remove unused code :: start
+/*
+//Xman Dynamic block request (netfinity/morph)
+uint64 CPartFile::GetRemainingAvailableData(const CUpDownClient* sender) const
+{
+	const uint8* srcstatus = sender->GetPartStatus();
+	if (srcstatus)
+		return GetRemainingAvailableData(srcstatus);
+	return 0;
+}
+uint64 CPartFile::GetRemainingAvailableData(const uint8* srcstatus) const
+{
+	uint64 uTotalGapSizeInCommun = 0;
+	POSITION pos = gaplist.GetHeadPosition();
+	while (pos)
+	{
+		const Gap_Struct* pGap = gaplist.GetNext(pos);
+		uint16 i = (uint16)(pGap->start/PARTSIZE);
+		uint16 end_chunk = (uint16)(pGap->end/PARTSIZE);
+		if (i == end_chunk) {
+			if (srcstatus[i]!=0)
+				uTotalGapSizeInCommun += pGap->end - pGap->start + 1;
+		} 
+		else {
+			if (srcstatus[i]!=0)
+				uTotalGapSizeInCommun += PARTSIZE - pGap->start%PARTSIZE;
+			while (++i < end_chunk) {
+				if ((srcstatus[i]!=0))
+					uTotalGapSizeInCommun += PARTSIZE;
+			}
+			if (srcstatus[end_chunk]!=0)
+				uTotalGapSizeInCommun += pGap->end%PARTSIZE + 1;
+		}
+	}
+	return uTotalGapSizeInCommun;
+}
+//Xman end
+*/
+//zz_fly :: remove unused code :: end
+
+//Xman
+// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+void CPartFile::CompDownloadRate(){	
+	// Remark: This method is called once every second
+
+	//Xman 4.3 Code-Improvement
+	m_nDownDatarate = 0;
+	m_nDownDatarate10 = 0;
+	EPartFileStatus tocheck=GetStatus();
+	if(tocheck==PS_READY || tocheck==PS_EMPTY || tocheck==PS_COMPLETING)
+	{
+	
+		// Process and retrieve m_nUpDatarate form clients
+		for(POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL; ){
+			CUpDownClient* cur_client = m_downloadingSourceList.GetNext(pos);
+			//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+			if (m_downloadingDeleteList.Find(cur_client))
+				continue;
+			//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+			if(cur_client->GetDownloadState() == DS_DOWNLOADING){ 
+				cur_client->CompDownloadRate();
+				m_nDownDatarate += cur_client->GetDownloadDatarate();  // [bytes/s]
+				m_nDownDatarate10 += cur_client->GetDownloadDatarate10();  // [bytes/s]
+			}
+		}
+		//every second
+		UpdateCompletedInfos(); //Remark: don't update this at drawstatusbar, because we don't draw hidden rects -> the value isn't up to date -> wrong sorting!
+		theApp.emuledlg->transferwnd->downloadlistctrl.UpdateItem(this);
+		//UpdateCompletedInfos();
+		m_lastRefreshedDLDisplay = ::GetTickCount(); //xman improvement
+	}
+}
+// Maella end
+
+//Xman Xtreme Downloadmanager
+void CPartFile::RemoveNoNeededPartsSources()
+{
+	//AddDebugLogLine(false, "GetMaxConnectionReached(%i) GetOpenSockets(%i)",theApp.listensocket->GetMaxConnectionReached(),theApp.listensocket->GetOpenSockets());
+	uint32 removed = 0;
+
+	for(POSITION pos = srclist.GetHeadPosition(); pos != NULL; )
+	{
+		CUpDownClient* cur_src = srclist.GetNext(pos);
+		if (cur_src != NULL && cur_src->GetDownloadState() == DS_NONEEDEDPARTS) 
+		{
+			if (!cur_src->SwapToAnotherFile(false, false, false, NULL))
+			{
+				cur_src->droptime=::GetTickCount(); 
+				theApp.downloadqueue->RemoveSource(cur_src);
+				removed ++; // Count removed source
+			}
+			else
+				cur_src->DontSwapTo(this);
+		}
+	}
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ removed); // show # of dropped sources - Stulle
+}
+
+void CPartFile::RemoveQueueFullSources()
+{
+	//AddDebugLogLine(false, "GetMaxConnectionReached(%i) GetOpenSockets(%i)",theApp.listensocket->GetMaxConnectionReached(),theApp.listensocket->GetOpenSockets());
+	uint32 removed = 0;	
+
+	for(POSITION pos = srclist.GetHeadPosition(); pos != NULL; )
+	{
+		CUpDownClient* cur_src = srclist.GetNext(pos);
+		if (cur_src != NULL && cur_src->GetDownloadState() == DS_ONQUEUE && cur_src->IsRemoteQueueFull()) 
+		{
+			if (!cur_src->SwapToAnotherFile(false, false, false, NULL))
+			{
+				cur_src->droptime=::GetTickCount(); 
+				theApp.downloadqueue->RemoveSource(cur_src);
+				removed ++; // Count removed source
+			}
+			else
+				cur_src->DontSwapTo(this);
+		}
+	}	
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ removed); // show # of dropped sources - Stulle
+}
+
+//Xman Anti-Leecher
+void CPartFile::RemoveLeecherSources()
+{
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
+	//uint32 removed = 0;	
+
+	for(POSITION pos = srclist.GetHeadPosition(); pos != NULL; )
+	{
+		CUpDownClient* cur_src = srclist.GetNext(pos);
+		if (cur_src != NULL && cur_src->GetDownloadState() != DS_DOWNLOADING && cur_src->IsLeecher()) 
+		{
+				cur_src->droptime=::GetTickCount(); 
+				theApp.downloadqueue->RemoveSource(cur_src);
+				m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+				//removed ++; // Count removed source
+		}
+	}	
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+//Xman end
+
+void CPartFile::CalcAvgQr(UINT inqr,UINT oldqr)
+{
+	if( oldqr!=0)
+	{
+		if(m_countqr==0)
+			AddDebugLogLine(false, _T("Error in calculating QR-Average, shouldn't happen"));
+		else
+		{
+			m_countqr--;
+			m_sumqr -=oldqr;
+		}
+	}
+	if(inqr!=0 )
+	{
+		m_countqr++;
+		m_sumqr += inqr;
+	}
+	if(m_countqr!=0)
+		m_avgqr=m_sumqr/m_countqr;
+	else
+		m_avgqr=0;
+}
+//Xman end
+
+//Xman sourcecache
+void CPartFile::ClearSourceCache()
+{
+	m_sourcecache.RemoveAll();
+}
+
+void CPartFile::AddToSourceCache(uint16 nPort, uint32 dwID, uint32 dwServerIP,uint16 nServerPort, ESourceFrom sourcefrom, bool ed2kIDFlag, const uchar* achUserHash, uint8 byCryptOptions)
+{
+	PartfileSourceCache newsource;
+	newsource.nPort=nPort;
+	newsource.dwID=dwID;
+	newsource.dwServerIP=dwServerIP;
+	newsource.nServerPort=nServerPort;
+	newsource.ed2kIDFlag=ed2kIDFlag;
+	newsource.sourcefrom=sourcefrom;
+	newsource.expires=::GetTickCount() + SOURCECACHELIFETIME;
+	newsource.byCryptOptions=byCryptOptions;
+	if(achUserHash!=NULL)
+	{
+		md4cpy(newsource.achUserHash,achUserHash);
+		newsource.withuserhash=true;
+	}
+	else
+	{
+		newsource.withuserhash=false;
+		//md4clr(newsource.achUserHash); //not needed
+	}
+
+	m_sourcecache.AddTail(newsource);
+}
+
+void CPartFile::ProcessSourceCache()
+{
+	if(m_lastSoureCacheProcesstime + SOURCECACHEPROCESSLOOP < ::GetTickCount())
+	{
+		uint32 currenttime=::GetTickCount(); //cache value
+		m_lastSoureCacheProcesstime=currenttime;
+
+		//if file is stopped clear the cache and return
+		if(stopped)
+		{
+			m_sourcecache.RemoveAll();
+			return;
+		}
+
+		while(m_sourcecache.IsEmpty()==false && m_sourcecache.GetHead().expires<currenttime)
+		{
+			m_sourcecache.RemoveHead();
+		}
+		uint32 sourcesadded=0;
+		while(m_sourcecache.IsEmpty()==false && GetMaxSources()  > this->GetSourceCount() +1 //let room for 1 passiv source
+			&& IsGlobalSourceAddAllowed()) //Xman GlobalMaxHarlimit for fairness
+		{
+			PartfileSourceCache currentsource=m_sourcecache.RemoveHead();
+			CUpDownClient* newsource = new CUpDownClient(this,currentsource.nPort, currentsource.dwID,currentsource.dwServerIP,currentsource.nServerPort,currentsource.ed2kIDFlag);
+			newsource->SetConnectOptions(currentsource.byCryptOptions,true,false);
+			newsource->SetSourceFrom(currentsource.sourcefrom);
+			if(currentsource.withuserhash==true)
+				newsource->SetUserHash(currentsource.achUserHash);
+			if(theApp.downloadqueue->CheckAndAddSource(this,newsource))
+				sourcesadded++;
+		}
+		if(sourcesadded>0 && thePrefs.GetDebugSourceExchange())
+			AddDebugLogLine(false,_T("-->%u sources added via sourcache. file: %s"),sourcesadded,GetFileName()); 
+	}
+}
+//Xman end
+
+//Xman GlobalMaxHarlimit for fairness
+bool CPartFile::IsGlobalSourceAddAllowed()
+{
+	// ==> Global Source Limit [Max/Stulle] - Stulle
+	// Well, well, we activated Global HL  global and for this very file so we are free to 
+	// add sources here. Since Global HL will take full control of the max src we doesn't
+	// care about the settings of GlobalMaxHarlimit for fairness, it's used anyhow
+	if(thePrefs.IsUseGlobalHL() && (thePrefs.GetGlobalHlAll() || m_bGlobalHL) && theApp.downloadqueue->GetGlobalHLSrcReqAllowed())
+		return true;
+	// <== Global Source Limit [Max/Stulle] - Stulle
+
+	if(thePrefs.m_bAcceptsourcelimit==false)
+		return true;
+
+	if(theApp.downloadqueue->GetGlobalSources()<thePrefs.m_uMaxGlobalSources)
+		return true;
+	else
+		return false;
+}
+
+bool CPartFile::IsSourceSearchAllowed()
+{
+	// ==> ACC [Max/WiZaRd] - Max
+	//added by Obelix. Not very pretty, but a*3>b*4 is at least 3 times faster than a*.75>b 
+	//and 2 times faster than a*3/4>b
+	//
+	//ActiveConnections > 75% MaxConnetions
+
+	// using a different compare sign (> to <) has the same effect as ! in front
+	if(thePrefs.GetACC() &&
+		thePrefs.maxconnections * 2 < theApp.listensocket->GetOpenSockets() *3)
+		return false;
+	// <== ACC [Max/WiZaRd] - Max
+
+	// ==> Global Source Limit [Max/Stulle] - Stulle
+	// if we enabled GlobalHL for this file (and global) we will add new sources until we
+	// think there are too many and start reducing
+	if(thePrefs.IsUseGlobalHL() && m_bGlobalHL && theApp.downloadqueue->GetGlobalHLSrcReqAllowed())
+		return true;
+	// <== Global Source Limit [Max/Stulle] - Stulle
+
+	if(thePrefs.m_bAcceptsourcelimit==false)
+		return true;
+
+	if(thePrefs.m_uMaxGlobalSources > theApp.downloadqueue->GetGlobalSources() + 50)
+		return true;
+	else
+		return false;
+}
+//Xman end
+
+//Xman manual file allocation (Xanatos)
+void CPartFile::AllocateNeededSpace()
+{
+	if (m_AllocateThread!=NULL)
+		return;
+
+	// Allocate filesize
+	m_AllocateThread = AfxBeginThread(AllocateSpaceThread, this, THREAD_PRIORITY_LOWEST, 0, CREATE_SUSPENDED);
+	if (m_AllocateThread == NULL){
+		TRACE(_T("Failed to create alloc thread! -> allocate blocking\n"));
+	}else{
+		m_iAllocinfo = GetFileSize();
+		m_AllocateThread->ResumeThread();
+	}
+}
+//Xman end
+
+//Xman
+// BEGIN SiRoB, SLUGFILLER: SafeHash
 void CPartFile::PerformFirstHash()
 {
 	CPartHashThread* parthashthread = (CPartHashThread*) AfxBeginThread(RUNTIME_CLASS(CPartHashThread), THREAD_PRIORITY_BELOW_NORMAL,0, CREATE_SUSPENDED);
-	m_PartsHashing += parthashthread->SetFirstHash(this);	// Only hashes completed parts, why hash gaps?
+	m_PartsHashing = m_PartsHashing + parthashthread->SetFirstHash(this);	// Only hashes completed parts, why hash gaps?
 	parthashthread->ResumeThread();
 }
 
@@ -8031,7 +9241,7 @@ bool CPartFile::IsRangeShareable(uint64 start, uint64 end) const
 			return false;
 	return true;
 }
-void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
+void CPartFile::PartHashFinished(UINT partnumber, bool corrupt)
 {
 	if (partnumber >= GetPartCount())
 		return;
@@ -8042,8 +9252,8 @@ void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
 		//MORPH START - Changed by SiRoB, SafeHash Fix
 		/*
 		if (partRange > 0) {
-			partRange--;
-			AddGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
+		partRange--;
+		AddGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		}
 		*/
 		if (partRange > 0)
@@ -8055,10 +9265,10 @@ void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
 
 		// add part to corrupted list, if not already there
 		if (!IsCorruptedPart(partnumber))
-			corrupted_list.AddTail(partnumber);
+			corrupted_list.AddTail((uint16)partnumber);
 
 		// request AICH recovery data
-		RequestAICHRecovery(partnumber);
+		RequestAICHRecovery((uint16)partnumber);
 
 		// update stats
 		m_uCorruptionLoss += (partRange + 1);
@@ -8073,10 +9283,10 @@ void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
 		//MORPH START - Changed by SiRoB, SafeHash Fix
 		/*
 		if (partRange > 0) {
-			partRange--;
+		partRange--;
 
-			// tell the blackbox about the verified data
-			m_CorruptionBlackBox.VerifiedData((uint64)PARTSIZE * partnumber, (uint64)PARTSIZE*partnumber + partRange);
+		// tell the blackbox about the verified data
+		m_CorruptionBlackBox.VerifiedData((uint64)PARTSIZE * partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		}
 		*/
 		if (partRange > 0)
@@ -8086,7 +9296,7 @@ void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
 		m_CorruptionBlackBox.VerifiedData((uint64)PARTSIZE * partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		//MORPH END   - Added by SiRoB, SafeHash -Fix-
 		// if this part was successfully completed (although ICH is active), remove from corrupted list
-		POSITION posCorrupted = corrupted_list.Find(partnumber);
+		POSITION posCorrupted = corrupted_list.Find((uint16)partnumber);
 		if (posCorrupted)
 			corrupted_list.RemoveAt(posCorrupted);
 
@@ -8107,7 +9317,7 @@ void CPartFile::PartHashFinished(UINT  partnumber, bool corrupt)
 		if (theApp.emuledlg->IsRunning())	// may be called during shutdown!
 		{
 			// Is this file finished?
-			if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushSetting) //MORPH - Changed by SiRoB, Flush Thread
+			if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushThread) //Xman - MORPH - Changed by SiRoB, Flush Thread
 				CompleteFile(false);	// Recheck all hashes, because loaded data is trusted based on file-date
 		}
 	}
@@ -8126,8 +9336,8 @@ void CPartFile::PartHashFinishedAICHRecover(UINT partnumber, bool corrupt)
 		//MORPH START - Changed by SiRoB, SafeHash Fix
 		/*
 		if (partRange > 0) {
-			partRange--;
-			AddGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
+		partRange--;
+		AddGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		}
 		*/
 		if (partRange > 0)
@@ -8144,7 +9354,7 @@ void CPartFile::PartHashFinishedAICHRecover(UINT partnumber, bool corrupt)
 	else{
 		AddDebugLogLine(DLP_DEFAULT, false, _T("Processing AICH Recovery data: The part (%u) got completed while recovering and MD4 agrees"), partnumber);
 		// alrighty not so bad
-		POSITION posCorrupted = corrupted_list.Find(partnumber);
+		POSITION posCorrupted = corrupted_list.Find((uint16)partnumber);
 		if (posCorrupted)
 			corrupted_list.RemoveAt(posCorrupted);
 		// Successfully recovered part, make it available for sharing
@@ -8163,7 +9373,7 @@ void CPartFile::PartHashFinishedAICHRecover(UINT partnumber, bool corrupt)
 
 		if (theApp.emuledlg->IsRunning()){
 			// Is this file finished?
-			if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushSetting) //MORPH - Changed by SiRoB, Flush Thread
+			if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData  && !m_FlushThread) //Xman - MORPH - Changed by SiRoB, Flush Thread
 				CompleteFile(false);	// Recheck all hashes, because loaded data is trusted based on file-date
 		}
 	}
@@ -8185,9 +9395,9 @@ void CPartFile::ParseICHResult()
 		//MORPH START - Changed by SiRoB, Fix
 		/*
 		if (partRange > 0) {
-			partRange--;
-			FillGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
-			RemoveBlockFromList((uint32)PARTSIZE*partnumber, (uint32)PARTSIZE*partnumber + partRange);
+		partRange--;
+		FillGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
+		RemoveBlockFromList((uint32)PARTSIZE*partnumber, (uint32)PARTSIZE*partnumber + partRange);
 		}
 		*/
 		if (partRange > 0)
@@ -8197,7 +9407,7 @@ void CPartFile::ParseICHResult()
 		FillGap((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		RemoveBlockFromList((uint64)PARTSIZE*partnumber, (uint64)PARTSIZE*partnumber + partRange);
 		//MORPH END   - Changed by SiRoB, Fix
-		
+
 		// tell the blackbox about the verified data
 		m_CorruptionBlackBox.VerifiedData((uint64)PARTSIZE * partnumber, (uint64)PARTSIZE*partnumber + partRange);
 
@@ -8234,14 +9444,14 @@ void CPartFile::ParseICHResult()
 
 	if (theApp.emuledlg->IsRunning()){ // may be called during shutdown!
 		// Is this file finished?
-		if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushSetting) //MORPH - Changed by SiRoB, Flush Thread
+		if (!m_PartsHashing && gaplist.IsEmpty() && !m_nTotalBufferData && !m_FlushThread) //Xman - MORPH - Changed by SiRoB, Flush Thread
 			CompleteFile(false);	// Recheck all hashes, because loaded data is trusted based on file-date
 	}
 }
 
 IMPLEMENT_DYNCREATE(CPartHashThread, CWinThread)
 
-int CPartHashThread::SetFirstHash(CPartFile* pOwner)
+uint16 CPartHashThread::SetFirstHash(CPartFile* pOwner)
 {
 	m_pOwner = pOwner;
 	m_ICHused = false;
@@ -8258,16 +9468,17 @@ int CPartHashThread::SetFirstHash(CPartFile* pOwner)
 		if (pOwner->IsComplete((uint64)i*PARTSIZE,(uint64)(i+1)*PARTSIZE-1, false)){
 		*/
 		if (pOwner->IsComplete((uint64)i*PARTSIZE,(uint64)(i+1)*PARTSIZE-1, true)){
+
 			uchar* cur_hash = new uchar[16];
 			md4cpy(cur_hash, pOwner->GetPartHash(i));
 
 			m_PartsToHash.Add(i);
 			m_DesiredHashes.Add(cur_hash);
 		}
-	return m_PartsToHash.GetSize();
+	return (uint16)m_PartsToHash.GetSize();
 }
 
-void CPartHashThread::SetSinglePartHash(CPartFile* pOwner, UINT part, bool ICHused, bool AICHRecover)
+void CPartHashThread::SetSinglePartHash(CPartFile* pOwner, uint16 part, bool ICHused, bool AICHRecover)
 {
 	m_pOwner = pOwner;
 	m_ICHused = ICHused;
@@ -8295,6 +9506,7 @@ void CPartHashThread::SetSinglePartHash(CPartFile* pOwner, UINT part, bool ICHus
 
 int CPartHashThread::Run()
 {
+	DbgSetThreadName("PartHashThread");
 	//InitThreadLocale(); //Performance killer
 
 	// SLUGFILLER: SafeHash
@@ -8307,7 +9519,6 @@ int CPartHashThread::Run()
 	CSingleLock sLock(&(m_pOwner->ICH_mut)); // ICH locks the file
 	if (m_ICHused)
 		sLock.Lock();
-	
 	if (file.Open(directory+_T("\\")+filename,CFile::modeRead|CFile::osSequentialScan|CFile::shareDenyNone)){
 		for (UINT i = 0; i < (UINT)m_PartsToHash.GetSize(); i++){
 			uint16 partnumber = m_PartsToHash[i];
@@ -8333,8 +9544,8 @@ int CPartHashThread::Run()
 					break;
 				continue;
 			}
-			
-			
+
+
 			if (md4cmp(hashresult,m_DesiredHashes[i])){
 				if (m_AICHRecover)
 					PostMessage(theApp.emuledlg->m_hWnd,TM_PARTHASHEDCORRUPTAICHRECOVER,partnumber,(LPARAM)m_pOwner);
@@ -8352,58 +9563,121 @@ int CPartHashThread::Run()
 		file.Close();
 	}
 	for (UINT i = 0; i < (UINT)m_DesiredHashes.GetSize(); i++)
-		delete[] m_DesiredHashes[i];
+		delete[] m_DesiredHashes[i]; //memleak-fix (wizard)
 	if (m_ICHused)
 		sLock.Unlock();
 	return 0;
 }
-// SLUGFILLER: SafeHash
-//MORPH END   - Added by SiRoB, SLUGFILLER: SafeHash
-//Morph Start - added by AndCycle, ICS
-// Pawcio for enkeyDev: ICS
-uint16* CPartFile::CalcDownloadingParts(const CUpDownClient* client){	//<<-- Pawcio for enkeyDEV -ICS-
-	if (!client)
-		return NULL;
+// END SiRoB, SLUGFILLER: SafeHash
 
-	uint16  partsCount = GetPartCount();
-	if (!partsCount)
-		return NULL;
-
-	uint16* partsDownloading = new uint16[partsCount];
-	memset(partsDownloading, 0, partsCount * sizeof(uint16));
-
-	CUpDownClient* cur_client;
-	POSITION pos = m_downloadingSourceList.GetHeadPosition();
-	while (pos){
-		cur_client = m_downloadingSourceList.GetNext(pos);
-		uint16 clientPart = cur_client->m_lastPartAsked;
-		if (cur_client != client && cur_client->GetRequestFile() && !md4cmp(cur_client->GetRequestFile()->GetFileHash(), GetFileHash()) && clientPart < partsCount && cur_client->GetDownloadDatarate() > 150)
-			partsDownloading[clientPart]++;
-	}
-	return partsDownloading;
-}
-// <--- enkeyDev: ICS
-//Morph End - added by AndCycle, ICS
-
-//Morph - added by AndCycle, Only download complete files v2.1 (shadow)
-bool	CPartFile::notSeenCompleteSource() const
+//zz_fly :: Drop stalled downloads :: netfinity :: start
+//note: all friend class is removed, i use some getters instead of it. revised by Enig123
+bool CPartFile::FindAndDropStalledDownload(CUpDownClient* ignore_client) const
 {
-	
-	if(!thePrefs.OnlyDownloadCompleteFiles()){
-		return false;
-	}
-	else if(lastseencomplete == NULL){
-		return true;
-	}
-	else if(CTime::GetCurrentTime() - lastseencomplete > 1209600){//14 days, no complete source...
-		return true;
-	}
-	return false;
+	bool			dropped = false;
+	CUpDownClient*	candidate = NULL;
+	CUpDownClient*	slowest = ignore_client; //Enig123
 
+	DWORD cur_tick = ::GetTickCount(); //Enig123
+
+	try {
+	//DebugLog(_T(__FUNCTION__) _T("; Drop requested!"));
+	for(POSITION pos = m_downloadingSourceList.GetHeadPosition(); pos != NULL; )
+	{
+		CUpDownClient* cur_src = m_downloadingSourceList.GetNext(pos);
+#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+		if (thePrefs.m_iDbgHeap >= 2)
+			ASSERT_VALID( cur_src );
+#endif
+		if (cur_src == NULL || m_downloadingDeleteList.Find(cur_src)) //zz_fly :: delayed deletion of downloading source :: Enig123
+			continue;
+
+		if (cur_src != ignore_client && cur_src->socket && cur_src->GetDownloadState() == DS_DOWNLOADING /*&& cur_src->m_dwNoNeededPartsPending == 0*/)
+		{
+			// No activity for more than 5 seconds
+			if ((cur_tick - cur_src->GetLastBlockReceived()) > SEC2MS(10) && (cur_tick - cur_src->socket->GetTimeOutTimer()) > SEC2MS(5))
+			{
+				//DebugLog(_T(__FUNCTION__) _T("; Found possible candidate!"));
+				// Blocks requested but nothing received
+				if (!cur_src->IsPendingBlocksListEmpty() /*&& cur_src->socket->pendingPacket == NULL*/)
+				{
+				//	DebugLog(_T(__FUNCTION__) _T("; Definitly a candidate!"));
+					// Remember client that has been stalled longest 
+					if (candidate == NULL || (cur_tick - cur_src->socket->GetTimeOutTimer() < cur_tick - candidate->socket->GetTimeOutTimer()) )
+						candidate = cur_src;
+				}
+			}
+			// Slowest source that did not just begun a block
+			if (!cur_src->IsPendingBlocksListEmpty() && (cur_tick - cur_src->GetLastBlockReceived()) > SEC2MS(3)) //zz_fly :: 3 seconds is enough
+			{
+				uint32	timeRemaining = (uint32) (cur_src->GetBytesRemaining() / (uint64) max(100, cur_src->GetDownloadDatarate10()));
+				if (timeRemaining > 15)
+				{
+					if (slowest == NULL || slowest->GetDownloadDatarate10() > cur_src->GetDownloadDatarate10())
+						slowest = cur_src;
+				}
+			}
+		}
+	}
+
+	// Drop stalled client if any
+	if (candidate == NULL && slowest != ignore_client) //Enig123
+		candidate = slowest;
+
+	if (candidate != NULL)
+	{
+		//if (candidate->socket)
+		//	candidate->socket->RecoverPackets(); // Recover data in yet uncomplete part packets
+		candidate->SendCancelTransfer();
+		candidate->SetDownloadState(DS_ONQUEUE, _T("Stalled download dropped"), CUpDownClient::DSR_PAUSED); // Maella -Download Stop Reason-;
+		DebugLog(_T(__FUNCTION__) _T("; Drop done!"));
+		dropped = true;
+	}
+	} catch(...) {
+		LogError(_T(__FUNCTION__) _T("; Error while determining source to drop."));
+	}
+	return dropped;
 }
-//Morph - added by AndCycle, Only download complete files v2.1 (shadow)
 
-//MORPH START - Added by Stulle, Global Source Limit
+uint64 CPartFile::GetUnrequestedSize() const
+{
+	uint64	requestedSize = 0;
+	try {
+	for (POSITION pos = requestedblocks_list.GetHeadPosition(); pos != 0;)
+	{
+		Requested_Block_Struct* item = requestedblocks_list.GetNext(pos);
+		requestedSize += (item->EndOffset - item->StartOffset + 1) - item->transferred;
+	}
+	requestedSize += (uint64) GetFileSize() - GetTotalGapSizeInRange(0, GetFileSize() - 1ULL);
+	if (GetFileSize() < requestedSize)
+		return 0;
+	} catch(...) {
+		LogError(_T(__FUNCTION__) _T("; Error in calculating requested size."));
+	}
+	return GetFileSize() - requestedSize;
+}
+//zz_fly :: Drop stalled downloads :: netfinity :: end
+//zz_fly :: delayed deletion of downloading source :: Enig123 :: Start
+void CPartFile::DoDelayedDeletion()
+{
+	if (m_downloadingDeleteList.IsEmpty() || m_downloadingSourceList.IsEmpty())
+		return;
+
+	for(POSITION pos = m_downloadingDeleteList.GetHeadPosition(); pos!=0; )
+	{
+		POSITION posLast = pos;
+		CUpDownClient* cur_src = m_downloadingDeleteList.GetNext(pos);
+
+		POSITION pos2 = m_downloadingSourceList.Find(cur_src);
+		if (pos2) {
+			m_downloadingSourceList.RemoveAt(pos2);
+			m_downloadingDeleteList.RemoveAt(posLast);
+		}
+	}
+}
+//zz_fly :: delayed deletion of downloading source :: Enig123 :: End
+
+// ==> Global Source Limit [Max/Stulle] - Stulle
 void CPartFile::IncrHL(UINT m_uSourcesDif)
 {
 	m_uFileHardLimit += m_uSourcesDif;
@@ -8415,99 +9689,188 @@ void CPartFile::IncrHL(UINT m_uSourcesDif)
 
 void CPartFile::InitHL()
 {
-	if(((int)(thePrefs.GetGlobalHL()*.95) - (int)(theApp.downloadqueue->GetGlobalSourceCount())) > 0)
+	UINT m_uGlobalHardlimit = 0;
+	if (thePrefs.m_bAcceptsourcelimit && thePrefs.m_uMaxGlobalSources < thePrefs.GetGlobalHL())
+		m_uGlobalHardlimit = thePrefs.m_uMaxGlobalSources;
+	else
+		m_uGlobalHardlimit = thePrefs.GetGlobalHL();
+
+	if(((int)(m_uGlobalHardlimit*.95) - (int)(theApp.downloadqueue->GetGlobalSourceCount())) > 0)
 		m_uFileHardLimit = 100;
 	else
 		m_uFileHardLimit = 10;
 	return;
 }
+// <== Global Source Limit [Max/Stulle] - Stulle
 
-bool CPartFile::IsSrcReqOrAddAllowed()
+// ==> advanced manual dropping - remove LowID to LowID sources from DL Queue - Stulle
+void CPartFile::RemoveLow2LowIPSourcesManual()
 {
-	// disabled GHL
-	if(thePrefs.IsUseGlobalHL() == false)
-		return true;
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
 
-	// ==> Global Source Limit (customize for files) - Stulle
-	// this file is definatly NOT active
-	if(thePrefs.GetGlobalHlAll() == false && m_bGlobalHL == false)
-		return true;
-	// <== Global Source Limit (customize for files) - Stulle
-
-	// GHL enabled, file active... let's check if it's allowed!
-	return (theApp.downloadqueue->GetGlobalHLSrcReqAllowed());
-}
-//MORPH END   - Added by Stulle, Global Source Limit
-
-//MORPH START - Added by Stulle, Source cache [Xman]
-void CPartFile::ClearSourceCache()
-{
-	m_sourcecache.RemoveAll();
-}
-
-void CPartFile::AddToSourceCache(uint16 nPort, uint32 dwID, uint32 dwServerIP,uint16 nServerPort, ESourceFrom sourcefrom, bool ed2kIDFlag, const uchar* achUserHash, const uint8 byCryptOptions)
-{
-	PartfileSourceCache newsource;
-	newsource.nPort=nPort;
-	newsource.dwID=dwID;
-	newsource.dwServerIP=dwServerIP;
-	newsource.nServerPort=nServerPort;
-	newsource.ed2kIDFlag=ed2kIDFlag;
-	newsource.sourcefrom=sourcefrom;
-	newsource.expires=::GetTickCount() + SOURCECACHELIFETIME;
-	newsource.byCryptOptions = byCryptOptions;
-	if(achUserHash!=NULL)
-	{
-		md4cpy(newsource.achUserHash,achUserHash);
-		newsource.withuserhash=true;
-	}
-	else
-	{
-		newsource.withuserhash=false;
-		//md4clr(newsource.achUserHash); //not needed
-	}
-
-	m_sourcecache.AddTail(newsource);
-}
-
-void CPartFile::ProcessSourceCache()
-{
-	if(m_lastSoureCacheProcesstime + SOURCECACHEPROCESSLOOP < ::GetTickCount())
-	{
-		uint32 currenttime=::GetTickCount(); //cache value
-		m_lastSoureCacheProcesstime=currenttime;
-
-		//if file is stopped clear the cache and return
-		if(stopped)
+	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos1);
+		if(cur_src->GetDownloadState() == DS_LOWTOLOWIP &&
+			cur_src->HasLowID() &&
+			!theApp.CanDoCallback( cur_src ))
 		{
-			m_sourcecache.RemoveAll();
-			return;
+			theApp.downloadqueue->RemoveSource(cur_src);
+			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
 		}
-
-		while(m_sourcecache.IsEmpty()==false && m_sourcecache.GetHead().expires<currenttime)
-		{
-			m_sourcecache.RemoveHead();
-		}
-		uint32 sourcesadded=0;
-		while(m_sourcecache.IsEmpty()==false && GetMaxSources()  > this->GetSourceCount() +2 //let room for 2 passiv source
-			&& IsSrcReqOrAddAllowed())
-		{
-			PartfileSourceCache currentsource=m_sourcecache.RemoveHead();
-			CUpDownClient* newsource = new CUpDownClient(this,currentsource.nPort, currentsource.dwID,currentsource.dwServerIP,currentsource.nServerPort,currentsource.ed2kIDFlag);
-			newsource->SetConnectOptions(currentsource.byCryptOptions,true,false);
-			newsource->SetSourceFrom(currentsource.sourcefrom);
-			if(currentsource.withuserhash==true)
-				newsource->SetUserHash(currentsource.achUserHash);
-			if(theApp.downloadqueue->CheckAndAddSource(this,newsource))
-				sourcesadded++;
-		}
-		if(sourcesadded>0 && thePrefs.GetDebugSourceExchange())
-			AddDebugLogLine(false,_T("-->%u sources added via sourcache. file: %s"),sourcesadded,GetFileName()); 
 	}
-}
-//MORPH END   - Added by Stulle, Source cache [Xman]
+	UpdateDisplayedInfo(true);
 
-// EastShare Start - FollowTheMajority by AndCycle
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+// <== advanced manual dropping - remove LowID to LowID sources from DL Queue - Stulle
+
+// ==> advanced manual dropping - remove unknown, error and banned sources from DL Queue - Stulle
+void CPartFile::RemoveUnknownErrorBannedSourcesManual()
+{
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
+
+	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos1);
+		switch(cur_src->GetDownloadState()){
+			case DS_NONE:
+			case DS_ERROR:
+			case DS_BANNED:	
+				{
+					cur_src->droptime=::GetTickCount();
+					theApp.downloadqueue->RemoveSource(cur_src);
+					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+				}
+			default: break;
+		}
+	}
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+// <== advanced manual dropping - remove unknown, error and banned sources from DL Queue - Stulle
+
+// ==> advanced manual dropping - remove high queue rating sources from DL Queue - Stulle
+void CPartFile::RemoveHighQRSourcesManualSivka()
+{
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
+
+	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos1);
+		if(cur_src->GetRemoteQueueRank() > m_MaxRemoveQRS
+		&& cur_src->GetDownloadState() == DS_ONQUEUE){
+			cur_src->droptime=::GetTickCount();
+			theApp.downloadqueue->RemoveSource(cur_src);
+			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+		}
+	}
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+// <== advanced manual dropping - remove high queue rating sources from DL Queue - Stulle
+
+// ==> advanced manual dropping - remove high queue rating (xman) sources from DL Queue - Stulle
+void CPartFile::RemoveHighQRSourcesManualXman()
+{
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
+
+	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos1);
+		if(cur_src->GetDownloadState() == DS_ONQUEUE &&
+		cur_src->IsEmuleClient() &&
+		cur_src->Credits() && cur_src->credits->GetMyScoreRatio(cur_src->GetIP())<1.5f &&
+		(::GetTickCount() - cur_src->enterqueuetime>(90*60*1000)) &&
+		cur_src->GetRemoteQueueRank()>2000 &&
+		cur_src->GetRemoteQueueRank()>(GetAvgQr()*2+400))
+		{
+			cur_src->droptime=::GetTickCount();
+			theApp.downloadqueue->RemoveSource(cur_src);
+			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+		}
+	}
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+// <== advanced manual dropping - remove high queue rating (xman) sources from DL Queue - Stulle
+
+// ==> advanced manual dropping - CleanUp => NNS, FQS, UNKOWN, ERROR and BANNED sources from DL Queue - Stulle
+void CPartFile::CleanUp_NNS_FQS_NONE_ERROR_BANNED_LOWTOLOWIP_Sources()
+{
+	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
+
+	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
+		CUpDownClient* cur_src = srclist.GetNext(pos1);
+		switch(cur_src->GetDownloadState()){
+			case DS_NONEEDEDPARTS:
+				if (!cur_src->SwapToAnotherFile(false, false, false, NULL))
+				{
+					cur_src->droptime=::GetTickCount(); 
+					theApp.downloadqueue->RemoveSource(cur_src);
+					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+				}
+				else
+					cur_src->DontSwapTo(this);
+				break;
+			case DS_ONQUEUE:
+				if(cur_src->IsRemoteQueueFull()){
+					if (!cur_src->SwapToAnotherFile(false, false, false, NULL))
+					{
+						cur_src->droptime=::GetTickCount(); 
+						theApp.downloadqueue->RemoveSource(cur_src);
+						m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+					}
+					else
+						cur_src->DontSwapTo(this);
+				}
+				break;
+			case DS_LOWTOLOWIP:
+				if(cur_src->HasLowID() &&
+				!theApp.CanDoCallback( cur_src ))
+				{
+					theApp.downloadqueue->RemoveSource(cur_src);
+					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+				}
+			case DS_NONE:
+			case DS_ERROR:
+			case DS_BANNED:
+				{
+					cur_src->droptime=::GetTickCount(); 
+					theApp.downloadqueue->RemoveSource(cur_src);
+					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
+				}
+			default: break;
+		}
+	}
+	UpdateDisplayedInfo(true);
+
+	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
+}
+// <== advanced manual dropping - CleanUp => NNS, FQS, UNKOWN, ERROR and BANNED sources from DL Queue - Stulle
+
+// ==> Design Settings [eWombat/Stulle] - Stulle
+int CPartFile::GetPfStyle() const
+{
+	int iPfStyle = style_d_default;
+	if ((GetStatus()==PS_READY || GetStatus()==PS_EMPTY) && GetTransferringSrcCount()>0 && thePrefs.GetStyleOnOff(download_styles, style_d_downloading)!=0)
+		iPfStyle = style_d_downloading;
+	else if (GetStatus() == PS_COMPLETE && thePrefs.GetStyleOnOff(download_styles, style_d_complete)!=0)
+		iPfStyle = style_d_complete;
+	else if (GetStatus() == PS_COMPLETING && thePrefs.GetStyleOnOff(download_styles, style_d_completing)!=0)
+		iPfStyle = style_d_completing;
+	else if (GetStatus() == PS_HASHING && thePrefs.GetStyleOnOff(download_styles, style_d_hashing)!=0)
+		iPfStyle = style_d_hashing;
+	else if (GetStatus()==PS_PAUSED && !IsStopped() && thePrefs.GetStyleOnOff(download_styles, style_d_paused)!=0)
+		iPfStyle = style_d_paused;
+	else if (IsStopped() && IsPartFile() && thePrefs.GetStyleOnOff(download_styles, style_d_stopped)!=0)
+		iPfStyle = style_d_stopped;
+	else if ((GetStatus() == PS_ERROR || GetStatus() == PS_UNKNOWN)  && thePrefs.GetStyleOnOff(download_styles, style_d_errunk)!=0)
+		iPfStyle = style_d_errunk;
+	return iPfStyle;
+}
+// <== Design Settings [eWombat/Stulle] - Stulle
+
+// ==> Follow The Majority [AndCycle/Stulle] - Stulle
 void CPartFile::UpdateSourceFileName(CUpDownClient* src) {
 
 
@@ -8519,35 +9882,30 @@ void CPartFile::UpdateSourceFileName(CUpDownClient* src) {
 	//remove from list
 	CString filename;
 	int count;
-	if (this->m_mapSrcFilename.Lookup(src, filename)) {
-		this->m_mapFilenameCount.Lookup(filename, count);
-		this->m_mapFilenameCount.SetAt(filename, count-1);
-		this->m_mapSrcFilename.RemoveKey(src);
+	if (m_mapSrcFilename.Lookup(src, filename)) {
+		m_mapFilenameCount.Lookup(filename, count);
+		m_mapFilenameCount.SetAt(filename, count-1);
+		m_mapSrcFilename.RemoveKey(src);
 	}
 
 	//then adding again
-	if (this->srclist.Find(src)) {
+	if (srclist.Find(src)) {
 		CString filename = src->GetClientFilename();
 		int count;
-		this->m_mapSrcFilename.SetAt(src, filename);
-		if (this->m_mapFilenameCount.Lookup(filename, count)) {
-			this->m_mapFilenameCount.SetAt(filename, count+1);
+		m_mapSrcFilename.SetAt(src, filename);
+		if (m_mapFilenameCount.Lookup(filename, count)) {
+			m_mapFilenameCount.SetAt(filename, count+1);
 		} else {
-			this->m_mapFilenameCount.SetAt(filename, 1);
+			m_mapFilenameCount.SetAt(filename, 1);
 		}
 	}
 
-	// ==> Set and save Follow the Majority per file - Stulle
-	/*
-	if (this->m_bFollowTheMajority) {
-	*/
 	bool bUseMajority = (m_iFollowTheMajority == 1) || (m_iFollowTheMajority == -1 && thePrefs.IsFollowTheMajorityEnabled());
 	if (bUseMajority) {
-	// <== Set and save Follow the Majority per file - Stulle
 		CString theMajorityFilename, filename;
 		int maxcount = -1, count;
-		for (POSITION pos = this->m_mapFilenameCount.GetStartPosition(); pos;) {
-			this->m_mapFilenameCount.GetNextAssoc(pos, filename, count);
+		for (POSITION pos = m_mapFilenameCount.GetStartPosition(); pos;) {
+			m_mapFilenameCount.GetNextAssoc(pos, filename, count);
 			if (count > maxcount) {
 				maxcount = count;
 				theMajorityFilename = filename;
@@ -8568,23 +9926,18 @@ void CPartFile::RemoveSourceFileName(CUpDownClient* src) {
 
 	CString filename;
 	int count;
-	if (this->m_mapSrcFilename.Lookup(src, filename)) {
-		this->m_mapFilenameCount.Lookup(filename, count);
-		this->m_mapFilenameCount.SetAt(filename, count-1);
-		this->m_mapSrcFilename.RemoveKey(src);
+	if (m_mapSrcFilename.Lookup(src, filename)) {
+		m_mapFilenameCount.Lookup(filename, count);
+		m_mapFilenameCount.SetAt(filename, count-1);
+		m_mapSrcFilename.RemoveKey(src);
 	}
 
-	// ==> Set and save Follow the Majority per file - Stulle
-	/*
-	if (this->m_bFollowTheMajority) {
-	*/
 	bool bUseMajority = (m_iFollowTheMajority == 1) || (m_iFollowTheMajority == -1 && thePrefs.IsFollowTheMajorityEnabled());
 	if (bUseMajority) {
-	// <== Set and save Follow the Majority per file - Stulle
 		CString theMajorityFilename, filename;
 		int maxcount = -1, count;
-		for (POSITION pos = this->m_mapFilenameCount.GetStartPosition(); pos;) {
-			this->m_mapFilenameCount.GetNextAssoc(pos, filename, count);
+		for (POSITION pos = m_mapFilenameCount.GetStartPosition(); pos;) {
+			m_mapFilenameCount.GetNextAssoc(pos, filename, count);
 			if (count > maxcount) {
 				maxcount = count;
 				theMajorityFilename = filename;
@@ -8596,214 +9949,4 @@ void CPartFile::RemoveSourceFileName(CUpDownClient* src) {
 		}
 	}
 }
-// EastShare End   - FollowTheMajority by AndCycle
-// ==> Average Queue Ranking [Xman] - Stulle
-void CPartFile::CalcAvgQr(UINT inqr,UINT oldqr)
-{
-	if( oldqr!=0)
-	{
-		if(m_countqr==0)
-			AddDebugLogLine(false, _T("Error in calculating QR-Average, shouldn't happen"));
-		else
-		{
-			m_countqr--;
-			m_sumqr -=oldqr;
-		}
-	}
-	if(inqr!=0 )
-	{
-		m_countqr++;
-		m_sumqr += inqr;
-	}
-	if(m_countqr!=0)
-		m_avgqr=(uint16)(m_sumqr/m_countqr);
-	else
-		m_avgqr=0;
-}
-// <== Average Queue Ranking [Xman] - Stulle
-
-// ==> drop sources - remove LowID to LowID sources from DL Queue - Stulle
-void CPartFile::RemoveLow2LowIPSourcesManual()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		if(cur_src->GetDownloadState() == DS_LOWTOLOWIP)
-		{
-			theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove LowID to LowID sources from DL Queue - Stulle
-
-// ==> drop sources - remove unknown, error and banned sources from DL Queue - Stulle
-void CPartFile::RemoveUnknownErrorBannedSourcesManual()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		switch(cur_src->GetDownloadState()){
-			case DS_NONE:
-			case DS_ERROR:
-			case DS_BANNED:	
-				{
-				theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-				m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-				}
-			default: break;
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove unknown, error and banned sources from DL Queue - Stulle
-
-// ==> drop sources - remove not needed sources from DL Queue - Stulle
-void CPartFile::RemoveNoNeededSourcesManual()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		if(cur_src->GetDownloadState() == DS_NONEEDEDPARTS){
-			if(!cur_src->SwapToAnotherFile( _T("Removed: NoNeededSources"), true, true, true , NULL )) // fix for sivka's version by Cyrex2001
-			{
-				theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-				m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-			}
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove not needed sources from DL Queue - Stulle
-
-// ==> drop sources - remove full queue sources from DL Queue - Stulle
-void CPartFile::RemoveFullQueueSourcesManual()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		if(cur_src->IsRemoteQueueFull()
-		&& cur_src->GetDownloadState() == DS_ONQUEUE){
-			theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove full queue sources from DL Queue - Stulle
-
-// ==> drop sources - remove high queue rating sources from DL Queue - Stulle
-void CPartFile::RemoveHighQRSourcesManual()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		if(cur_src->GetRemoteQueueRank() > m_MaxRemoveQRS
-		&& cur_src->GetDownloadState() == DS_ONQUEUE){
-			theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove high queue rating sources from DL Queue - Stulle
-
-// ==> drop sources - CleanUp => NNS, FQS, HQRS, UNKOWN, ERROR and BANNED sources from DL Queue - Stulle
-void CPartFile::CleanUp_NNS_FQS_HQRS_NONE_ERROR_BANNED_LOWTOLOWIP_Sources()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		switch(cur_src->GetDownloadState()){
-			case DS_NONEEDEDPARTS:
-				if(!cur_src->SwapToAnotherFile( _T("Removed: NoNeededSources"), true, true, true , NULL )) // fix for sivka's version by Cyrex2001
-				{
-					theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-				}
-				break;
-			case DS_ONQUEUE:
-				if(cur_src->IsRemoteQueueFull()){
-					theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-				}
-				else if(cur_src->GetRemoteQueueRank() > m_MaxRemoveQRS){
-					theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-				}
-				break;
-			case DS_NONE:
-			case DS_ERROR:
-			case DS_BANNED:
-			case DS_LOWTOLOWIP: 
-				{
-					theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-					m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-				}
-			default: break;
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - CleanUp => NNS, FQS, HQRS, UNKOWN, ERROR and BANNED sources from DL Queue - Stulle
-
-// ==> drop sources - remove leecher sources from DL Queue - Stulle
-void CPartFile::RemoveLeechers()
-{
-	uint16 m_ShowDroppedSrc_Temp = 0; // show # of dropped sources - Stulle
-
-	for(POSITION pos2, pos1 = srclist.GetHeadPosition(); (pos2=pos1)!=NULL; ){
-		CUpDownClient* cur_src = srclist.GetNext(pos1);
-		if(cur_src->GetScoreReduce()){
-			theApp.downloadqueue->RemoveSourceAndDontAsk(cur_src, true/*, pos2*/);
-			m_ShowDroppedSrc_Temp++; // show # of dropped sources - Stulle
-		}
-	}
-	m_ShowDroppedSrc = (uint16)(m_ShowDroppedSrc+ m_ShowDroppedSrc_Temp); // show # of dropped sources - Stulle
-
-	UpdateDisplayedInfo(true);
-}
-// <== drop sources - remove leecher sources from DL Queue - Stulle
-
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-int CPartFile::GetPfStyle() const
-{
-	int iPfStyle = style_d_default;
-	if ((GetStatus()==PS_READY || GetStatus()==PS_EMPTY) && GetTransferringSrcCount()>0 && thePrefs.GetStyleOnOff(download_styles, style_d_downloading)!=0)
-		iPfStyle = style_d_downloading;
-	else if (GetStatus() == PS_COMPLETE && thePrefs.GetStyleOnOff(download_styles, style_d_complete)!=0)
-		iPfStyle = style_d_complete;
-	else if (GetStatus() == PS_COMPLETING && thePrefs.GetStyleOnOff(download_styles, style_d_completing)!=0)
-		iPfStyle = style_d_completing;
-	else if (GetStatus() == PS_HASHING && thePrefs.GetStyleOnOff(download_styles, style_d_hashing)!=0)
-		iPfStyle = style_d_hashing;
-	else if (GetStatus()==PS_PAUSED && !IsStopped() && thePrefs.GetStyleOnOff(download_styles, style_d_paused)!=0)
-		iPfStyle = style_d_paused;
-	else if (IsStopped() && IsPartFile() && thePrefs.GetStyleOnOff(download_styles, style_d_stopped)!=0)
-		iPfStyle = style_d_stopped;
-	else if ((GetStatus() == PS_ERROR || GetStatus() == PS_UNKNOWN)  && thePrefs.GetStyleOnOff(download_styles, style_d_errunk)!=0)
-		iPfStyle = style_d_errunk;
-	return iPfStyle;
-}
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Follow The Majority [AndCycle/Stulle] - Stulle

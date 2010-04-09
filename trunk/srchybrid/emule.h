@@ -19,14 +19,19 @@
 	#error include 'stdafx.h' before including this file for PCH
 #endif
 #include "resource.h"
-#include ".\MiniMule\TBHMM.h" // TBH: minimule - Stulle
-#include ".\MiniMule\SystemInfo.h" // CPU/MEM usage [$ick$/Stulle] - Stulle
-#include "ConChecker.h" // Connection Checker [eWombat/WiZaRd] - Stulle
+//Xman
 #include "ReadWriteLock.h"	// SLUGFILLER: SafeHash
-#include "UPnP_IGDControlPoint.h" //MORPH - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
-#include "WapServer/WapServer.h" //MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
+#include "Version.h"		// netfinity: Mod version
 
-#define	DEFAULT_NICK	_T("StulleMule @ http://stulle.emule-web.de/")
+// ==> UPnP support [MoNKi] - leuk_he
+#include "UPnP_IGDControlPoint.h" //[MoNKi: -UPnPNAT Support-]
+// <== UPnP support [MoNKi] - leuk_he
+
+
+#include ".\MiniMule\SystemInfo.h" // CPU/MEM usage [$ick$/Stulle] - Max 
+#include ".\MiniMule\TBHMM.h" // TBH: minimule - Max
+
+#define	DEFAULT_NICK		_T("ScarAngel @ http://scarangel.sourceforge.net")
 #define	DEFAULT_TCP_PORT_OLD	4662
 #define	DEFAULT_UDP_PORT_OLD	(DEFAULT_TCP_PORT_OLD+10)
 
@@ -38,7 +43,11 @@ class CListenSocket;
 class CDownloadQueue;
 class CScheduler;
 class UploadBandwidthThrottler;
+//Xman
+/*
 class LastCommonRouteFinder;
+*/
+//Xman end
 class CemuleDlg;
 class CClientList;
 class CKnownFileList;
@@ -55,15 +64,21 @@ class CAbstractFile;
 class CUpDownClient;
 class CPeerCacheFinder;
 class CFirewallOpener;
-#ifdef USE_OFFICIAL_UPNP
+// ==> UPnP support [MoNKi] - leuk_he
+/*
 class CUPnPImplWrapper;
-#endif
+*/
+// <== UPnP support [MoNKi] - leuk_he
 
+//Xman
+class CBandWidthControl; // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 struct SLogItem;
-class CFakecheck; //MORPH - Added by milobac, FakeCheck, FakeReport, Auto-updating
+
 class CIP2Country; //EastShare - added by AndCycle, IP to Country
-class CPPgBackup; //EastShare - Added by Pretender, TBH-AutoBackup
-class CSystemInfo;  // CPU/MEM usage [$ick$/Stulle] - Stulle 
+class CDLP;	//Xman DLP
+class CSplashScreenEx; //Xman new slpash-screen arrangement
+
+class CSystemInfo;  // CPU/MEM usage [$ick$/Stulle] - Max 
 
 enum AppState{
 	APP_STATE_RUNNING = 0,
@@ -73,14 +88,19 @@ enum AppState{
 
 class CemuleApp : public CWinApp
 {
-	friend class CTBHMM; // TBH: minimule - Stulle
+
+	friend class CTBHMM; // TBH: minimule - Max
 
 public:
 	CemuleApp(LPCTSTR lpszAppName = NULL);
 
 	// ZZ:UploadSpeedSense -->
     UploadBandwidthThrottler* uploadBandwidthThrottler;
+	//Xman
+	/*
     LastCommonRouteFinder* lastCommonRouteFinder;
+	*/
+	//Xman end
 	// ZZ:UploadSpeedSense <--
 	CemuleDlg*			emuledlg;
 	CClientList*		clientlist;
@@ -101,23 +121,32 @@ public:
 	CMMServer*			mmserver;
 	CPeerCacheFinder*	m_pPeerCache;
 	CFirewallOpener*	m_pFirewallOpener;
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	CUPnPImplWrapper*	m_pUPnPFinder;
-#endif
-        //MORPH START - Added by schnulli900, dynamic IP-Filters [Xman]
-	bool				m_bIsIPDlgOpen;
-        //MORPH END   - Added by schnulli900, dynamic IP-Filters [Xman]
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 
-	// ==> TBH: minimule - Stulle/ leuk_he
-	CTBHMM*				minimule;
-//	CMutex				minimulemutex;
-	// <== TBH: minimule - Stulle/ leuk_he
-	CSystemInfo*		sysinfo; // CPU/MEM usage [$ick$/Stulle] - Stulle 
+	//Xman
+	// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	CBandWidthControl*	pBandWidthControl;
+	// Maella end
 
-	CFakecheck*			FakeCheck; //MORPH - Added by milobac, FakeCheck, FakeReport, Auto-updating
-	CPPgBackup*			ppgbackup; //EastShare - Added by Pretender, TBH-AutoBackup
+	CSplashScreenEx*	m_pSplashWnd; //Xman new slpash-screen arrangement
+
+	//Xman dynamic IP-Filters
+	bool				ipdlgisopen;
+
 	CIP2Country*		ip2country; //EastShare - added by AndCycle, IP to Country
 
+	CDLP*				dlp;
+	//Xman end
+
+	// ==> TBH: minimule - Max/ leuk_he
+	CTBHMM*				minimule;
+	// <== TBH: minimule - Max/ leuk_he
+
+	CSystemInfo*		sysinfo; // CPU/MEM usage [$ick$/Stulle] - Max 
 
 	HANDLE				m_hMutexOneInstance;
 	int					m_iDfltImageListColorFlags;
@@ -145,54 +174,41 @@ public:
 	volatile AppState		m_app_state; // defines application state for shutdown 
 	//MORPH END
 	CMutex				hashing_mut;
+	//Xman
 	CReadWriteLock		m_threadlock;	// SLUGFILLER: SafeHash - This will ensure eMule goes last
 	CString*			pstrPendingLink;
 	COPYDATASTRUCT		sendstruct;
 
-	//MORPH START - Added by SiRoB, [-modname-]
-	static const UINT	m_nMVersionMjr;
-	static const UINT	m_nMVersionMin;
-	static const UINT	m_nMVersionBld;
-	static const TCHAR	m_szMVersionLong[];
-	static const TCHAR	m_szMVersion[];
-	static const TCHAR	m_szMMVersion[];
-	CString		m_strModVersion;
-	// ==> StulleMule is not banned - Stulle
-	/*
-	CString		m_strModVersionOld;
-	*/
-	// <== StulleMule is not banned - Stulle
-	CString		m_strModVersionPure;
-	CString		m_strModLongVersion;
-	uint8		m_uModLength;
-	// ==> Morph-Version-Check Changes for StulleMule - Stulle
-	static const UINT	m_nMVersionMjrMorph;
-	static const UINT	m_nMVersionMinMorph;
-	static const UINT	m_nMVersionBldMorph;
-	// <== Morph-Version-Check Changes for StulleMule - Stulle
-	//MORPH END   - Added by SiRoB, [-modname-]
-	
 // Implementierung
 	virtual BOOL InitInstance();
 	virtual int ExitInstance();
 	virtual BOOL IsIdleMessage(MSG *pMsg);
-	virtual BOOL OnIdle(LONG lCount); // MORPH
 
 	// ed2k link functions
-//EastShare START - Modified by Pretender, [MoNKi: -Check already downloaded files-]
-/*
-	void		AddEd2kLinksToDownload(CString strLinks, int cat, bool fromclipboard=false);
-*/
-	void		AddEd2kLinksToDownload(CString strLinks, int cat, bool fromclipboard=false, bool askIfAlreadyDownloaded = false);
-//EastShare END
+	//Xman [MoNKi: -Check already downloaded files-]
+	/*
+	void		AddEd2kLinksToDownload(CString strLinks, int cat);
+	*/
+	void		AddEd2kLinksToDownload(CString strLinks, int cat, bool askIfAlreadyDownloaded = false);
+	//Xman end
+
+	//Xman new slpash-screen arrangement
+	void			ShowSplash(bool start=false);
+	void			UpdateSplash(LPCTSTR Text);
+	void			DestroySplash();
+	bool			IsSplash()			{ return (m_pSplashWnd != NULL); }
+	bool			spashscreenfinished;
+	uint32			m_dwSplashTime;
+	//Xman end
+
 	void		SearchClipboard();
 	void		IgnoreClipboardLinks(CString strLinks) {m_strLastClipboardContents = strLinks;}
-	//MORPH START - Changed by SiRoB, Selection category support khaos::categorymod+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	/*
 	void		PasteClipboard(int cat = 0);
 	*/
-	void		PasteClipboard(int Cat = -1);
-	//MORPH END   - Changed by SiRoB, Selection category support khaos::categorymod+
+	void		PasteClipboard(int cat = -1);
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	bool		IsEd2kFileLinkInClipboard();
 	bool		IsEd2kServerLinkInClipboard();
 	bool		IsEd2kLinkInClipboard(LPCSTR pszLinkType, int iLinkTypeLen);
@@ -262,6 +278,8 @@ public:
 
 	bool			DidWeAutoStart() { return m_bAutoStart; }
 
+	WSADATA				m_wsaData; //eWombat [WINSOCK2]
+
 protected:
 	bool ProcessCommandline();
 	void SetTimeOnTransfer();
@@ -291,85 +309,61 @@ protected:
 
 	uint32 m_dwPublicIP;
 	bool m_bAutoStart;
-	WSADATA				m_wsaData; //MORPH - Added by SiRoB, eWombat [WINSOCK2]
 
 private:
     UINT     m_wTimerRes;
-
+//Xman -Reask sources after IP change- v4 
 public:
-	// Commander - Added: Custom incoming folder icon [emulEspaña] - Start
-	void	AddIncomingFolderIcon();
-	void	RemoveIncomingFolderIcon();
-	void	AddTempFolderIcon();
-	void	RemoveTempFolderIcon();
-	BOOL	IsCustomIncomingFolderIcon();
-	// Commander - Added: Custom incoming folder icon [emulEspaña] - End
+	bool m_bneedpublicIP; 
+	uint32 last_ip_change;
+	uint32 last_valid_serverid;
+	uint32 last_valid_ip;
+	uint32 recheck_ip;
+	uint32	last_traffic_reception;
+	uint8	internetmaybedown;
+//Xman end
 
-	//MORPH START - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
-public:
+	// ==> UPnP support [MoNKi] - leuk_he
 	CUPnP_IGDControlPoint *m_UPnP_IGDControlPoint;
-	//MORPH END   - Added by SiRoB, [MoNKi: -UPnPNAT Support-]
+	// <== UPnP support [MoNKi] - leuk_he
 
-//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-public:
-	CWapServer*		wapserver;
-//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]
-// Morph start lh: lh require obfuscated server connection 
-   // When you want to connect to a server obfuscated you need
-   // to be able to cryptping, else no server will have a valid Key
-	bool IsWaitingForCryptPingConnect();  
-// Morph end lh: lh require obfuscated server connection 
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+	//Xman queued disc-access for read/flushing-threads
+	void AddNewDiscAccessThread(CWinThread* threadtoadd);
+	void ResumeNextDiscAccessThread();
+	void ForeAllDiscAccessThreadsToFinish();
+private:
+	CTypedPtrList<CPtrList, CWinThread*> threadqueue;
+	CCriticalSection					 threadqueuelock;
+	uint16								 m_uRunningNonBlockedDiscAccessThreads;
+	//Xman end
+
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 public:
 	bool	IsEd2kFriendLinkInClipboard();
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
-#define  SVC_NO_OPT 0
-#define	 SVC_LIST_OPT 4
-#define  SVC_SVR_OPT 6
-#define SVC_FULL_OPT 10
-	bool	IsRunningAsService(int OptimizeLevel = SVC_NO_OPT );// MORPH leuk_he:run as ntservice v1..
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 
-	void RebindUPnP(); //emulEspaa: Added by MoNKi [MoNKi: -UPnPNAT Support-]
-
-	// ==> auto drop immunity - Stulle
-	DWORD	GetReAskTick()	{return m_dwReAskTick;}
-	void	SetReAskTick(DWORD in) {m_dwReAskTick = in;}
-private:
-	DWORD	m_dwReAskTick;
-	// <== auto drop immunity - Stulle
-
-	// ==> Connection Checker [eWombat/WiZaRd] - Stulle
-	uint32			m_nConnectionState;
+	// ==> ModID [itsonlyme/SiRoB] - Stulle
 public:
-	uint32			GetConnectionState()					{return m_nConnectionState;} 
-	void			SetConnectionState(uint32 state)		{m_nConnectionState=state;}
-	void			InitConChecker(void);
-	WombatAgent::CConChecker    conchecker;
-	// <== Connection Checker [eWombat/WiZaRd] - Stulle
-
-	// ==> Inform Clients after IP Change - Stulle
-	void			CheckIdChange();
-private:
-	uint32			m_uLastValidID[3];
-	DWORD			m_dwLastIpCheckDetected;
-	// <== Inform Clients after IP Change - Stulle
+	static const UINT	m_nMVersionMjr;
+	static const UINT	m_nMVersionMin;
+	static const UINT	m_nMVersionBld;
+	static const TCHAR	m_szMVersionLong[];
+	static const TCHAR	m_szMVersion[];
+	CString		m_strModVersion;
+	CString		m_strModLongVersion;
+	CString		m_strModVersionPure;
+	uint8		m_uModLength;
+	// <== ModID [itsonlyme/SiRoB] - Stulle
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-public:
 	void	CreateExtraFonts(CFont *font);
 	void	DestroyExtraFonts();
-	CFont *GetBoldFont()		{return &m_ExtraFonts[0];}
-	CFont *GetULFont()			{return &m_ExtraFonts[1];}
-	CFont *GetItalicFont()		{return &m_ExtraFonts[2];}
-	CFont *GetFontByStyle(DWORD nStyle);
+	CFont *GetFontByStyle(DWORD nStyle,bool bNarrow);
 protected:
-	CFont			m_ExtraFonts[7];
-#endif
+	CFont			m_ExtraFonts[15];
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
 	// ==> Automatic shared files updater [MoNKi] - Stulle
-#ifdef ASFU
 private:
 	static CEvent*				m_directoryWatcherCloseEvent;
 	static CEvent*				m_directoryWatcherReloadEvent;
@@ -379,8 +373,17 @@ public:
 	void ResetDirectoryWatcher();
 	void EndDirectoryWatcher();
 	void DirectoryWatcherExternalReload();
-#endif
 	// <== Automatic shared files updater [MoNKi] - Stulle
+
+	void RebindUPnP(); // UPnP support [MoNKi] - leuk_he
+
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+#define  SVC_NO_OPT 0
+#define	 SVC_LIST_OPT 4
+#define  SVC_SVR_OPT 6
+#define SVC_FULL_OPT 10
+	bool	IsRunningAsService(int OptimizeLevel = SVC_NO_OPT );// MORPH leuk_he:run as ntservice v1..
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 };
 
 extern CemuleApp theApp;

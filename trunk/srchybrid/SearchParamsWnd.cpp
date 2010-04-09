@@ -59,11 +59,7 @@ BEGIN_MESSAGE_MAP(CSearchParamsWnd, CDialogBar)
 	ON_WM_SYSCOMMAND()
 	ON_WM_SETCURSOR()
 	ON_WM_HELPINFO()
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	ON_WM_CTLCOLOR()
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	ON_WM_CTLCOLOR() // Design Settings [eWombat/Stulle] - Max
 END_MESSAGE_MAP()
 
 
@@ -134,13 +130,7 @@ LRESULT CSearchParamsWnd::OnInitDialog(WPARAM /*wParam*/, LPARAM /*lParam*/)
 	m_szMRU = m_szFloat;
 
 	UpdateData(FALSE);
-
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
-
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 	SetAllIcons();
 
 	GetDlgItem(IDC_MSTATIC3)->GetWindowRect(&m_rcNameLbl);
@@ -1170,8 +1160,7 @@ BOOL CSearchParamsWnd::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	return TRUE;
 }
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
 void CSearchParamsWnd::OnBackcolor() 
 {
 	COLORREF crTempColor = thePrefs.GetStyleBackColor(window_styles, style_w_search);
@@ -1203,5 +1192,4 @@ HBRUSH CSearchParamsWnd::OnCtlColor(CDC* pDC, CWnd* /*pWnd*/, UINT nCtlColor)
 
 	return hbr;
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max

@@ -39,14 +39,10 @@ protected:
 	struct SComment
 	{
 		SComment(const void* pClientCookie, int iRating, const CString& strComment, 
-			     const CString& strFileName, const CString& strUserName, int iOrigin,
-				 const CString& strClientSoftware,  //Commander - Added: ClientSoftware Column
-				 const CString& strClientCountry) //Commander - Added: ClientCountry Column
+			     const CString& strFileName, const CString& strUserName, int iOrigin)
 			: m_pClientCookie(pClientCookie), m_iRating(iRating), 
 			  m_strComment(strComment), m_strFileName(strFileName), 
-			  m_strUserName(strUserName), m_iOrigin(iOrigin),
-			  m_strClientSoft(strClientSoftware),  //Commander - Added: ClientSoftware Column
-			  m_strClientCountry(strClientCountry) //Commander - Added: ClientCountry Column
+			  m_strUserName(strUserName), m_iOrigin(iOrigin)
 		{ }
 
 		const void* m_pClientCookie;
@@ -55,8 +51,6 @@ protected:
 		CString m_strFileName;
 		CString m_strUserName;
 		int m_iOrigin;	// 0=eD2K, 1=Kad
-		CString m_strClientSoft; //Commander - Added: ClientSoftware Column
-		CString m_strClientCountry; //Commander - Added: ClientCountry Column
 	};
 	void AddComment(const SComment* pComment);
 	int FindClientComment(const void* pCookie);

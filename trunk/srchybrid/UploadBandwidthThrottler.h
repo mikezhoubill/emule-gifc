@@ -18,21 +18,6 @@
 
 #include "ThrottledSocket.h" // ZZ:UploadBandWithThrottler (UDP)
 
-//MORPH START - Added by SiRoB & AndCycle, Upload Splitting Class
-#define NB_SPLITTING_CLASS 3
-#define LAST_CLASS NB_SPLITTING_CLASS-1
-#define NB_SCHED_CLASS NB_SPLITTING_CLASS
-
-struct Socket_stat{
-	uint32	classID;
-	sint64	realBytesToSpend;
-	DWORD	dwLastBusySince;
-	DWORD	dwLastBytesSent;
-	bool	scheduled;
-};
-//MORPH END - Added by SiRoB & AndCycle, Upload Splitting Class
-
-
 class UploadBandwidthThrottler :
     public CWinThread 
 {
@@ -40,29 +25,17 @@ public:
     UploadBandwidthThrottler(void);
     ~UploadBandwidthThrottler(void);
 
-    void GetStats(uint64* SentBytes, uint64* SentBytesOverhead, uint32* HighestNumberOfFullyActivatedSlotsSinceLastCallClass);
+    //Xman Xtreme Upload unused
+	//uint64 GetNumberOfSentBytesSinceLastCallAndReset();
+    //uint64 GetNumberOfSentBytesOverheadSinceLastCallAndReset();
+	//uint32 GetHighestNumberOfFullyActivatedSlotsSinceLastCallAndReset();
 
-	// MORPH count tcp overhead from download
-	void SetDownDataOverheadOtherPackets(long bytes)	;
-	uint64	GetDownDataOverheadOtherPackets_andreset()	;
-	// END count
-
-
-    //MORPH - Removed by SiRoB, See above (avoid lock delay by splitting call)
-	/*
-	uint64 GetNumberOfSentBytesOverheadSinceLastCallAndReset(uint64* sentBytesOverhead);
-    uint32 GetHighestNumberOfFullyActivatedSlotsSinceLastCallAndReset();
-	*/
-	//MORPH END   - Changed by SiRoB, Upload Splitting Class
     uint32 GetStandardListSize() { return m_StandardOrder_list.GetSize(); };
 
-	//MORPH START - Changed by SiRoB, Upload Splitting Class
-    /*
-	void AddToStandardList(uint32 index, ThrottledFileSocket* socket);
-	*/
-	void AddToStandardList(uint32 index, ThrottledFileSocket* socket, uint32 classID, bool scheduled);
-	//MORPH END   - Changed by SiRoB, Upload Splitting Class
-	bool RemoveFromStandardList(ThrottledFileSocket* socket, bool resort = false); //MORPH - Changed by SiRoB & AndCycle, Upload Splitting Class
+	//void ReplaceSocket(ThrottledFileSocket* oldsocket, ThrottledFileSocket* newsocket); //Xman Xtreme Upload: Peercache-part
+	bool ReplaceSocket(ThrottledFileSocket* normalsocket, ThrottledFileSocket* pcsocket, ThrottledFileSocket* newsocket); //Xman Xtreme Upload: Peercache-part
+	void AddToStandardList(bool first, ThrottledFileSocket* socket); //Xman bugfix: sometimes a socket was placed on wrong position
+    bool RemoveFromStandardList(ThrottledFileSocket* socket);
 
     void QueueForSendingControlPacket(ThrottledControlSocket* socket, bool hasSent = false); // ZZ:UploadBandWithThrottler (UDP)
     void RemoveFromAllQueues(ThrottledControlSocket* socket) { RemoveFromAllQueues(socket, true); }; // ZZ:UploadBandWithThrottler (UDP)
@@ -72,45 +45,70 @@ public:
 
     void Pause(bool paused);
 
-	static uint32 UploadBandwidthThrottler::GetSlotLimit(uint32 currentUpSpeed);
+	//Xman Xtreme Upload
+	void	SetNoNeedSlot();
+	uint16	GetNumberOfFullyActivatedSlots()	{return m_highestNumberOfFullyActivatedSlots_out;}
+	void	SetNumberOfFullyActivatedSlots()	{m_highestNumberOfFullyActivatedSlots_out=m_highestNumberOfFullyActivatedSlots;}
+	void	SetNextTrickleToFull();
+	void	RecalculateOnNextLoop();
+	bool	needslot;
 
-    void SignalNoLongerBusy();
+	//Xman count block/success send
+	float	GetAvgBlockRatio() const				{return avgBlockRatio;}
+	//Xman upload health
+	float	GetAvgHealth() const					{return avg_health;}
+
+#ifdef PRINT_STATISTIC
+	void	PrintStatistic();
+#endif
+
 private:
     static UINT RunProc(LPVOID pParam);
     UINT RunInternal();
 
     void RemoveFromAllQueues(ThrottledControlSocket* socket, bool lock); // ZZ:UploadBandWithThrottler (UDP)
-	bool RemoveFromStandardListNoLock(ThrottledFileSocket* socket, bool resort = false); //MORPH - Changed by SiRoB & AndCycle, Upload Splitting Class
-    
-    uint32 CalculateChangeDelta(uint32 numberOfConsecutiveChanges) const;
+    bool RemoveFromStandardListNoLock(ThrottledFileSocket* socket);
 
-	CTypedPtrList<CPtrList, ThrottledControlSocket*> m_ControlQueue_list; // a queue for all the sockets that want to have Send() called on them. // ZZ:UploadBandWithThrottler (UDP)
+    CTypedPtrList<CPtrList, ThrottledControlSocket*> m_ControlQueue_list; // a queue for all the sockets that want to have Send() called on them. // ZZ:UploadBandWithThrottler (UDP)
     CTypedPtrList<CPtrList, ThrottledControlSocket*> m_ControlQueueFirst_list; // a queue for all the sockets that want to have Send() called on them. // ZZ:UploadBandWithThrottler (UDP)
     CTypedPtrList<CPtrList, ThrottledControlSocket*> m_TempControlQueue_list; // sockets that wants to enter m_ControlQueue_list // ZZ:UploadBandWithThrottler (UDP)
     CTypedPtrList<CPtrList, ThrottledControlSocket*> m_TempControlQueueFirst_list; // sockets that wants to enter m_ControlQueue_list and has been able to send before // ZZ:UploadBandWithThrottler (UDP)
 
     CArray<ThrottledFileSocket*, ThrottledFileSocket*> m_StandardOrder_list; // sockets that have upload slots. Ordered so the most prioritized socket is first
-    //MORPH START - Added by SiRoB & AndCycle, Upload Splitting Class
-	CMap<ThrottledControlSocket*, ThrottledControlSocket*, Socket_stat*, Socket_stat*> m_stat_list;
-	//MORPH END - Added by SiRoB & AndCycle, Upload Splitting Class
 
-	
-	CCriticalSection sendLocker;
+	CTypedPtrList<CPtrList, ThrottledFileSocket*> m_StandardOrder_list_full; //Xman Xtreme Upload
+
+    CCriticalSection sendLocker;
     CCriticalSection tempQueueLocker;
-    CCriticalSection sendBytesLocker;
 
     CEvent* threadEndedEvent;
     CEvent* pauseEvent;
 
-    uint64 m_SentBytesSinceLastCallClass[NB_SPLITTING_CLASS];
-    uint64 m_SentBytesSinceLastCallOverheadClass[NB_SPLITTING_CLASS];
-    uint32 m_highestNumberOfFullyActivatedSlotsClass[NB_SPLITTING_CLASS];
-	uint32 slotCounterClass[NB_SPLITTING_CLASS];
+	//Xman Xtreme Upload unused
+    //uint64 m_SentBytesSinceLastCall;
+    //uint64 m_SentBytesSinceLastCallOverhead;
+    uint16 m_highestNumberOfFullyActivatedSlots; //used inside
+    volatile uint16 m_highestNumberOfFullyActivatedSlots_out; //used outside
 	bool doRun;
-	// MORPH START
-	uint64	m_nUpDataOverheadFromDownload;
-	// MOPRH END
 
+	//Xman Xtreme Upload
+	bool	recalculate;
+	bool	nexttrickletofull;
 
-    CEvent busyEvent;
+	//Xman count block/success send
+	float	avgBlockRatio;
+	//Xman upload health
+
+	struct ratio_struct{
+		float ratio; // % successful upload loops
+		uint32 timestamp; // time in 1024 ms units
+	};
+	//Xman end
+
+	typedef CList<ratio_struct> HealthHistory;
+	HealthHistory m_healthhistory;
+	float avg_health; //the average health of last 10 seconds
+	float sum_healthhistory; //the sum of all stored ratio samples
+	uint16 m_countsend; //count the sends during ~one second
+	uint16 m_countsendsuccessful; // " successful
 };

@@ -18,13 +18,11 @@
 #include "emule.h"
 #include "emuleDlg.h"
 #include "ServerWnd.h"
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 #include "PPgServer.h"
 #include "OtherFunctions.h"
 #include "Preferences.h"
 #include "HelpIDs.h"
 #include "Opcodes.h"
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,17 +41,15 @@ BEGIN_MESSAGE_MAP(CPPgServer, CPropertyPage)
 	ON_BN_CLICKED(IDC_SCORE, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SMARTIDCHECK, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SAFESERVERCONNECT, OnSettingsChange)
+	ON_BN_CLICKED(IDC_DONTREMOVESTATICSERVER, OnSettingsChange) //Xman // Mighty Knife: Static server handling (morph)
 	ON_BN_CLICKED(IDC_AUTOCONNECTSTATICONLY, OnSettingsChange)
 	ON_BN_CLICKED(IDC_MANUALSERVERHIGHPRIO, OnSettingsChange)
 	ON_BN_CLICKED(IDC_EDITADR, OnBnClickedEditadr)
 	ON_WM_HELPINFO()
-	ON_BN_CLICKED(IDC_SERVER_REQUIREOBFUSCATION, OnSettingsChange) // MORPH lh require obfuscated server connection 
 END_MESSAGE_MAP()
 
 CPPgServer::CPPgServer()
-	//: CPropertyPage(CPPgServer::IDD) leuk_he  tooltipped 
-: CPPgtooltipped(CPPgServer::IDD) // leuk_he  tooltipped 
-
+	: CPropertyPage(CPPgServer::IDD)
 {
 }
 
@@ -72,7 +68,6 @@ BOOL CPPgServer::OnInitDialog()
 	InitWindowStyles(this);
 
 	LoadSettings();
-	InitTooltips(); //leuk_he tooltipped
 	Localize();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -90,8 +85,8 @@ void CPPgServer::LoadSettings(void)
 	CheckDlgButton(IDC_SAFESERVERCONNECT, thePrefs.m_bSafeServerConnect);
 	CheckDlgButton(IDC_AUTOCONNECTSTATICONLY, thePrefs.m_bAutoConnectToStaticServersOnly);
 	CheckDlgButton(IDC_MANUALSERVERHIGHPRIO, thePrefs.m_bManualAddedServersHighPriority);
-	CheckDlgButton(IDC_SERVER_REQUIREOBFUSCATION, thePrefs.IsServerCryptLayerRequiredStrict()); // MORPH lh require obfuscated server connection 
-	if (!thePrefs.IsClientCryptLayerSupported()) GetDlgItem(IDC_SERVER_REQUIREOBFUSCATION)->EnableWindow(FALSE); // MORPH lh require obfuscated server connection 
+	//Xman // Mighty Knife: Static server handling (morph)
+	CheckDlgButton(IDC_DONTREMOVESTATICSERVER,thePrefs.GetDontRemoveStaticServers());
 }
 
 BOOL CPPgServer::OnApply()
@@ -114,7 +109,10 @@ BOOL CPPgServer::OnApply()
 	thePrefs.SetSafeServerConnectEnabled(IsDlgButtonChecked(IDC_SAFESERVERCONNECT)!=0);
 	thePrefs.m_bAutoConnectToStaticServersOnly = IsDlgButtonChecked(IDC_AUTOCONNECTSTATICONLY)!=0;
 	thePrefs.m_bManualAddedServersHighPriority = IsDlgButtonChecked(IDC_MANUALSERVERHIGHPRIO)!=0;
-    thePrefs.m_bCryptLayerRequiredStrictServer= IsDlgButtonChecked(IDC_SERVER_REQUIREOBFUSCATION)!=0; // MORPH lh require obfuscated server connection 
+
+	//Xman // Mighty Knife: Static server handling (morph)
+	thePrefs.SetDontRemoveStaticServers(IsDlgButtonChecked(IDC_DONTREMOVESTATICSERVER)!=0);
+
 	LoadSettings();
 
 	SetModified();
@@ -139,23 +137,9 @@ void CPPgServer::Localize(void)
 		GetDlgItem(IDC_MANUALSERVERHIGHPRIO)->SetWindowText(GetResString(IDS_MANUALSERVERHIGHPRIO));
 		GetDlgItem(IDC_EDITADR)->SetWindowText(GetResString(IDS_EDITLIST));
 		GetDlgItem(IDC_AUTOCONNECTSTATICONLY)->SetWindowText(GetResString(IDS_PW_AUTOCONNECTSTATICONLY));
-		GetDlgItem(IDC_SERVER_REQUIREOBFUSCATION)->SetWindowText(GetResString(IDS_SERVER_REQUIREOBFUSCATION)); // MORPH lh require obfuscated server connection 
-        // leuk_he tooltipped start
-		SetTool(IDC_SERVERRETRIES,IDS_PW_RDEAD_TIP);
-        SetTool(IDC_REMOVEDEAD,IDS_PW_RDEAD_TIP);
-		SetTool(IDC_RETRIES_LBL,IDS_PW_RETRIES_TIP);
-		SetTool(IDC_UPDATESERVERCONNECT, IDS_PW_USS_TIP );
-		SetTool(IDC_UPDATESERVERCLIENT,IDS_PW_UCC_TIP );
-		SetTool(IDC_AUTOSERVER,IDS_PW_USC_TIP );
-		SetTool(IDC_SMARTIDCHECK,IDS_SMARTLOWIDCHECK_TIP);
-		SetTool(IDC_SAFESERVERCONNECT,IDS_PW_FASTSRVCON_TIP);
-		SetTool(IDC_SCORE,IDS_PW_SCORE_TIP);
-		SetTool(IDC_MANUALSERVERHIGHPRIO,IDS_MANUALSERVERHIGHPRIO_TIP);
-		SetTool(IDC_EDITADR,IDS_EDITLIST_TIP);
-		SetTool(IDC_AUTOCONNECTSTATICONLY,IDS_PW_AUTOCONNECTSTATICONLY_TIP);
-		SetTool(IDC_SERVER_REQUIREOBFUSCATION, IDS_SERVER_REQUIREOBFUSCATION_TIP); // MORPH lh require obfuscated server connection 
-		//leuk_he tooltipped end
 
+		//Xman // Mighty Knife: Static server handling (morph)
+		GetDlgItem(IDC_DONTREMOVESTATICSERVER)->SetWindowText(GetResString(IDS_DONTREMOVESTATICSERVER));
 	}
 }
 

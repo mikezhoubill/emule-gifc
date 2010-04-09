@@ -1,5 +1,4 @@
 #pragma once
-#include "WapServer/WebWapDefinitions.h"	//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
 
 #include <zlib/zlib.h>
 #include "WebSocket.h"
@@ -9,12 +8,14 @@
 #define WEB_GRAPH_HEIGHT		120
 #define WEB_GRAPH_WIDTH			500
 
-// emulEspaña: Removed by MoNKi, now in WebWapDefinitions.h [MoNKi: -Wap Server-]
-/*
 #define SESSION_TIMEOUT_SECS	300	// 5 minutes session expiration
 #define SHORT_LENGTH_MAX		60	// Max size for strings maximum
 #define SHORT_LENGTH			40	// Max size for strings
 #define SHORT_LENGTH_MIN		30	// Max size for strings minimum
+// ==> New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
+#define BAN_TIME_SECS			900	// 15 minutes ban time 
+#define LOGIN_TRIES_LIMIT		4	// Max number of tries to login before ban
+// <== New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
 
 typedef struct
 {
@@ -27,12 +28,13 @@ typedef struct
 {
 	CTime	startTime;
 	long	lSession;
-//>>> [ionix] - iONiX::Advanced WebInterface Account Management
-	//bool admin; 
-	uint8 admin;
-//<<< [ionix] - iONiX::Advanced WebInterface Account Management
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	/*
+	bool	admin;
 	int		lastcat;
-//>>> [ionix] - iONiX::Advanced WebInterface Account Management
+	*/
+	uint8 admin;
+	int		lastcat;
 	CString	RightsToCategories;
 	bool RightsToKad;
 	bool RightsToPrefs;
@@ -41,10 +43,17 @@ typedef struct
 	bool RightsToSharedList;
 	bool RightsToStats;
 	bool RightsToTransfered;
-//<<< [ionix] - iONiX::Advanced WebInterface Account Management
+	bool RightsToDownloadFiles;
+	CString username;
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+
 } Session;
 
 struct BadLogin {
+	// ==> New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
+	CString ip;
+	uint32	tries;
+	// <== New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
 	uint32	datalen;
 	DWORD	timestamp;
 };
@@ -91,6 +100,10 @@ typedef struct
 	uint32	nFileAllTimeAccepts;
 	CString sFileCompletes;
 	double	dblFileCompletes;
+	// ==> PowerShare support for WebInterface [Stulle] - Stulle
+	int		nFilePowerShared;
+	CString sFilePowerShared;
+	// <== PowerShare support for WebInterface [Stulle] - Stulle
 	byte	nFilePriority;
 	CString sFilePriority;
 	bool	bFileAutoPriority;
@@ -176,6 +189,7 @@ typedef enum
 	SHARED_SORT_ACCEPTS,
 	SHARED_SORT_ALL_TIME_ACCEPTS,
 	SHARED_SORT_COMPLETES,
+	SHARED_SORT_POWERSHARE, // PowerShare support for WebInterface [Stulle] - Stulle
 	SHARED_SORT_PRIORITY
 } SharedSort;
 
@@ -247,11 +261,11 @@ typedef struct
 	CArray<BadLogin>	badlogins;	//TransferredData= IP : time
 
 } GlobalParams;
-*/
+
 typedef struct
 {
 	CString			sURL;
-	CString			sCookie; // [ionix] - Aireoreion: Cookie settings
+	CString			sCookie; // Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
 	void			*pThis;
 	CWebSocket		*pSocket;
 	in_addr			inadr;
@@ -290,10 +304,7 @@ typedef struct
 	CString sStats;
 	CString sPreferences;
 	CString	sLogin;
-	//MORPH START - Added by SiRoB, Login Failed from eMule+
-	CString sFailedLogin;
- 	//MORPH END   - Added by SiRoB, Login Failed from eMule+
-	CString	sConnectedServer;
+	CString sFailedLogin; // Failed login screen for WebInterface [SiRoB/CommanderGer/Stulle] - Stulle
 	CString	sAddServerBox;
 	CString	sSearch;
 	CString	sProgressbarImgs;
@@ -313,7 +324,7 @@ typedef struct
 	CString sCommentListLine;
 } WebTemplates;
 
-//>>> [ionix] - iONiX::Advanced WebInterface Account Management
+// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 struct WebServDef{
 	TCHAR	Pass[256];
 	TCHAR	User[256];
@@ -327,8 +338,9 @@ struct WebServDef{
 	bool RightsToSharedList;
 	bool RightsToStats;
 	bool RightsToTransfered;
+	bool RightsToDownloadFiles;
 };
-//<<< [ionix] - iONiX::Advanced WebInterface Account Management
+// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 
 class CWebServer 
 {
@@ -350,7 +362,6 @@ public:
 protected:
 	static void		ProcessURL(ThreadData);
 	static void		ProcessFileReq(ThreadData Data);
-//static CString CookieExpireDateTime(); // [ionix] - Aireoreion: Cookie settings
 
 private:
 	static CString	_GetHeader(ThreadData, long lSession);
@@ -365,10 +376,13 @@ private:
 	static CString	_GetStats(ThreadData);
 	static CString  _GetKadDlg(ThreadData);
 	static CString	_GetPreferences(ThreadData);
-	static CString	_GetLoginScreen(ThreadData, bool bLogout = false); // [ionix] - Aireoreion: Cookie settings - added , bool bLogout = false
-	//MORPH START - Added by SiRoB, Login Failed from eMule+
-	static CString  _GetFailedLoginScreen(ThreadData);
-	//MORPH END   - Added by SiRoB, Login Failed from eMule+
+	// ==> Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
+	/*
+	static CString	_GetLoginScreen(ThreadData);
+	*/
+	static CString	_GetLoginScreen(ThreadData, bool bLogout = false);
+	// <== Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
+	static CString  _GetFailedLoginScreen(ThreadData); //Failed login screen for WebInterface [SiRoB/CommanderGer/Stulle] - Stulle
 	static CString	_GetConnectedServer(ThreadData);
 	static CString 	_GetAddServerBox(ThreadData Data);
 	static CString	_GetCommentlist(ThreadData Data);
@@ -382,10 +396,10 @@ private:
 
 	static CString	_ParseURL(CString URL, CString fieldname); 
 	static CString	_ParseURLArray(CString URL, CString fieldname);
-	static CString	_ParseCookie(const CString& Cookie, const CString& Cookiename); // [ionix] - Aireoreion: Cookie settings
+	static CString	_ParseCookie(const CString& Cookie, const CString& Cookiename); // Multiuser WebInterface Cookie settings [Aireoreion] - Stulle
 	static void		_ConnectToServer(CString sIP, int nPort);
 	static bool		_IsLoggedIn(ThreadData Data, long lSession);
-	static void		_RemoveTimeOuts(ThreadData Data, long lSession);
+	static void		_RemoveTimeOuts(ThreadData Data);
 	static bool		_RemoveSession(ThreadData Data, long lSession);
 	static CString	_SpecialChars(CString str, bool noquote = true);
 	static CString	_GetPlainResString(UINT nID, bool noquote = true);
@@ -393,15 +407,20 @@ private:
 	static int		_GzipCompress(Bytef *dest, uLongf *destLen, const Bytef *source, uLong sourceLen, int level);
 	CString			_LoadTemplate(CString sAll, CString sTemplateName);
 	static Session	GetSessionByID(ThreadData Data,long sessionID);
-//>>> [ionix] - iONiX::Advanced WebInterface Account Management - added bHiLvlFunc
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	/*
+	static bool		IsSessionAdmin(ThreadData Data, const CString &strSsessionID);
+	*/
 	static bool		IsSessionAdmin(ThreadData Data, const CString &strSsessionID, const uint8 bMinAdminLvl = 1); // 0 is user
-//<<< [ionix] - iONiX::Advanced WebInterface Account Management - added bHiLvlFunc
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	static CString	GetPermissionDenied();
 	static CString	_GetDownloadGraph(ThreadData Data,CString filehash);
-//>>> Advanced WebInterface Account Management
-	//static void		InsertCatBox(CString &Out,int preselect,CString boxlabel, bool jump,bool extraCats,CString sSession,CString sFileHash,bool ed2kbox=false); 
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	/*
+	static void		InsertCatBox(CString &Out,int preselect,CString boxlabel, bool jump,bool extraCats,CString sSession,CString sFileHash,bool ed2kbox=false);
+	*/
 	static void		InsertCatBox(CString &Out,int preselect,CString boxlabel, bool jump,bool extraCats,CString sSession,CString sFileHash,bool ed2kbox, const Session& Rights); 
-//<<< Advanced WebInterface Account Management
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	static CString	GetSubCatLabel(int iCat);
 	static CString  _GetRemoteLinkAddedOk(ThreadData Data);
 	static CString  _GetRemoteLinkAddedFailed(ThreadData Data);
@@ -415,11 +434,12 @@ private:
 	static CString  GetClientSummary(CUpDownClient* client);
 	static CString	_GetMyInfo(ThreadData Data);
 	static CString	GetClientversionImage(CUpDownClient* client);
-	// MORPH start badloging fix dreamwalker [leuk_he]
+	// ==> New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
 	static BadLogin * RegisterFailedLogin(ThreadData Data);
 	static void		UpdateFailedLoginsList(ThreadData Data);
 	static BadLogin * FindBadLoginByIp(ThreadData Data,CString ip);
-	// MORPH end badloging fix dreamwalker [leuk_he]
+	// <== New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle
+
 
 // Common data
 	GlobalParams	m_Params;
@@ -432,13 +452,13 @@ private:
 	uint32			m_nStartTempDisabledTime;
 	bool			GetIsTempDisabled() { return m_bIsTempDisabled; }
 	ULONG			m_ulCurIP;
-
-//>>> [ionix] - iONiX::Advanced WebInterface Account Management
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 public:
-	int iMultiUserversion; // multiuser version of template [leuk_he]
+	int iMultiUserversion;
 	static	bool	GetWebServLogin(const CString& user, const CString& pass, WebServDef& Def);
+	static	bool	GetWebServDefByName(const CString& user, WebServDef& Def);
 	static	void	SaveWebServConf();
 	static	void	LoadWebServConf();
 	static	CRBMap<uint32, WebServDef>	AdvLogins; //unlimited logs
-//<<< [ionix] - iONiX::Advanced WebInterface Account Management
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 };

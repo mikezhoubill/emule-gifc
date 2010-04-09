@@ -16,12 +16,12 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+class CPartFile;
+
 // ==> XP Style Menu [Xanatos] - Stulle
 #define CTitleMenu CMenuXP
 class CTitleMenu;
 // <== XP Style Menu [Xanatos] - Stulle
-
-class CPartFile;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CPreviewThread

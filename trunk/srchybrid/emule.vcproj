@@ -24,7 +24,7 @@
 				AdditionalOptions="/EHa"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;upnplib\ixml\src\inc;upnplib\upnp\src\inc;upnplib\upnp\inc;upnplib\build\inc;upnplib\threadutil\inc;upnplib\ixml\inc;pthreads\pthreads\inc;WMSDK\include9"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;ID3LIB_LINKOPTION=1;SUPPORT_LARGE_FILES;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB;PNG_DEBUG=1;PNG_USE_PNGVCRD;PNG_LIBPNG_SPECIALBUILD"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;ID3LIB_LINKOPTION=1;SUPPORT_LARGE_FILES;PRINT_STATISTIC;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB;PNG_DEBUG=1;PNG_USE_PNGVCRD;PNG_LIBPNG_SPECIALBUILD"
 				MinimalRebuild="TRUE"
 				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="3"
@@ -133,7 +133,7 @@
 				Name="VCPostBuildEventTool"
 				Description="Performing Post-Build Steps..."
 				CommandLine="echo Inserting Vista application icon...
-..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP
+..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\Scar_Vista.ico&quot; AAAEMULEAPP
 echo Enabling Dynamic Base support...
 ..\EditBinX\release\EditBinX /dynamicbase &quot;$(TargetPath)&quot;
 "/>
@@ -158,9 +158,9 @@ echo Enabling Dynamic Base support...
 				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
 		</Configuration>
 		<Configuration
-			Name="Beta|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Beta"
+			Name="testversion|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="1"
 			CharacterSet="1"
@@ -179,7 +179,7 @@ echo Enabling Dynamic Base support...
 				OptimizeForProcessor="2"
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;upnplib\ixml\src\inc;upnplib\upnp\src\inc;upnplib\upnp\inc;upnplib\build\inc;upnplib\threadutil\inc;upnplib\ixml\inc;pthreads\pthreads\inc;WMSDK\include9"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;ID3LIB_LINKOPTION=1;_BETA;SUPPORT_LARGE_FILES;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;ID3LIB_LINKOPTION=1;_BETA;SUPPORT_LARGE_FILES;PRINT_STATISTIC;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB"
 				StringPooling="TRUE"
 				ExceptionHandling="FALSE"
 				BasicRuntimeChecks="0"
@@ -213,7 +213,7 @@ echo Enabling Dynamic Base support...
 				Name="VCPostBuildEventTool"
 				Description="Performing Post-Build Steps..."
 				CommandLine="echo Inserting Vista application icon...
-..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP
+..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\Scar_Vista.ico&quot; AAAEMULEAPP
 echo Enabling Dynamic Base support...
 ..\EditBinX\release\EditBinX /dynamicbase &quot;$(TargetPath)&quot;
 del $(IntDir)\emule.obj
@@ -252,10 +252,10 @@ del $(IntDir)\emule.obj
 				RelativePath="AICHSyncThread.cpp">
 			</File>
 			<File
-				RelativePath=".\AntiNick.cpp">
+				RelativePath="ArchiveRecovery.cpp">
 			</File>
 			<File
-				RelativePath="ArchiveRecovery.cpp">
+				RelativePath=".\AskExitDlg.cpp">
 			</File>
 			<File
 				RelativePath="AsyncProxySocketLayer.cpp">
@@ -291,12 +291,6 @@ del $(IntDir)\emule.obj
 				RelativePath="CollectionFile.cpp">
 			</File>
 			<File
-				RelativePath="CommentListCtrl.cpp">
-			</File>
-			<File
-				RelativePath=".\ConChecker.cpp">
-			</File>
-			<File
 				RelativePath="CorruptionBlackBox.cpp">
 			</File>
 			<File
@@ -324,15 +318,6 @@ del $(IntDir)\emule.obj
 				RelativePath="EncryptedStreamSocket.cpp">
 			</File>
 			<File
-				RelativePath=".\NetF\Fakealyzer.cpp">
-			</File>
-			<File
-				RelativePath="fakecheck.cpp">
-			</File>
-			<File
-				RelativePath=".\FileProcessing.cpp">
-			</File>
-			<File
 				RelativePath="FirewallOpener.cpp">
 			</File>
 			<File
@@ -357,9 +342,6 @@ del $(IntDir)\emule.obj
 				RelativePath="Ini2.cpp">
 			</File>
 			<File
-				RelativePath=".\IP2Country.cpp">
-			</File>
-			<File
 				RelativePath="IPFilter.cpp">
 			</File>
 			<File
@@ -367,9 +349,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="KnownFileList.cpp">
-			</File>
-			<File
-				RelativePath="LastCommonRouteFinder.cpp">
 			</File>
 			<File
 				RelativePath="ListenSocket.cpp">
@@ -392,7 +371,7 @@ del $(IntDir)\emule.obj
 						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
@@ -419,7 +398,7 @@ del $(IntDir)\emule.obj
 						Outputs="$(IntDir)\$(InputName).obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Assembling..."
@@ -427,9 +406,6 @@ del $(IntDir)\emule.obj
 "
 						Outputs="$(IntDir)\$(InputName).obj"/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\MD5_CAPI.cpp">
 			</File>
 			<File
 				RelativePath="MD5Sum.cpp">
@@ -455,7 +431,7 @@ del $(IntDir)\emule.obj
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -499,7 +475,7 @@ del $(IntDir)\emule.obj
 						Description="Performing Custom Build Step"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing Custom Build Step"/>
@@ -521,9 +497,6 @@ del $(IntDir)\emule.obj
 				RelativePath="PerfLog.cpp">
 			</File>
 			<File
-				RelativePath=".\Ping.cpp">
-			</File>
-			<File
 				RelativePath="Pinger.cpp">
 			</File>
 			<File
@@ -539,13 +512,7 @@ del $(IntDir)\emule.obj
 				RelativePath="RARFile.cpp">
 			</File>
 			<File
-				RelativePath=".\ReadWriteLock.cpp">
-			</File>
-			<File
 				RelativePath="SafeFile.cpp">
-			</File>
-			<File
-				RelativePath=".\NetF\SafeKad.cpp">
 			</File>
 			<File
 				RelativePath="Scanner.cpp">
@@ -562,7 +529,7 @@ del $(IntDir)\emule.obj
 						UsePrecompiledHeader="0"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"/>
@@ -633,7 +600,7 @@ del $(IntDir)\emule.obj
 						Outputs="$(IntDir)\$(InputName).obj"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Assembling..."
@@ -653,9 +620,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="Sockets.cpp">
-			</File>
-			<File
-				RelativePath="SourceSaver.cpp">
 			</File>
 			<File
 				RelativePath=".\SR13-ImportParts.cpp">
@@ -681,7 +645,7 @@ del $(IntDir)\emule.obj
 						UsePrecompiledHeader="1"/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32">
+					Name="testversion|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"/>
@@ -706,7 +670,7 @@ del $(IntDir)\emule.obj
 				RelativePath="UploadQueue.cpp">
 			</File>
 			<File
-				RelativePath=".\UPnP_IGDControlPoint.cpp">
+				RelativePath="UPnP_IGDControlPoint.cpp">
 			</File>
 			<File
 				RelativePath="URLClient.cpp">
@@ -715,7 +679,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Version.cpp">
 			</File>
 			<File
-				RelativePath=".\WebSocket.cpp">
+				RelativePath="WebSocket.cpp">
 			</File>
 			<File
 				RelativePath="ZIPFile.cpp">
@@ -808,10 +772,10 @@ del $(IntDir)\emule.obj
 				RelativePath="AICHSyncThread.h">
 			</File>
 			<File
-				RelativePath=".\AntiNick.h">
+				RelativePath="ArchiveRecovery.h">
 			</File>
 			<File
-				RelativePath="ArchiveRecovery.h">
+				RelativePath=".\AskExitDlg.h">
 			</File>
 			<File
 				RelativePath="AsyncProxySocketLayer.h">
@@ -850,12 +814,6 @@ del $(IntDir)\emule.obj
 				RelativePath="CollectionFile.h">
 			</File>
 			<File
-				RelativePath="CommentListCtrl.h">
-			</File>
-			<File
-				RelativePath=".\ConChecker.h">
-			</File>
-			<File
 				RelativePath="CorruptionBlackBox.h">
 			</File>
 			<File
@@ -889,12 +847,6 @@ del $(IntDir)\emule.obj
 				RelativePath="Exceptions.h">
 			</File>
 			<File
-				RelativePath="fakecheck.h">
-			</File>
-			<File
-				RelativePath=".\FileProcessing.h">
-			</File>
-			<File
 				RelativePath="FirewallOpener.h">
 			</File>
 			<File
@@ -916,9 +868,6 @@ del $(IntDir)\emule.obj
 				RelativePath="Ini2.h">
 			</File>
 			<File
-				RelativePath=".\IP2Country.h">
-			</File>
-			<File
 				RelativePath="IPFilter.h">
 			</File>
 			<File
@@ -929,12 +878,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="langids.h">
-			</File>
-			<File
-				RelativePath="LastCommonRouteFinder.h">
-			</File>
-			<File
-				RelativePath=".\libald.h">
 			</File>
 			<File
 				RelativePath="ListenSocket.h">
@@ -955,7 +898,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Mdump.h">
 			</File>
 			<File
-				RelativePath=".\MediaInfo.h">
+				RelativePath="MediaInfo.h">
 			</File>
 			<File
 				RelativePath="MMServer.h">
@@ -965,6 +908,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath=".\ModVersion.h">
+			</File>
+			<File
+				RelativePath=".\NTService.h">
 			</File>
 			<File
 				RelativePath="Opcodes.h">
@@ -994,9 +940,6 @@ del $(IntDir)\emule.obj
 				RelativePath="PerfLog.h">
 			</File>
 			<File
-				RelativePath=".\Ping.h">
-			</File>
-			<File
 				RelativePath="Pinger.h">
 			</File>
 			<File
@@ -1012,7 +955,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Quantize.h">
 			</File>
 			<File
-				RelativePath=".\ReadWriteLock.h">
+				RelativePath="RARFile.h">
 			</File>
 			<File
 				RelativePath="Resource.h">
@@ -1066,9 +1009,6 @@ del $(IntDir)\emule.obj
 				RelativePath="Sockets.h">
 			</File>
 			<File
-				RelativePath="SourceSaver.h">
-			</File>
-			<File
 				RelativePath=".\SR13-ImportParts.h">
 			</File>
 			<File
@@ -1084,7 +1024,7 @@ del $(IntDir)\emule.obj
 				RelativePath="StringConversion.h">
 			</File>
 			<File
-				RelativePath=".\ThrottledSocket.h">
+				RelativePath="ThrottledSocket.h">
 			</File>
 			<File
 				RelativePath="TimeTick.h">
@@ -1105,7 +1045,7 @@ del $(IntDir)\emule.obj
 				RelativePath="UploadQueue.h">
 			</File>
 			<File
-				RelativePath=".\UPnP_IGDControlPoint.h">
+				RelativePath="UPnP_IGDControlPoint.h">
 			</File>
 			<File
 				RelativePath="URLClient.h">
@@ -1114,7 +1054,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Version.h">
 			</File>
 			<File
-				RelativePath=".\VistaDefines.h">
+				RelativePath="VistaDefines.h">
 			</File>
 			<File
 				RelativePath="WebServices.h">
@@ -1228,22 +1168,16 @@ del $(IntDir)\emule.obj
 				RelativePath="3DPreviewControl.cpp">
 			</File>
 			<File
-				RelativePath=".\AddCRC32TagDialog.cpp">
-			</File>
-			<File
 				RelativePath="AddFriend.cpp">
 			</File>
 			<File
 				RelativePath="AddSourceDlg.cpp">
 			</File>
 			<File
-				RelativePath=".\ArchivePreviewDlg.cpp">
+				RelativePath="ArchivePreviewDlg.cpp">
 			</File>
 			<File
 				RelativePath="BarShader.cpp">
-			</File>
-			<File
-				RelativePath=".\BmiDlg.cpp">
 			</File>
 			<File
 				RelativePath="BtnST.cpp">
@@ -1292,6 +1226,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="CommentDialogLst.cpp">
+			</File>
+			<File
+				RelativePath="CommentListCtrl.cpp">
 			</File>
 			<File
 				RelativePath="CreditsDlg.cpp">
@@ -1378,9 +1315,6 @@ del $(IntDir)\emule.obj
 				RelativePath="KademliaWnd.cpp">
 			</File>
 			<File
-				RelativePath="KCSideBannerWnd.cpp">
-			</File>
-			<File
 				RelativePath=".\KeyHelper.cpp">
 			</File>
 			<File
@@ -1400,9 +1334,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="ListViewWalkerPropertySheet.cpp">
-			</File>
-			<File
-				RelativePath=".\MassRename.cpp">
 			</File>
 			<File
 				RelativePath=".\MenuXP.cpp">
@@ -1429,16 +1360,10 @@ del $(IntDir)\emule.obj
 				RelativePath="OScopeCtrl.cpp">
 			</File>
 			<File
-				RelativePath=".\PPgBackup.cpp">
-			</File>
-			<File
 				RelativePath="PPgConnection.cpp">
 			</File>
 			<File
 				RelativePath="PPgDebug.cpp">
-			</File>
-			<File
-				RelativePath=".\PPgDesign.cpp">
 			</File>
 			<File
 				RelativePath="PPgDirectories.cpp">
@@ -1447,19 +1372,10 @@ del $(IntDir)\emule.obj
 				RelativePath="PPgDisplay.cpp">
 			</File>
 			<File
-				RelativePath=".\PPgEastShare.cpp">
-			</File>
-			<File
-				RelativePath=".\PPgEmulespana.cpp">
-			</File>
-			<File
 				RelativePath="PPgFiles.cpp">
 			</File>
 			<File
 				RelativePath="PPgGeneral.cpp">
-			</File>
-			<File
-				RelativePath=".\PPgIonixWebServer.cpp">
 			</File>
 			<File
 				RelativePath="PPgIRC.cpp">
@@ -1468,22 +1384,13 @@ del $(IntDir)\emule.obj
 				RelativePath="PPgMessages.cpp">
 			</File>
 			<File
-				RelativePath="PPgMorph.cpp">
-			</File>
-			<File
-				RelativePath="PPgMorph2.cpp">
-			</File>
-			<File
-				RelativePath=".\PPgMorphShare.cpp">
-			</File>
-			<File
 				RelativePath="PPgNotify.cpp">
 			</File>
 			<File
-				RelativePath=".\PPgNTServer.cpp">
+				RelativePath="PPgProxy.cpp">
 			</File>
 			<File
-				RelativePath="PPgProxy.cpp">
+				RelativePath=".\PPgScar.cpp">
 			</File>
 			<File
 				RelativePath="PPgScheduler.cpp">
@@ -1496,9 +1403,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="PPgStats.cpp">
-			</File>
-			<File
-				RelativePath=".\PPgStulle.cpp">
 			</File>
 			<File
 				RelativePath="PPgTweaks.cpp">
@@ -1534,7 +1438,7 @@ del $(IntDir)\emule.obj
 				RelativePath="SearchResultsWnd.cpp">
 			</File>
 			<File
-				RelativePath="SelCategoryDlg.cpp">
+				RelativePath=".\SelCategoryDlg.cpp">
 			</File>
 			<File
 				RelativePath="ServerWnd.cpp">
@@ -1552,10 +1456,7 @@ del $(IntDir)\emule.obj
 				RelativePath=".\SivkaFileSettings.cpp">
 			</File>
 			<File
-				RelativePath=".\SlideBar.cpp">
-			</File>
-			<File
-				RelativePath=".\SmileySelector.cpp">
+				RelativePath="SmileySelector.cpp">
 			</File>
 			<File
 				RelativePath=".\SpeedGraph.cpp">
@@ -1597,6 +1498,12 @@ del $(IntDir)\emule.obj
 				RelativePath="TreeOptionsCtrlEx.cpp">
 			</File>
 			<File
+				RelativePath=".\TreeOptionsInvisibleKeyCombo.cpp">
+			</File>
+			<File
+				RelativePath=".\TreeOptionsInvisibleModCombo.cpp">
+			</File>
+			<File
 				RelativePath="TreePropSheet.cpp">
 			</File>
 			<File
@@ -1634,9 +1541,6 @@ del $(IntDir)\emule.obj
 				</File>
 				<File
 					RelativePath="FriendListCtrl.cpp">
-				</File>
-				<File
-					RelativePath=".\HistoryListCtrl.cpp">
 				</File>
 				<File
 					RelativePath="KadContactListCtrl.cpp">
@@ -1695,28 +1599,12 @@ del $(IntDir)\emule.obj
 					RelativePath="IrcWnd.cpp">
 				</File>
 			</Filter>
-			<Filter
-				Name="Tooltip"
-				Filter="">
-				<File
-					RelativePath=".\ToolTips\CeXDib.cpp">
-				</File>
-				<File
-					RelativePath=".\PPGtooltipped.cpp">
-				</File>
-				<File
-					RelativePath=".\ToolTips\PPTooltip.cpp">
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Interface Header"
 			Filter="">
 			<File
 				RelativePath="3DPreviewControl.h">
-			</File>
-			<File
-				RelativePath=".\AddCRC32TagDialog.h">
 			</File>
 			<File
 				RelativePath="AddFriend.h">
@@ -1728,13 +1616,10 @@ del $(IntDir)\emule.obj
 				RelativePath="AfxBeginMsgMapTemplate.h">
 			</File>
 			<File
-				RelativePath=".\ArchivePreviewDlg.h">
+				RelativePath="ArchivePreviewDlg.h">
 			</File>
 			<File
 				RelativePath="BarShader.h">
-			</File>
-			<File
-				RelativePath=".\BmiDlg.h">
 			</File>
 			<File
 				RelativePath="BtnST.h">
@@ -1780,6 +1665,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="CommentDialogLst.h">
+			</File>
+			<File
+				RelativePath="CommentListCtrl.h">
 			</File>
 			<File
 				RelativePath="CreditsDlg.h">
@@ -1872,9 +1760,6 @@ del $(IntDir)\emule.obj
 				RelativePath="KademliaWnd.h">
 			</File>
 			<File
-				RelativePath="KCSideBannerWnd.h">
-			</File>
-			<File
 				RelativePath=".\KeyHelper.h">
 			</File>
 			<File
@@ -1897,9 +1782,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="ListViewWalkerPropertySheet.h">
-			</File>
-			<File
-				RelativePath=".\MassRename.h">
 			</File>
 			<File
 				RelativePath="MemDC.h">
@@ -1935,28 +1817,16 @@ del $(IntDir)\emule.obj
 				RelativePath="Parser.hpp">
 			</File>
 			<File
-				RelativePath=".\PPgBackup.h">
-			</File>
-			<File
 				RelativePath="PPgConnection.h">
 			</File>
 			<File
 				RelativePath="PPgDebug.h">
 			</File>
 			<File
-				RelativePath=".\PPgDesign.h">
-			</File>
-			<File
 				RelativePath="PPgDirectories.h">
 			</File>
 			<File
 				RelativePath="PPgDisplay.h">
-			</File>
-			<File
-				RelativePath=".\PPgEastShare.h">
-			</File>
-			<File
-				RelativePath=".\PPgEmulespana.h">
 			</File>
 			<File
 				RelativePath="PPgFiles.h">
@@ -1968,19 +1838,16 @@ del $(IntDir)\emule.obj
 				RelativePath="PPgIRC.h">
 			</File>
 			<File
-				RelativePath="PPgMorph.h">
-			</File>
-			<File
-				RelativePath=".\PPgMorph2.h">
-			</File>
-			<File
-				RelativePath=".\PPgMorphShare.h">
+				RelativePath="PPgMessages.h">
 			</File>
 			<File
 				RelativePath="PPgNotify.h">
 			</File>
 			<File
 				RelativePath="PPgProxy.h">
+			</File>
+			<File
+				RelativePath=".\PPgScar.h">
 			</File>
 			<File
 				RelativePath="PPgScheduler.h">
@@ -1993,9 +1860,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="PPgStats.h">
-			</File>
-			<File
-				RelativePath=".\PPgStulle.h">
 			</File>
 			<File
 				RelativePath="PPgTweaks.h">
@@ -2037,7 +1901,7 @@ del $(IntDir)\emule.obj
 				RelativePath="SearchResultsWnd.h">
 			</File>
 			<File
-				RelativePath="SelCategoryDlg.h">
+				RelativePath=".\SelCategoryDlg.h">
 			</File>
 			<File
 				RelativePath="ServerWnd.h">
@@ -2055,10 +1919,7 @@ del $(IntDir)\emule.obj
 				RelativePath=".\SivkaFileSettings.h">
 			</File>
 			<File
-				RelativePath=".\SlideBar.h">
-			</File>
-			<File
-				RelativePath=".\SmileySelector.h">
+				RelativePath="SmileySelector.h">
 			</File>
 			<File
 				RelativePath=".\SpeedGraph.h">
@@ -2098,6 +1959,12 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="TreeOptionsCtrlEx.h">
+			</File>
+			<File
+				RelativePath=".\TreeOptionsInvisibleKeyCombo.h">
+			</File>
+			<File
+				RelativePath=".\TreeOptionsInvisibleModCombo.h">
 			</File>
 			<File
 				RelativePath="TreePropSheet.h">
@@ -2140,9 +2007,6 @@ del $(IntDir)\emule.obj
 				</File>
 				<File
 					RelativePath="FriendListCtrl.h">
-				</File>
-				<File
-					RelativePath=".\HistoryListCtrl.h">
 				</File>
 				<File
 					RelativePath="KadContactListCtrl.h">
@@ -2206,55 +2070,46 @@ del $(IntDir)\emule.obj
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest;gif">
 			<File
-				RelativePath=".\res\MOD\AAMorph.ico">
-			</File>
-			<File
 				RelativePath="res\all.ico">
 			</File>
 			<File
-				RelativePath="res\all.ico">
+				RelativePath="res\ArchivePreview.ico">
 			</File>
 			<File
-				RelativePath="res\all.ico">
-			</File>
-			<File
-				RelativePath=".\res\ArchivePreview.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\backup.ico">
+				RelativePath=".\res\Backup.ico">
 			</File>
 			<File
 				RelativePath="res\bold.ico">
 			</File>
 			<File
+				RelativePath=".\res\boldFont.ico">
+			</File>
+			<File
 				RelativePath="res\Cancel.ico">
 			</File>
 			<File
-				RelativePath="res\MOD\catadd.ico">
+				RelativePath=".\res\catadd.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatAdvA4AF.ico">
-			</File>
-			<File
-				RelativePath="res\MOD\catedit.ico">
+				RelativePath=".\res\catedit.ico">
 			</File>
 			<File
 				RelativePath="res\Category.ico">
 			</File>
 			<File
-				RelativePath="res\MOD\catmerge.ico">
+				RelativePath=".\res\catmerge.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatPauseLast.ico">
+				RelativePath=".\res\catPauseLast.ico">
 			</File>
 			<File
-				RelativePath="res\MOD\catremove.ico">
+				RelativePath=".\res\catremove.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatResumeNext.ico">
+				RelativePath=".\res\catResumeNext.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatStopLast.ico">
+				RelativePath=".\res\catStopLast.ico">
 			</File>
 			<File
 				RelativePath="res\Chat.ico">
@@ -2266,7 +2121,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\clear2.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\Client-Neo.ico">
+				RelativePath=".\res\Client-Neo.ico">
 			</File>
 			<File
 				RelativePath="res\Client0.ico">
@@ -2302,7 +2157,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\ClientDefaultPlus.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\ClienteDonkey.ico">
+				RelativePath=".\res\ClienteDonkey.ico">
 			</File>
 			<File
 				RelativePath="res\ClienteDonkeyHybrid.ico">
@@ -2311,10 +2166,22 @@ del $(IntDir)\emule.obj
 				RelativePath="res\ClienteDonkeyHybridPlus.ico">
 			</File>
 			<File
+				RelativePath=".\res\ClienteDonkeyPlus.ico">
+			</File>
+			<File
+				RelativePath=".\res\ClientFriend.ico">
+			</File>
+			<File
+				RelativePath=".\res\ClientFriendPlus.ico">
+			</File>
+			<File
 				RelativePath="res\ClientlPhant.ico">
 			</File>
 			<File
 				RelativePath="res\ClientlPhantPlus.ico">
+			</File>
+			<File
+				RelativePath=".\res\clientml.ico">
 			</File>
 			<File
 				RelativePath="res\ClientMLDonkey.ico">
@@ -2324,9 +2191,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Clientobfuovl.ICO">
-			</File>
-			<File
-				RelativePath="res\ClientSecureHashOvl.ico">
 			</File>
 			<File
 				RelativePath="res\ClientSecureHashOvl.ico">
@@ -2350,6 +2214,12 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Close.ico">
 			</File>
 			<File
+				RelativePath=".\res\CloseTab.ico">
+			</File>
+			<File
+				RelativePath=".\res\CloseTabSelected.ico">
+			</File>
+			<File
 				RelativePath="res\Collapse.ico">
 			</File>
 			<File
@@ -2357,9 +2227,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Comments.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\community.ico">
 			</File>
 			<File
 				RelativePath="res\ConnectDo.ico">
@@ -2458,16 +2325,16 @@ del $(IntDir)\emule.obj
 				RelativePath="res\CopyVisible.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CreditOvl.ico">
+				RelativePath=".\res\CreditOvl.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\CreditSecureOvl.ico">
+				RelativePath=".\res\CreditSecureOvl.ico">
+			</File>
+			<File
+				RelativePath=".\res\Cut.ico">
 			</File>
 			<File
 				RelativePath="res\CycleView.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Cyrex2001.ico">
 			</File>
 			<File
 				RelativePath="res\Delete.ico">
@@ -2485,6 +2352,9 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Display.ico">
 			</File>
 			<File
+				RelativePath=".\res\DlMode.ico">
+			</File>
+			<File
 				RelativePath="res\Download.gif">
 			</File>
 			<File
@@ -2494,7 +2364,13 @@ del $(IntDir)\emule.obj
 				RelativePath="res\DownloadFiles.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\EastShare.ico">
+				RelativePath=".\res\DropDefaults.ico">
+			</File>
+			<File
+				RelativePath=".\res\Dropicon.ico">
+			</File>
+			<File
+				RelativePath=".\res\EastShare.ico">
 			</File>
 			<File
 				RelativePath="res\eD2kLink.ico">
@@ -2504,6 +2380,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Empty.ico">
+			</File>
+			<File
+				RelativePath=".\res\Emulator.ico">
 			</File>
 			<File
 				RelativePath="res\emule.manifest">
@@ -2533,7 +2412,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\emuleCollView.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\emulespana.ico">
+				RelativePath=".\res\emulefuture.ico">
 			</File>
 			<File
 				RelativePath="res\Exit.ico">
@@ -2551,34 +2430,16 @@ del $(IntDir)\emule.obj
 				RelativePath="res\ExportSelected.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileAddSrc.ico">
-			</File>
-			<File
 				RelativePath="res\FileComments.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileCommentsOvl.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileCRC32.ico">
+				RelativePath="res\FileCommentsOvl.ico">
 			</File>
 			<File
 				RelativePath="res\FileDonkey.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileDownload.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileDownloadPaused.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileDownloadPreviewFirst.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileHideOS.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\fileimportparts.ico">
+				RelativePath=".\res\FileHideOS.ico">
 			</File>
 			<File
 				RelativePath="res\FileInfo.gif">
@@ -2587,73 +2448,82 @@ del $(IntDir)\emule.obj
 				RelativePath="res\FileInfo.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\fileinitiaterehash.ico">
+				RelativePath=".\res\FileLinearPrio.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileLinearPrio.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileMassRename.ico">
+				RelativePath=".\res\FileMassRename.ico">
 			</File>
 			<File
 				RelativePath="res\FileOpen.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FilePermission.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FilePowerShare.ico">
+				RelativePath=".\res\FilePowerShare.ico">
 			</File>
 			<File
 				RelativePath="res\FilePriority.ico">
 			</File>
 			<File
+				RelativePath="res\FileRating0.ico">
+			</File>
+			<File
+				RelativePath="res\FileRating1.ico">
+			</File>
+			<File
+				RelativePath="res\FileRating2.ico">
+			</File>
+			<File
+				RelativePath="res\FileRating3.ico">
+			</File>
+			<File
+				RelativePath="res\FileRating4.ico">
+			</File>
+			<File
+				RelativePath="res\FileRating5.ico">
+			</File>
+			<File
 				RelativePath="res\FileRename.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileRequested.ico">
+				RelativePath=".\res\FileRequested.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileSharedKad.ico">
+				RelativePath="res\FileSharedKad.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileSharedServer.ico">
+				RelativePath="res\FileSharedServer.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileShareONlyTheNeed.ico">
+				RelativePath=".\res\FileShareONlyTheNeed.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileSpreadbar.ico">
+				RelativePath="res\FileTypeAny.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeAny.ico">
+				RelativePath="res\FileTypeArchive.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeArchive.ico">
+				RelativePath="res\FileTypeAudio.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeAudio.ico">
+				RelativePath="res\FileTypeCDImage.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeCDImage.ico">
+				RelativePath="res\FileTypeDocument.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeDocument.ico">
+				RelativePath="res\FileTypeEmuleCollection.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeEmuleCollection.ico">
+				RelativePath="res\FileTypePicture.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypePicture.ico">
+				RelativePath="res\FileTypeProgram.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeProgram.ico">
+				RelativePath="res\FileTypeVideo.ico">
 			</File>
 			<File
-				RelativePath=".\res\FileTypeVideo.ico">
-			</File>
-			<File
-				RelativePath=".\res\FolderOpen.gif">
+				RelativePath="res\FolderOpen.gif">
 			</File>
 			<File
 				RelativePath="res\FolderOpen.ico">
@@ -2665,43 +2535,37 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Friend.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FriendOvl.ico">
-			</File>
-			<File
 				RelativePath="res\Friends1.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends1slot.ICO">
+				RelativePath=".\res\friends1slot.ICO">
 			</File>
 			<File
 				RelativePath="res\Friends2.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends2slot.ICO">
+				RelativePath=".\res\friends2slot.ICO">
 			</File>
 			<File
 				RelativePath="res\Friends3.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends3slot.ICO">
+				RelativePath=".\res\friends3slot.ICO">
 			</File>
 			<File
 				RelativePath="res\FriendSlot.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\FriendSlotOvl.ico">
+				RelativePath=".\res\FriendSlotOvl.ico">
 			</File>
 			<File
-				RelativePath="res\MOD\FriendslotRemove.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\FriendslotRemoveAll.ico">
+				RelativePath=".\res\FunnyNick.ico">
 			</File>
 			<File
 				RelativePath="res\Global.ico">
 			</File>
 			<File
-				RelativePath=".\res\HardDisk.gif">
+				RelativePath="res\HardDisk.gif">
 			</File>
 			<File
 				RelativePath="res\HardDisk.ico">
@@ -2710,19 +2574,19 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Help.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\iconmax.ico">
+				RelativePath=".\res\iconmax.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\iconstulle.ico">
+				RelativePath=".\res\iconstulle.ico">
 			</File>
 			<File
 				RelativePath="res\Import.ico">
 			</File>
 			<File
-				RelativePath="res\Incoming.ico">
+				RelativePath=".\res\Incoming.gif">
 			</File>
 			<File
-				RelativePath=".\res\Mod\incomingfolder.ico">
+				RelativePath="res\Incoming.ico">
 			</File>
 			<File
 				RelativePath="res\incomplete.ico">
@@ -2734,7 +2598,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Info.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\ionix.ico">
+				RelativePath=".\res\InvMode.ico">
 			</File>
 			<File
 				RelativePath="res\IPFilter.ico">
@@ -2744,6 +2608,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\IRCClipboard.ico">
+			</File>
+			<File
+				RelativePath=".\res\italicFont.ico">
 			</File>
 			<File
 				RelativePath="res\Kad.ico">
@@ -2764,6 +2631,9 @@ del $(IntDir)\emule.obj
 				RelativePath="res\KadNodeSearch.ico">
 			</File>
 			<File
+				RelativePath=".\res\KadServer.ico">
+			</File>
+			<File
 				RelativePath="res\KadStoreFile.ico">
 			</File>
 			<File
@@ -2773,7 +2643,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\KadWordSearch.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\known.ico">
+				RelativePath=".\res\leecher.ICO">
 			</File>
 			<File
 				RelativePath="res\ListAdd.ico">
@@ -2797,7 +2667,10 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Log.ico">
 			</File>
 			<File
-				RelativePath="res\Logo.jpg">
+				RelativePath=".\res\Logo.jpg">
+			</File>
+			<File
+				RelativePath=".\res\MagicAngel.ico">
 			</File>
 			<File
 				RelativePath="res\MediaInfo.ico">
@@ -2819,16 +2692,40 @@ del $(IntDir)\emule.obj
 				DeploymentContent="TRUE">
 			</File>
 			<File
-				RelativePath=".\res\MiniMuleBack.gif">
+				RelativePath=".\res\MiniMule.ICO">
 			</File>
 			<File
-				RelativePath=".\res\Mod\mobile.ico">
+				RelativePath="res\MiniMuleBack.gif">
 			</File>
 			<File
-				RelativePath=".\res\Mod\Morph.ico">
+				RelativePath=".\res\MM_ConCon.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\MorphBanner.jpg">
+				RelativePath=".\res\MM_ConDis.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_ConLow.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_DisCon.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_DisDis.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_DisLow.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_LowCon.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_LowDis.ico">
+			</File>
+			<File
+				RelativePath=".\res\MM_LowLow.ico">
+			</File>
+			<File
+				RelativePath=".\res\Morph.ico">
 			</File>
 			<File
 				RelativePath="res\Mule.ico">
@@ -2840,31 +2737,34 @@ del $(IntDir)\emule.obj
 				RelativePath="res\mule_wiz_hdr.gif">
 			</File>
 			<File
-				RelativePath=".\res\Mod\mule_wiz_morph.gif">
-			</File>
-			<File
 				RelativePath="res\NavigateBack.ico">
 			</File>
 			<File
 				RelativePath="res\NavigateForward.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\nextEMF.ico">
-			</File>
-			<File
-				RelativePath="res\MOD\not.ico">
-			</File>
-			<File
 				RelativePath="res\Notifications.ico">
+			</File>
+			<File
+				RelativePath=".\res\NotShared.ico">
+			</File>
+			<File
+				RelativePath=".\res\Paste.ico">
 			</File>
 			<File
 				RelativePath="res\Pause.ico">
 			</File>
 			<File
-				RelativePath=".\res\Preferences.gif">
+				RelativePath=".\res\Ports.ico">
+			</File>
+			<File
+				RelativePath="res\Preferences.gif">
 			</File>
 			<File
 				RelativePath="res\Preferences.ico">
+			</File>
+			<File
+				RelativePath=".\res\Prefs_Webcache.ico">
 			</File>
 			<File
 				RelativePath="res\Preview.ico">
@@ -2888,28 +2788,10 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Proxy.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\queue.ico">
-			</File>
-			<File
 				RelativePath="res\queue.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\Rating-Excellent.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Fair.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Fake.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Good.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-NotRated.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Poor.ico">
+				RelativePath=".\res\quickstart.ico">
 			</File>
 			<File
 				RelativePath="res\Rating.ico">
@@ -2918,13 +2800,19 @@ del $(IntDir)\emule.obj
 				RelativePath="res\RatingBad.ico">
 			</File>
 			<File
-				RelativePath=".\res\Records.ico">
+				RelativePath="res\Records.ico">
+			</File>
+			<File
+				RelativePath=".\res\ReleaseBonus.ico">
 			</File>
 			<File
 				RelativePath="res\Rename.ico">
 			</File>
 			<File
 				RelativePath="res\resetformat.ico">
+			</File>
+			<File
+				RelativePath=".\res\ResetSpreadBar.ico">
 			</File>
 			<File
 				RelativePath="res\Restore.ico">
@@ -2936,16 +2824,28 @@ del $(IntDir)\emule.obj
 				RelativePath="res\RestoreWindow.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\ScarAngel.ico">
+				RelativePath=".\res\Save.ico">
+			</File>
+			<File
+				RelativePath=".\res\ScarAngel.ico">
 			</File>
 			<File
 				RelativePath="res\Scheduler.ico">
 			</File>
 			<File
+				RelativePath=".\res\SchedulerAdd.ico">
+			</File>
+			<File
+				RelativePath=".\res\SchedulerEdit.ico">
+			</File>
+			<File
+				RelativePath=".\res\SchedulerRemove.ico">
+			</File>
+			<File
 				RelativePath="res\Search.ico">
 			</File>
 			<File
-				RelativePath=".\res\SearchEdit.ico">
+				RelativePath="res\SearchEdit.ico">
 			</File>
 			<File
 				RelativePath="res\SearchGlobalActive.ico">
@@ -2991,6 +2891,15 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\SharedFilesList.ico">
+			</File>
+			<File
+				RelativePath=".\res\SharedFilesManagement.ico">
+			</File>
+			<File
+				RelativePath=".\res\SharedFolderOvl.ico">
+			</File>
+			<File
+				RelativePath=".\res\sidebanner.jpg">
 			</File>
 			<File
 				RelativePath=".\res\Smiley_Cry.ico">
@@ -3056,10 +2965,13 @@ del $(IntDir)\emule.obj
 				RelativePath="res\SpeedMin.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\Splash.jpg">
+				RelativePath=".\res\splash.bmp">
 			</File>
 			<File
 				RelativePath="res\SplitWindow.ico">
+			</File>
+			<File
+				RelativePath=".\res\SpreadCredits.ico">
 			</File>
 			<File
 				RelativePath="res\Start.ico">
@@ -3095,7 +3007,10 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Stop.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\suc.ico">
+				RelativePath=".\res\Support.ico">
+			</File>
+			<File
+				RelativePath=".\res\SysInfo.ico">
 			</File>
 			<File
 				RelativePath="res\TaskbarNotifier.gif">
@@ -3105,12 +3020,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Transfer.ico">
-			</File>
-			<File
-				RelativePath=".\res\Mod\transfers.ico">
-			</File>
-			<File
-				RelativePath="res\transfers.ico">
 			</File>
 			<File
 				RelativePath="res\TransferUpDown.ico">
@@ -3125,19 +3034,10 @@ del $(IntDir)\emule.obj
 				RelativePath="res\TrayBtnMetallic.bmp">
 			</File>
 			<File
-				RelativePath=".\res\MOD\TrayConnected.ico">
-			</File>
-			<File
 				RelativePath="res\TrayConnected.ico">
 			</File>
 			<File
-				RelativePath=".\res\MOD\Traydisconnected.ico">
-			</File>
-			<File
 				RelativePath="res\TrayDisconnected.ico">
-			</File>
-			<File
-				RelativePath=".\res\MOD\traylowid.ico">
 			</File>
 			<File
 				RelativePath="res\TrayLowID.ico">
@@ -3146,7 +3046,13 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Tweak.ico">
 			</File>
 			<File
+				RelativePath=".\res\ulFont.ico">
+			</File>
+			<File
 				RelativePath="res\underline.ico">
+			</File>
+			<File
+				RelativePath=".\res\Undo.ico">
 			</File>
 			<File
 				RelativePath="res\Up0down0.ico">
@@ -3161,13 +3067,16 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Up1down1.ico">
 			</File>
 			<File
-				RelativePath=".\res\Upload.gif">
+				RelativePath=".\res\Update.ico">
+			</File>
+			<File
+				RelativePath="res\Upload.gif">
 			</File>
 			<File
 				RelativePath="res\Upload.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\UPnP.ico">
+				RelativePath=".\res\UPnP.ico">
 			</File>
 			<File
 				RelativePath="res\User.ico">
@@ -3209,10 +3118,7 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Wizzard.ico">
 			</File>
 			<File
-				RelativePath=".\res\Mod\xtreme.ico">
-			</File>
-			<File
-				RelativePath=".\res\MOD\zzratio.ico">
+				RelativePath=".\res\Xray.ico">
 			</File>
 		</Filter>
 		<Filter
@@ -3231,55 +3137,106 @@ del $(IntDir)\emule.obj
 				RelativePath="..\setup\Template.eMuleSkin.ini">
 			</File>
 			<File
-				RelativePath="..\setup\Template.Notifier.ini">
-			</File>
-			<File
 				RelativePath="..\setup\webservices.dat">
-			</File>
-		</Filter>
-		<Filter
-			Name="WapServer"
-			Filter="">
-			<File
-				RelativePath=".\TreeOptsPrefs\PassTreeOptionsEdit.cpp">
-			</File>
-			<File
-				RelativePath=".\TreeOptsPrefs\PassTreeOptionsEdit.h">
-			</File>
-			<File
-				RelativePath="WapServer\WapServer.cpp">
-			</File>
-			<File
-				RelativePath="WapServer\WapServer.h">
-			</File>
-			<File
-				RelativePath="WapServer\WapSocket.cpp">
-			</File>
-			<File
-				RelativePath="WapServer\WapSocket.h">
-			</File>
-			<File
-				RelativePath="WapServer\WebWapDefinitions.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Documents"
 			Filter="">
 			<File
-				RelativePath="..\emule\Changelog.MorphXT.txt">
+				RelativePath="..\docs\kademlia\changelog.txt">
 			</File>
 			<File
-				RelativePath="..\emule\changelog.txt">
-			</File>
-			<File
-				RelativePath="..\emule\readme.txt">
-			</File>
-			<File
-				RelativePath="..\todo.txt">
+				RelativePath="..\docs\readme.txt">
 			</File>
 		</Filter>
 		<Filter
-			Name="minimule"
+			Name="Xtreme"
+			Filter="">
+			<File
+				RelativePath=".\BandWidthControl.cpp">
+			</File>
+			<File
+				RelativePath=".\BandWidthControl.h">
+			</File>
+			<File
+				RelativePath=".\DLP.cpp">
+			</File>
+			<File
+				RelativePath=".\DLP.h">
+			</File>
+			<File
+				RelativePath=".\HistoryListCtrl.cpp">
+			</File>
+			<File
+				RelativePath=".\HistoryListCtrl.h">
+			</File>
+			<File
+				RelativePath=".\IP2Country.cpp">
+			</File>
+			<File
+				RelativePath=".\IP2Country.h">
+			</File>
+			<File
+				RelativePath=".\KCSideBannerWnd.cpp">
+			</File>
+			<File
+				RelativePath=".\KCSideBannerWnd.h">
+			</File>
+			<File
+				RelativePath=".\MassRename.cpp">
+			</File>
+			<File
+				RelativePath=".\MassRename.h">
+			</File>
+			<File
+				RelativePath=".\NumEdit.cpp">
+			</File>
+			<File
+				RelativePath=".\NumEdit.h">
+			</File>
+			<File
+				RelativePath=".\P2PThreat.cpp">
+			</File>
+			<File
+				RelativePath=".\P2PThreat.h">
+			</File>
+			<File
+				RelativePath=".\PPgXtreme.cpp">
+			</File>
+			<File
+				RelativePath=".\PPgXtreme.h">
+			</File>
+			<File
+				RelativePath=".\PPgXtreme2.cpp">
+			</File>
+			<File
+				RelativePath=".\PPgXtreme2.h">
+			</File>
+			<File
+				RelativePath=".\ReadWriteLock.cpp">
+			</File>
+			<File
+				RelativePath=".\ReadWriteLock.h">
+			</File>
+			<File
+				RelativePath=".\SourceSaver.cpp">
+			</File>
+			<File
+				RelativePath=".\SourceSaver.h">
+			</File>
+			<File
+				RelativePath=".\SplashScreenEx.cpp">
+			</File>
+			<File
+				RelativePath=".\SplashScreenEx.h">
+			</File>
+			<File
+				RelativePath=".\WndUtil.h">
+			</File>
+		</Filter>
+		<Filter
+			Name="MiniMule"
 			Filter="">
 			<File
 				RelativePath=".\MiniMule\CDialogSK.cpp">

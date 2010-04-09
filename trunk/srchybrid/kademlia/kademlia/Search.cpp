@@ -80,7 +80,12 @@ CSearch::CSearch()
 	m_uTotalLoad = 0;
 	m_uTotalLoadResponses = 0;
 	theApp.emuledlg->kademliawnd->searchList->SearchAdd(this);
-	m_uLastResponse = (uint32)time(NULL); //vs2005
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	m_uLastResponse = time(NULL);
+	*/
+	m_uLastResponse = (uint32)time(NULL);
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	m_pucSearchTermsData = NULL;
 	m_uSearchTermsDataSize = 0;
 	pNodeSpecialSearchRequester = NULL;
@@ -1438,7 +1443,12 @@ static int GetMetaDataWords(CStringArray& rastrWords, const CString& rstrData)
 		rastrWords.Add(strWord);
 		strWord = rstrData.Tokenize(g_aszInvKadKeywordChars, iPos);
 	}
-	return (int) rastrWords.GetSize(); // MOPRH
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	return rastrWords.GetSize();
+	*/
+	return (int) rastrWords.GetSize();
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 }
 
 static bool IsRedundantMetaData(const CStringArray& rastrFileNameWords, const CString& rstrMetaData)
@@ -1624,7 +1634,12 @@ uint32 CSearch::GetAnswers() const
 	if(m_listFileIDs.size() == 0)
 		return m_uAnswers;
 	// If we sent more then one packet per node, we have to average the answers for the real count.
-	return (uint32) m_uAnswers/((m_listFileIDs.size()+49)/50); // MOPRH
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	return m_uAnswers/((m_listFileIDs.size()+49)/50);
+	*/
+	return (uint32) m_uAnswers/((m_listFileIDs.size()+49)/50);
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 }
 uint32 CSearch::GetKadPacketSent() const
 {

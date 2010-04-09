@@ -24,7 +24,7 @@
 #include "emule.h"
 #include "Preferences.h"
 #include "emuledlg.h"
-#include "MemDc.h"
+#include "MemDC.h"
 #include "knownfilelist.h"
 #include "SharedFileList.h"
 #include "menucmds.h"
@@ -53,7 +53,7 @@ static char THIS_FILE[] = __FILE__;
 
 //////////////////////////////////////////////////////////////////////////////
 // CHistoryFileDetailsSheet
-#ifndef NO_HISTORY
+
 class CHistoryFileDetailsSheet : public CListViewWalkerPropertySheet
 {
 	DECLARE_DYNAMIC(CHistoryFileDetailsSheet)
@@ -212,6 +212,8 @@ CHistoryListCtrl::~CHistoryListCtrl()
 
 BEGIN_MESSAGE_MAP(CHistoryListCtrl, CMuleListCtrl)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnLvnColumnClick)
+	ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
+	ON_NOTIFY_REFLECT(NM_DBLCLK, OnNMDblclk)
 	ON_WM_CONTEXTMENU()
 END_MESSAGE_MAP()
 
@@ -229,18 +231,11 @@ void CHistoryListCtrl::Init(void)
 	InsertColumn(4,GetResString(IDS_DATE),LVCFMT_LEFT, 120);
 	InsertColumn(5,GetResString(IDS_DOWNHISTORY_SHARED),LVCFMT_LEFT, 65);
 	InsertColumn(6,GetResString(IDS_COMMENT),LVCFMT_LEFT, 260);
-	
 	//EastShare START - Added by Pretender
 	InsertColumn(7,GetResString(IDS_SF_TRANSFERRED),LVCFMT_RIGHT,120);
 	InsertColumn(8,GetResString(IDS_SF_REQUESTS),LVCFMT_RIGHT,100);
 	InsertColumn(9,GetResString(IDS_SF_ACCEPTS),LVCFMT_RIGHT,100);
 	//EastShare END
-	//MORPH START - SLUGFILLER: Spreadbars //Fafner: added to history - 080318
-	InsertColumn(10,GetResString(IDS_SF_UPLOADED_PARTS),LVCFMT_LEFT,170,14); // SF
-	InsertColumn(11,GetResString(IDS_SF_TURN_PART),LVCFMT_LEFT,100,15); // SF
-	InsertColumn(12,GetResString(IDS_SF_TURN_SIMPLE),LVCFMT_LEFT,100,16); // VQB
-	InsertColumn(13,GetResString(IDS_SF_FULLUPLOAD),LVCFMT_LEFT,100,17); // SF
-	//MORPH END   - SLUGFILLER: Spreadbars
 
 	LoadSettings();
 
@@ -369,15 +364,6 @@ void CHistoryListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 							cur_rec.right -= sm_iSubItemInset;
 							break;
 						}
-						// SLUGFILLER: Spreadbars //Fafner: added to history - 080318
-						case 10:
-							cur_rec.bottom--;
-							cur_rec.top++;
-							file->statistic.DrawSpreadBar(dc,&cur_rec,thePrefs.UseFlatBar());
-							cur_rec.bottom++;
-							cur_rec.top--;
-							break;
-						// SLUGFILLER: Spreadbars //Fafner: added to history - 080318
 
 						default:
 							dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
@@ -389,8 +375,6 @@ void CHistoryListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		}
 
 		DrawFocusRect(dc, lpDrawItemStruct->rcItem, lpDrawItemStruct->itemState & ODS_FOCUS, bCtrlFocused, lpDrawItemStruct->itemState & ODS_SELECTED);
-		if (!theApp.IsRunningAsService(SVC_LIST_OPT)) // MORPH leuk_he:run as ntservice v1..
-			m_updatethread->AddItemUpdated((LPARAM)file); //MORPH - UpdateItemThread
 	}
 	catch (...) {
 		if (!theApp.knownfiles->bReloadHistory)
@@ -442,23 +426,7 @@ void CHistoryListCtrl::GetItemDisplayText(CKnownFile* file, int iSubItem, LPTSTR
 	case 9:
 		_sntprintf(pszText, cchTextMax, _T("%u"), file->statistic.GetAllTimeAccepts());
 		break;
-	//EastShare
-	// SLUGFILLER: Spreadbars //Fafner: added to history - 080318
-	case 10:
-		break;
-	case 11:
-		_sntprintf(pszText, cchTextMax, _T("%.2f"),file->statistic.GetSpreadSortValue());
-		break;
-	case 12:
-		if (file->GetFileSize()>(uint64)0)
-			_sntprintf(pszText, cchTextMax, _T("%.2f"),((double)file->statistic.GetAllTimeTransferred())/((double)file->GetFileSize()));
-		else
-			_sntprintf(pszText, cchTextMax, _T("%.2f"),0.0f);
-		break;
-	case 13:
-		_sntprintf(pszText, cchTextMax, _T("%.2f"),file->statistic.GetFullSpreadCount());
-		break;
-	// SLUGFILLER: Spreadbars
+	//EastShare END
 	}
 	pszText[cchTextMax - 1] = _T('\0');
 }
@@ -511,8 +479,18 @@ int CHistoryListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 				break;
 
 			case 2: //filetype asc
-				iResult= item1->GetFileType().CompareNoCase(item2->GetFileType());
-				break;
+			iResult= item1->GetFileType().CompareNoCase(item2->GetFileType());
+			// if the type is equal, subsort by extension
+			if (iResult == 0)
+			{
+				LPCTSTR pszExt1 = PathFindExtension(item1->GetFileName());
+				LPCTSTR pszExt2 = PathFindExtension(item2->GetFileName());
+				if ((pszExt1 == NULL) ^ (pszExt2 == NULL))
+					iResult = pszExt1 == NULL ? 1 : (-1);
+				else
+					iResult = pszExt1 != NULL ? _tcsicmp(pszExt1, pszExt2) : 0;
+			}
+			break;
 
 			case 3: //file ID
 				iResult= memcmp(item1->GetFileHash(),item2->GetFileHash(),16);
@@ -535,38 +513,19 @@ int CHistoryListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 				iResult= _tcsicmp(item1->GetFileComment(),item2->GetFileComment());
 				break;
 
-				//EastShare START - Added by Pretender
+			//EastShare START - Added by Pretender
 			case 7: //all transferred asc
 				iResult=item1->statistic.GetAllTimeTransferred()==item2->statistic.GetAllTimeTransferred()?0:(item1->statistic.GetAllTimeTransferred()>item2->statistic.GetAllTimeTransferred()?1:-1);
 				break;
 
 			case 8: //acc requests asc
-				iResult=item1->statistic.GetAllTimeAccepts() - item2->statistic.GetAllTimeAccepts();
+				iResult=item1->statistic.GetAllTimeRequests() - item2->statistic.GetAllTimeRequests();
 				break;
-			
+		
 			case 9: //acc accepts asc
 				iResult=item1->statistic.GetAllTimeAccepts() - item2->statistic.GetAllTimeAccepts();
 				break;
 			//EastShare END
-
-			//MORPH START - SLUGFILLER: Spreadbars //Fafner: added to history - 080318
-			case 10: //spread asc
-			case 11:
-				iResult=CompareFloat(item1->statistic.GetSpreadSortValue(),item2->statistic.GetSpreadSortValue());
-				break;
-
-			case 12: // VQB:  Simple UL asc
-			{
-					float x1 = ((float)item1->statistic.GetAllTimeTransferred())/((float)item1->GetFileSize());
-					float x2 = ((float)item2->statistic.GetAllTimeTransferred())/((float)item2->GetFileSize());
-					iResult=CompareFloat(x1,x2);
-				break;
-			}
-
-			case 13: // SF:  Full Upload Count asc
-				iResult=CompareFloat(item1->statistic.GetFullSpreadCount(),item2->statistic.GetFullSpreadCount());
-				break;
-			//MORPH END   - SLUGFILLER: Spreadbars
 		}
 	}
 	catch (...) {
@@ -632,22 +591,6 @@ void CHistoryListCtrl::Localize() {
 				strRes = GetResString(IDS_SF_ACCEPTS);
 				break;
 			//EastShare
-
-			//MORPH START - SLUGFILLER: Spreadbars //Fafner: added to history - 080318
-			case 10:
-				strRes = GetResString(IDS_SF_UPLOADED_PARTS);
-				break;
-			case 11:
-				strRes = GetResString(IDS_SF_TURN_PART);
-				break;
-			case 12:
-				strRes = GetResString(IDS_SF_TURN_SIMPLE);
-				break;
-			case 13:
-				strRes = GetResString(IDS_SF_FULLUPLOAD);
-			//MORPH END - SLUGFILLER: Spreadbars
-				break;
-
 			default:
 				strRes = "No Text!!";
 		}
@@ -669,7 +612,7 @@ void CHistoryListCtrl::CreateMenues()
 	/*
 	m_HistoryOpsMenu.AddMenuTitle(NULL, true);
 	*/
-	m_HistoryOpsMenu.AddMenuTitle(GetResString(IDS_HISTORY), true, false);
+	m_HistoryOpsMenu.AddMenuTitle(NULL, true, false);
 	// <== XP Style Menu [Xanatos] - Stulle
 	m_HistoryOpsMenu.AppendMenu(MF_STRING,MP_CLEARHISTORY,GetResString(IDS_DOWNHISTORY_CLEAR), _T("CLEARCOMPLETE"));
 
@@ -729,15 +672,21 @@ void CHistoryListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	/*
 	WebMenu.AddMenuTitle(NULL, true);
 	*/
-	WebMenu.AddMenuTitle(GetResString(IDS_WEBSERVICES), true, false);
+	WebMenu.AddMenuTitle(NULL, true, false);
 	// <== XP Style Menu [Xanatos] - Stulle
 	int iWebMenuEntries = theWebServices.GetFileMenuEntries(&WebMenu);
 	UINT flag = (iWebMenuEntries == 0 || iSelectedItems != 1) ? MF_GRAYED : MF_ENABLED;
 	m_HistoryMenu.AppendMenu(MF_POPUP | flag, (UINT_PTR)WebMenu.m_hMenu, GetResString(IDS_WEBSERVICES), _T("SEARCHMETHOD_GLOBAL"));
 
+	m_HistoryMenu.AppendMenu(MF_SEPARATOR); 
+	m_HistoryMenu.AppendMenu(MF_STRING | (GetItemCount() > 0 ? MF_ENABLED : MF_GRAYED), MP_FIND, GetResString(IDS_FIND), _T("Search"));
+
+	GetPopupMenuPos(*this, point);
 	m_HistoryMenu.TrackPopupMenu(TPM_LEFTALIGN |TPM_RIGHTBUTTON,point.x,point.y,this);
 
-	m_HistoryMenu.RemoveMenu(m_HistoryMenu.GetMenuItemCount()-1,MF_BYPOSITION);
+	m_HistoryMenu.RemoveMenu(m_HistoryMenu.GetMenuItemCount()-1,MF_BYPOSITION); //find menu
+	m_HistoryMenu.RemoveMenu(m_HistoryMenu.GetMenuItemCount()-1,MF_BYPOSITION); //separator
+	m_HistoryMenu.RemoveMenu(m_HistoryMenu.GetMenuItemCount()-1,MF_BYPOSITION); //web menu
 	VERIFY( WebMenu.DestroyMenu() );
 }
 
@@ -766,6 +715,14 @@ BOOL CHistoryListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 {
 	UINT selectedCount = this->GetSelectedCount(); 
 	int iSel = GetSelectionMark();
+
+	switch (wParam)
+	{
+	case MP_FIND:
+		OnFindStart();
+		return TRUE;
+	}
+
 
 	CTypedPtrList<CPtrList, CKnownFile*> selectedList;
 	POSITION pos = GetFirstSelectedItemPosition();
@@ -929,10 +886,13 @@ void CHistoryListCtrl::ClearHistory() {
 }
 
 
-//MORPH START- UpdateItemThread
-/*
 void CHistoryListCtrl::UpdateFile(const CKnownFile* file)
 {
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_LIST_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+
 	if (!file || !theApp.emuledlg->IsRunning())
 		return;
 	int iItem = FindFile(file);
@@ -950,23 +910,6 @@ int CHistoryListCtrl::FindFile(const CKnownFile* pFile)
 	find.lParam = (LPARAM)pFile;
 	return FindItem(&find);
 }
-*/
-void CHistoryListCtrl::UpdateFile(const CKnownFile* file)
-{
-	if (theApp.IsRunningAsService(SVC_LIST_OPT)) return;// MORPH leuk_he:run as ntservice v1..
-	
-	if(!file || !theApp.emuledlg->IsRunning())
-		return;
-
-	//MORPH START - SiRoB, Don't Refresh item if not needed
-	if( theApp.emuledlg->activewnd != theApp.emuledlg->sharedfileswnd || IsWindowVisible() == FALSE )
-		return;
-	//MORPH END   - SiRoB, Don't Refresh item if not needed
-
-	m_updatethread->AddItemToUpdate((LPARAM)file);
-	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
-}
-//MORPH END - UpdateItemThread
 
 void CHistoryListCtrl::ShowFileDialog(CTypedPtrList<CPtrList, CKnownFile*>& aFiles, UINT uPshInvokePage)
 {
@@ -976,4 +919,26 @@ void CHistoryListCtrl::ShowFileDialog(CTypedPtrList<CPtrList, CKnownFile*>& aFil
 		dialog.DoModal();
 	}
 }
-#endif
+void CHistoryListCtrl::OnLvnGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	if (theApp.emuledlg->IsRunning()) {
+		// Although we have an owner drawn listview control we store the text for the primary item in the listview, to be
+		// capable of quick searching those items via the keyboard. Because our listview items may change their contents,
+		// we do this via a text callback function. The listview control will send us the LVN_DISPINFO notification if
+		// it needs to know the contents of the primary item.
+		//
+		// But, the listview control sends this notification all the time, even if we do not search for an item. At least
+		// this notification is only sent for the visible items and not for all items in the list. Though, because this
+		// function is invoked *very* often, do *NOT* put any time consuming code in here.
+		//
+		// Vista: That callback is used to get the strings for the label tips for the sub(!) items.
+		//
+		NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+		if (pDispInfo->item.mask & LVIF_TEXT) {
+			CKnownFile* pFile = reinterpret_cast<CKnownFile*>(pDispInfo->item.lParam);
+			if (pFile != NULL)
+				GetItemDisplayText(pFile, pDispInfo->item.iSubItem, pDispInfo->item.pszText, pDispInfo->item.cchTextMax);
+		}
+	}
+	*pResult = 0;
+}

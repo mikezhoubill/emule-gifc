@@ -16,6 +16,36 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
+// ==> ModID [itsonlyme/SiRoB] - Stulle
+/*
+//Xman
+//ModID
+#define MOD_VERSION		_T("Xtreme 7.2") 
+*/
+// <== ModID [itsonlyme/SiRoB] - Stulle
+
+//Xman versions check
+#define MOD_MAIN_VER	7
+#define MOD_MIN_VER		2
+#define	MOD_BUILD_VER	1 //1=Xtreme x.x 2=Xtreme x.x.1
+
+// ==> ModID [itsonlyme/SiRoB] - Stulle
+/*
+//Xman Anti-Leecher: simple Anti-Thief
+#define MOD_MAJOR_VERSION _T("eMule v0.49c") 
+//const float MOD_FLOAT_VERSION= (float)_tstof(CString(MOD_VERSION).Mid(7)) ;
+#define MOD_NICK_ADD _T(" «") + MOD_VERSION + _T("»")
+*/
+// <== ModID [itsonlyme/SiRoB] - Stulle
+
+
+//Xman Links:
+#define MOD_FORUMLINK _T("http://www.emule-web.de/board/forum34.html")
+#define MOD_HPLINK _T("http://www.emule-mods.de/?mods=xtreme") //zz_fly :: new homepage
+#define MOD_DLPLINK _T("http://sourceforge.net/project/showfiles.php?group_id=129450&package_id=164798") //zz_fly :: update DLP link
+#define MOD_VOTELINK _T("http://www.emule-mods.de/?comment=xtreme#addentry")
+//---------------------------------------
+
 // MOD Note: Do not change this part - Merkur
 #define	EMULE_PROTOCOL					0x01
 // MOD Note: end
@@ -35,17 +65,18 @@
 #define PARTFILE_VERSION_LARGEFILE		0xe2
 #define SOURCEEXCHANGE2_VERSION			4		// replaces the version sent in MISC_OPTIONS flag fro SX1
 
-//Morph Start - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
+/*
+#define CREDITFILE_VERSION		0x12
+#define CREDITFILE_VERSION_29	0x11
+*/
 #define CREDITFILE_VERSION_30_DYN		0x81	// Moonlight: Dynamic Transportable CreditStruct.
 #define CREDITFILE_VERSION_30_SUQWTv2	0x80	// Moonlight: SUQWT CreditStruct v2.
 #define CREDITFILE_VERSION_30_SUQWTv1	0x13	// Moonlight: SUQWT CreditStruct v1.
 #define CREDITFILE_VERSION_30			0x12
-/* //original commented out
-#define CREDITFILE_VERSION		0x12
-*/
-#define CREDITFILE_VERSION_29	0x11
+#define CREDITFILE_VERSION_29			0x11
 #define CREDITFILE_VERSION				CREDITFILE_VERSION_30_SUQWTv2	// Define the current version number.
-//Morph End - modified by AndCycle, Moonlight's Save Upload Queue Wait Time (MSUQWT)
+// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 #define COMPILE_DATE			__DATE__
 #define COMPILE_TIME			__TIME__
 #ifdef _DEBUG
@@ -68,7 +99,12 @@
 #define MAX_RESULTS				100			// max global search results
 #define	MAX_MORE_SEARCH_REQ		5			// this gives a max. total search results of (1+5)*201 = 1206 or (1+5)*300 = 1800
 #define MAX_CLIENTCONNECTIONTRY	2
+//Xman changed to 50
+/*
 #define CONNECTION_TIMEOUT		SEC2MS(40)	//40 secs - set his lower if you want less connections at once, set it higher if you have enough sockets (edonkey has its own timout too, so a very high value won't effect this)
+*/
+#define CONNECTION_TIMEOUT		SEC2MS(50)	//50 secs - set his lower if you want less connections at once, set it higher if you have enough sockets (edonkey has its own timout too, so a very high value won't effect this)
+//Xman end
 #define	FILEREASKTIME			MIN2MS(29)	//29 mins
 #define SERVERREASKTIME			MIN2MS(15)	//15 mins - don't set this too low, it wont speed up anything, but it could kill emule or your internetconnection
 #define UDPSERVERREASKTIME		MIN2MS(30)	//30 mins
@@ -103,50 +139,77 @@
 #define RSAKEYSIZE				384			//384 bits
 #define	MAX_SOURCES_FILE_SOFT	750
 #define	MAX_SOURCES_FILE_UDP	50
-#define SESSIONMAXTRANS			PARTSIZE // "Try to send complete chunks" always sends this amount of data
+#define SESSIONMAXTRANS			(PARTSIZE+20*1024) // "Try to send complete chunks" always sends this amount of data
+//Xman Full Chunk, changed from 1 to 2 hours
+// Xtreme Upload: with the lowest slotspeed (1,5kbs) we need 110 minutes to complete one chunk
+/*
 #define SESSIONMAXTIME			HR2MS(1)	//1 hour
+*/
+#define SESSIONMAXTIME			HR2MS(2)
+//Xman end
 #define	MAXFILECOMMENTLEN		128
 #define	PARTSIZE				9728000ui64
 #define	MAX_EMULE_FILE_SIZE		0x4000000000ui64 // = 2^38 = 256GB
 #define OLD_MAX_EMULE_FILE_SIZE	4290048000ui64	// (4294967295/PARTSIZE)*PARTSIZE = ~4GB
 // MOD Note: end
 
-//MORPH START - Changed by SiRoB, Better datarate mesurement for low and high speed
-#define	MAXAVERAGETIMEUPLOAD	(UINT)thePrefs.m_iUploadDataRateAverageTime
-#define	MAXAVERAGETIMEDOWNLOAD	(UINT)thePrefs.m_iDownloadDataRateAverageTime
-//MORPH END   - Changed by SiRoB, Better datarate mesurement for low and high speed
-
 #define CONFIGFOLDER			_T("config\\")
-#define SIVKAFOLDER				_T("Extra Lists\\")// drop sources - Stulle
+#define SIVKAFOLDER				_T("Extra Lists\\") // File Settings [sivka/Stulle] - Stulle
 #define MAXCONPER5SEC			20	
 #define MAXCON5WIN9X			10
 #define	UPLOAD_CHECK_CLIENT_DR	2048
 #define	UPLOAD_CLIENT_DATARATE	3072		// uploadspeed per client in bytes - you may want to adjust this if you have a slow connection or T1-T3 ;)
 #define	MAX_UP_CLIENTS_ALLOWED	250			// max. clients allowed regardless UPLOAD_CLIENT_DATARATE or any other factors. Don't set this too low, use DATARATE to adjust uploadspeed per client
-#define	MIN_UP_CLIENTS_ALLOWED	3			// min. clients per class allowed to download regardless UPLOAD_CLIENT_DATARATE or any other factors. Don't set this too high
-#define MINNUMBEROFTRICKLEUPLOADS 1			//MORPH  - Added By AndCycle, ZZUL_20050212-0200
+#define	MIN_UP_CLIENTS_ALLOWED	2			// min. clients allowed to download regardless UPLOAD_CLIENT_DATARATE or any other factors. Don't set this too high
+//Xman increased from 100
+/*
 #define DOWNLOADTIMEOUT			SEC2MS(100)
+*/
+#define DOWNLOADTIMEOUT			SEC2MS(120)
+//Xman end
 #define CONSERVTIMEOUT			SEC2MS(25)	// agelimit for pending connection attempts
 #define RARE_FILE				50
 #define BADCLIENTBAN			4
 #define	MIN_REQUESTTIME			MIN2MS(10) 
+//Xman Xtreme Upload
+/*
 #define	MAX_PURGEQUEUETIME		HR2MS(1) 
+*/
+#define	MAX_PURGEQUEUETIME		MIN2MS(80)
+//Xman end
+//Xman Xtreme Downloadmanager changed form 15 to 40, important!
+/*
 #define PURGESOURCESWAPSTOP		MIN2MS(15)	// (15 mins), how long forbid swapping a source to a certain file (NNP,...)
+*/
+#define PURGESOURCESWAPSTOP		MIN2MS(40)	// (40 mins), how long forbid swapping a source to a certain file (NNP,...)
+//Xman end
 #define CONNECTION_LATENCY		22050		// latency for responces
 #define MINWAIT_BEFORE_DLDISPLAY_WINDOWUPDATE   1000
 #define MINWAIT_BEFORE_ULDISPLAY_WINDOWUPDATE   1000
+//Xman changed
+/*
 #define CLIENTBANTIME			HR2MS(2)	// 2h
 #define TRACKED_CLEANUP_TIME	HR2MS(1)	// 1 hour
+*/
+#define CLIENTBANTIME			HR2MS(4)	// 4h
+#define TRACKED_CLEANUP_TIME	MIN2MS(30)	// 1/2 hour
+//Xman end
 #define KEEPTRACK_TIME			HR2MS(2)	// 2h	//how long to keep track of clients which were once in the uploadqueue
 #define LOCALSERVERREQUESTS		20000		// only one local src request during this timespan (WHERE IS THIS USED?)
 #define DISKSPACERECHECKTIME	MIN2MS(15)
+//Xman changed to 10, because of extended cleanup
+/*
 #define CLIENTLIST_CLEANUP_TIME	MIN2MS(34)	// 34 min
+*/
+#define CLIENTLIST_CLEANUP_TIME	MIN2MS(21)	//21 min
+//Xman end
 #define MAXPRIORITYCOLL_SIZE	10*1024		// max file size for collection file which are allowed to bypass the queue
 #define SEARCH_SPAM_THRESHOLD	60
 #define OLDFILES_PARTIALLYPURGE DAY2S(31)	// time after which some data about a know file in the known.met and known2.met is deleted
 
 // you shouldn't change anything here if you are not really sure, or emule will probaly not work
 #define UDP_KAD_MAXFRAGMENT		1420		// based on a 1500 ethernet MTU, use a conservative value to leave enough room for IP/UDP headers, tunnel headers, Kad headers(16) and misconfigs 
+#define	MAXFRAGSIZE				1300 //Xman avoid the silly window syndrome
 #define EMBLOCKSIZE				184320
 #define OP_EDONKEYHEADER		0xE3
 #define OP_KADEMLIAHEADER		0xE4
@@ -273,9 +336,6 @@
 #define OP_PUBLICKEY			0x85	// <len 1><pubkey len>
 #define OP_SIGNATURE			0x86	// v1: <len 1><signature len>  v2:<len 1><signature len><sigIPused 1>
 #define OP_SECIDENTSTATE		0x87	// <state 1><rndchallenge 4>
-
-#define OP_FILEINCSTATUS		0x8e	// enkeyDEV: ICS - Incomplete part packet (like OP_FILESTATUS) //Morph - added by AndCycle, ICS
-
 #define OP_REQUESTPREVIEW		0x90	// <HASH 16>
 #define OP_PREVIEWANSWER		0x91	// <HASH 16><frames 1>{frames * <len 4><frame len>}
 #define OP_MULTIPACKET			0x92
@@ -402,43 +462,13 @@
 #define  FT_CATEGORY			 0x53	// <uint32>
 #define	 FT_ATTRANSFERREDHI		 0x54	// <uint32>
 #define	 FT_MAXSOURCES			 0x55	// <uint32>
-// khaos::categorymod+
-#define FT_CATRESUMEORDER		0x7F
-// khaos::categorymod-
-// khaos::accuratetimerem+
-#define	FT_SECONDSACTIVE		0x80
-#define	FT_INITIALBYTES			0x81
-#define FT_A4AFON				0x82
-#define FT_A4AFOFF				0x83
-// khaos::accuratetimerem-
 
-//MORPH START - Added by SiRoB, ZZ Upload System
-#define FT_POWERSHARE           "ZZUL_POWERSHARE"
-//MORPH END - Added by SiRoB, ZZ Upload System
+//Xman advanced upload-priority
+#define	 FT_NOTCOUNTEDTRANSFERREDLOW	 0x90
+#define	 FT_NOTCOUNTEDTRANSFERREDHIGH	 0x91
+#define	 FT_LASTDATAUPDATE		 0x92
+//Xman end
 
-//MORPH START - Added by SiRoB, POWERSHARE Limit
-#define FT_POWERSHARE_LIMIT		"POWERSHARE_LIMIT"
-//MORPH END   - Added by SiRoB, POWERSHARE Limit
-
-//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-#define FT_SPREADBAR			"Spreadbar"
-//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-
-//MORPH START - Added by SiRoB, HIDEOS
-#define FT_HIDEOS				"HIDEOS"
-#define FT_SELECTIVE_CHUNK		"SELECT_CHUNK"
-//MORPH END   - Added by SiRoB, HIDEOS
-
-//MORPH START - Added by SiRoB, SHARE_ONLY_THE_NEED
-#define FT_SHAREONLYTHENEED		"SHARE_ONLY_THE_NEED"
-//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED
-
-//MORPH - Added by IceCream, SLUGFILLER: Spreadbars
-#define FT_SPREADSTART			0x70
-#define FT_SPREADEND			0x71
-#define FT_SPREADCOUNT			0x72
-//MORPH - Added by IceCream, SLUGFILLER: Spreadbars
-#define FT_ATSHARED				0x96	// <uint32> // Morph - Added by AndCycle, Equal Chance For Each File
 #define	 FT_MEDIA_ARTIST		 0xD0	// <string>
 #define	TAG_MEDIA_ARTIST		"\xD0"	// <string>
 #define	 FT_MEDIA_ALBUM			 0xD1	// <string>
@@ -590,8 +620,27 @@
 #define ET_COMPATIBLECLIENT		0x26
 #define ET_FEATURES				0x27
 #define ET_MOD_VERSION			CT_MOD_VERSION
-#define ET_INCOMPLETEPARTS		0x3D // enkeyDEV: ICS //Morph - added by AndCycle, ICS
 
+//------------------------------------------------------------------------------------
+//Xman Xtreme Mod Parameters
+// Maella -small latency-
+#ifndef _DEBUG
+#define TIMER_PERIOD			100			// base period in [ms] (emule default is 100 [ms])
+#else
+#define TIMER_PERIOD			100			// base period in [ms] (emule default is 100 [ms])
+#endif
+#define DISPLAY_REFRESH			1			// GUI refresh rate in [s] (emule default is 3 [s])
+#define DISPLAY_REFRESH_CLIENTLIST			3*DISPLAY_REFRESH //GUI clientlist refresh
+// ==> Increase Slotspeed [Stulle] - Stulle
+/*
+#define XTREME_MAX_SLOTSPEED	15
+*/
+#define XTREME_MAX_SLOTSPEED	19 // increased by 26.6666% to get int value
+// <== Increase Slotspeed [Stulle] - Stulle
+// Maella end
+
+
+//---------------------------------------------------------------------------------------
 
 #define	PCPCK_VERSION			0x01
 
@@ -621,9 +670,6 @@
 
 #define KADEMLIA_HELLO_RES     			0x18	// <PEER (receiver) [25]>
 #define KADEMLIA2_HELLO_RES				0x19	//
-//EastShare
-#define KADEMLIA_HELLO_ACK     	0x85	// (null)
-//EastShare
 
 #define KADEMLIA_REQ		   			0x20	// <TYPE [1]> <HASH (target) [16]> <HASH (receiver) 16>
 #define KADEMLIA2_REQ					0x21	//
@@ -687,29 +733,45 @@
 #define SP_FILESIZE						0x07
 #define SP_UDPSERVERSPAMRATIO			0x08
 
-#define MAX_GSL                         8000 //MORPH - Added by Stulle, Global Source Limit
-//MORPH START - Append WC info to m_strNotOfficial
-#define WC_TAG_VOODOO		0x69		// hello packet tag: magic number == 'WebC' for pre-1.1 (unsupported), 'ARC4' for 1.1
-#define WC_TAG_FLAGS		0x6A		// webcache flags tag
-//MORPH END   - Append WC info to m_strNotOfficial
-
-// ==> drop sources - Stulle
-#define ENABLE_AUTO_DROP_NNS            1
-#define AUTO_NNS_TIMER                  40000 // 40 sec
+// ==> File Settings [sivka/Stulle] - Stulle
+#define ENABLE_AUTO_DROP_NNS            true
+#define AUTO_NNS_TIMER                  35000 // 35 sec
 #define MAX_REMOVE_NNS_LIMIT            80
-#define ENABLE_AUTO_DROP_FQS            1
-#define AUTO_FQS_TIMER                  40000 // 40 sec
+#define ENABLE_AUTO_DROP_FQS            true
+#define AUTO_FQS_TIMER                  45000 // 45 sec
 #define MAX_REMOVE_FQS_LIMIT            80
-#define ENABLE_AUTO_DROP_QRS            0
-#define AUTO_HQRS_TIMER                 35000 // 35 sec
+#define ENABLE_AUTO_DROP_QRS            false
+#define AUTO_HQRS_TIMER                 60000 // 60 sec
 #define MAX_REMOVE_QRS                  4000
 #define MAX_REMOVE_QRS_LIMIT            90
-// <== drop sources - Stulle
+#define HQR_XMAN                        true
+// <== File Settings [sivka/Stulle] - Stulle
 
-// ==> Limit PS by amount of data uploaded - Stulle
+#define MAX_GSL                         8000 // Global Source Limit [Max/Stulle] - Stulle
+
+#define FT_CATRESUMEORDER		0x7F // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
+// ==> Spread bars [Slugfiller/MorphXT] - Stulle
+#define FT_SPREADSTART			0x70
+#define FT_SPREADEND			0x71
+#define FT_SPREADCOUNT			0x72
+// <== Spread bars [Slugfiller/MorphXT] - Stulle
+
+// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+#define FT_HIDEOS				"HIDEOS"
+#define FT_SELECTIVE_CHUNK		"SELECT_CHUNK"
+#define FT_SHAREONLYTHENEED		"SHARE_ONLY_THE_NEED"
+// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+
+// ==> PowerShare [ZZ/MorphXT] - Stulle
+#define FT_POWERSHARE           "ZZUL_POWERSHARE"
+#define FT_POWERSHARE_LIMIT		"POWERSHARE_LIMIT"
+// <== PowerShare [ZZ/MorphXT] - Stulle
+
+// ==> Limit PS by amount of data uploaded [Stulle] - Stulle
 #define FT_PS_AMOUNT_LIMIT		"PS_AMOUNT_LIMIT"
 #define MAX_PS_AMOUNT_LIMIT             10000
-// <== Limit PS by amount of data uploaded - Stulle
+// <== Limit PS by amount of data uploaded [Stulle] - Stulle
 
 // ==> Recognize MlDonkey XS Answer [Spike2/ideas by Wiz] - Stulle
 #define OP_XSMLDONKEY			0xFA // <2 bytes: no. of sources><HASH 16><sources: IP port IP>

@@ -23,8 +23,7 @@ typedef CMap<CCKey,const CCKey&,CKnownFile*,CKnownFile*> CKnownFilesMap;
 typedef CMap<CSKey,const CSKey&,int,int> CancelledFilesMap;
 typedef CMap<CAICHHash, const CAICHHash&, const CKnownFile*, const CKnownFile*> KnonwFilesByAICHMap;
 
-// ==> Threaded Known Files Saving - Stulle
-#ifdef KNOWNFILES_SAVE_THREAD
+// ==> Threaded Known Files Saving [Stulle] - Stulle
 class CSaveKnownThread : public CWinThread
 {
 public:
@@ -42,8 +41,7 @@ private:
     CEvent* pauseEvent;
 	volatile bool bDoRun;
 };
-#endif
-// <== Threaded Known Files Saving - Stulle
+// <== Threaded Known Files Saving [Stulle] - Stulle
 
 class CKnownFileList 
 {
@@ -62,7 +60,6 @@ public:
 	CKnownFile* FindKnownFile(LPCTSTR filename, uint32 date, uint64 size) const;
 	CKnownFile* FindKnownFileByID(const uchar* hash) const;
 	CKnownFile* FindKnownFileByPath(const CString& sFilePath) const;
-	void	MergePartFileStats(CKnownFile* original);	// SLUGFILLER: mergeKnown - retrieve part file stats from known file
 	bool	IsKnownFile(const CKnownFile* file) const;
 	bool	IsFilePtrInList(const CKnownFile* file) const;
 
@@ -75,23 +72,20 @@ public:
 	bool	ShouldPurgeAICHHashset(const CAICHHash& rAICHHash) const;
 	void	AICHHashChanged(const CAICHHash* pOldAICHHash, const CAICHHash& rNewAICHHash, CKnownFile* pFile);
 
-	//MORPH START - Added, Downloaded History [Monki/Xman]
-#ifndef NO_HISTORY
-	CKnownFilesMap* GetDownloadedFiles();
-	bool RemoveKnownFile(CKnownFile *toRemove);
-	void ClearHistory();
-
-	bool	bReloadHistory; //Fafner: possible exception in history - 070626
-#endif
-	//MORPH END   - Added, Downloaded History [Monki/Xman]
-
-	//Added by MoNKi [MoNKi: -Check already downloaded files-]
+	//Xman [MoNKi: -Check already downloaded files-]
 	int CheckAlreadyDownloadedFile(const uchar* hash, CString filename=_T(""), CArray<CKnownFile*,CKnownFile*> *files = NULL);
 	// >> modified by Ken
 	//bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename);
 	bool CheckAlreadyDownloadedFileQuestion(const uchar* hash, CString filename, bool bAutoDownloadGIFC = false);
-	// << modified by Ken
-	//end MoNKi
+	// << modified by Ken	//Xman end
+
+	//Xman [MoNKi: -Downloaded History-]
+	CKnownFilesMap* GetDownloadedFiles();
+	bool RemoveKnownFile(CKnownFile *toRemove);
+	void ClearHistory();
+	bool	bReloadHistory; //Fafner: possible exception in history - 070626
+	//Xman end
+
 
 private:
 	bool	LoadKnownFiles();
@@ -111,12 +105,10 @@ private:
 public:
 	uint32	GetTotalRequested() {return requested;} // push rare file - Stulle
 
-	// ==> Threaded Known Files Saving - Stulle
-#ifdef KNOWNFILES_SAVE_THREAD
+	// ==> Threaded Known Files Saving [Stulle] - Stulle
 	void SaveKnown(bool bStart = true);
 	CSaveKnownThread* m_SaveKnownThread;
 protected:
 	bool m_bSaveAgain;
-#endif
-	// <== Threaded Known Files Saving - Stulle
+	// <== Threaded Known Files Saving [Stulle] - Stulle
 };

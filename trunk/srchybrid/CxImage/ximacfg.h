@@ -3,12 +3,12 @@
 
 /////////////////////////////////////////////////////////////////////////////
 // CxImage supported features
-#define CXIMAGE_SUPPORT_ALPHA          1        // MorphXT: Comment by FrankyFive [Toolbar Transparency On Win2k]
-#define CXIMAGE_SUPPORT_SELECTION      1        // MorphXT: We need this for CXIMAGE_SUPPORT_DSP
+#define CXIMAGE_SUPPORT_ALPHA          1
+#define CXIMAGE_SUPPORT_SELECTION      1
 #define CXIMAGE_SUPPORT_TRANSFORMATION 1
-#define CXIMAGE_SUPPORT_DSP            1        // MorphXT: Comment by FrankyFive [Toolbar Transparency On Win2k]
-#define CXIMAGE_SUPPORT_LAYERS		   0
-#define CXIMAGE_SUPPORT_INTERPOLATION  0
+#define CXIMAGE_SUPPORT_DSP            1
+#define CXIMAGE_SUPPORT_LAYERS		   1
+#define CXIMAGE_SUPPORT_INTERPOLATION  1
 
 #define CXIMAGE_SUPPORT_DECODE	1
 #define CXIMAGE_SUPPORT_ENCODE	1		//<vho><T.Peck>
@@ -17,15 +17,16 @@
 /////////////////////////////////////////////////////////////////////////////
 // CxImage supported formats
 #define CXIMAGE_SUPPORT_BMP 1
-#define CXIMAGE_SUPPORT_GIF 1           // MorphXT: Comment by FrankyFive [Skin Selector, Wap Server]
+#define CXIMAGE_SUPPORT_GIF 1
 #define CXIMAGE_SUPPORT_JPG 0
-#define CXIMAGE_SUPPORT_PNG 1
-#define CXIMAGE_SUPPORT_ICO 0
+#define CXIMAGE_SUPPORT_PNG 1	//Xman
+#define CXIMAGE_SUPPORT_MNG 0
+#define CXIMAGE_SUPPORT_ICO 1
 #define CXIMAGE_SUPPORT_TIF 0
-#define CXIMAGE_SUPPORT_TGA 0
-#define CXIMAGE_SUPPORT_PCX 0
-#define CXIMAGE_SUPPORT_WBMP 1          // MorphXT: Comment by FrankyFive [Wap Server]
-#define CXIMAGE_SUPPORT_WMF 0
+#define CXIMAGE_SUPPORT_TGA 0	//Xman
+#define CXIMAGE_SUPPORT_PCX 0	//Xman
+#define CXIMAGE_SUPPORT_WBMP 0	//Xman
+#define CXIMAGE_SUPPORT_WMF 0	//Xman
 
 #define CXIMAGE_SUPPORT_JP2 0
 #define CXIMAGE_SUPPORT_JPC 0

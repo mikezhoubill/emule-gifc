@@ -33,8 +33,8 @@ BEGIN
     BEGIN
         BLOCK "040904B0" // Lang=US English, CharSet=Unicode
         BEGIN
-            VALUE "CompanyName", "http://emulemorph.sourceforge.net"
-            VALUE "FileDescription", "eMule morph Language DLL"
+            VALUE "CompanyName", "http://www.emule-project.net"
+            VALUE "FileDescription", "eMule Language DLL"
             VALUE "FileVersion", SZ_VERSION_NAME
             VALUE "LegalCopyright", "Copyright © 2002-2006 Merkur - read license.txt for more infos"
             VALUE "ProductName", "eMule"

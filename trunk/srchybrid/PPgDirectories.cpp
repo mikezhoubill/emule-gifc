@@ -18,7 +18,6 @@
 #include "emule.h"
 #include "emuledlg.h"
 #include "SharedFilesWnd.h"
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 #include "PPgDirectories.h"
 #include "otherfunctions.h"
 #include "InputBox.h"
@@ -31,7 +30,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -50,8 +49,7 @@ BEGIN_MESSAGE_MAP(CPPgDirectories, CPropertyPage)
 END_MESSAGE_MAP()
 
 CPPgDirectories::CPPgDirectories()
-	: CPPgtooltipped (CPPgDirectories::IDD) //leuk_he  tooltipped 
-		//: CPropertyPage(CPPgServer::IDD) leuk_he  tooltipped 
+	: CPropertyPage(CPPgDirectories::IDD)
 {
 	m_icoBrowse = NULL;
 }
@@ -81,21 +79,16 @@ BOOL CPPgDirectories::OnInitDialog()
 	AddBuddyButton(GetDlgItem(IDC_TEMPFILES)->m_hWnd, ::GetDlgItem(m_hWnd, IDC_SELTEMPDIR));
 	InitAttachedBrowseButton(::GetDlgItem(m_hWnd, IDC_SELTEMPDIR), m_icoBrowse);
 
-/* old version: on column
-	m_ctlUncPaths.InsertColumn(0, GetResString(IDS_UNCFOLDERS), LVCFMT_LEFT, 280); 
-*/
-	m_ctlUncPaths.InsertColumn(0, GetResString(IDS_UNCLIST_INACTIVE  ), LVCFMT_LEFT, 250);  // sharesubdir ==> this can be better
-	m_ctlUncPaths.InsertColumn(1,GetResString(IDS_SUBDIRS), LVCFMT_LEFT,30); // sharesubdir + column for inactive shares
+	m_ctlUncPaths.InsertColumn(0, GetResString(IDS_UNCFOLDERS), LVCFMT_LEFT, 280);
 	m_ctlUncPaths.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_INFOTIP);
 
 	GetDlgItem(IDC_SELTEMPDIRADD)->ShowWindow(thePrefs.IsExtControlsEnabled()?SW_SHOW:SW_HIDE);
 
 	LoadSettings();
-	InitTooltips(); //leuk_he tooltipped
 	Localize();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 void CPPgDirectories::LoadSettings(void)
@@ -110,10 +103,7 @@ void CPPgDirectories::LoadSettings(void)
 	}
 	GetDlgItem(IDC_TEMPFILES)->SetWindowText(tempfolders);
 
-/* sharesubdir
 	m_ShareSelector.SetSharedDirectories(&thePrefs.shareddir_list);
-*/
-	m_ShareSelector.SetSharedDirectories(&thePrefs.shareddir_list, &thePrefs.sharedsubdir_list);	// SLUGFILLER: shareSubdir
 	FillUncList();
 }
 
@@ -133,22 +123,6 @@ void CPPgDirectories::OnBnClickedSeltempdir()
 		GetDlgItem(IDC_TEMPFILES)->SetWindowText(buffer);
 }
 
-// SLUGFILLER START: shareSubdir - don't double-share UNC
-static bool FindStringNoCase(const CStringList &list, CString string) {
-	if (string.Right(1) != '\\')
-		string += '\\';
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL; )
-	{
-		CString str = list.GetNext(pos);
-		if (str.Right(1) != '\\')
-			str += '\\';
-		if (str.CompareNoCase(string) == 0)
-			return true;
-	}
-	return false;
-}
-// SLUGFILLER END: shareSubdir
-
 BOOL CPPgDirectories::OnApply()
 {
 	bool testtempdirchanged=false;
@@ -167,7 +141,8 @@ BOOL CPPgDirectories::OnApply()
 		AfxMessageBox(GetResString(IDS_WRN_INCFILE_RESERVED));
 		return FALSE;
 	}
-	*/ //end safehash remove
+	*/
+	// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 	else if (strIncomingDir.CompareNoCase(testincdirchanged) != 0 && strIncomingDir.CompareNoCase(thePrefs.GetDefaultDirectory(EMULE_INCOMINGDIR, false)) != 0){
 		// if the user chooses a non-default directory which already contains files, inform him that all those files
 		// will be shared
@@ -189,9 +164,9 @@ BOOL CPPgDirectories::OnApply()
 				SHFILEINFO info;
 				if (SHGetFileInfo(ff.GetFilePath(), 0, &info, sizeof(info), SHGFI_ATTRIBUTES) && (info.dwAttributes & SFGAO_LINK)){
 					if (!thePrefs.GetResolveSharedShellLinks())
-									continue;
-								}
-							}
+						continue;
+				}
+			}
 
 			// ignore real THUMBS.DB files -- seems that lot of ppl have 'thumbs.db' files without the 'System' file attribute
 			if (ff.GetFileName().CompareNoCase(_T("thumbs.db")) == 0)
@@ -232,7 +207,8 @@ BOOL CPPgDirectories::OnApply()
 				AfxMessageBox(GetResString(IDS_WRN_TEMPFILES_RESERVED));
 				return FALSE;
 			}
-			*/ // end safehash remove
+			*/
+			// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 			bool doubled=false;
 			for (int i=0;i<temptempfolders.GetCount();i++)	// avoid double tempdirs
 				if (temptempfolders.GetAt(i).CompareNoCase(atmp)==0) {
@@ -272,59 +248,17 @@ BOOL CPPgDirectories::OnApply()
 	if (thePrefs.tempdir.IsEmpty())
 		thePrefs.tempdir.Add(thePrefs.GetDefaultDirectory(EMULE_TEMPDIR, true));
 
-	// Commander - Added: Custom incoming / temp folder icon [emulEspaña] - Start
-	if(thePrefs.ShowFolderIcons()){
-	if(CString(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)).Trim().MakeLower() != CString(strIncomingDir).Trim().MakeLower())
-		theApp.RemoveIncomingFolderIcon();
-	if(CString(thePrefs.GetTempDir()).Trim().MakeLower() != CString(strTempDir).Trim().MakeLower())
-		theApp.RemoveTempFolderIcon();
-	}
-	// Commander - Added: Custom incoming / temp folder icon [emulEspaña] - End
-		thePrefs.m_strIncomingDir = strIncomingDir;
+	thePrefs.m_strIncomingDir = strIncomingDir;
 	MakeFoldername(thePrefs.m_strIncomingDir);
 	thePrefs.GetCategory(0)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
 
-	// Commander - Added: Custom incoming / temp folder icon [emulEspaña] - Start
-	if(thePrefs.ShowFolderIcons()){
-	theApp.AddIncomingFolderIcon();
-	theApp.AddTempFolderIcon();
-	}
-	// SLUGFILLER START: shareSubdir
-	m_ShareSelector.GetSharedDirectories(&thePrefs.shareddir_list, &thePrefs.sharedsubdir_list);
-	thePrefs.inactive_shareddir_list.RemoveAll();
-	thePrefs.inactive_sharedsubdir_list.RemoveAll();
-    for (int i = 0; i < m_ctlUncPaths.GetItemCount(); i++){
-		CString unc = m_ctlUncPaths.GetItemText(i, 0);
-		bool    sharesub= (m_ctlUncPaths.GetItemText(i, 1).Compare(_T("+")) ==0);
-		if (!PathFileExists(unc))	// only add directories which still exist
-		{   if  (sharesub) // maintain inactive dir list
-				thePrefs.inactive_sharedsubdir_list.AddTail(unc);
-		    else
-		 		thePrefs.inactive_shareddir_list.AddTail(unc);
-			continue;
-		}
-		if (FindStringNoCase(thePrefs.shareddir_list, unc))	// don't double-share UNC
-			continue; // log?
-		// TODO: Could be indirectly shared via subdir. We should probably check for that too.
-		if  (sharesub) // maintain inactive dir list
-			thePrefs.sharedsubdir_list.AddTail(unc);
-		else
-			thePrefs.shareddir_list.AddTail(unc);
-	}
-
-	FillUncList();
-	// SLUGFILLER END: shareSubdir
-
-	// Commander - Added: Custom incoming / temp folder icon [emulEspaña] - End
-/* old Code sharesubdir 
 	thePrefs.shareddir_list.RemoveAll();
 	m_ShareSelector.GetSharedDirectories(&thePrefs.shareddir_list);
 	for (int i = 0; i < m_ctlUncPaths.GetItemCount(); i++)
 		thePrefs.shareddir_list.AddTail(m_ctlUncPaths.GetItemText(i, 0));
-   end sharesubdir old code*/
+
 	// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 	/*
-
 	// check shared directories for reserved folder names
 	POSITION pos = thePrefs.shareddir_list.GetHeadPosition();
 	while (pos){
@@ -333,7 +267,8 @@ BOOL CPPgDirectories::OnApply()
 		if (!thePrefs.IsShareableDirectory(rstrDir))
 			thePrefs.shareddir_list.RemoveAt(posLast);
 	}
-	*/ // end safehash remove
+	*/
+	// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 
 	if (testtempdirchanged)
 		AfxMessageBox(GetResString(IDS_SETTINGCHANGED_RESTART));
@@ -357,13 +292,9 @@ BOOL CPPgDirectories::OnApply()
 	}
 
 	theApp.emuledlg->sharedfileswnd->Reload();
-	// ==> Automatic shared files updater [MoNKi] - Stulle
-#ifdef ASFU
-	if(thePrefs.GetDirectoryWatcher())
-		theApp.ResetDirectoryWatcher();
-#endif
-	// <== Automatic shared files updater [MoNKi] - Stulle
 	
+	theApp.ResetDirectoryWatcher(); // Automatic shared files updater [MoNKi] - Stulle
+
 	SetModified(0);
 	return CPropertyPage::OnApply();
 }
@@ -389,93 +320,23 @@ void CPPgDirectories::Localize(void)
 		GetDlgItem(IDC_INCOMING_FRM)->SetWindowText(GetResString(IDS_PW_INCOMING));
 		GetDlgItem(IDC_TEMP_FRM)->SetWindowText(GetResString(IDS_PW_TEMP));
 		GetDlgItem(IDC_SHARED_FRM)->SetWindowText(GetResString(IDS_PW_SHARED));
-		// leuk_he tooltipped start
-		SetTool(  IDC_INCFILES,  IDS_INCFILES_TIP);
-		SetTool(  IDC_SELINCDIR,IDS_INCFILES_TIP );
-		SetTool(  IDC_TEMPFILES,IDS_TEMPFILES_TIP );
-  	SetTool(  IDC_SELTEMPDIR ,IDS_TEMPFILES_TIP );
-		SetTool(  IDC_SELTEMPDIRADD ,IDS_TEMPFILES_TIP);
-		SetTool(  IDC_SHARESELECTOR ,IDS_SHARESELECTOR_TIP );
-		SetTool(  IDC_UNCLIST ,IDS_UNCLIST_TIP );
-		SetTool(  IDC_UNCADD ,IDS_UNCADD_TIP );
-		SetTool(  IDC_UNCREM ,IDS_UNCREM_TIP );
-		// leuk_he tooltipped end
 	}
 }
 
 void CPPgDirectories::FillUncList(void)
 {
 	m_ctlUncPaths.DeleteAllItems();
-	// SLUGFILLER START: shareSubdir remove - don't refill list, use it only for adding
-/* old code
+
 	for (POSITION pos = thePrefs.shareddir_list.GetHeadPosition(); pos != 0; )
 	{
 		CString folder = thePrefs.shareddir_list.GetNext(pos);
 		if (PathIsUNC(folder))
 			m_ctlUncPaths.InsertItem(0, folder);
 	}
- end old code */
-	//inactive sharelist	 HIER WAS IK
-	for (POSITION pos = thePrefs.inactive_shareddir_list.GetHeadPosition(); pos != 0; )
-	{
-		CString folder = thePrefs.inactive_shareddir_list.GetNext(pos);
-		{
-		  int nIndex = m_ctlUncPaths.InsertItem(0,folder);
-          m_ctlUncPaths.SetItemText(nIndex,1,L" ");
-		}
-	}
-	for (POSITION pos = thePrefs.inactive_sharedsubdir_list.GetHeadPosition(); pos != 0; )
-	{
-		CString folder = thePrefs.inactive_sharedsubdir_list.GetNext(pos);
-    	int nIndex = m_ctlUncPaths.InsertItem(0,folder);
-         m_ctlUncPaths.SetItemText(nIndex,1,L"+");
-	}
-
 }
-
-//sharesubdir
-IMPLEMENT_DYNAMIC(CAddSharedDirDialog, CDialog)
-
-CAddSharedDirDialog::CAddSharedDirDialog(LPTSTR sUnc,bool bSubdir,CWnd* pParent /*=NULL*/)
-	: CDialog(CAddSharedDirDialog::IDD, pParent)
-{
-	m_sUnc=sUnc;
-	m_bSubdir=bSubdir;
-} // ssd
-
-BOOL CAddSharedDirDialog::OnInitDialog(){
-	CDialog::OnInitDialog();
-	InitWindowStyles(this);
-	SetWindowText(GetResString(IDS_ADDSHAREDIR));
-
-	CheckDlgButton(IDC_SHAREWITHSUBDIR, m_bSubdir ? BST_CHECKED : BST_UNCHECKED);
-
-	GetDlgItem(IDC_TEXTSHRETOADD)->SetWindowText(GetResString(IDS_TEXTSHRETOADD));
-	GetDlgItem(IDC_SHAREWITHSUBDIR)->SetWindowText(GetResString(IDS_SHAREWITHSUBDIR));
-	GetDlgItem(IDC_INPUTTEXT)->SetWindowText(m_sUnc);
-
-
-	GetDlgItem(IDCANCEL)->SetWindowText(GetResString(IDS_CANCEL));
-
-	return TRUE;
-}
-
-
-BEGIN_MESSAGE_MAP(CAddSharedDirDialog, CDialog)
-END_MESSAGE_MAP()
-
-void CAddSharedDirDialog::OnOK()
-{	
-	GetDlgItem(IDC_INPUTTEXT)->GetWindowText ( m_sUnc);
-	m_bSubdir = IsDlgButtonChecked(IDC_SHAREWITHSUBDIR)!=0;
-
-	CDialog::OnOK();
-} // ssd
 
 void CPPgDirectories::OnBnClickedAddUNC()
 {
-
-   /* old code, replace by dialog that contains "include subdir"  checkbox
 	InputBox inputbox;
 	inputbox.SetLabels(GetResString(IDS_UNCFOLDERS), GetResString(IDS_UNCFOLDERS), _T("\\\\Server\\Share"));
 	if (inputbox.DoModal() != IDOK)
@@ -487,49 +348,20 @@ void CPPgDirectories::OnBnClickedAddUNC()
 		AfxMessageBox(GetResString(IDS_ERR_BADUNC), MB_ICONERROR);
 		return;
 	}
-	 end old code */
-  // MORPH START SHARESUBDIR 
-	CAddSharedDirDialog AddSharedDirDialog(_T("\\\\Server\\Share"),false);
-	int result = AddSharedDirDialog.DoModal();
-		if (result != IDOK) 
-			return;
-	CString unc=AddSharedDirDialog.GetUNC();
-	bool   bsharesubdir=AddSharedDirDialog.GetSubDir();
-  // MORPH END SHARESUBDIR
 
 	if (unc.Right(1) == _T("\\"))
 		unc.Delete(unc.GetLength()-1, 1);
 
-// MORPH START SHARESUBDIR 
-	if (bsharesubdir) {
-		for (POSITION pos = thePrefs.sharedsubdir_list.GetHeadPosition();pos != 0;){
-			if (unc.CompareNoCase(thePrefs.sharedsubdir_list.GetNext(pos))==0)
-				//	 message that it is already shared? 
-				return;
-			}
-		}
-	else {
-  // MORPH END SHARESUBDIR 
 	for (POSITION pos = thePrefs.shareddir_list.GetHeadPosition();pos != 0;){
 		if (unc.CompareNoCase(thePrefs.shareddir_list.GetNext(pos))==0)
 			return;
 	}
-	} // ssd
 	for (int posi = 0; posi < m_ctlUncPaths.GetItemCount(); posi++){
 		if (unc.CompareNoCase(m_ctlUncPaths.GetItemText(posi, 0)) == 0)
 			return;
 	}
 
-   /* old code:
 	m_ctlUncPaths.InsertItem(m_ctlUncPaths.GetItemCount(), unc);
-   end old code */ 
-  // MOROPH START sharesubdir
-	int nIndex=m_ctlUncPaths.InsertItem(m_ctlUncPaths.GetItemCount(), unc);
-	if (bsharesubdir) 
-	    m_ctlUncPaths.SetItemText(nIndex,1,L"+");
-	else
-		m_ctlUncPaths.SetItemText(nIndex,1,L" ");
-// MOROPH END sharesubdir
 	SetModified();
 }
 
@@ -570,13 +402,7 @@ void CPPgDirectories::OnBnClickedSeltempdiradd()
 
 void CPPgDirectories::OnDestroy()
 {
-	//tooltipped
-	/*
 	CPropertyPage::OnDestroy();
-	*/
-	// Stullemon - is this right? it should be 'coz we derive from CPPgtooltipped
-	CPPgtooltipped::OnDestroy();
-	//tooltipped
 	if (m_icoBrowse)
 	{
 		VERIFY( DestroyIcon(m_icoBrowse) );

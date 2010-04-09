@@ -33,8 +33,7 @@
 #include "ToolTipCtrlX.h"
 #include "IPFilter.h"
 #include "IP2Country.h" //EastShare - added by AndCycle, IP to Country
-#include "MemDC.h"
-#include "NTService.h"
+#include "MemDC.h" // Xman
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -48,7 +47,11 @@ IMPLEMENT_DYNAMIC(CServerListCtrl, CMuleListCtrl)
 BEGIN_MESSAGE_MAP(CServerListCtrl, CMuleListCtrl)
 	ON_NOTIFY_REFLECT(LVN_COLUMNCLICK, OnLvnColumnClick)
 	ON_NOTIFY_REFLECT(LVN_GETINFOTIP, OnLvnGetInfoTip)
+	//Xman no need for this because //EastShare - added by AndCycle, IP to Country
+	/*
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnNmCustomDraw)
+	*/
+	//Xman end
 	ON_NOTIFY_REFLECT(NM_DBLCLK, OnNmDblClk)
 	ON_WM_CONTEXTMENU()
 	ON_WM_SYSCOLORCHANGE()
@@ -56,11 +59,22 @@ END_MESSAGE_MAP()
 
 CServerListCtrl::CServerListCtrl()
 {
+	//Xman IP to country //remark: because of new drawing methodes we can only search first column
+	/*
 	SetGeneralPurposeFind(true);
-	if (!theApp.IsRunningAsService()) {		 // MORPH RUNNING As a ntservice. 
+	*/
+	SetGeneralPurposeFind(true, false);
+	//Xman end
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	/*
+	m_tooltip = new CToolTipCtrlX;
+	*/
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
 		m_tooltip = new CToolTipCtrlX;
-	}
-	else m_tooltip =NULL; // runnin as a ntservice
+	else
+		m_tooltip = NULL;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	SetSkinKey(L"ServersLv");
 }
 
@@ -69,15 +83,19 @@ bool CServerListCtrl::Init()
 	SetPrefsKey(_T("ServerListCtrl"));
 	SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_INFOTIP);
 
-	if (!theApp.IsRunningAsService()) { // MORPH leuk_he running as a service 
-	CToolTipCtrl* tooltip = GetToolTips();
-	if (tooltip) {
-		m_tooltip->SubclassWindow(*tooltip);
-		tooltip->ModifyStyle(0, TTS_NOPREFIX);
-		tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
-		//tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
-	}
-	} // MORPH leuk_he running as a service 
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	{
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+		CToolTipCtrl* tooltip = GetToolTips();
+		if (tooltip) {
+			m_tooltip->SubclassWindow(*tooltip);
+			tooltip->ModifyStyle(0, TTS_NOPREFIX);
+			tooltip->SetDelayTime(TTDT_AUTOPOP, 20000);
+			//tooltip->SetDelayTime(TTDT_INITIAL, thePrefs.GetToolTipDelay()*1000);
+		}
+	} // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	InsertColumn(0, GetResString(IDS_SL_SERVERNAME),LVCFMT_LEFT, 150);
 	InsertColumn(1, GetResString(IDS_IP),			LVCFMT_LEFT, 140);
@@ -94,13 +112,6 @@ bool CServerListCtrl::Init()
 	InsertColumn(12,GetResString(IDS_VERSION),		LVCFMT_LEFT,  50, -1, true);
 	InsertColumn(13,GetResString(IDS_IDLOW),		LVCFMT_RIGHT, 60);
 	InsertColumn(14,GetResString(IDS_OBFUSCATION),  LVCFMT_RIGHT, 50);
-	InsertColumn(15,GetResString(IDS_AUXPORTS),		LVCFMT_LEFT,  50);//Morph - added by AndCycle, aux Ports, by lugdunummaster
-	// Commander - Added: IP2Country column - Start
-	if (thePrefs.GetIP2CountryNameMode() == IP2CountryName_DISABLE)
-		InsertColumn(16,GetResString(IDS_COUNTRY),      LVCFMT_LEFT, 100, -1, true);
-	else
-		InsertColumn(16,GetResString(IDS_COUNTRY),      LVCFMT_LEFT, 100);
-	// Commander - Added: IP2Country column - End
 
 	SetAllIcons();
 	Localize();
@@ -117,7 +128,10 @@ bool CServerListCtrl::Init()
 
 CServerListCtrl::~CServerListCtrl()
 {
-	if (!theApp.IsRunningAsService()) // MORPH leuk_he:run as ntservice v1.. workaaround running MFC as service. 
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	// workaround running MFC as service
+	if (!theApp.IsRunningAsService())
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 		delete m_tooltip;
 }
 
@@ -135,7 +149,7 @@ void CServerListCtrl::SetAllIcons()
 	HIMAGELIST himl = ApplyImageList(iml.Detach());
 	if (himl)
 		ImageList_Destroy(himl);
-	//MORPH START - Changed b SiRoB, CountryFlag Addon
+	//MORPH START - Changed b SiRoB, CountryFlag Addon , IP to Country
 	imagelist.DeleteImageList();
 	imagelist.Create(16,16,theApp.m_iDfltImageListColorFlags|ILC_MASK,0,1);
 	imagelist.SetBkColor(CLR_NONE);
@@ -210,24 +224,11 @@ void CServerListCtrl::Localize()
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(14, &hdi);
 
-	//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-	strRes = GetResString(IDS_AUXPORTS);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(15, &hdi);
-	//Morph End - added by AndCycle, aux Ports, by lugdunummaster
-
-	// Commander - Added: IP2Country column - Start
-	strRes = GetResString(IDS_COUNTRY);
-	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
-	pHeaderCtrl->SetItem(16, &hdi);
-	// Commander - Added: IP2Country column - End
-
 	int iItems = GetItemCount();
 	for (int i = 0; i < iItems; i++)
 		RefreshServer((CServer*)GetItemData(i));
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 	COLORREF crTempColor = thePrefs.GetStyleBackColor(background_styles, style_b_serverwnd);
 
 	if(crTempColor == CLR_DEFAULT)
@@ -237,7 +238,6 @@ void CServerListCtrl::Localize()
 		SetBkColor(crTempColor);
 	else
 		SetBkColor(COLORREF(RGB(255,255,255)));
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 }
 
@@ -260,22 +260,15 @@ void CServerListCtrl::RemoveAllDeadServers()
 	for (POSITION pos = theApp.serverlist->list.GetHeadPosition(); pos != NULL; )
 	{
 		const CServer* cur_server = theApp.serverlist->list.GetNext(pos);
-		// MORPH START - leuke_he  ipfilter servers .
-		/*
 		if (cur_server->GetFailedCount() >= thePrefs.GetDeadServerRetries())
-		*/
-		if  ( (cur_server->GetFailedCount() >= thePrefs.GetDeadServerRetries())||
-		      (thePrefs.GetFilterServerByIP() && theApp.ipfilter->IsFiltered(cur_server->GetIP())))
-		// MORPH END - leuke_he  ipfilter servers .
 		{
-			// Mighty Knife: Static server handling
-			// Static servers can be prevented from being removed from the list.
-			if ((!cur_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers()))
-			{
-				RemoveServer(cur_server);
-				pos = theApp.serverlist->list.GetHeadPosition();
-			}
-			// [end] Mighty Knife
+				//Xman
+				// Mighty Knife: Static server handling
+				// Static servers can be prevented from being removed from the list.
+				if ((!cur_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers())) {
+					RemoveServer(cur_server);
+					pos = theApp.serverlist->list.GetHeadPosition();
+				} // [end] Mighty Knife
 		}
 	}
 	ShowWindow(SW_SHOW);
@@ -306,7 +299,10 @@ bool CServerListCtrl::AddServer(const CServer* pServer, bool bAddToList, bool bR
 	if (!theApp.serverlist->AddServer(pServer, bAddTail))
 		return false;
 
-	if (theApp.IsRunningAsService(SVC_SVR_OPT)) return true;// MORPH leuk_he:run as ntservice v1..
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_SVR_OPT))
+		return true;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	if (bAddToList)
 	{
@@ -319,8 +315,11 @@ bool CServerListCtrl::AddServer(const CServer* pServer, bool bAddToList, bool bR
 
 void CServerListCtrl::RefreshServer(const CServer* server)
 {
-	if (theApp.IsRunningAsService(SVC_SVR_OPT )) return;// MORPH leuk_he:run as ntservice v1..
-	
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if (theApp.IsRunningAsService(SVC_SVR_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+
 	if (!server || !theApp.emuledlg->IsRunning())
 		return;
 
@@ -329,22 +328,18 @@ void CServerListCtrl::RefreshServer(const CServer* server)
 		return;
 	//MORPH END   - SiRoB, Don't Refresh item if not needed
 
-	//MORPH START- UpdateItemThread
-	/*
 	LVFINDINFO find;
 	find.flags = LVFI_PARAM;
 	find.lParam = (LPARAM)server;
 	int itemnr = FindItem(&find);
 	if (itemnr == -1)
 		return;
-	//MORPH START - Added by SiRoB,  CountryFlag Addon
-	Update(itemnr);
-	//MORPH END   - Added by SiRoB,  CountryFlag Addon
-	*/
-	m_updatethread->AddItemToUpdate((LPARAM)server);
-	//MORPH END - UpdateItemThread
 
-	//MORPH START - Removed for CountryFlag
+	//MORPH START - Added by SiRoB,  CountryFlag Addon, IP to Country
+	Update(itemnr);
+	//MORPH START - Added by SiRoB,  CountryFlag Addon
+
+	//Xman not used because of morph code
 	/*
 	CString temp;
 	temp.Format(_T("%s : %i"), server->GetAddress(), server->GetPort());
@@ -443,17 +438,16 @@ void CServerListCtrl::RefreshServer(const CServer* server)
 	else
 		SetItemText(itemnr, 14, GetResString(IDS_NO));
 	*/
-	//MORPH END   - Removed for CountryFlag
+	//Xman end
 }
 
 //EastShare Start - added by AndCycle, IP to Country
 void CServerListCtrl::RefreshAllServer(){
 
-	for(POSITION pos = theApp.serverlist->list.GetHeadPosition(); pos != NULL;){
+	for (POSITION pos = theApp.serverlist->list.GetHeadPosition(); pos != NULL; theApp.serverlist->list.GetNext(pos))
+	{
 		RefreshServer(theApp.serverlist->list.GetAt(pos));
-		theApp.serverlist->list.GetNext(pos);
 	}
-
 }
 //EastShare End - added by AndCycle, IP to Country
 
@@ -654,17 +648,17 @@ BOOL CServerListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		return TRUE;
 	}
 
-			case MP_PRIOLOW:
-				SetSelectedServersPriority(SRV_PR_LOW);
-				return TRUE;
-			
-			case MP_PRIONORMAL:
-				SetSelectedServersPriority(SRV_PR_NORMAL);
-				return TRUE;
-			
-			case MP_PRIOHIGH:
-				SetSelectedServersPriority(SRV_PR_HIGH);
-				return TRUE;
+	case MP_PRIOLOW:
+		SetSelectedServersPriority(SRV_PR_LOW);
+		return TRUE;
+	
+	case MP_PRIONORMAL:
+		SetSelectedServersPriority(SRV_PR_NORMAL);
+		return TRUE;
+	
+	case MP_PRIOHIGH:
+		SetSelectedServersPriority(SRV_PR_HIGH);
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -893,18 +887,6 @@ int CServerListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	  case 14: 
 		 iResult = (int)(item1->SupportsObfuscationTCP() && item1->GetObfuscationPortTCP() != 0) - (int)(item2->SupportsObfuscationTCP() && item2->GetObfuscationPortTCP() != 0);
 		 break;
-           // Commander - Added: AuxPort Sort - Start
-	  case 15:
-		  UNDEFINED_INT_AT_BOTTOM(item1->GetConnPort(), item2->GetConnPort());
-		  iResult = CompareUnsigned(item1->GetConnPort(), item2->GetConnPort());
-		  break;
-		  // Commander - Added: AuxPort Sort - End
-          // Commander - Added: IP2Country column - Start
-      case 16:
-          UNDEFINED_STR_AT_BOTTOM(item1->GetCountryName(), item2->GetCountryName());
-          iResult = item1->GetCountryName().CompareNoCase(item2->GetCountryName());
-		  break;
-         // Commander - Added: IP2Country column - End
 
 	  default: 
 		  iResult = 0;
@@ -916,8 +898,9 @@ int CServerListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	int dwNextSort;
 	if (iResult == 0 && (dwNextSort = theApp.emuledlg->serverwnd->serverlistctrl.GetNextSortOrder(lParamSort)) != -1)
 		iResult = SortProc(lParam1, lParam2, dwNextSort);
+
 	*/
-	// SLUGFILLER: multiSort remove - handled in parent class
+	//Xman end
 
 	if (HIWORD(lParamSort))
 		iResult = -iResult;
@@ -1023,8 +1006,18 @@ void CServerListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 }
 
+//Xman no need for this because //EastShare - added by AndCycle, IP to Country
+/*
 void CServerListCtrl::OnNmCustomDraw(NMHDR *pNMHDR, LRESULT *plResult)
+*/
+void CServerListCtrl::OnNmCustomDraw(NMHDR* /*pNMHDR*/, LRESULT* /*plResult*/)
 {
+	
+	return; 
+//Xman end
+
+	//Xman no need for this because //EastShare - added by AndCycle, IP to Country
+	/*
 	LPNMLVCUSTOMDRAW pnmlvcd = (LPNMLVCUSTOMDRAW)pNMHDR;
 
 	if (pnmlvcd->nmcd.dwDrawStage == CDDS_PREPAINT)
@@ -1049,9 +1042,11 @@ void CServerListCtrl::OnNmCustomDraw(NMHDR *pNMHDR, LRESULT *plResult)
 	}
 
 	*plResult = CDRF_DODEFAULT;
+	*/
+	//Xman end
 }
 
-//Commander - Added: CountryFlag - Start
+//Commander - Added: CountryFlag - Start IP to Country
 void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 {
 	if( !theApp.emuledlg->IsRunning() )
@@ -1072,16 +1067,10 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	const CServer* server = (CServer*)lpDrawItemStruct->itemData;
 	const CServer* cur_srv;
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+	/*
 	if( (lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED )
-		||
-		(
-			theApp.serverconnect->IsConnected()
-			&& (cur_srv = theApp.serverconnect->GetCurrentServer()) != NULL
-			&& cur_srv->GetPort() == server->GetPort()
-			&& cur_srv->GetConnPort() == server->GetConnPort()//Morph - added by AndCycle, aux Ports, by lugdunummaster
-			&& _tcsicmp(cur_srv->GetAddress(), server->GetAddress()) == 0)
-		){
+		)
+	{
 		if(bCtrlFocused)
 			odc->SetBkColor(m_crHighlight);
 		else
@@ -1091,22 +1080,44 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		odc->SetBkColor(GetBkColor());
 	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
 	CFont* pOldFont = dc.SelectObject(GetFont());
-	//MORPH - Moved by SiRoB, Don't draw hidden Rect
-	/*
-	RECT cur_rec = lpDrawItemStruct->rcItem;
-	*/
+	//RECT cur_rec = lpDrawItemStruct->rcItem; //MORPH - Moved by SiRoB, Don't draw hidden Rect
+	COLORREF crOldTextColor = dc.SetTextColor(m_crWindowText);
 
-    // leuke_he  ipfilter servers . 
-	COLORREF crOldTextColor ;
-	if ((server->GetFailedCount() >= thePrefs.GetDeadServerRetries()) || 
-		(thePrefs.GetFilterServerByIP()&& theApp.ipfilter->IsFiltered(server->GetIP())))  // Isfitlered is cpu intensive, possible optimization, but serverscreen is not drawn often anyway.
-		crOldTextColor = dc.SetTextColor(RGB(192,192,192)); //todo set color in template.
-	else if (server->GetFailedCount() >= 2)
-		crOldTextColor = dc.SetTextColor(RGB(128,128,128)); //todo set color in template.
-	else // default:  
-		crOldTextColor= dc.SetTextColor(m_crWindowText);
-	 // leuke_he  ipfilter servers . 
-#else
+	//Xman our server in blubold
+	//+
+	//grey out dead servers (BlueSonic/TK4)
+	LOGFONT lfFont = {0};
+	CFont fontCustom;
+	if(theApp.serverconnect->IsConnected()
+		&& (cur_srv = theApp.serverconnect->GetCurrentServer()) != NULL
+		&& cur_srv->GetPort() == server->GetPort()
+		//&& cur_srv->GetConnPort() == server->GetConnPort()//Morph - added by AndCycle, aux Ports, by lugdunummaster
+		&& _tcsicmp(cur_srv->GetAddress(), server->GetAddress()) == 0)
+	{
+		//it's our server
+		GetFont()->GetLogFont(&lfFont);
+		lfFont.lfWeight = FW_BOLD; 
+		fontCustom.CreateFontIndirect(&lfFont);
+
+		dc.SelectObject(&fontCustom);
+		dc->SetTextColor(RGB(0,0,192));
+	}
+	else //TK4 Mod grey out Filtered servers or Dead servers
+		if(server->GetFailedCount() >= thePrefs.GetDeadServerRetries() || theApp.ipfilter->IsFiltered(server->GetIP()))
+		{
+			GetFont()->GetLogFont(&lfFont);
+			fontCustom.CreateFontIndirect(&lfFont);
+			dc.SelectObject(&fontCustom);
+			dc->SetTextColor(RGB(192,192,192));
+		} else if(server->GetFailedCount() >= 2)
+		{ //unreliable servers
+			GetFont()->GetLogFont(&lfFont);
+			fontCustom.CreateFontIndirect(&lfFont);
+			dc.SelectObject(&fontCustom);
+			dc->SetTextColor(RGB(128,128,128));
+		}
+		//Xman end
+	*/
 	cur_srv = theApp.serverconnect->GetCurrentServer();
 
 	int iClientStyle = style_se_default;
@@ -1151,50 +1162,42 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		crTempColor = style.nFontColor;
 
 	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
-	CFont* pOldFont = dc.SelectObject(theApp.GetFontByStyle(style.nFlags));
-	//MORPH - Moved by SiRoB, Don't draw hidden Rect
-	/*
-	RECT cur_rec = lpDrawItemStruct->rcItem;
-	*/
+	CFont* pOldFont = dc.SelectObject(theApp.GetFontByStyle(style.nFlags,thePrefs.UseNarrowFont()));
 	COLORREF crOldTextColor = dc.SetTextColor((lpDrawItemStruct->itemState & ODS_SELECTED) ? m_crHighlightText : crTempColor);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
-	int iOldBkMode;
-	if (m_crWindowTextBk == CLR_NONE){
-		DefWindowProc(WM_ERASEBKGND, (WPARAM)(HDC)dc, 0);
-		iOldBkMode = dc.SetBkMode(TRANSPARENT);
-	}
-	else
-		iOldBkMode = OPAQUE;
+		int iOldBkMode;
+		if (m_crWindowTextBk == CLR_NONE){
+			DefWindowProc(WM_ERASEBKGND, (WPARAM)(HDC)dc, 0);
+			iOldBkMode = dc.SetBkMode(TRANSPARENT);
+		}
+		else
+			iOldBkMode = OPAQUE;
 
-	CString Sbuffer;
-	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
-	int iCount = pHeaderCtrl->GetItemCount();
-	cur_rec.right = cur_rec.left - 8;
-	cur_rec.left += 4;
+		CString Sbuffer;
+		CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
+		int iCount = pHeaderCtrl->GetItemCount();
+		cur_rec.right = cur_rec.left - 8;
+		cur_rec.left += 4;
 
-	for(int iCurrent = 0; iCurrent < iCount; iCurrent++){
-		int iColumn = pHeaderCtrl->OrderToIndex(iCurrent);
-		if( !IsColumnHidden(iColumn) ){
-			cur_rec.right += GetColumnWidth(iColumn);
-			switch(iColumn){
+		for(int iCurrent = 0; iCurrent < iCount; iCurrent++){
+			int iColumn = pHeaderCtrl->OrderToIndex(iCurrent);
+			if( !IsColumnHidden(iColumn) ){
+				cur_rec.right += GetColumnWidth(iColumn);
+				switch(iColumn){
 
-				case 0:{
+				case 0:
+				{
 					uint8 image;
 					image = 0;
-					
+
 					//POINT point = {cur_rec.left, cur_rec.top+1};
 					Sbuffer = server->GetListName();
 
-					//CString tempStr;
-					//tempStr.Format("%s%s", server->GetCountryName(), Sbuffer);
-					//Sbuffer = tempStr;
-                    
 					//Draw Country Flag
 
 					POINT point2= {cur_rec.left,cur_rec.top+1};
-					if(theApp.ip2country->ShowCountryFlag() && IsColumnHidden(16)){
+					if(theApp.ip2country->ShowCountryFlag() ){
 						theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, server->GetCountryFlagIndex(), point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
 					}
 					else
@@ -1207,48 +1210,50 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 
 					break;
 				}
-				case 1:{
-					//Morph Start - added by AndCycle, aux Ports, by lugdunummaster
-					if (server->GetConnPort() != server->GetPort())
-			           Sbuffer.Format(_T("%s : %i/%i"), server->GetAddress(), server->GetPort(), server->GetConnPort());
-	               else 
+				case 1:
+				{
 					Sbuffer.Format(_T("%s : %i"), server->GetAddress(), server->GetPort());
-					//Morph End - added by AndCycle, aux Ports, by lugdunummaster
 					break;
 				}
-				case 2:{
+				case 2:
+				{
 					Sbuffer = server->GetDescription();
 					break;
-			  }
-				case 3:{
+				}
+				case 3:
+				{
 					if(server->GetPing())
 						Sbuffer.Format(_T("%i"), server->GetPing());
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 4:{
+				case 4:
+				{
 					if(server->GetUsers())
 						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetUsers()));
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 5:{
+				case 5:
+				{
 					if(server->GetMaxUsers())
 						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetMaxUsers()));
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 6:{
+				case 6:
+				{
 					if(server->GetFiles())
 						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetFiles()));
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 7:{
+				case 7:
+				{
 					switch(server->GetPreference()){
 						case SRV_PR_LOW:
 							Sbuffer = GetResString(IDS_PRIOLOW);
@@ -1261,53 +1266,60 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 							break;
 						default:
 							Sbuffer = GetResString(IDS_PRIONOPREF);
-						}
-					break;
 					}
-				case 8:{
+					break;
+				}
+				case 8:
+				{
 					Sbuffer.Format(_T("%i"), server->GetFailedCount());
 					break;
 				}
-				case 9:{
+				case 9:
+				{
 					if (server->IsStaticMember())
 						Sbuffer = GetResString(IDS_YES); 
 					else
 						Sbuffer = GetResString(IDS_NO);
 					break;
 				}
-				case 10:{
+				case 10:
+				{
 					if(server->GetSoftFiles())
 						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetSoftFiles()));
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 11:{
+				case 11:
+				{
 					if(server->GetHardFiles())
 						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetHardFiles()));
 					else
 						Sbuffer = "";
 					break;
 				}
-				case 12:{
+				case 12:
+				{
 					Sbuffer = server->GetVersion();
 					if (thePrefs.GetDebugServerUDPLevel() > 0){
 						if (server->GetUDPFlags() != 0){
 							if (!Sbuffer.IsEmpty())
 								Sbuffer += _T("; ");
 							Sbuffer.AppendFormat(_T("ExtUDP=%x"), server->GetUDPFlags());
-							}
 						}
-						if (thePrefs.GetDebugServerTCPLevel() > 0){
-							if (server->GetTCPFlags() != 0){
-								if (!Sbuffer.IsEmpty())
-									Sbuffer += _T("; ");
-								Sbuffer.AppendFormat(_T("ExtTCP=%x"), server->GetTCPFlags());
-								}
-							}
-                        break;
+					}
+					if (thePrefs.GetDebugServerTCPLevel() > 0){
+						if (server->GetTCPFlags() != 0){
+							if (!Sbuffer.IsEmpty())
+								Sbuffer += _T("; ");
+							Sbuffer.AppendFormat(_T("ExtTCP=%x"), server->GetTCPFlags());
 						}
-				case 13:{
+					}
+					break;
+				}
+				//Lowid Column
+				case 13:
+				{
 					if (server->GetLowIDUsers()){
 						CString tempStr2;
 						tempStr2.Format(_T("%s"), CastItoIShort(server->GetLowIDUsers()));
@@ -1317,81 +1329,50 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 						Sbuffer = _T("");
 					}
 					break;
-						}
-
-				// Obfuscation
-				case 14:{
+				}
+				case 14:
+				{
+					// Obfuscation
 					if (server->SupportsObfuscationTCP() && server->GetObfuscationPortTCP() != 0)
-					{ //morph start	 obfuscation server required
-						Sbuffer = GetResString(IDS_YES); 
-						if (server->GetServerKeyUDP()) {	// MORPH and has a valid obfuscation key
-												Sbuffer+="(";
-							                    Sbuffer+=GetResString(IDS_KEY );  // obfuscation key available
-												Sbuffer+=")";	  
-						}
-						else {
-												Sbuffer+="(";
-							                    Sbuffer+=GetResString(IDS_BUDDYNONE ); // no key available.
-												Sbuffer+=")";
-						     }
-					} // morph end obfuscation server required
+						Sbuffer = GetResString(IDS_YES);
 					else
 						Sbuffer = GetResString(IDS_NO);
-
-
 					break;
 				}
-				case 15:{
-					if(server->GetConnPort() != server->GetPort())
-						Sbuffer.Format(_T("%i"), server->GetConnPort());
-					else
-						Sbuffer = _T("");
-					break;
-						}
 
-				//Commander - Country Column
-				case 16:{
-					Sbuffer.Format(_T("%s"), server->GetCountryName());
-					if(theApp.ip2country->ShowCountryFlag()){
-						POINT point2= {cur_rec.left,cur_rec.top+1};
-						theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, server->GetCountryFlagIndex(), point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
-						cur_rec.left+=20;
-						}
-				    dc->DrawText(Sbuffer,Sbuffer.GetLength(),&cur_rec,MLC_DT_TEXT);
 
-				    if(theApp.ip2country->ShowCountryFlag()){
-					    cur_rec.left-=20;
-					}
-					break;
-				}
-}//End of Switch
-				
-					if(iColumn != 0 && iColumn != 16)
-						dc->DrawText(Sbuffer,Sbuffer.GetLength(),&cur_rec, DT_LEFT);
-					cur_rec.left += GetColumnWidth(iColumn);
-				}
+				}//End of Switch
+
+				if(iColumn != 0 && iColumn != 15)
+					dc->DrawText(Sbuffer,Sbuffer.GetLength(),&cur_rec, DT_LEFT);
+				cur_rec.left += GetColumnWidth(iColumn);
 			}
-			//draw rectangle around selected item(s)
-			if ((lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED))
-			{
-				RECT outline_rec = lpDrawItemStruct->rcItem;
-				outline_rec.top--;
-				outline_rec.bottom++;
-				dc->FrameRect(&outline_rec, &CBrush(GetBkColor()));
-				outline_rec.top++;
-				outline_rec.bottom--;
-				outline_rec.left++;
-				outline_rec.right--;
-				if(bCtrlFocused)
-			dc->FrameRect(&outline_rec, &CBrush(m_crFocusLine));
-		else
-			dc->FrameRect(&outline_rec, &CBrush(m_crNoFocusLine));
-	}
-	if (m_crWindowTextBk == CLR_NONE)
-		dc.SetBkMode(iOldBkMode);
-	dc.SelectObject(pOldFont);
-	dc.SetTextColor(crOldTextColor);
-	if (!theApp.IsRunningAsService(SVC_SVR_OPT)) // MORPH leuk_he:run as ntservice v1..
-		m_updatethread->AddItemUpdated((LPARAM)server); //MORPH - UpdateItemThread
+		}
+		//draw rectangle around selected item(s)
+		if ((lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED))
+		{
+			RECT outline_rec = lpDrawItemStruct->rcItem;
+			outline_rec.top--;
+			outline_rec.bottom++;
+			dc->FrameRect(&outline_rec, &CBrush(GetBkColor()));
+			outline_rec.top++;
+			outline_rec.bottom--;
+			outline_rec.left++;
+			outline_rec.right--;
+			if(bCtrlFocused)
+				dc->FrameRect(&outline_rec, &CBrush(m_crFocusLine));
+			else
+				dc->FrameRect(&outline_rec, &CBrush(m_crNoFocusLine));
+		}
+
+		if (m_crWindowTextBk == CLR_NONE)
+			dc.SetBkMode(iOldBkMode);
+		dc.SelectObject(pOldFont);
+		dc.SetTextColor(crOldTextColor);
+		// ==> Design Settings [eWombat/Stulle] - Stulle
+		/*
+		fontCustom.DeleteObject();
+		*/
+		// <== Design Settings [eWombat/Stulle] - Stulle
 }
 //Commander - Added: CountryFlag - End

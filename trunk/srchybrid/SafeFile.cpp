@@ -189,11 +189,17 @@ void CFileDataIO::WriteString(const CString& rstr, EUtf8Str eEncode)
 	}
 	else if (eEncode == utf8strOptBOM)
 	{
+		//Borschtsch - we always use Unicode
+		/*
 		if (NeedUTF8String(rstr))
 		{
+		*/
+		//Borschtsch - we always use Unicode
 			CUnicodeToBOMUTF8 bomutf8(rstr);
 			WRITE_STR_LEN(bomutf8.GetLength());
 			Write((LPCSTR)bomutf8, bomutf8.GetLength());
+		//Borschtsch - we always use Unicode
+		/*
 		}
 		else
 		{
@@ -201,6 +207,8 @@ void CFileDataIO::WriteString(const CString& rstr, EUtf8Str eEncode)
 			WRITE_STR_LEN(mb.GetLength());
 			Write((LPCSTR)mb, mb.GetLength());
 		}
+		*/
+		//Borschtsch - we always use Unicode
 	}
 	else
 	{
@@ -229,11 +237,17 @@ void CFileDataIO::WriteLongString(const CString& rstr, EUtf8Str eEncode)
 	}
 	else if (eEncode == utf8strOptBOM)
 	{
+		//Borschtsch - we always use Unicode
+		/*
 		if (NeedUTF8String(rstr))
 		{
+		*/
+		//Borschtsch - we always use Unicode
 			CUnicodeToBOMUTF8 bomutf8(rstr);
 			WRITE_STR_LEN(bomutf8.GetLength());
 			Write((LPCSTR)bomutf8, bomutf8.GetLength());
+		//Borschtsch - we always use Unicode
+		/*
 		}
 		else
 		{
@@ -241,6 +255,8 @@ void CFileDataIO::WriteLongString(const CString& rstr, EUtf8Str eEncode)
 			WRITE_STR_LEN(mb.GetLength());
 			Write((LPCSTR)mb, mb.GetLength());
 		}
+		*/
+		//Borschtsch - we always use Unicode
 	}
 	else
 	{

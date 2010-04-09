@@ -1,12 +1,7 @@
 #pragma once
 #include "Preferences.h"
 
-// MORPH START leuk_he tooltipped
-/*
 class CPPgProxy : public CPropertyPage
-*/
-class CPPgProxy : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgProxy)
 

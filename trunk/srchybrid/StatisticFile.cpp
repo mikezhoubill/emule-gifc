@@ -20,16 +20,36 @@
 #include "emule.h"
 #include "KnownFileList.h"
 #include "SharedFileList.h"
-#include "Uploadqueue.h" //MORPH START - Added by SiRoB, Equal Chance For Each File
-#include "Statistics.h" //MORPH START - Added by SiRoB, Equal Chance For Each File
-#include "Preferences.h" //MORPH START - Added by SiRoB, Equal Chance For Each File
-#include "Log.h" //Fafner: corrupted spreadbarinfo? - 080317
+#include "KnownFile.h" //Xman PowerRelease
+
+//Xman advanced upload-priority
+#ifdef _BETA
+#include "Log.h"
+#include "otherfunctions.h"
+#endif
+//Xman end
+// ==> Spread bars [Slugfiller/MorphXT] - Stulle
+#include "Preferences.h"
+#include "Log.h"
+// <== Spread bars [Slugfiller/MorphXT] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+/*
+//Xman PowerRelease
+// SLUGFILLER: Spreadbars (old version)
+CStatisticFile::~CStatisticFile(){
+	for (POSITION pos = spreadlist.GetHeadPosition();pos != 0;spreadlist.GetNext(pos))
+		delete spreadlist.GetAt(pos);
+}
+//Xman end
+*/
+// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
 
 void CStatisticFile::MergeFileStats( CStatisticFile *toMerge )
 {
@@ -39,8 +59,17 @@ void CStatisticFile::MergeFileStats( CStatisticFile *toMerge )
 	alltimerequested += toMerge->GetAllTimeRequests();
 	alltimetransferred += toMerge->GetAllTimeTransferred();
 	alltimeaccepted += toMerge->GetAllTimeAccepts();
+	//Xman advanced upload-priority
+	m_unotcountedtransferred += toMerge->m_unotcountedtransferred;
+	if(m_unotcountedtransferred > alltimetransferred)
+		m_unotcountedtransferred = alltimetransferred;
+	//Xman end
 
-	// SLUGFILLER: Spreadbars
+#ifdef _BETA
+	AddDebugLogLine(false,_T("merged file stats: %s"), toMerge->fileParent->GetFileName());
+#endif
+
+	// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 	if (!toMerge->spreadlist.IsEmpty()) {
 		POSITION pos = toMerge->spreadlist.GetHeadPosition();
 		uint64 start = toMerge->spreadlist.GetKeyAt(pos);
@@ -55,47 +84,254 @@ void CStatisticFile::MergeFileStats( CStatisticFile *toMerge )
 			toMerge->spreadlist.GetNext(pos);
 		}
 	}
-	// SLUGFILLER: Spreadbars
+	// <== Spread bars [Slugfiller/MorphXT] - Stulle
 }
 
 void CStatisticFile::AddRequest(){
 	requested++;
 	alltimerequested++;
 	theApp.knownfiles->requested++;
+	//Xman Code Improvement -> don't update to often
+	m_uFileupdatetime=::GetTickCount(); 
 	theApp.sharedfiles->UpdateFile(fileParent);
+	//Xman end
 }
 	
 void CStatisticFile::AddAccepted(){
 	accepted++;
 	alltimeaccepted++;
 	theApp.knownfiles->accepted++;
+	//Xman Code Improvement -> don't update to often
+	m_uFileupdatetime=::GetTickCount(); 
 	theApp.sharedfiles->UpdateFile(fileParent);
+	//Xman end
 }
 	
-void CStatisticFile::AddTransferred(uint64 start, uint64 bytes){	//MORPH - Added by IceCream, SLUGFILLER: Spreadbars
+//Xman PowerRelease
+/*
+void CStatisticFile::AddTransferred(uint64 bytes){
+*/
+// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+/*
+void CStatisticFile::AddTransferred(uint64 start, uint32 bytes){
+*/
+// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+void CStatisticFile::AddTransferred(uint64 start, uint64 bytes){ // Spread bars [Slugfiller/MorphXT] - Stulle
+//Xman end
 	transferred += bytes;
 	alltimetransferred += bytes;
 	theApp.knownfiles->transferred += bytes;
-	AddBlockTransferred(start, start+bytes/*FIX?+1*/, 1);	//MORPH - Added by IceCream, SLUGFILLER: Spreadbars
-	theApp.sharedfiles->UpdateFile(fileParent);
-	m_bInChangedEqualChanceValue = false;	//Morph - added by AndCycle, Equal Chance For Each File
+	//Xman PowerRelease
+	// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+	/*
+	if(!fileParent->IsPartFile() && fileParent->GetED2KPartCount()>3)
+	*/
+	// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+		AddBlockTransferred(start, start+bytes/*+1*/, 1); //Xman David
+	//Xman end
+	//Xman Code Improvement -> don't update to often
+	if(m_uFileupdatetime + 1000 < ::GetTickCount()) //once per second
+	{
+		m_uFileupdatetime=::GetTickCount();
+		theApp.sharedfiles->UpdateFile(fileParent);
+	}
+	//Xman end
 }
+// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
+/*
+//Xman PowerRelease
+// SLUGFILLER: Spreadbars (old version)
+void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint32 count){
+	if (start >= end || !count)
+		return;
 
-//MORPH START - Added by IceCream, SLUGFILLER: Spreadbars
+	if (spreadlist.IsEmpty()) {
+		if (start > 0) {
+			Spread_Struct* gap_spread = new Spread_Struct;
+			gap_spread->start = 0;
+			gap_spread->end = start;
+			gap_spread->count = 0;
+			spreadlist.AddTail(gap_spread);
+		}
+		Spread_Struct* new_spread = new Spread_Struct;
+		new_spread->start = start;
+		new_spread->end = end;
+		new_spread->count = count;
+		spreadlist.AddTail(new_spread);
+		return;
+	}
+
+	POSITION pos = spreadlist.GetTailPosition();
+	Spread_Struct* cur_spread = spreadlist.GetAt(pos);
+
+	if (cur_spread->end <= end) {
+		if (cur_spread->end <= start) {
+			if (cur_spread->end == start) {
+				if (cur_spread->count == count) {
+					cur_spread->end = end;
+					return;
+				}
+			} else {
+				Spread_Struct* gap_spread = new Spread_Struct;
+				gap_spread->start = cur_spread->end;
+				gap_spread->end = start;
+				gap_spread->count = 0;
+				spreadlist.AddTail(gap_spread);
+			}
+			Spread_Struct* new_spread = new Spread_Struct;
+			new_spread->start = start;
+			new_spread->end = end;
+			new_spread->count = count;
+			spreadlist.AddTail(new_spread);
+			return;
+		}
+		if (cur_spread->end == end) {
+			if (cur_spread->start == start) {
+				cur_spread->count += count;
+				return;
+			}
+			if (cur_spread->start < start) {
+				cur_spread->end = start;
+				Spread_Struct* new_spread = new Spread_Struct;
+				new_spread->start = start;
+				new_spread->end = end;
+				new_spread->count = count+cur_spread->count;
+				spreadlist.AddTail(new_spread);
+				return;
+			}
+		} else {
+			Spread_Struct* new_spread = new Spread_Struct;
+			new_spread->start = cur_spread->end;
+			new_spread->end = end;
+			new_spread->count = count;
+			spreadlist.AddTail(new_spread);
+		}
+		while (cur_spread->start > start) {
+			cur_spread->count += count;
+			spreadlist.GetPrev(pos);
+			cur_spread = spreadlist.GetAt(pos);
+		}
+		if (cur_spread->start == start) {
+			cur_spread->count += count;
+			spreadlist.GetPrev(pos);
+			if (!pos)
+				return;
+			Spread_Struct* next_spread = spreadlist.GetAt(pos);
+			if (next_spread->count != cur_spread->count)
+				return;
+			cur_spread->start = next_spread->start;
+			spreadlist.RemoveAt(pos);
+			delete next_spread;
+			return;
+		}
+		Spread_Struct* new_spread = new Spread_Struct;
+		new_spread->start = start;
+		new_spread->end = cur_spread->end;
+		new_spread->count = count+cur_spread->count;
+		spreadlist.InsertAfter(pos,new_spread);
+		cur_spread->end = start;
+		return;
+	}
+
+	pos = spreadlist.GetHeadPosition();
+	cur_spread = spreadlist.GetAt(pos);
+	while (cur_spread->end < start) {
+		spreadlist.GetNext(pos);
+		cur_spread = spreadlist.GetAt(pos);
+	}
+	if (cur_spread->end == start) {
+		POSITION pos1 = pos;
+		spreadlist.GetNext(pos);
+		Spread_Struct* next_spread = spreadlist.GetAt(pos);
+		if (next_spread->count+count != cur_spread->count)
+			cur_spread = next_spread;
+		else {
+			cur_spread->count = next_spread->count;
+			cur_spread->end = next_spread->end;
+			spreadlist.RemoveAt(pos);
+			delete next_spread;
+			pos = pos1;
+		}
+	} else if (cur_spread->start < start) {
+		Spread_Struct* new_spread = new Spread_Struct;
+		new_spread->start = start;
+		new_spread->end = cur_spread->end;
+		new_spread->count = cur_spread->count;
+		spreadlist.InsertAfter(pos,new_spread);
+		cur_spread->end = start;
+		spreadlist.GetNext(pos);
+		cur_spread = new_spread;
+	}
+	while (cur_spread->end < end) {
+		cur_spread->count += count;
+		spreadlist.GetNext(pos);
+		cur_spread = spreadlist.GetAt(pos);
+	}
+	if (cur_spread->end == end) {
+		cur_spread->count += count;
+		spreadlist.GetNext(pos);
+		Spread_Struct* next_spread = spreadlist.GetAt(pos);
+		if (next_spread->count != cur_spread->count)
+			return;
+		cur_spread->end = next_spread->end;
+		spreadlist.RemoveAt(pos);
+		delete next_spread;
+		return;
+	}
+	Spread_Struct* new_spread = new Spread_Struct;
+	new_spread->start = end;
+	new_spread->end = cur_spread->end;
+	new_spread->count = cur_spread->count;
+	spreadlist.InsertAfter(pos,new_spread);
+	cur_spread->count += count;
+	cur_spread->end = end;
+}
+//Xman end
+*/
+// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+
+//Xman advanced upload-priority
+void CStatisticFile::UpdateCountedTransferred() 
+{
+	ASSERT(m_tlastdataupdate!=0);
+	ASSERT(m_unotcountedtransferred <= alltimetransferred);
+	if(time(NULL) - m_tlastdataupdate > 3600 * 12) // every 12 hours
+	{
+#ifdef _BETA
+		uint64 oldcounted=GetCountedTransferred();
+#endif
+		//we subtract every day 10% from the counted upload
+		//this means, if you close emule for >=10 days and restart, no old upload is counted for Auto-Prio
+		//also if there are no uploads for longer time the file get pushed via Auto-Prio
+		//remark: when emule is running 10 days, the counted upload will never reach 0, because always subtracting 10%
+		//however this method is the best one without adding lot of more information to the met files
+		//and it's crash-safe
+		uint32 difference = (time(NULL)-m_tlastdataupdate)/(3600*12); //in half days
+		if(difference>20) difference = 20;
+		//every half day = 5%
+		difference *=5;
+		if(difference>=100) //manual to avoid overflow because rounding errors
+			m_unotcountedtransferred = alltimetransferred;
+		else
+			m_unotcountedtransferred += (uint64)((double)GetCountedTransferred() * ((double)difference/100));
+#ifdef _BETA
+		AddDebugLogLine(false,_T("--> Calc file stats: old counted upload: %s, new counted upload: %s, half days difference: %u%%, file: %s"),CastItoXBytes(oldcounted),CastItoXBytes(GetCountedTransferred()),difference,fileParent->GetFileName());
+#endif
+		m_tlastdataupdate=time(NULL);
+	}
+}
+//Xman end
+// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint64 count){
 	if (start >= end || !count)
 		return;
 
-	//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-	if(fileParent->GetSpreadbarSetStatus() == 0 || (fileParent->GetSpreadbarSetStatus() == -1 && thePrefs.GetSpreadbarSetStatus() == 0))
+	if(thePrefs.GetSpreadbarSetStatus() == false)
 		return;
-	//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
 
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	InChangedSpreadSortValue = false;
 	InChangedFullSpreadCount = false;
 	InChangedSpreadBar = false;
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	
 	if (spreadlist.IsEmpty())
 		spreadlist.SetAt(0, 0);
@@ -109,7 +345,7 @@ void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint64 count)
 
 	ASSERT(endpos != NULL);
 	if (endpos == NULL) { //Fafner: corrupted spreadbarinfo? - 080317
-		DebugLog(LOG_MORPH|LOG_ERROR, _T("AddBlockTransferred: No endpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
+		AddDebugLogLine(false, _T("AddBlockTransferred: No endpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
 		return;
 	}
 
@@ -134,12 +370,12 @@ void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint64 count)
 
 	ASSERT(startpos != NULL);
 	if (startpos == NULL) { //Fafner: corrupted spreadbarinfo? - 080317
-		DebugLog(LOG_MORPH|LOG_ERROR, _T("AddBlockTransferred: No startpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
+		AddDebugLogLine(false, _T("AddBlockTransferred: No startpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
 		return;
 	}
 	ASSERT(startpos != endpos);
 	if (startpos == endpos) { //Fafner: corrupted spreadbarinfo? - 080317
-		DebugLog(LOG_MORPH|LOG_WARNING, _T("AddBlockTransferred: startpos == endpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
+		AddDebugLogLine(false, _T("AddBlockTransferred: startpos == endpos in spreadbarinfo for file %s - %I64u, %I64u, %I64u"), fileParent->GetFileName(), start, end, count);
 	}
 
 	uint64 startcount = spreadlist.GetValueAt(startpos)+count;
@@ -158,7 +394,6 @@ void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint64 count)
 
 CBarShader CStatisticFile::s_SpreadBar(16);
 
-//MORPH START - Changed by SiRoB, Reduce SpreadBar CPU consumption
 void CStatisticFile::DrawSpreadBar(CDC* dc, RECT* rect, bool bFlat) /*const*/
 {
 	int iWidth=rect->right - rect->left;
@@ -205,15 +440,11 @@ void CStatisticFile::DrawSpreadBar(CDC* dc, RECT* rect, bool bFlat) /*const*/
 	dc->BitBlt(rect->left, rect->top, iWidth, iHeight, &cdcStatus, 0, 0, SRCCOPY);
 	cdcStatus.SelectObject(hOldBitmap);
 }
-//MORPH END  - Changed by SiRoB, Reduce SpreadBar CPU consumption
 
 float CStatisticFile::GetSpreadSortValue() /*const*/
 {
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
-	if (InChangedSpreadSortValue)
-		return lastSpreadSortValue;
+	if (InChangedSpreadSortValue) return lastSpreadSortValue;
 	InChangedSpreadSortValue=true;
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	float avg, calc;
 	uint64 total = 0;
 	uint64 filesize = fileParent->GetFileSize();
@@ -250,18 +481,14 @@ float CStatisticFile::GetSpreadSortValue() /*const*/
 		spreadlist.GetNext(pos);
 	}
 	calc /= filesize;
-	//MORPH START - Added by SiRoB, Reduce Spread CPU consumption
 	lastSpreadSortValue = calc;
 	return calc;
-	//MORPH START - Added by SiRoB, Reduce Spread CPU consumption
 }
 
 float CStatisticFile::GetFullSpreadCount() /*const*/
 {
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	if (InChangedFullSpreadCount) return lastFullSpreadCount;
 	InChangedFullSpreadCount=true;
-	//MORPH START - Added by SiRoB, Reduce SpreedBar CPU consumption
 	float next;
 	uint64 min;
 	uint64 filesize = fileParent->GetFileSize();
@@ -293,79 +520,21 @@ float CStatisticFile::GetFullSpreadCount() /*const*/
 		spreadlist.GetNext(pos);
 	}
 	next /= filesize;
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	return lastFullSpreadCount = min+next;
-	//MORPH END   - Added by SiRoB, Reduce SpreadBar CPU consumption
 }
-//MORPH END   - Added by IceCream, SLUGFILLER: Spreadbars
 
-//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
 void CStatisticFile::ResetSpreadBar()
 {
 	spreadlist.RemoveAll();
 	spreadlist.SetAt(0, 0);
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	InChangedSpreadSortValue = false;
 	InChangedFullSpreadCount = false;
 	InChangedSpreadBar = false;
-	//MORPH START - Added by SiRoB, Reduce SpreadBar CPU consumption
 	return;
 }
-//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
+// <== Spread bars [Slugfiller/MorphXT] - Stulle
 
-//Morph Start - added by AndCycle, Equal Chance For Each File
-double CStatisticFile::GetEqualChanceValue()
-{
-	if(!thePrefs.IsEqualChanceEnable()){
-		return 0;
-	}
-	//Morph - Added by AndCycle, Equal Chance For Each File, reduce CPU power
-	else if(m_bInChangedEqualChanceValue && (lastCheckEqualChanceSemiValue + theApp.uploadqueue->GetAverageUpTime()) > (uint32)time(NULL)){
-		return m_dLastEqualChanceSemiValue/GetSessionShareTime();
-	}
-	lastCheckEqualChanceSemiValue = time(NULL);
-	m_bInChangedEqualChanceValue = true;
-	//Morph - Added by AndCycle, Equal Chance For Each File, reduce CPU power
-
-	//smaller value means greater priority
-	m_dLastEqualChanceSemiValue = ((double)GetTransferred()/(uint64)fileParent->GetFileSize());
-
-	//weight adjustment
-	if(theApp.uploadqueue->GetSuccessfullUpCount() > 0){
-		uint64 threshold = (UINT)(theStats.GetAvgUploadRate(AVG_SESSION)*1024*theApp.uploadqueue->GetAverageUpTime());
-		if(fileParent->GetFileSize() < threshold){
-			m_dLastEqualChanceBiasValue = 1+log((double)threshold/((uint64)fileParent->GetFileSize()%threshold+1));
-			m_dLastEqualChanceSemiValue /= m_dLastEqualChanceBiasValue;
-		}
-	}
-	return m_dLastEqualChanceSemiValue/GetSessionShareTime();
-}
-
-CString CStatisticFile::GetEqualChanceValueString(bool detail) const
-{
-	CString tempString;
-
-	if(thePrefs.IsEqualChanceEnable())	{
-		if(m_dLastEqualChanceBiasValue != 1){
-			detail ?
-				tempString.Format(_T("%s : %.2f*%.2f = %s/%s"), CastSecondsToHM(GetSessionShareTime()), m_dLastEqualChanceSemiValue, m_dLastEqualChanceBiasValue, CastItoXBytes(GetTransferred()), CastItoXBytes(fileParent->GetFileSize())) :
-				tempString.Format(_T("%s : %.2f*%.2f"), CastSecondsToHM(GetSessionShareTime()), m_dLastEqualChanceSemiValue, m_dLastEqualChanceBiasValue) ;
-		}
-		else{
-			detail ?
-				tempString.Format(_T("%s : %.2f = %s/%s"), CastSecondsToHM(GetSessionShareTime()), m_dLastEqualChanceSemiValue, CastItoXBytes(GetTransferred()), CastItoXBytes(fileParent->GetFileSize())) :
-				tempString.Format(_T("%s : %.2f"), CastSecondsToHM(GetSessionShareTime()), m_dLastEqualChanceSemiValue) ;
-		}
-	}
-	else{
-		tempString.Empty();
-	}
-
-	return tempString;
-}
-//Morph End - added by AndCycle, Equal Chance For Each File
-
-//EastShare	Start - FairPlay by AndCycle
+// ==> Fair Play [AndCycle/Stulle] - Stulle
 bool	CStatisticFile::GetFairPlay() const
 {
 	//should only judge simple UL or is there any better replacement?
@@ -375,4 +544,4 @@ bool	CStatisticFile::GetFairPlay() const
 		return true;
 	return false;
 }
-//EastShare	End   - FairPlay by AndCycle
+// <== Fair Play [AndCycle/Stulle] - Stulle

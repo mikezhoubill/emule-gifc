@@ -83,11 +83,13 @@ void CHTRichEditCtrl::Init(LPCTSTR pszTitle, LPCTSTR pszSkinKey)
 
 	VERIFY( SendMessage(EM_SETUNDOLIMIT, 0, 0) == 0 );
 	int iMaxLogBuff = thePrefs.GetMaxLogBuff();
-	/* morph no win95 vs2008
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	if (afxIsWin95())
 		LimitText(iMaxLogBuff > 0xFFFF ? 0xFFFF : iMaxLogBuff);
 	else
-	*/ // end vs2008
+	*/
+	// <== Drop Win95 support [MorphXT] - Stulle
 		LimitText(iMaxLogBuff ? iMaxLogBuff : 128*1024);
 	m_iLimitText = GetLimitText();
 
@@ -200,10 +202,6 @@ COLORREF GetLogLineColor(UINT eMsgType)
 		return thePrefs.m_crLogWarning;
 	if (eMsgType == LOG_SUCCESS)
 		return thePrefs.m_crLogSuccess;
-	//MORPH START - Added by SiRoB, Upload Splitting Class
-	if (eMsgType == LOG_USC)
-		return thePrefs.m_crLogUSC;
-	//MORPH END   - Added by SiRoB, Upload Splitting Class
 	ASSERT( eMsgType == LOG_INFO );
 	return CLR_DEFAULT;
 }
@@ -345,7 +343,8 @@ void CHTRichEditCtrl::ScrollToLastLine(bool bForceLastLineAtBottom)
 
 	// WM_VSCROLL does not work correctly under Win98 (or older version of comctl.dll)
 	SendMessage(WM_VSCROLL, SB_BOTTOM);
-	/* no win95 vs2008
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	if (afxIsWin95())
 	{
 		// older version of comctl.dll seem to need this to properly update the display
@@ -354,13 +353,15 @@ void CHTRichEditCtrl::ScrollToLastLine(bool bForceLastLineAtBottom)
 		SendMessage(WM_VSCROLL, SB_ENDSCROLL);
 	}
 	*/
+	// <== Drop Win95 support [MorphXT] - Stulle
 }
 
 void CHTRichEditCtrl::ScrollToFirstLine()
 {
 	// WM_VSCROLL does not work correctly under Win98 (or older version of comctl.dll)
 	SendMessage(WM_VSCROLL, SB_TOP);
-	/* morph no win98 vs2008
+	// ==> Drop Win95 support [MorphXT] - Stulle
+	/*
 	if (afxIsWin95())
 	{
 		// older version of comctl.dll seem to need this to properly update the display
@@ -369,6 +370,7 @@ void CHTRichEditCtrl::ScrollToFirstLine()
 		SendMessage(WM_VSCROLL, SB_ENDSCROLL);
 	}
 	*/
+	// <== Drop Win95 support [MorphXT] - Stulle
 }
 
 void CHTRichEditCtrl::AddString(int nPos, LPCTSTR pszString, bool bLink, COLORREF cr, COLORREF bk, DWORD mask)
@@ -506,19 +508,7 @@ void CHTRichEditCtrl::SafeAddLine(int nPos, LPCTSTR pszLine, int iLen, long& lSt
 		}
 	}
 
-	//MORPH START - Added by SiRoB, Draw date adn time with defaultcolor
-	TCHAR temp[128];
-	 _sntprintf(temp, ARRSIZE(temp), _T("%s:"), CTime::GetCurrentTime().Format(thePrefs.GetDateTimeFormat4Log()));	
-	if(_tcslen(pszLine)>20 && _tcsncmp(pszLine,temp,15)==0)
-	{
-		TCHAR Date[21]=_T("\0");
-		_tcsncpy(Date,pszLine,20);
-		AddString(nPos, Date, false, CLR_DEFAULT, bk, mask);
-		AddString(nPos+20, pszLine+20, bLink, cr, bk, mask);
-	}
-	else
-	//MORPH END   - Added by SiRoB, Draw date adn time with defaultcolor
-		AddString(nPos, pszLine, bLink, cr, bk, mask);
+	AddString(nPos, pszLine, bLink, cr, bk, mask);
 
 	if (m_bEnErrSpace)
 	{

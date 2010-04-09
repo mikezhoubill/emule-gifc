@@ -40,9 +40,7 @@ enum ECols
 	colComment,
 	colFileName,
 	colUserName,
-	colOrigin,
-	colClientSoft,  //MORPH - Added by SiRoB, ClientSoftware Column
-	colClientCountry //MORPH - Added by SiRoB, ClientCountry Column
+	colOrigin
 };
 
 IMPLEMENT_DYNAMIC(CCommentListCtrl, CMuleListCtrl)
@@ -72,8 +70,6 @@ void CCommentListCtrl::Init(void)
 	InsertColumn(colFileName,	GetResString(IDS_DL_FILENAME),	LVCFMT_LEFT, DFLT_FILENAME_COL_WIDTH);
 	InsertColumn(colUserName,	GetResString(IDS_QL_USERNAME),	LVCFMT_LEFT, DFLT_CLIENTNAME_COL_WIDTH);
 	InsertColumn(colOrigin,		GetResString(IDS_NETWORK),		LVCFMT_LEFT,  80);
-	InsertColumn(colClientSoft,	GetResString(IDS_CD_CSOFT),	LVCFMT_LEFT, 130); //Commander - Added: ClientSoftware Column
-	InsertColumn(colClientCountry,	GetResString(IDS_COUNTRY),	LVCFMT_LEFT, 130); //Commander - Added: ClientCountry Column
 
 	CImageList iml;
 	iml.Create(16, 16, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1);
@@ -132,17 +128,7 @@ int CCommentListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 			else
 				iResult = 0;
 			break;
-	
-		//Commander - Added: ClientSoftware Column
-		case colClientSoft:
-			iResult = item1->m_strClientSoft.Compare(item2->m_strClientSoft);
-			break;
-		//Commander - Added: ClientSoftware Column
 		
-		case colClientCountry:
-			iResult = item1->m_strClientCountry.Compare(item2->m_strClientCountry);
-			break;
-		//Commander - Added: ClientCountry Column
 		default:
 			ASSERT(0);
 			return 0;
@@ -239,8 +225,6 @@ void CCommentListCtrl::AddComment(const SComment* pComment)
 	SetItemText(iItem, colFileName, pComment->m_strFileName);
 	SetItemText(iItem, colUserName, pComment->m_strUserName);
 	SetItemText(iItem, colOrigin, pComment->m_iOrigin == 0 ? _T("eD2K") : _T("Kad"));
-	SetItemText(iItem, colClientSoft, pComment->m_strClientSoft); //Commander - Added: ClientSoftware Column
-	SetItemText(iItem, colClientCountry, pComment->m_strClientCountry); //Commander - Added: ClientCountry Column
 }
 
 void CCommentListCtrl::AddItem(const CUpDownClient* client)
@@ -250,9 +234,7 @@ void CCommentListCtrl::AddItem(const CUpDownClient* client)
 		return;
 	int iRating = client->GetFileRating();
 	SComment* pComment = new SComment(pClientCookie, iRating, client->GetFileComment(),
-									  client->GetClientFilename(), client->GetUserName(), 0/*eD2K*/,
-									  client->GetClientSoftVer(), //Commander - Added: ClientSoftware Column
-									  client->GetCountryName()); //Commander - Added: ClientCountry Column
+									  client->GetClientFilename(), client->GetUserName(), 0/*eD2K*/);
 	AddComment(pComment);
 }
 
@@ -263,9 +245,7 @@ void CCommentListCtrl::AddItem(const Kademlia::CEntry* entry)
 		return;
 	int iRating = (int)entry->GetIntTagValue(TAG_FILERATING);
 	SComment* pComment = new SComment(pClientCookie, iRating, entry->GetStrTagValue(TAG_DESCRIPTION),
-									  entry->GetCommonFileName(), _T(""), 1/*Kad*/,
-									  _T(""), //Commander - Added: ClientSoftware Column
-									  _T("")); //Commander - Added: ClientCountry Column
+									  entry->GetCommonFileName(), _T(""), 1/*Kad*/);
 	AddComment(pComment);
 }
 

@@ -25,7 +25,9 @@
 #include "OtherFunctions.h"
 #include "Statistics.h"
 #include "ClientCredits.h"
-#include "log.h" //MORPH - Work arround I.C.H and other recovering processing responsible of stalled download 
+//Xman
+#include "emule.h"
+#include "BandwidthControl.h" 
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -50,22 +52,9 @@ void CUrlClient::SetRequestFile(CPartFile* pReqFile)
 	CUpDownClient::SetRequestFile(pReqFile);
 	if (reqfile)
 	{
-		//MORPH START - Changed by SiRoB, ICS merged into partstatus
-		uint8* PartStatus;
-		if(!m_PartStatus_list.Lookup(reqfile,PartStatus)) {
-		//MORPH END   - Changed by SiRoB, ICS merged into partstatus
-			m_nPartCount = reqfile->GetPartCount();
-			m_abyPartStatus = new uint8[m_nPartCount];
-			//MORPH - Changed by SiRoB, ICS merged into partstatus
-			/*
-			memset(m_abyPartStatus, 1, m_nPartCount);
-			*/
-			memset(m_abyPartStatus, SC_AVAILABLE, m_nPartCount);
-			//MORPH START - Added by SiRoB, Keep A4AF infos
-			m_PartStatus_list.SetAt(reqfile,m_abyPartStatus);
-			//MORPH END   - Added by SiRoB, Keep A4AF infos
-		}
-			//MORPH END   - Changed by SiRoB, ICS merged into partstatus
+		m_nPartCount = reqfile->GetPartCount();
+		m_abyPartStatus = new uint8[m_nPartCount];
+		memset(m_abyPartStatus, 1, m_nPartCount);
 		m_bCompleteSource = true;
 	}
 }
@@ -132,7 +121,7 @@ bool CUrlClient::SetUrl(LPCTSTR pszUrl, uint32 nIP)
 		m_nConnectIP = nIP;
 	else
 		m_nConnectIP = inet_addr(CT2A(szHostName));
-	ResetIP2Country(m_nConnectIP); //MORPH Added by SiRoB, IPtoCountry URLClient
+	ResetIP2Country(m_nConnectIP); //MORPH Added by SiRoB, IP to Country URLClient
 //	if (m_nConnectIP == INADDR_NONE)
 //		m_nConnectIP = 0;
 	m_nUserIDHybrid = htonl(m_nConnectIP);
@@ -158,8 +147,13 @@ bool CUrlClient::SendHttpBlockRequests()
 
 	CreateBlockRequests(PARTSIZE / EMBLOCKSIZE);
 	if (m_PendingBlocks_list.IsEmpty()){
+		// - Maella -Download Stop Reason-
+		/*
 		SetDownloadState(DS_NONEEDEDPARTS);
         SwapToAnotherFile(_T("A4AF for NNP file. UrlClient::SendHttpBlockRequests()"), true, false, false, NULL, true, true);
+		*/
+		SetDownloadState(DS_NONEEDEDPARTS, _T("No needed parts"), CUpDownClient::DSR_NONEEDEDPARTS);
+		//Xman end
 		return false;
 	}
 	
@@ -177,12 +171,7 @@ bool CUrlClient::SendHttpBlockRequests()
 		else
 		{
 			bMergeBlocks = false;
-			//MORPH START -Optimization
-			/*
 			reqfile->RemoveBlockFromList(pending->block->StartOffset, pending->block->EndOffset);
-			*/
-			reqfile->RemoveBlockFromList(pending->block);
-			//MORPH EMD START -Optimization
 			delete pending->block;
 			delete pending;
 			m_PendingBlocks_list.RemoveAt(posLast);
@@ -198,13 +187,6 @@ bool CUrlClient::SendHttpBlockRequests()
 	strHttpRequest.AppendFormat("Connection: Keep-Alive\r\n");
 	strHttpRequest.AppendFormat("Host: %s\r\n", m_strHostA);
 	strHttpRequest.AppendFormat("\r\n");
-
-	//MORPH START - Added, Extra logging
-	AddDebugLogLine(false, _T("http trsnasfer from SendHttpBlockRequests %s"),(CString) strHttpRequest);
-
-		if (thePrefs.GetDebugSourceExchange())
-			AddDebugLogLine(false, _T("SXSend (%s): Client source request; %s, File=\"%s\""),SupportsSourceExchange2() ? _T("Version 2") : _T("Version 1"), DbgGetClientInfo(), reqfile->GetFileName());
-	//MORPH END   - Added, Extra logging
 
 	if (thePrefs.GetDebugClientTCPLevel() > 0)
 		Debug(_T("Sending HTTP request:\n%hs"), strHttpRequest);
@@ -252,12 +234,16 @@ void CUrlClient::SendFileRequest()
 
 bool CUrlClient::Disconnected(LPCTSTR pszReason, bool bFromSocket)
 {
+	//Xman
+	/*
 	CHttpClientDownSocket* s = STATIC_DOWNCAST(CHttpClientDownSocket, socket);
 
 	TRACE(_T("%hs: HttpState=%u, Reason=%s\n"), __FUNCTION__, s==NULL ? -1 : s->GetHttpState(), pszReason);
 	// TODO: This is a mess..
 	if (s && (s->GetHttpState() == HttpStateRecvExpected || s->GetHttpState() == HttpStateRecvBody))
         m_fileReaskTimes.RemoveKey(reqfile); // ZZ:DownloadManager (one resk timestamp for each file)
+	*/
+	//Xman end
 	return CUpDownClient::Disconnected(CString(_T("CUrlClient::Disconnected")) + pszReason, bFromSocket);
 }
 
@@ -404,14 +390,22 @@ void CUpDownClient::ProcessHttpBlockPacket(const BYTE* pucData, UINT uSize)
 		throw CString(_T("Failed to process HTTP data block - Invalid block start/end offsets"));
 
 	thePrefs.Add2SessionTransferData(GetClientSoft(), (GetClientSoft()==SO_URL) ? (UINT)-2 : (UINT)-1, false, false, uSize);
-	m_nDownDataRateMS += uSize;
-	//MORPH START - Avoid Credits Accumulate faker
+	//Xman
 	/*
+	m_nDownDataRateMS += uSize;
+	*/
+	//Xman end
 	if (credits)
 		credits->AddDownloaded(uSize, GetIP());
-	*/
-	//MORPH END   - Avoid Credits Accumulate faker
 	nEndPos--;
+
+	//Xman
+	//remark: if the socket IsRawDataMode (means a httpsocket) we don't count the data at emsocket OnReceive, we have to do it at this point
+	//remark: this isn't fully accurate because we don't remove the headers
+	// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	AddDownloadRate(uSize); 
+	theApp.pBandWidthControl->AddeMuleIn(uSize); 
+	//Xman end
 
 	for (POSITION pos = m_PendingBlocks_list.GetHeadPosition(); pos != NULL; )
 	{
@@ -429,22 +423,13 @@ void CUpDownClient::ProcessHttpBlockPacket(const BYTE* pucData, UINT uSize)
 			uint32 lenWritten = reqfile->WriteToBuffer(uSize, pucData, nStartPos, nEndPos, cur_block->block, this);
 			if (lenWritten > 0)
 			{
-				//MORPH START - Avoid Credits Accumulate faker
-				if (credits)
-					credits->AddDownloaded(uSize, GetIP());
-				//MORPH END   - Avoid Credits Accumulate faker
 				m_nTransferredDown += uSize;
                 m_nCurSessionPayloadDown += lenWritten;
 				SetTransferredDownMini();
 
 				if (nEndPos >= cur_block->block->EndOffset)
 				{
-					//MORPH START- Optimization
-					/*
 					reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
-					*/
-					reqfile->RemoveBlockFromList(cur_block->block);
-					//MORPH END - Optimization
 					delete cur_block->block;
 					delete cur_block;
 					m_PendingBlocks_list.RemoveAt(posLast);
@@ -460,26 +445,6 @@ void CUpDownClient::ProcessHttpBlockPacket(const BYTE* pucData, UINT uSize)
 //				else
 //					TRACE("%hs - %d bytes missing\n", __FUNCTION__, cur_block->block->EndOffset - nEndPos);
 			}
-			//MORPH START - Work arround I.C.H and other recovering processing responsible of stalled download 
-			else if (nEndPos >= cur_block->block->EndOffset) { 
-				DebugLog(LOG_MORPH|LOG_SUCCESS,_T("[FIX STALLED DOWNLOAD] Often due to Data recovery, for '%s' with client: %s"), reqfile->GetFileName(), DbgGetClientInfo());
-				/*
-				reqfile->RemoveBlockFromList(cur_block->block->StartOffset, cur_block->block->EndOffset);
-				*/
-				reqfile->RemoveBlockFromList(cur_block->block);
-				//MORPH END - Optimization
-				delete cur_block->block;
-				delete cur_block;
-				m_PendingBlocks_list.RemoveAt(posLast);
-				if (m_PendingBlocks_list.IsEmpty())
-				{
-					if (thePrefs.GetDebugClientTCPLevel() > 0)
-						DebugSend("More block requests", this);
-					m_nUrlStartPos = (uint64)-1;
-					SendHttpBlockRequests();
-				}
-			}
-			//MORPH END   - Work arround I.C.H and other recovering processing responsible of stalled download 
 
 			return;
 		}

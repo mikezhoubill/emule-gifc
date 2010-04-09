@@ -1,5 +1,6 @@
 #pragma once
 #include "ColorButton.h"
+#include "afxcmn.h"
 
 class CPPgStats : public CPropertyPage
 {
@@ -23,6 +24,7 @@ protected:
 	CSliderCtrl m_ctlGraphsUpdate;
 	CSliderCtrl m_ctlGraphsAvgTime;
 	CSliderCtrl m_ctlStatsUpdate;
+	CSliderCtrl m_zoomSlider; //Xman Xtreme Mod
 	int m_iGraphsUpdate;
 	int m_iGraphsAvgTime;
 	int m_iStatsUpdate;
@@ -43,12 +45,15 @@ protected:
 	afx_msg LONG OnColorPopupSelChange(UINT lParam, LONG wParam);
 	afx_msg void OnEnChangeCGraphScale() { SetModified(); }
 	afx_msg void OnCbnSelChangeCRatio()	{ SetModified(); }
-	afx_msg void OnHelp();
-	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
-	afx_msg void OnDestroy();
-	afx_msg void OnBnClickedFillGraphs();
 	// ==> Source Graph - Stulle
 	afx_msg void OnBnClickedSrcGraph()	{ SetModified(); }
 	afx_msg void OnEnChangeStatsHL()	{ SetModified(); }
 	// <== Source Graph - Stulle
+	afx_msg void OnHelp();
+	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg void OnDestroy();
+	afx_msg void OnBnClickedFillGraphs();
+	
+public:
+	afx_msg void OnBnClickedSmoothAccurateRadio(); //Xman smooth-accurate-graph
 };

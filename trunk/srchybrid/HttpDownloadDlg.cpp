@@ -21,6 +21,7 @@ All rights reserved.
 #include "HttpDownloadDlg.h"
 #include "OtherFunctions.h"
 #include "Log.h"
+#include "Preferences.h" //Xman Send user agent as firefox for http downloads when obfucscation enabled (leuk_he)
 
 ///////////////////////////////// Defines /////////////////////////////////////
 #define HAS_ZLIB
@@ -214,7 +215,7 @@ CHttpDownloadDlg::CHttpDownloadDlg(CWnd* pParent /*=NULL*/)
 	m_pThread = NULL;
 	if (sm_ullWinInetVer == 0)
 		sm_ullWinInetVer = GetModuleVersion(GetModuleHandle(_T("wininet")));
-	m_pLastModifiedTime = NULL;//MORPH - Added by SiRoB,
+	m_pLastModifiedTime = NULL; //Xman auto update IPFilter
 }
 
 void CHttpDownloadDlg::DoDataExchange(CDataExchange* pDX)
@@ -306,8 +307,6 @@ BOOL CHttpDownloadDlg::OnInitDialog()
 		DWORD dwError = GetLastError();
 		CString sMsg;
 		sMsg.Format(GetResString(IDS_HTTPDOWNLOAD_FAIL_FILE_OPEN), GetErrorMessage(dwError));
-		sMsg += "\n"; // morph  better error reportn when config dir is readonly
-		sMsg += m_sFileToDownloadInto; // morph better error reportn when config dir is readonly
 		AfxMessageBox(sMsg);
 		EndDialog(IDCANCEL);
 		return TRUE;
@@ -351,11 +350,13 @@ UINT AFX_CDECL CHttpDownloadDlg::_DownloadThread(LPVOID pParam)
 {
 	DbgSetThreadName("HttpDownload");
 	InitThreadLocale();
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
+
 	//Convert from the SDK world to the C++ world
 	CHttpDownloadDlg* pDlg = (CHttpDownloadDlg*) pParam;
 	ASSERT(pDlg);
@@ -452,7 +453,14 @@ void CHttpDownloadDlg::DownloadThread()
 	ENCODING_INIT;
 	//Create the Internet session handle
 	ASSERT(m_hInternetSession == NULL);
+	//Xman Send user agent as firefox for http downloads when obfucscation enabled (leuk_he)
+	/*
 	m_hInternetSession = ::InternetOpen(AfxGetAppName(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	*/
+	m_hInternetSession = ::InternetOpen(
+		thePrefs.IsClientCryptLayerRequested()?_T("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;"):AfxGetAppName(),
+		INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+	//Xman end
 	if (m_hInternetSession == NULL)
 	{
 		TRACE(_T("Failed in call to InternetOpen, Error:%d\n"), ::GetLastError());
@@ -598,7 +606,8 @@ resend:
 			bEncodedWithGZIP = TRUE;
 	}
 
-	//MORPH START - Added by SiRoB,
+	//Xman auto update IPFilter
+	//this part is taken from morph. It checks the date of the file and only download if newer version is found
 	if (m_pLastModifiedTime) {
 		SYSTEMTIME SysTime;
 		dwInfoSize = sizeof(SYSTEMTIME);
@@ -615,7 +624,7 @@ resend:
 			memcpy(m_pLastModifiedTime, &SysTime, dwInfoSize);
 		}
 	}
-	//MORPH END   - Added by SIRoB,
+	//Xman end
 
 	//Update the status control to reflect that we are getting the file information
 	SetStatus(GetResString(IDS_HTTPDOWNLOAD_GETTING_FILE_INFORMATION));

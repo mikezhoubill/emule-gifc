@@ -19,109 +19,6 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="debug80|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
-			CharacterSet="1"
-			DeleteExtensionsOnClean="*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;*.asm;$(TargetPath)"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-				CommandLine=""
-				AdditionalDependencies=""
-			/>
-			<Tool
-				Name="MASM"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="false"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories=".;..;..\id3lib\include;upnplib\ixml\src\inc;upnplib\upnp\src\inc;upnplib\upnp\inc;upnplib\build\inc;upnplib\threadutil\inc;upnplib\ixml\inc;pthreads\pthreads\inc;DirectX\Include;DirectX\Extras\DirectShow\Include;WMSDK\include;WMSDK\lib"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;ID3LIB_LINKOPTION=1;SUPPORT_LARGE_FILES;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB;PNG_DEBUG=1;PNG_USE_PNGVCRD;PNG_LIBPNG_SPECIALBUILD"
-				MinimalRebuild="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
-				BufferSecurityCheck="true"
-				EnableFunctionLevelLinking="true"
-				TreatWChar_tAsBuiltInType="true"
-				ForceConformanceInForLoopScope="false"
-				UsePrecompiledHeader="2"
-				WarningLevel="4"
-				DebugInformationFormat="3"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG;_UNICODE;UNICODE"
-				Culture="2052"
-				AdditionalIncludeDirectories="$(IntDir)"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/nxcompat"
-				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib"
-				OutputFile="$(OutDir)\eMule.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="true"
-				IgnoreDefaultLibraryNames=""
-				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="0"
-				OptimizeForWindows98="0"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-				AssemblyIdentity="Microsoft.Windows.emule, processorArchitecture=X86, version=1.0.0.0, type=win32"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\release"
 			IntermediateDirectory=".\release"
@@ -181,7 +78,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG;_UNICODE;UNICODE"
-				Culture="2052"
+				Culture="1033"
 				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
@@ -228,13 +125,13 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Inserting Vista application icon..."
-				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP"
+				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\Scar_Vista.ico&quot; AAAEMULEAPP"
 			/>
 		</Configuration>
 		<Configuration
-			Name="Beta|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Beta"
+			Name="testversion|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="1"
@@ -273,7 +170,7 @@
 				OmitFramePointers="true"
 				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;upnplib\ixml\src\inc;upnplib\upnp\src\inc;upnplib\upnp\inc;upnplib\build\inc;upnplib\threadutil\inc;upnplib\ixml\inc;pthreads\pthreads\inc;DirectX\Include;DirectX\Extras\DirectShow\Include;WMSDK\include;WMSDK\lib"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;ID3LIB_LINKOPTION=1;_BETA;SUPPORT_LARGE_FILES;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;ID3LIB_LINKOPTION=1;_BETA;SUPPORT_LARGE_FILES;PRINT_STATISTIC;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB"
 				StringPooling="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="0"
@@ -339,7 +236,110 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Inserting Vista application icon..."
-				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\MOD\Stulle_Vista.ico&quot; AAAEMULEAPP&#x0D;&#x0A;del $(IntDir)\emule.obj&#x0D;&#x0A;"
+				CommandLine="..\ReplaceVistaIcon\release\ReplaceVistaIcon &quot;$(TargetPath)&quot; &quot;$(ProjectDir)res\Scar_Vista.ico&quot; AAAEMULEAPP&#x0D;&#x0A;del $(IntDir)\emule.obj&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="debug80|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			CharacterSet="1"
+			DeleteExtensionsOnClean="*.obj;*.ilk;*.pdb;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.bat;*.asm;$(TargetPath)"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+				CommandLine=""
+				AdditionalDependencies=""
+			/>
+			<Tool
+				Name="MASM"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="false"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;upnplib\ixml\src\inc;upnplib\upnp\src\inc;upnplib\upnp\inc;upnplib\build\inc;upnplib\threadutil\inc;upnplib\ixml\inc;pthreads\pthreads\inc;DirectX\Include;DirectX\Extras\DirectShow\Include;WMSDK\include;WMSDK\lib"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;ID3LIB_LINKOPTION=1;SUPPORT_LARGE_FILES;UPNP_STATIC_LIB;_WIN32;PTW32_STATIC_LIB;PNG_DEBUG=1;PNG_USE_PNGVCRD;PNG_LIBPNG_SPECIALBUILD"
+				MinimalRebuild="true"
+				ExceptionHandling="2"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				BufferSecurityCheck="true"
+				EnableFunctionLevelLinking="true"
+				TreatWChar_tAsBuiltInType="true"
+				ForceConformanceInForLoopScope="false"
+				UsePrecompiledHeader="2"
+				WarningLevel="4"
+				DebugInformationFormat="3"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG;_UNICODE;UNICODE"
+				Culture="1033"
+				AdditionalIncludeDirectories="$(IntDir)"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalOptions="/nxcompat"
+				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib"
+				OutputFile="$(OutDir)\eMule.exe"
+				LinkIncremental="2"
+				SuppressStartupBanner="true"
+				IgnoreDefaultLibraryNames=""
+				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="0"
+				OptimizeForWindows98="0"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+				AssemblyIdentity="Microsoft.Windows.emule, processorArchitecture=X86, version=1.0.0.0, type=win32"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>
@@ -359,11 +359,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\AntiNick.cpp"
+				RelativePath="ArchiveRecovery.cpp"
 				>
 			</File>
 			<File
-				RelativePath="ArchiveRecovery.cpp"
+				RelativePath=".\AskExitDlg.cpp"
 				>
 			</File>
 			<File
@@ -411,14 +411,6 @@
 				>
 			</File>
 			<File
-				RelativePath="CommentListCtrl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ConChecker.cpp"
-				>
-			</File>
-			<File
 				RelativePath="CorruptionBlackBox.cpp"
 				>
 			</File>
@@ -455,18 +447,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NetF\Fakealyzer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="fakecheck.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\FileProcessing.cpp"
-				>
-			</File>
-			<File
 				RelativePath="FirewallOpener.cpp"
 				>
 			</File>
@@ -499,10 +479,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\IP2Country.cpp"
-				>
-			</File>
-			<File
 				RelativePath="IPFilter.cpp"
 				>
 			</File>
@@ -512,10 +488,6 @@
 			</File>
 			<File
 				RelativePath="KnownFileList.cpp"
-				>
-			</File>
-			<File
-				RelativePath="LastCommonRouteFinder.cpp"
 				>
 			</File>
 			<File
@@ -530,14 +502,6 @@
 				RelativePath="MD4.cpp"
 				>
 				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -546,7 +510,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ObjectFile="$(IntDir)/$(InputName)1.obj"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -555,16 +527,8 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\MD4_asm.asm"
+				RelativePath="MD4_asm.asm"
 				>
-				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="MASM"
-						WarningLevel="2"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -574,17 +538,21 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
 					>
 					<Tool
 						Name="MASM"
 						WarningLevel="2"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\MD5_CAPI.cpp"
-				>
+				<FileConfiguration
+					Name="debug80|Win32"
+					>
+					<Tool
+						Name="MASM"
+						WarningLevel="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="MD5Sum.cpp"
@@ -602,14 +570,6 @@
 				RelativePath="MfcStaticBinaryCompatible.cpp"
 				>
 				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -618,7 +578,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -658,16 +626,6 @@
 				RelativePath="Parser.y"
 				>
 				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Performing Custom Build Step"
-						CommandLine=""
-						Outputs=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -676,11 +634,21 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
 					>
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing Custom Build Step"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing Custom Build Step"
+						CommandLine=""
+						Outputs=""
 					/>
 				</FileConfiguration>
 			</File>
@@ -705,10 +673,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Ping.cpp"
-				>
-			</File>
-			<File
 				RelativePath="Pinger.cpp"
 				>
 			</File>
@@ -729,28 +693,12 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ReadWriteLock.cpp"
-				>
-			</File>
-			<File
 				RelativePath="SafeFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NetF\SafeKad.cpp"
 				>
 			</File>
 			<File
 				RelativePath="Scanner.cpp"
 				>
-				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -760,7 +708,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -819,7 +775,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SettingsSaver.cpp"
+				RelativePath="SettingsSaver.cpp"
 				>
 			</File>
 			<File
@@ -830,14 +786,6 @@
 				RelativePath="SHA_asm.asm"
 				>
 				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="MASM"
-						WarningLevel="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -846,7 +794,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					>
+					<Tool
+						Name="MASM"
+						WarningLevel="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					>
 					<Tool
 						Name="MASM"
@@ -867,15 +823,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SivkaFileSettings.cpp"
-				>
-			</File>
-			<File
 				RelativePath="Sockets.cpp"
-				>
-			</File>
-			<File
-				RelativePath="SourceSaver.cpp"
 				>
 			</File>
 			<File
@@ -894,14 +842,6 @@
 				RelativePath="Stdafx.cpp"
 				>
 				<FileConfiguration
-					Name="debug80|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
 					Name="Release|Win32"
 					>
 					<Tool
@@ -910,7 +850,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -1076,11 +1024,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\AntiNick.h"
+				RelativePath="ArchiveRecovery.h"
 				>
 			</File>
 			<File
-				RelativePath="ArchiveRecovery.h"
+				RelativePath=".\AskExitDlg.h"
 				>
 			</File>
 			<File
@@ -1132,14 +1080,6 @@
 				>
 			</File>
 			<File
-				RelativePath="CommentListCtrl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ConChecker.h"
-				>
-			</File>
-			<File
 				RelativePath="CorruptionBlackBox.h"
 				>
 			</File>
@@ -1188,18 +1128,6 @@
 				>
 			</File>
 			<File
-				RelativePath="fakecheck.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FeatureDefines.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FileProcessing.h"
-				>
-			</File>
-			<File
 				RelativePath="FirewallOpener.h"
 				>
 			</File>
@@ -1228,10 +1156,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\IP2Country.h"
-				>
-			</File>
-			<File
 				RelativePath="IPFilter.h"
 				>
 			</File>
@@ -1245,14 +1169,6 @@
 			</File>
 			<File
 				RelativePath="langids.h"
-				>
-			</File>
-			<File
-				RelativePath="LastCommonRouteFinder.h"
-				>
-			</File>
-			<File
-				RelativePath=".\libald.h"
 				>
 			</File>
 			<File
@@ -1296,6 +1212,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTService.h"
+				>
+			</File>
+			<File
 				RelativePath="Opcodes.h"
 				>
 			</File>
@@ -1332,10 +1252,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Ping.h"
-				>
-			</File>
-			<File
 				RelativePath="Pinger.h"
 				>
 			</File>
@@ -1356,7 +1272,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ReadWriteLock.h"
+				RelativePath="RARFile.h"
 				>
 			</File>
 			<File
@@ -1404,7 +1320,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SettingsSaver.h"
+				RelativePath="SettingsSaver.h"
 				>
 			</File>
 			<File
@@ -1424,15 +1340,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SivkaFileSettings.h"
-				>
-			</File>
-			<File
 				RelativePath="Sockets.h"
-				>
-			</File>
-			<File
-				RelativePath="SourceSaver.h"
 				>
 			</File>
 			<File
@@ -1644,10 +1552,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\AddCRC32TagDialog.cpp"
-				>
-			</File>
-			<File
 				RelativePath="AddFriend.cpp"
 				>
 			</File>
@@ -1661,10 +1565,6 @@
 			</File>
 			<File
 				RelativePath="BarShader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BmiDlg.cpp"
 				>
 			</File>
 			<File
@@ -1729,6 +1629,10 @@
 			</File>
 			<File
 				RelativePath="CommentDialogLst.cpp"
+				>
+			</File>
+			<File
+				RelativePath="CommentListCtrl.cpp"
 				>
 			</File>
 			<File
@@ -1844,11 +1748,7 @@
 				>
 			</File>
 			<File
-				RelativePath="KCSideBannerWnd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\KeyHelper.cpp"
+				RelativePath="KeyHelper.cpp"
 				>
 			</File>
 			<File
@@ -1876,11 +1776,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MassRename.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MenuXP.cpp"
+				RelativePath="MenuXP.cpp"
 				>
 			</File>
 			<File
@@ -1912,19 +1808,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PPgBackup.cpp"
-				>
-			</File>
-			<File
 				RelativePath="PPgConnection.cpp"
 				>
 			</File>
 			<File
 				RelativePath="PPgDebug.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgDesign.cpp"
 				>
 			</File>
 			<File
@@ -1936,23 +1824,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PPgEastShare.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgEmulespana.cpp"
-				>
-			</File>
-			<File
 				RelativePath="PPgFiles.cpp"
 				>
 			</File>
 			<File
 				RelativePath="PPgGeneral.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgIonixWebServer.cpp"
 				>
 			</File>
 			<File
@@ -1964,27 +1840,15 @@
 				>
 			</File>
 			<File
-				RelativePath="PPgMorph.cpp"
-				>
-			</File>
-			<File
-				RelativePath="PPgMorph2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgMorphShare.cpp"
-				>
-			</File>
-			<File
 				RelativePath="PPgNotify.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\PPgNTServer.cpp"
+				RelativePath="PPgProxy.cpp"
 				>
 			</File>
 			<File
-				RelativePath="PPgProxy.cpp"
+				RelativePath="PPgScar.cpp"
 				>
 			</File>
 			<File
@@ -2001,10 +1865,6 @@
 			</File>
 			<File
 				RelativePath="PPgStats.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgStulle.cpp"
 				>
 			</File>
 			<File
@@ -2076,11 +1936,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SlideBar.cpp"
+				RelativePath=".\SivkaFileSettings.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\SmileySelector.cpp"
+				RelativePath="SmileySelector.cpp"
 				>
 			</File>
 			<File
@@ -2136,6 +1996,14 @@
 				>
 			</File>
 			<File
+				RelativePath="TreeOptionsInvisibleKeyCombo.cpp"
+				>
+			</File>
+			<File
+				RelativePath="TreeOptionsInvisibleModCombo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="TreePropSheet.cpp"
 				>
 			</File>
@@ -2184,10 +2052,6 @@
 				</File>
 				<File
 					RelativePath="FriendListCtrl.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\HistoryListCtrl.cpp"
 					>
 				</File>
 				<File
@@ -2263,32 +2127,12 @@
 					>
 				</File>
 			</Filter>
-			<Filter
-				Name="Tooltip"
-				>
-				<File
-					RelativePath=".\ToolTips\CeXDib.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\PPGtooltipped.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ToolTips\PPTooltip.cpp"
-					>
-				</File>
-			</Filter>
 		</Filter>
 		<Filter
 			Name="Interface Header"
 			>
 			<File
 				RelativePath="3DPreviewControl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AddCRC32TagDialog.h"
 				>
 			</File>
 			<File
@@ -2309,10 +2153,6 @@
 			</File>
 			<File
 				RelativePath="BarShader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\BmiDlg.h"
 				>
 			</File>
 			<File
@@ -2373,6 +2213,10 @@
 			</File>
 			<File
 				RelativePath="CommentDialogLst.h"
+				>
+			</File>
+			<File
+				RelativePath="CommentListCtrl.h"
 				>
 			</File>
 			<File
@@ -2496,11 +2340,7 @@
 				>
 			</File>
 			<File
-				RelativePath="KCSideBannerWnd.h"
-				>
-			</File>
-			<File
-				RelativePath=".\KeyHelper.h"
+				RelativePath="KeyHelper.h"
 				>
 			</File>
 			<File
@@ -2532,10 +2372,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MassRename.h"
-				>
-			</File>
-			<File
 				RelativePath="MemDC.h"
 				>
 			</File>
@@ -2544,7 +2380,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MenuXP.h"
+				RelativePath="MenuXP.h"
 				>
 			</File>
 			<File
@@ -2580,10 +2416,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PPgBackup.h"
-				>
-			</File>
-			<File
 				RelativePath="PPgConnection.h"
 				>
 			</File>
@@ -2592,23 +2424,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\PPgDesign.h"
-				>
-			</File>
-			<File
 				RelativePath="PPgDirectories.h"
 				>
 			</File>
 			<File
 				RelativePath="PPgDisplay.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgEastShare.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgEmulespana.h"
 				>
 			</File>
 			<File
@@ -2624,23 +2444,15 @@
 				>
 			</File>
 			<File
-				RelativePath="PPgMorph.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgMorph2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgMorphShare.h"
-				>
-			</File>
-			<File
 				RelativePath="PPgNotify.h"
 				>
 			</File>
 			<File
 				RelativePath="PPgProxy.h"
+				>
+			</File>
+			<File
+				RelativePath="PPgScar.h"
 				>
 			</File>
 			<File
@@ -2657,10 +2469,6 @@
 			</File>
 			<File
 				RelativePath="PPgStats.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PPgStulle.h"
 				>
 			</File>
 			<File
@@ -2740,7 +2548,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SlideBar.h"
+				RelativePath=".\SivkaFileSettings.h"
 				>
 			</File>
 			<File
@@ -2800,6 +2608,14 @@
 				>
 			</File>
 			<File
+				RelativePath="TreeOptionsInvisibleKeyCombo.h"
+				>
+			</File>
+			<File
+				RelativePath="TreeOptionsInvisibleModCombo.h"
+				>
+			</File>
+			<File
 				RelativePath="TreePropSheet.h"
 				>
 			</File>
@@ -2852,10 +2668,6 @@
 				</File>
 				<File
 					RelativePath="FriendListCtrl.h"
-					>
-				</File>
-				<File
-					RelativePath=".\HistoryListCtrl.h"
 					>
 				</File>
 				<File
@@ -2937,18 +2749,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest;gif"
 			>
 			<File
-				RelativePath=".\res\MOD\AAMorph.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\all.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\all.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\all.ico"
 				>
 			</File>
@@ -2957,11 +2757,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\backup.ico"
+				RelativePath=".\res\backup.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Banner_StulleMule.jpg"
+				RelativePath=".\res\banner_quer.jpg"
 				>
 			</File>
 			<File
@@ -2969,7 +2769,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\boldFont.ico"
+				RelativePath="res\boldFont.ico"
 				>
 			</File>
 			<File
@@ -2981,15 +2781,11 @@
 				>
 			</File>
 			<File
-				RelativePath="res\MOD\catadd.ico"
+				RelativePath=".\res\catadd.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatAdvA4AF.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\MOD\catedit.ico"
+				RelativePath="res\catedit.ico"
 				>
 			</File>
 			<File
@@ -2997,23 +2793,23 @@
 				>
 			</File>
 			<File
-				RelativePath="res\MOD\catmerge.ico"
+				RelativePath="res\catmerge.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatPauseLast.ico"
+				RelativePath=".\res\CatPauseLast.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\MOD\catremove.ico"
+				RelativePath="res\catremove.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatResumeNext.ico"
+				RelativePath=".\res\CatResumeNext.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CatStopLast.ico"
+				RelativePath=".\res\CatStopLast.ico"
 				>
 			</File>
 			<File
@@ -3029,7 +2825,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\Client-Neo.ico"
+				RelativePath=".\res\Client-Neo.ico"
 				>
 			</File>
 			<File
@@ -3077,7 +2873,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\ClienteDonkey.ico"
+				RelativePath=".\res\ClienteDonkey.ico"
 				>
 			</File>
 			<File
@@ -3089,11 +2885,27 @@
 				>
 			</File>
 			<File
+				RelativePath="res\ClienteDonkeyPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\ClientFriend.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\ClientFriendPlus.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\ClientlPhant.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\ClientlPhantPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\clientml.ico"
 				>
 			</File>
 			<File
@@ -3106,10 +2918,6 @@
 			</File>
 			<File
 				RelativePath="res\Clientobfuovl.ICO"
-				>
-			</File>
-			<File
-				RelativePath="res\ClientSecureHashOvl.ico"
 				>
 			</File>
 			<File
@@ -3158,10 +2966,6 @@
 			</File>
 			<File
 				RelativePath="res\Comments.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\community.ico"
 				>
 			</File>
 			<File
@@ -3293,23 +3097,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CreditOvl.ico"
+				RelativePath=".\res\CreditOvl.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\CreditSecureOvl.ico"
+				RelativePath=".\res\CreditSecureOvl.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Cut.ico"
+				RelativePath=".\res\Cut.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\CycleView.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Cyrex2001.ico"
 				>
 			</File>
 			<File
@@ -3333,6 +3133,10 @@
 				>
 			</File>
 			<File
+				RelativePath="res\DlMode.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Download.gif"
 				>
 			</File>
@@ -3345,11 +3149,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\DropDefaults.ico"
+				RelativePath=".\res\DropDefaults.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\EastShare.ico"
+				RelativePath=".\res\Dropicon.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\EastShare.ico"
 				>
 			</File>
 			<File
@@ -3361,28 +3169,16 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Edit.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\Empty.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Emulator.ico"
+				RelativePath=".\res\Emulator.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\emule.manifest"
 				>
-				<FileConfiguration
-					Name="debug80|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32"
 					ExcludedFromBuild="true"
@@ -3392,7 +3188,15 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Beta|Win32"
+					Name="testversion|Win32"
+					ExcludedFromBuild="true"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="debug80|Win32"
 					ExcludedFromBuild="true"
 					>
 					<Tool
@@ -3433,11 +3237,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\emulefuture.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\emulespana.ico"
+				RelativePath=".\res\emulefuture.ico"
 				>
 			</File>
 			<File
@@ -3461,10 +3261,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileAddSrc.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\FileComments.ico"
 				>
 			</File>
@@ -3473,31 +3269,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileCRC32.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\FileDonkey.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileDownload.ico"
+				RelativePath=".\res\FileHideOS.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileDownloadPaused.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileDownloadPreviewFirst.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileHideOS.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\fileimportparts.ico"
+				RelativePath=".\res\fileimportparts.ico"
 				>
 			</File>
 			<File
@@ -3509,15 +3289,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\fileinitiaterehash.ico"
+				RelativePath=".\res\FileLinearPrio.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileLinearPrio.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\FileMassRename.ico"
+				RelativePath=".\res\FileMassRename.ico"
 				>
 			</File>
 			<File
@@ -3525,11 +3301,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FilePermission.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\FilePowerShare.ico"
+				RelativePath=".\res\FilePowerShare.ico"
 				>
 			</File>
 			<File
@@ -3537,11 +3309,35 @@
 				>
 			</File>
 			<File
+				RelativePath="res\FileRating0.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\FileRating1.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\FileRating2.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\FileRating3.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\FileRating4.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\FileRating5.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\FileRename.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileRequested.ico"
+				RelativePath=".\res\FileRequested.ico"
 				>
 			</File>
 			<File
@@ -3553,11 +3349,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileShareONlyTheNeed.ico"
+				RelativePath=".\res\FileShareONlyTheNeed.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FileSpreadbar.ico"
+				RelativePath=".\res\FileSpreadbar.ico"
 				>
 			</File>
 			<File
@@ -3613,15 +3409,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FriendOvl.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\Friends1.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends1slot.ICO"
+				RelativePath=".\res\friends1slot.ICO"
 				>
 			</File>
 			<File
@@ -3629,7 +3421,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends2slot.ICO"
+				RelativePath=".\res\friends2slot.ICO"
 				>
 			</File>
 			<File
@@ -3637,7 +3429,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\friends3slot.ICO"
+				RelativePath=".\res\friends3slot.ICO"
 				>
 			</File>
 			<File
@@ -3645,19 +3437,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\FriendSlotOvl.ico"
+				RelativePath=".\res\FriendSlotOvl.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\MOD\FriendslotRemove.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\FriendslotRemoveAll.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\FunnyNick.ico"
+				RelativePath="res\FunnyNick.ico"
 				>
 			</File>
 			<File
@@ -3685,15 +3469,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\icon2.ico"
+				RelativePath=".\res\iconmax.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\iconmax.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\iconstulle.ico"
+				RelativePath=".\res\iconstulle.ico"
 				>
 			</File>
 			<File
@@ -3706,10 +3486,6 @@
 			</File>
 			<File
 				RelativePath="res\Incoming.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\incomingfolder.ico"
 				>
 			</File>
 			<File
@@ -3729,7 +3505,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\ionix.ico"
+				RelativePath=".\res\InvMode.ico"
 				>
 			</File>
 			<File
@@ -3745,7 +3521,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\italicFont.ico"
+				RelativePath="res\italicFont.ico"
 				>
 			</File>
 			<File
@@ -3789,7 +3565,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\known.ico"
+				RelativePath=".\res\leecher.ico"
 				>
 			</File>
 			<File
@@ -3825,7 +3601,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MagicAngel.ico"
+				RelativePath=".\res\MagicAngel.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\MagicAngel.jpg"
 				>
 			</File>
 			<File
@@ -3833,11 +3613,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MenuBack.jpg"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\mephisto.ico"
+				RelativePath=".\res\mephisto.ico"
 				>
 			</File>
 			<File
@@ -3862,7 +3638,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MiniMule.ICO"
+				RelativePath=".\res\MiniMule.ICO"
 				>
 			</File>
 			<File
@@ -3870,51 +3646,43 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_ConCon.ico"
+				RelativePath="res\MM_ConCon.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_ConDis.ico"
+				RelativePath="res\MM_ConDis.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_ConLow.ico"
+				RelativePath="res\MM_ConLow.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_DisCon.ico"
+				RelativePath="res\MM_DisCon.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_DisDis.ico"
+				RelativePath="res\MM_DisDis.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_DisLow.ico"
+				RelativePath="res\MM_DisLow.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_LowCon.ico"
+				RelativePath="res\MM_LowCon.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_LowDis.ico"
+				RelativePath="res\MM_LowDis.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\MM_LowLow.ico"
+				RelativePath="res\MM_LowLow.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\mobile.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Morph.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\MorphBanner.jpg"
+				RelativePath=".\res\Morph.ico"
 				>
 			</File>
 			<File
@@ -3930,10 +3698,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\mule_wiz_morph.gif"
-				>
-			</File>
-			<File
 				RelativePath="res\NavigateBack.ico"
 				>
 			</File>
@@ -3942,31 +3706,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\New.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\nextEMF.ico"
-				>
-			</File>
-			<File
 				RelativePath=".\res\NoAccessFolderOvl.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\MOD\not.ico"
+				RelativePath=".\res\Notifications.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\Notifications.ico"
+				RelativePath="res\NotShared.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\NotShared.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\Paste.ico"
+				RelativePath="res\Paste.ico"
 				>
 			</File>
 			<File
@@ -3974,7 +3726,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Pinger.ico"
+				RelativePath="res\Ports.ico"
 				>
 			</File>
 			<File
@@ -3983,6 +3735,10 @@
 			</File>
 			<File
 				RelativePath="res\Preferences.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\Prefs_Webcache.ico"
 				>
 			</File>
 			<File
@@ -4014,47 +3770,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\queue.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\queue.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\quickstart.ico"
+				RelativePath=".\res\quickstart.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\Rating-Excellent.ico"
+				RelativePath=".\res\Rating.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\Rating-Fair.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Fake.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Good.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-NotRated.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\Rating-Poor.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\Rating.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\RatingBad.ico"
+				RelativePath=".\res\RatingBad.ico"
 				>
 			</File>
 			<File
@@ -4062,15 +3790,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\ReleaseBonus.ico"
+				RelativePath=".\res\ReleaseBonus.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\Rename.ico"
+				RelativePath=".\res\Rename.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\resetformat.ico"
+				RelativePath=".\res\resetformat.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\ResetSpreadBar.ico"
 				>
 			</File>
 			<File
@@ -4078,7 +3810,7 @@
 				>
 			</File>
 			<File
-				RelativePath="res\RestoreWindow.gif"
+				RelativePath=".\res\RestoreWindow.gif"
 				>
 			</File>
 			<File
@@ -4086,11 +3818,99 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Save.ico"
+				RelativePath="res\Save.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\ScarAngel.ico"
+				RelativePath="res\ScarAngel.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarClientsKnown.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarClientsOnQueue.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarConnectDo.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarConnectDrop.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarConnectStop.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarDownload.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarDownloadFiles.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarHelp.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarIRC.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarKad.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarMessages.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarPreferences.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarSearch.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarServer.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarSharedFiles.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarStatistics.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarTools.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarTransfer.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarTrayConnectedPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarTrayDisconnectedPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarTrayLowIDPlus.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ScarUpload.ico"
 				>
 			</File>
 			<File
@@ -4098,15 +3918,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\SchedulerAdd.ico"
+				RelativePath="res\SchedulerAdd.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\SchedulerEdit.ico"
+				RelativePath=".\res\SchedulerEdit.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\SchedulerRemove.ico"
+				RelativePath="res\SchedulerRemove.ico"
 				>
 			</File>
 			<File
@@ -4178,7 +3998,15 @@
 				>
 			</File>
 			<File
+				RelativePath="res\SharedFilesManagement.ico"
+				>
+			</File>
+			<File
 				RelativePath=".\res\SharedFolderOvl.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ShareDir.ico"
 				>
 			</File>
 			<File
@@ -4191,6 +4019,10 @@
 			</File>
 			<File
 				RelativePath=".\res\ShowMore.ico"
+				>
+			</File>
+			<File
+				RelativePath="res\sidebanner.jpg"
 				>
 			</File>
 			<File
@@ -4278,11 +4110,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\Splash.jpg"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\Splash_StulleMule.jpg"
+				RelativePath=".\res\splash.bmp"
 				>
 			</File>
 			<File
@@ -4290,11 +4118,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\SpreadCredits.ico"
+				RelativePath="res\SpreadCredits.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\Start.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\startup.bmp"
 				>
 			</File>
 			<File
@@ -4338,35 +4170,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\stullemule_wiz.gif"
+				RelativePath=".\res\Support.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\StulleTrayConnected.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\StulleTrayConnectedPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\StulleTrayDisconnected.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\StulleTrayDisconnectedPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\StulleTrayLowID.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\StulleTrayLowIDPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\suc.ico"
+				RelativePath=".\res\SysInfo.ico"
 				>
 			</File>
 			<File
@@ -4379,14 +4187,6 @@
 			</File>
 			<File
 				RelativePath="res\Transfer.ico"
-				>
-			</File>
-			<File
-				RelativePath="res\transfers.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Mod\transfers.ico"
 				>
 			</File>
 			<File
@@ -4410,31 +4210,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\TrayConnected.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\Traydisconnected.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\TrayDisconnected.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\TrayLowID.ico"
+				RelativePath=".\res\TrayLowID.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\traylowid.ico"
+				RelativePath=".\res\Tweak.ico"
 				>
 			</File>
 			<File
-				RelativePath="res\Tweak.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\ulFont.ico"
+				RelativePath="res\ulFont.ico"
 				>
 			</File>
 			<File
@@ -4442,7 +4230,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Undo.ico"
+				RelativePath="res\Undo.ico"
 				>
 			</File>
 			<File
@@ -4462,7 +4250,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Update.ico"
+				RelativePath="res\Update.ico"
 				>
 			</File>
 			<File
@@ -4474,7 +4262,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\UPnP.ico"
+				RelativePath=".\res\UPnP.ico"
 				>
 			</File>
 			<File
@@ -4530,15 +4318,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MOD\Xray.ico"
+				RelativePath=".\res\XP-Menu.JPG"
 				>
 			</File>
 			<File
-				RelativePath=".\res\Mod\xtreme.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\MOD\zzratio.ico"
+				RelativePath=".\res\Xray.ico"
 				>
 			</File>
 		</Filter>
@@ -4562,43 +4346,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\setup\Template.Notifier.ini"
-				>
-			</File>
-			<File
 				RelativePath="..\setup\webservices.dat"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="WapServer"
-			>
-			<File
-				RelativePath=".\TreeOptsPrefs\PassTreeOptionsEdit.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TreeOptsPrefs\PassTreeOptionsEdit.h"
-				>
-			</File>
-			<File
-				RelativePath="WapServer\WapServer.cpp"
-				>
-			</File>
-			<File
-				RelativePath="WapServer\WapServer.h"
-				>
-			</File>
-			<File
-				RelativePath="WapServer\WapSocket.cpp"
-				>
-			</File>
-			<File
-				RelativePath="WapServer\WapSocket.h"
-				>
-			</File>
-			<File
-				RelativePath="WapServer\WebWapDefinitions.h"
 				>
 			</File>
 		</Filter>
@@ -4606,19 +4354,123 @@
 			Name="Documents"
 			>
 			<File
-				RelativePath="..\emule\Changelog.MorphXT.txt"
-				>
-			</File>
-			<File
-				RelativePath="..\emule\changelog.txt"
+				RelativePath="..\docs\kademlia\changelog.txt"
 				>
 			</File>
 			<File
 				RelativePath="..\docs\readme.txt"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Xtreme"
+			>
 			<File
-				RelativePath="..\todo.txt"
+				RelativePath=".\BandWidthControl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BandWidthControl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DLP.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DLP.h"
+				>
+			</File>
+			<File
+				RelativePath=".\HistoryListCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\HistoryListCtrl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IP2Country.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\IP2Country.h"
+				>
+			</File>
+			<File
+				RelativePath=".\KCSideBannerWnd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\KCSideBannerWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MassRename.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MassRename.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NumEdit.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NumEdit.h"
+				>
+			</File>
+			<File
+				RelativePath=".\P2PThreat.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\P2PThreat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PPgXtreme.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PPgXtreme.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PPgXtreme2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PPgXtreme2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ReadWriteLock.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ReadWriteLock.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SourceSaver.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SourceSaver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SplashScreenEx.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SplashScreenEx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\WndUtil.h"
 				>
 			</File>
 		</Filter>

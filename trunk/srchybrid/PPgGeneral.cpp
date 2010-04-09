@@ -34,11 +34,12 @@
 #include "HelpIDs.h"
 #include "StringConversion.h"
 #include "Log.h"
+#include "DLP.h" //Xman dlp check own usernick if valid
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -51,31 +52,21 @@ BEGIN_MESSAGE_MAP(CPPgGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_BEEPER, OnSettingsChange)
 	ON_BN_CLICKED(IDC_EXIT, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SPLASHON, OnSettingsChange)
-	ON_BN_CLICKED(IDC_STARTUPSOUNDON, OnSettingsChange)//Commander - Added: Enable/Disable Startupsound
 	ON_BN_CLICKED(IDC_BRINGTOFOREGROUND, OnSettingsChange)
 	ON_CBN_SELCHANGE(IDC_LANGS, OnLangChange)
 	ON_BN_CLICKED(IDC_ED2KFIX, OnBnClickedEd2kfix)
 	ON_BN_CLICKED(IDC_WEBSVEDIT , OnBnClickedEditWebservices)
 	ON_BN_CLICKED(IDC_ONLINESIG, OnSettingsChange)
 	ON_BN_CLICKED(IDC_CHECK4UPDATE, OnBnClickedCheck4Update)
-    ON_BN_CLICKED(IDC_MINIMULE, OnSettingsChange)
+	ON_BN_CLICKED(IDC_CHECK4UPDATEMOD, OnSettingsChange) //Xman versions check
+	ON_BN_CLICKED(IDC_MINIMULE, OnSettingsChange)
 	ON_BN_CLICKED(IDC_PREVENTSTANDBY, OnSettingsChange)
-	//Commander - Added: Invisible Mode [TPT] - Start
-	ON_CBN_SELCHANGE(IDC_INVISIBLE_MODE_SELECT_COMBO, OnSettingsChange)
-	ON_CBN_SELCHANGE(IDC_INVISIBLE_MODE_KEY_COMBO, OnCbnSelchangeKeymodcombo)
-	ON_BN_CLICKED(IDC_INVISIBLE_MODE, OnBoxesChange)
-	//Commander - Added: Invisible Mode [TPT] - End
 	ON_WM_HSCROLL()
 	ON_WM_HELPINFO()
 END_MESSAGE_MAP()
 
 CPPgGeneral::CPPgGeneral()
-// MORPH START leuk_he tooltipped
-/*
-: CPropertyPage(CPPgGeneral::IDD)
-*/
-: CPPgtooltipped(CPPgGeneral::IDD)
-// MORRPH END leuk_he tooltipped
+	: CPropertyPage(CPPgGeneral::IDD)
 {
 }
 
@@ -91,20 +82,6 @@ void CPPgGeneral::DoDataExchange(CDataExchange* pDX)
 
 void CPPgGeneral::LoadSettings(void)
 {
-	//Commander - Added: Invisible Mode [TPT] - Start
-	m_iActualKeyModifier = thePrefs.GetInvisibleModeHKKeyModifier();
-	((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO))->SelectString(-1, CString(thePrefs.GetInvisibleModeHKKey()));
-	if (!thePrefs.GetInvisibleMode()){
-		GetDlgItem(IDC_INVISIBLE_MODE_SELECT_STATIC)->EnableWindow(false);
-		GetDlgItem(IDC_INVISIBLE_MODE_MODIFIER_STATIC)->EnableWindow(false);
-		GetDlgItem(IDC_INVISIBLE_MODE_KEY_STATIC)->EnableWindow(false);
-		GetDlgItem(IDC_INVISIBLE_MODE_SYMBOL_STATIC)->EnableWindow(false);
-		GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO)->EnableWindow(false);
-		GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO)->EnableWindow(false);
-		CheckDlgButton(IDC_INVISIBLE_MODE, 0);
-	} else 
-		CheckDlgButton(IDC_INVISIBLE_MODE, 1);
-	//Commander - Added: Invisible Mode [TPT] - End
 	GetDlgItem(IDC_NICK)->SetWindowText(thePrefs.GetUserNick());
 
 	for(int i = 0; i < m_language.GetCount(); i++)
@@ -141,12 +118,6 @@ void CPPgGeneral::LoadSettings(void)
 	else
 		CheckDlgButton(IDC_SPLASHON,0);
 
-    //Commander - Added: Enable/Disable Startupsound - Start
-    if(thePrefs.startupsound)
-		CheckDlgButton(IDC_STARTUPSOUNDON,1);
-	else
-		CheckDlgButton(IDC_STARTUPSOUNDON,0);
-    //Commander - Added: Enable/Disable Startupsound - End
 	if(thePrefs.bringtoforeground)
 		CheckDlgButton(IDC_BRINGTOFOREGROUND,1);
 	else
@@ -176,6 +147,9 @@ void CPPgGeneral::LoadSettings(void)
 	CString strBuffer;
 	strBuffer.Format(_T("%i %s"),thePrefs.versioncheckdays,GetResString(IDS_DAYS2));
 	GetDlgItem(IDC_DAYS)->SetWindowText(strBuffer);
+
+	//Xman versions check
+	CheckDlgButton(IDC_CHECK4UPDATEMOD, thePrefs.UpdateNotifyMod());
 }
 
 BOOL CPPgGeneral::OnInitDialog()
@@ -228,22 +202,17 @@ BOOL CPPgGeneral::OnInitDialog()
 	sliderUpdate->SetRange(2, 7, true);
 	sliderUpdate->SetPos(thePrefs.GetUpdateDays());
 	
-	//Commander - Added: Invisible Mode [TPT] - Start
-	// Add keys to ComboBox
-	for(int i='A'; i<='Z'; i++)
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO))->AddString(CString((char)(i)));
-	for(int i='0'; i<='9'; i++)
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO))->AddString(CString((char)(i)));
-	//Commander - Added: Invisible Mode [TPT] - End
-
 	LoadSettings();
-	InitTooltips(); //MORPH leuk_he tooltipped
 	Localize();
+	//Xman versions check
+	/*
 	GetDlgItem(IDC_CHECKDAYS)->ShowWindow( IsDlgButtonChecked(IDC_CHECK4UPDATE) ? SW_SHOW : SW_HIDE );
 	GetDlgItem(IDC_DAYS)->ShowWindow( IsDlgButtonChecked(IDC_CHECK4UPDATE) ? SW_SHOW : SW_HIDE );
+	*/
+	//Xman end
 
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 void ModifyAllWindowStyles(CWnd* pWnd, DWORD dwRemove, DWORD dwAdd)
@@ -264,17 +233,6 @@ void ModifyAllWindowStyles(CWnd* pWnd, DWORD dwRemove, DWORD dwAdd)
 
 BOOL CPPgGeneral::OnApply()
 {
-	//Commander - Added: Invisible Mode [TPT] - Start
-	CString sKey;
-	int cur_sel = ((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO))->GetCurSel();
-	if (cur_sel>=0)
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO))->GetLBText(cur_sel, sKey);
-	if (IsDlgButtonChecked(IDC_INVISIBLE_MODE) && cur_sel>=0)
-		thePrefs.SetInvisibleMode(true,m_iActualKeyModifier, (char)sKey[0]);
-	else
-		thePrefs.SetInvisibleMode(false,m_iActualKeyModifier, (char)sKey[0]);
-	//Commander - Added: Invisible Mode [TPT] - End
-
 	CString strNick;
 	GetDlgItem(IDC_NICK)->GetWindowText(strNick);
 	strNick.Trim();
@@ -285,6 +243,15 @@ BOOL CPPgGeneral::OnApply()
 		strNick = DEFAULT_NICK;
 		GetDlgItem(IDC_NICK)->SetWindowText(strNick);
 	}
+	//Xman DLP check the nick
+	CString strNicktocheck=strNick + _T(" [xxx]");
+	if(theApp.dlp->IsDLPavailable() && (theApp.dlp->DLPCheckUsername_Hard(strNicktocheck) || theApp.dlp->DLPCheckUsername_Soft(strNicktocheck)))
+	{
+		AfxMessageBox(_T("This nick is not allowed"));
+		strNick = DEFAULT_NICK;
+		GetDlgItem(IDC_NICK)->SetWindowText(strNick);
+	}
+	//Xman end
 	thePrefs.SetUserNick(strNick);
 
 	if (m_language.GetCurSel() != CB_ERR)
@@ -327,16 +294,18 @@ BOOL CPPgGeneral::OnApply()
 		AddAutoStart();
 	else
 		RemAutoStart();
-	thePrefs.beepOnError= IsDlgButtonChecked(IDC_BEEPER)!=0;
-	thePrefs.confirmExit= IsDlgButtonChecked(IDC_EXIT)!=0;
+	thePrefs.beepOnError = IsDlgButtonChecked(IDC_BEEPER)!=0;
+	thePrefs.confirmExit = IsDlgButtonChecked(IDC_EXIT)!=0;
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON)!=0;
 	thePrefs.bringtoforeground = IsDlgButtonChecked(IDC_BRINGTOFOREGROUND)!=0;
 	thePrefs.updatenotify = IsDlgButtonChecked(IDC_CHECK4UPDATE)!=0;
-	thePrefs.onlineSig= IsDlgButtonChecked(IDC_ONLINESIG)!=0;
+	//Xman versions check
+	thePrefs.updatenotifymod= IsDlgButtonChecked(IDC_CHECK4UPDATEMOD)!=0;
+	//Xman end
+	thePrefs.onlineSig = IsDlgButtonChecked(IDC_ONLINESIG)!=0;
 	thePrefs.versioncheckdays = ((CSliderCtrl*)GetDlgItem(IDC_CHECKDAYS))->GetPos();
 	thePrefs.m_bEnableMiniMule = IsDlgButtonChecked(IDC_MINIMULE) != 0;
 	thePrefs.m_bPreventStandby = IsDlgButtonChecked(IDC_PREVENTSTANDBY) != 0;
-	thePrefs.startupsound = IsDlgButtonChecked(IDC_STARTUPSOUNDON)!=0;//Commander - Added: Enable/Disable Startupsound
 
 	theApp.emuledlg->transferwnd->downloadlistctrl.SetStyle();
 	LoadSettings();
@@ -383,64 +352,12 @@ void CPPgGeneral::Localize(void)
 		GetDlgItem(IDC_STARTWIN)->SetWindowText(GetResString(IDS_STARTWITHWINDOWS));
 		GetDlgItem(IDC_MINIMULE)->SetWindowText(GetResString(IDS_ENABLEMINIMULE));
 		GetDlgItem(IDC_PREVENTSTANDBY)->SetWindowText(GetResString(IDS_PREVENTSTANDBY));
-		GetDlgItem(IDC_STARTUPSOUNDON)->SetWindowText(GetResString(IDS_PW_STARTUPSOUND));//Commander - Added: Enable/Disable Startupsound
-		//Commander - Added: Invisible Mode [TPT] - Start
-		// Add key modifiers to ComboBox
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->ResetContent();
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_CTRLKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_ALTKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_SHIFTKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_CTRLKEY) + _T(" + ") + GetResString(IDS_ALTKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_CTRLKEY) + _T(" + ") + GetResString(IDS_SHIFTKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_ALTKEY) + _T(" + ") + GetResString(IDS_SHIFTKEY));
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->AddString(GetResString(IDS_CTRLKEY) + _T(" + ") + GetResString(IDS_ALTKEY) + _T(" + ") + GetResString(IDS_SHIFTKEY));
-
-		CString key_modifier;
-		if (m_iActualKeyModifier & MOD_CONTROL)
-			key_modifier=GetResString(IDS_CTRLKEY);
-		if (m_iActualKeyModifier & MOD_ALT){
-			if (!key_modifier.IsEmpty()) key_modifier += " + ";
-			key_modifier+=GetResString(IDS_ALTKEY);
-		}
-		if (m_iActualKeyModifier & MOD_SHIFT){
-			if (!key_modifier.IsEmpty()) key_modifier += " + ";
-			key_modifier+=GetResString(IDS_SHIFTKEY);
-		}
-		((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->SelectString(-1,key_modifier);
-		
-		GetDlgItem(IDC_INVISIBLE_MODE_GROUP_BOX)->SetWindowText(GetResString(IDS_INVMODE_GROUP));
-		GetDlgItem(IDC_INVISIBLE_MODE)->SetWindowText(GetResString(IDS_INVMODE));
-		GetDlgItem(IDC_INVISIBLE_MODE_SELECT_STATIC)->SetWindowText(GetResString(IDS_INVMODE_HOTKEY));
-		GetDlgItem(IDC_INVISIBLE_MODE_MODIFIER_STATIC)->SetWindowText(GetResString(IDS_INVMODE_MODKEY));
-		GetDlgItem(IDC_INVISIBLE_MODE_KEY_STATIC)->SetWindowText(GetResString(IDS_INVMODE_VKEY));
-		//Commander - Added: Invisible Mode [TPT] - End
-         //MORPH START leuk_he tooltipped
-		SetTool(IDC_NICK_FRM,IDS_QL_USERNAME_TIP);
-		SetTool(IDC_NICK,IDS_QL_USERNAME_TIP);
-		SetTool(IDC_LANG_FRM,IDS_PW_LANG_TIP);
-		SetTool(IDC_LANGS,IDS_PW_LANG_TIP);
-		//SetTool(IDC_MISC_FRM,IDS_PW_MISC_TIP);
-		SetTool(IDC_BEEPER,IDS_PW_BEEP_TIP);
-		SetTool(IDC_EXIT,IDS_PW_PROMPT_TIP);
-		SetTool(IDC_SPLASHON,IDS_PW_SPLASH_TIP);
-		SetTool(IDC_BRINGTOFOREGROUND,IDS_PW_FRONT_TIP);
-		SetTool(IDC_ONLINESIG,IDS_PREF_ONLINESIG_TIP);	
-		SetTool(IDC_STARTMIN,IDS_PREF_STARTMIN_TIP);	
-		SetTool(IDC_WEBSVEDIT,IDS_WEBSVEDIT_TIP);
-		SetTool(IDC_ED2KFIX,IDS_ED2KLINKFIX_TIP);
-		SetTool(IDC_CHECK4UPDATE,IDS_CHECK4UPDATE_TIP);
-		SetTool(IDC_CHECKDAYS,IDS_CHECK4UPDATE_TIP);
-		SetTool(IDC_STARTUP,IDS_STARTUP_TIP);
-		SetTool(IDC_STARTWIN,IDS_STARTWITHWINDOWS_TIP);
-		SetTool(IDC_STARTUPSOUNDON,IDS_PW_STARTUPSOUND_TIP);
-        SetTool(IDC_INVISIBLE_MODE_KEY_COMBO,IDC_INVISIBLE_MODE_KEY_COMBO_TIP);
-		SetTool(IDC_INVISIBLE_MODE_GROUP_BOX,IDS_INVMODE_GROUP_TIP);
-		SetTool(IDC_INVISIBLE_MODE,IDS_INVMODE_TIP);
-		SetTool(IDC_INVISIBLE_MODE_SELECT_STATIC,IDS_INVMODE_HOTKEY_TIP);
-		SetTool(IDC_INVISIBLE_MODE_MODIFIER_STATIC,IDS_INVMODE_MODKEY_TIP);
-		SetTool(IDC_INVISIBLE_MODE_KEY_STATIC,IDC_INVISIBLE_MODE_KEY_COMBO_TIP);
-		SetTool(IDC_INVISIBLE_MODE_SELECT_COMBO ,IDC_INVISIBLE_MODE_KEY_COMBO_TIP);
-		// MORPH END leuk_he tooltipped
+		//Xman versions check
+		GetDlgItem(IDC_CHECK4UPDATEMOD)->SetWindowText(GetResString(IDS_CHECK4UPDATEMOD));
+		// ==> Removed Xtreme version check [Stulle] - Stulle
+		GetDlgItem(IDC_CHECK4UPDATEMOD)->EnableWindow(FALSE);
+		GetDlgItem(IDC_CHECK4UPDATEMOD)->ShowWindow(SW_HIDE);
+		// <== Removed Xtreme version check [Stulle] - Stulle
 	}
 }
 
@@ -510,8 +427,12 @@ void CPPgGeneral::OnLangChange()
 void CPPgGeneral::OnBnClickedCheck4Update()
 {
 	SetModified();
+	//Xman versions check
+	//simple way: always enable
+	/*
 	GetDlgItem(IDC_CHECKDAYS)->ShowWindow( IsDlgButtonChecked(IDC_CHECK4UPDATE)?SW_SHOW:SW_HIDE );
 	GetDlgItem(IDC_DAYS)->ShowWindow( IsDlgButtonChecked(IDC_CHECK4UPDATE)?SW_SHOW:SW_HIDE );
+	*/
 }
 
 void CPPgGeneral::OnHelp()
@@ -534,35 +455,3 @@ BOOL CPPgGeneral::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	OnHelp();
 	return TRUE;
 }
-
-//Commander - Added: Invisible Mode [TPT] - Start
-void CPPgGeneral::SetBoxes()
-{	
-	bool bImode = IsDlgButtonChecked(IDC_INVISIBLE_MODE)!=0;
-
-	GetDlgItem(IDC_INVISIBLE_MODE_SELECT_STATIC)->EnableWindow(bImode);
-	GetDlgItem(IDC_INVISIBLE_MODE_MODIFIER_STATIC)->EnableWindow(bImode);
-	GetDlgItem(IDC_INVISIBLE_MODE_KEY_STATIC)->EnableWindow(bImode);
-	GetDlgItem(IDC_INVISIBLE_MODE_SYMBOL_STATIC)->EnableWindow(bImode);
-	GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO)->EnableWindow(bImode);
-	GetDlgItem(IDC_INVISIBLE_MODE_SELECT_COMBO)->EnableWindow(bImode);
-
-	SetModified();
-}
-
-void CPPgGeneral::OnCbnSelchangeKeymodcombo()
-{
-	CString sKeyMod;
-	
-	((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->GetLBText(((CComboBox*)GetDlgItem(IDC_INVISIBLE_MODE_KEY_COMBO))->GetCurSel(), sKeyMod);
-	m_iActualKeyModifier = 0;
-	if (sKeyMod.Find(GetResString(IDS_CTRLKEY))!=-1)
-		m_iActualKeyModifier |= MOD_CONTROL;
-	if (sKeyMod.Find(GetResString(IDS_ALTKEY))!=-1)
-		m_iActualKeyModifier |= MOD_ALT;
-	if (sKeyMod.Find(GetResString(IDS_SHIFTKEY))!=-1)
-		m_iActualKeyModifier |= MOD_SHIFT;
-	
-	SetModified();
-}
-//Commander - Added: Invisible Mode [TPT] - End

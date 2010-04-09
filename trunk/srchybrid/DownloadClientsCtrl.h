@@ -35,10 +35,11 @@ public:
 	void	Show() { ShowWindow(SW_SHOW); }
 	void	Localize();
 	void	ShowSelectedUserDetails();
+	void	StopSingleClient(CUpDownClient* single);  //Xman Xtreme Downloadmanager
 
 protected:
 	CImageList  m_ImageList;
-	CImageList  m_overlayimages; //MORPH
+	CImageList  m_overlayimages; // Mod Icons - Stulle
 	
 	void SetAllIcons();
 	void GetItemDisplayText(const CUpDownClient *client, int iSubItem, LPTSTR pszText, int cchTextMax);

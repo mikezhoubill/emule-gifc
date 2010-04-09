@@ -7,9 +7,6 @@
 #include "preferences.h"
 #include "opcodes.h"
 #include "otherfunctions.h"
-#include "Sockets.h"
-#include "kademlia/kademlia/Kademlia.h"
-#include "Scheduler.h" //MORPH - Added by SiRoB, Fix for Param used in scheduler
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,28 +28,34 @@ void CInputBox::OnContextMenu(CWnd* /*pWnd*/, CPoint /*point*/)
 /////////////////////////////////////////////////////////////////////////////
 // CMuleSystrayDlg dialog
 
+//Xman
+/*
 CMuleSystrayDlg::CMuleSystrayDlg(CWnd* pParent, CPoint pt, int iMaxUp, int iMaxDown, int iCurUp, int iCurDown)
-: CDialog(CMuleSystrayDlg::IDD, pParent)
+*/
+CMuleSystrayDlg::CMuleSystrayDlg(CWnd* pParent, CPoint pt, float iMaxUp, float iMaxDown, float iCurUp, float iCurDown)
+//Xman end
+	: CDialog(CMuleSystrayDlg::IDD, pParent)
 {
 	if(iCurDown == UNLIMITED)
 		iCurDown = 0;
+	//Xman
+	/*
 	if(iCurUp == UNLIMITED)
 		iCurUp = 0;
-	
+	*/
+	//Xman end
+
 	//{{AFX_DATA_INIT(CMuleSystrayDlg)
 	m_nDownSpeedTxt = iMaxDown < iCurDown ? iMaxDown : iCurDown;
 	m_nUpSpeedTxt = iMaxUp < iCurUp ? iMaxUp : iCurUp;
-	m_nMinUpSpeedTxt = thePrefs.GetMinUpload();
 	//}}AFX_DATA_INIT
 
 	m_iMaxUp = iMaxUp;
 	m_iMaxDown = iMaxDown;
-	
 	m_ptInitialPosition = pt;
 
 	m_hUpArrow = NULL;
 	m_hDownArrow = NULL;
-	m_hSUCIcon = NULL;
 
 	m_nExitCode = 0;
 	m_bClosingDown = false;
@@ -64,8 +67,6 @@ CMuleSystrayDlg::~CMuleSystrayDlg()
 		DestroyIcon(m_hUpArrow);
 	if(m_hDownArrow)
 		DestroyIcon(m_hDownArrow);
-	if(m_hSUCIcon)
-		DestroyIcon(m_hSUCIcon);
 }
 
 void CMuleSystrayDlg::DoDataExchange(CDataExchange* pDX)
@@ -74,17 +75,19 @@ void CMuleSystrayDlg::DoDataExchange(CDataExchange* pDX)
 	//{{AFX_DATA_MAP(CMuleSystrayDlg)
 	DDX_Control(pDX, IDC_TRAYUP, m_ctrlUpArrow);
 	DDX_Control(pDX, IDC_TRAYDOWN, m_ctrlDownArrow);
-	DDX_Control(pDX, IDC_TRAYSUC, m_ctrlMinUpIcon);
 	DDX_Control(pDX, IDC_SIDEBAR, m_ctrlSidebar);
 	DDX_Control(pDX, IDC_UPSLD, m_ctrlUpSpeedSld);
 	DDX_Control(pDX, IDC_DOWNSLD, m_ctrlDownSpeedSld);
-	DDX_Control(pDX, IDC_MINUPSLD, m_ctrlMinUpSpeedSld);
+	//Xman
+	/*
 	DDX_Control(pDX, IDC_DOWNTXT, m_DownSpeedInput);
 	DDX_Control(pDX, IDC_UPTXT, m_UpSpeedInput);
-	DDX_Control(pDX, IDC_MINUPTXT, m_MinUpSpeedInput);
 	DDX_Text(pDX, IDC_DOWNTXT, m_nDownSpeedTxt);
 	DDX_Text(pDX, IDC_UPTXT, m_nUpSpeedTxt);
-	DDX_Text(pDX, IDC_MINUPTXT, m_nMinUpSpeedTxt);
+	*/
+	DDX_Control(pDX, IDC_DOWNTXT, m_DownSpeedInput);
+	DDX_Control(pDX, IDC_UPTXT, m_UpSpeedInput);
+	//Xman end
 	//}}AFX_DATA_MAP
 }
 
@@ -94,7 +97,6 @@ BEGIN_MESSAGE_MAP(CMuleSystrayDlg, CDialog)
 	ON_WM_MOUSEMOVE()
 	ON_EN_CHANGE(IDC_DOWNTXT, OnChangeDowntxt)
 	ON_EN_CHANGE(IDC_UPTXT, OnChangeUptxt)
-	ON_EN_CHANGE(IDC_MINUPTXT, OnChangeMinUptxt)
 	ON_WM_HSCROLL()
 	ON_WM_LBUTTONUP()
 	ON_WM_RBUTTONDOWN()
@@ -108,7 +110,7 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CMuleSystrayDlg message handlers
 
-void CMuleSystrayDlg::OnMouseMove(UINT nFlags, CPoint point) 
+void CMuleSystrayDlg::OnMouseMove(UINT nFlags, CPoint point)
 {	
 	CWnd *pWnd = ChildWindowFromPoint(point, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED);
 	if(pWnd)
@@ -131,16 +133,12 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 
 	CRect r;
 	CWnd *p;
-	CString buffer;
-	CString buffer2;
 
 	m_hUpArrow = theApp.LoadIcon(_T("UPLOAD"));
 	m_hDownArrow = theApp.LoadIcon(_T("DOWNLOAD"));
-	m_hSUCIcon = theApp.LoadIcon(_T("SUC"));
-	m_ctrlUpArrow.SetIcon(m_hUpArrow);
-	m_ctrlDownArrow.SetIcon(m_hDownArrow);
-	m_ctrlMinUpIcon.SetIcon(m_hSUCIcon); 
-	
+	m_ctrlUpArrow.SetIcon(m_hUpArrow); 
+	m_ctrlDownArrow.SetIcon(m_hDownArrow); 
+
 	bool	bValidFont = false;
 	LOGFONT lfStaticFont = {0};
 
@@ -159,25 +157,13 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		m_ctrlSpeed.Create(NULL, NULL, WS_CHILD|WS_VISIBLE, r, this, IDC_SPEED);
 		m_ctrlSpeed.m_nBtnID = IDC_SPEED;
 		//p->GetWindowText(m_ctrlSpeed.m_strText);
-		
-		if(theApp.serverconnect->IsConnected())
-			buffer = _T("ED2K");
-		else if (theApp.serverconnect->IsConnecting())
-			buffer = _T("ed2k");
-		else
-			buffer = _T("");
-
-		if(Kademlia::CKademlia::IsConnected())
-			buffer += buffer.IsEmpty()?_T("KAD"):_T(" | KAD");
-		else if (Kademlia::CKademlia::IsRunning())
-			buffer += buffer.IsEmpty()?_T("kad"):_T(" | kad");
-		
-		m_ctrlSpeed.m_strText = buffer;
+		m_ctrlSpeed.m_strText = GetResString(IDS_TRAYDLG_SPEED);
+		m_ctrlSpeed.m_strText.Remove(_T('&'));
 
 		m_ctrlSpeed.m_bUseIcon = true;
 		m_ctrlSpeed.m_sIcon.cx = 16;
 		m_ctrlSpeed.m_sIcon.cy = 16;
-		m_ctrlSpeed.m_hIcon = theApp.LoadIcon(_T("STATSCLIENTS"), m_ctrlSpeed.m_sIcon.cx, m_ctrlSpeed.m_sIcon.cy);
+		m_ctrlSpeed.m_hIcon = theApp.LoadIcon(_T("SPEED"), m_ctrlSpeed.m_sIcon.cx, m_ctrlSpeed.m_sIcon.cy);
 		m_ctrlSpeed.m_bParentCapture = true;
 		if(bValidFont)
 		{	
@@ -185,11 +171,23 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 			lfFont.lfWeight += 200;			// make it bold
 			m_ctrlSpeed.m_cfFont.CreateFontIndirect(&lfFont);
 		}
-
+		
 		m_ctrlSpeed.m_bNoHover = true;
 	}
 
 	p = GetDlgItem(IDC_TOMAX);
+
+	//zz_fly :: make font not bold for chinese :: start
+	if(p)
+	{
+		p->GetFont()->GetLogFont(&lfStaticFont);
+		bValidFont = true;
+	}
+
+	if(bValidFont && (thePrefs.m_wLanguageID != 2052) && (thePrefs.m_wLanguageID != 1028))
+		lfStaticFont.lfWeight += 200;			// make it bold
+	//zz_fly :: make font not bold for chinese :: end
+
 	if(p)
 	{
 		p->GetWindowRect(r);
@@ -208,7 +206,7 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		if(bValidFont)
 			m_ctrlAllToMax.m_cfFont.CreateFontIndirect(&lfStaticFont);
 	}
-/*
+
 	p = GetDlgItem(IDC_TOMIN);
 	if(p)
 	{
@@ -228,7 +226,7 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		if(bValidFont)
 			m_ctrlAllToMin.m_cfFont.CreateFontIndirect(&lfStaticFont);
 	}
-*/
+
 	p = GetDlgItem(IDC_RESTORE);
 	if(p)
 	{
@@ -247,12 +245,17 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		m_ctrlRestore.m_bParentCapture = true;
 		if(bValidFont)
 		{	
+			//zz_fly :: make font not bold for chinese :: start 
+			/*
 			LOGFONT lfFont = lfStaticFont;
 			lfFont.lfWeight += 200;			// make it bold
 			m_ctrlRestore.m_cfFont.CreateFontIndirect(&lfFont);
+			*/
+			m_ctrlRestore.m_cfFont.CreateFontIndirect(&lfStaticFont);
+			//zz_fly :: make font not bold for chinese :: end 
 		}	
 	}
-
+	
 	p = GetDlgItem(IDC_CONNECT);
 	if(p)
 	{
@@ -312,25 +315,7 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		if(bValidFont)
 			m_ctrlPreferences.m_cfFont.CreateFontIndirect(&lfStaticFont);
 	}
-	p = GetDlgItem(IDC_TRAYRELOADSHARE);
-	if(p)
-	{
-		p->GetWindowRect(r);
-		ScreenToClient(r);
-		m_ctrlReloadShares.Create(NULL, NULL, WS_CHILD|WS_VISIBLE, r, this, IDC_TRAYRELOADSHARE);
-		m_ctrlReloadShares.m_nBtnID = IDC_TRAYRELOADSHARE;
-		//p->GetWindowText(m_ctrlPreferences.m_strText);
-		m_ctrlReloadShares.m_strText = GetResString(IDS_RELOADSHARE);
-		m_ctrlReloadShares.m_strText.Remove('&');
 
-		m_ctrlReloadShares.m_bUseIcon = true;
-		m_ctrlReloadShares.m_sIcon.cx = 16;
-		m_ctrlReloadShares.m_sIcon.cy = 16;
-		m_ctrlReloadShares.m_hIcon = theApp.LoadIcon(_T("SHAREDFILES"), m_ctrlReloadShares.m_sIcon.cx, m_ctrlReloadShares.m_sIcon.cy, 0);
-		m_ctrlReloadShares.m_bParentCapture = true;
-		if(bValidFont)
-			m_ctrlReloadShares.m_cfFont.CreateFontIndirect(&lfStaticFont);
-	}
 	p = GetDlgItem(IDC_TRAY_EXIT);
 	if(p)
 	{
@@ -348,64 +333,69 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		m_ctrlExit.m_hIcon = theApp.LoadIcon(_T("EXIT"), m_ctrlExit.m_sIcon.cx, m_ctrlExit.m_sIcon.cy);
 		m_ctrlExit.m_bParentCapture = true;
 		if(bValidFont)
-		{	
-			LOGFONT lfFont = lfStaticFont;
-			lfFont.lfWeight += 200;			// make it bold
-			m_ctrlExit.m_cfFont.CreateFontIndirect(&lfFont);
-		}	
+			m_ctrlExit.m_cfFont.CreateFontIndirect(&lfStaticFont);
 	}
-	
+
 	if((p = GetDlgItem(IDC_DOWNLBL)) != NULL)
 		p->SetWindowText(GetResString(IDS_PW_CON_DOWNLBL));
 	if((p = GetDlgItem(IDC_UPLBL)) != NULL)
 		p->SetWindowText(GetResString(IDS_PW_CON_UPLBL));
-	if((p = GetDlgItem(IDC_MINUPLBL)) != NULL){
-		p->SetWindowText(GetResString(IDS_MINUPLOAD_SHORT));
-		p->EnableWindow(thePrefs.IsSUCEnabled() || thePrefs.IsDynUpEnabled());
-	}
 	if((p = GetDlgItem(IDC_DOWNKB)) != NULL)
 		p->SetWindowText(GetResString(IDS_KBYTESPERSEC));
 	if((p = GetDlgItem(IDC_UPKB)) != NULL)
 		p->SetWindowText(GetResString(IDS_KBYTESPERSEC));
-	if((p = GetDlgItem(IDC_MINUPKB)) != NULL){
-		p->SetWindowText(GetResString(IDS_KBYTESPERSEC));
-		p->EnableWindow(thePrefs.IsSUCEnabled() || thePrefs.IsDynUpEnabled());
-	}
-	GetDlgItem(IDC_MINUPTXT)->EnableWindow(thePrefs.IsSUCEnabled() || thePrefs.IsDynUpEnabled());
+
+	//Xman
+	/*
 	m_ctrlDownSpeedSld.SetRange(0,m_iMaxDown);
 	m_ctrlDownSpeedSld.SetPos(m_nDownSpeedTxt);
 
 	m_ctrlUpSpeedSld.SetRange(0,m_iMaxUp);
 	m_ctrlUpSpeedSld.SetPos(m_nUpSpeedTxt);
 
-	m_ctrlMinUpSpeedSld.SetRange(1,m_iMaxUp);
-	m_ctrlMinUpSpeedSld.SetPos(m_nMinUpSpeedTxt);
-	m_ctrlMinUpSpeedSld.EnableWindow(thePrefs.IsSUCEnabled() || thePrefs.IsDynUpEnabled());
+	m_DownSpeedInput.EnableWindow(m_nDownSpeedTxt >0);
+	m_UpSpeedInput.EnableWindow(m_nUpSpeedTxt >0);
+	*/
+	CString strBuffer;
+	strBuffer.Format(_T("%.1f"), m_nDownSpeedTxt);
+	GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+	strBuffer.Format(_T("%.1f"), m_nUpSpeedTxt);
+	GetDlgItem(IDC_UPTXT)->SetWindowText(strBuffer);
+
+	m_ctrlDownSpeedSld.SetRange(0,int(m_iMaxDown*10.0f));
+	m_ctrlDownSpeedSld.SetPos(int(m_nDownSpeedTxt*10.0f));
+
+	m_ctrlUpSpeedSld.SetRange(1,int(m_iMaxUp*10.0f));
+	m_ctrlUpSpeedSld.SetPos(int(m_nUpSpeedTxt*10.0f));
+
+	m_DownSpeedInput.EnableWindow(m_nDownSpeedTxt > 0.0f);
+	//Xman end
+
 	CFont Font;
-	Font.CreateFont(-16,0,900,0,700,0,0,0,0,3,2,1,34,_T("Arial"));
+	Font.CreateFont(-16,0,900,0,700,0,0,0,0,3,2,1,34,_T("Tahoma"));
 
 	UINT winver = thePrefs.GetWindowsVersion();
-	if(winver == _WINVER_95_ || winver == _WINVER_NT4_)
+	if (winver == _WINVER_95_ || winver == _WINVER_NT4_ || g_bLowColorDesktop)
 	{
 		m_ctrlSidebar.SetColors(GetSysColor(COLOR_CAPTIONTEXT), 
-			GetSysColor(COLOR_ACTIVECAPTION), 
-			GetSysColor(COLOR_ACTIVECAPTION));
+									GetSysColor(COLOR_ACTIVECAPTION), 
+										GetSysColor(COLOR_ACTIVECAPTION));
 	}
 	else
 	{
 		m_ctrlSidebar.SetColors(GetSysColor(COLOR_CAPTIONTEXT), 
-			GetSysColor(COLOR_ACTIVECAPTION), 
-								GetSysColor(COLOR_GRADIENTACTIVECAPTION));
+									GetSysColor(COLOR_ACTIVECAPTION), 
+										GetSysColor(COLOR_GRADIENTACTIVECAPTION));
 	}
 
 	m_ctrlSidebar.SetHorizontal(false);
 	m_ctrlSidebar.SetFont(&Font);
-	m_ctrlSidebar.SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]"));
-
+	m_ctrlSidebar.SetWindowText(_T("eMule ") + theApp.m_strCurVersionLong);
+	
 	CRect rDesktop;
 	CWnd *pDesktopWnd = GetDesktopWindow();
 	pDesktopWnd->GetClientRect(rDesktop);
-
+	
 	CPoint pt = m_ptInitialPosition;
 	pDesktopWnd->ScreenToClient(&pt);
 	int xpos, ypos;
@@ -419,7 +409,7 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 		ypos = pt.y;
 	else
 		ypos = pt.y - r.Height();
-
+	
 	MoveWindow(xpos, ypos, r.Width(), r.Height());
 	SetCapture();
 	return TRUE;  // return TRUE unless you set the focus to a control
@@ -428,73 +418,187 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 
 void CMuleSystrayDlg::OnChangeDowntxt() 
 {
-	if (GetDlgItem(IDC_DOWNTXT)->GetWindowTextLength()){
-		UpdateData();
-		
-		m_nDownSpeedTxt = min(max(m_nDownSpeedTxt,0),m_iMaxDown);
-		
-		m_ctrlDownSpeedSld.SetPos(m_nDownSpeedTxt);
-		thePrefs.SetMaxDownload(m_nDownSpeedTxt);
-		theApp.scheduler->SaveOriginals(); //Added by SiRoB, Fix for Param used in scheduler
-		UpdateData(FALSE);
+	UpdateData();
+	//Xman
+	CString strBuffer;
+	if(GetDlgItem(IDC_DOWNTXT)->GetWindowTextLength())
+	{
+		GetDlgItem(IDC_DOWNTXT)->GetWindowText(strBuffer);
+		m_nDownSpeedTxt = (float)_tstof(strBuffer);
+		// fix non-numeric input
+		/*
+		if(strBuffer.GetAt(0) < '0' || strBuffer.GetAt(0) > '9')
+		{
+			strBuffer.Format(_T("%.1f"),0.0f);
+			GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+		}
+		*/
+		// auto complete to float (removed)
+		/*
+		else if(strBuffer.FindOneOf(_T(".,")) == -1)
+		{
+			strBuffer.Format(_T("%.1f"),m_nDownSpeedTxt);
+			GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+		}
+		*/
 	}
+	float m_nDownSpeedTxtOld = m_nDownSpeedTxt;
+	//Xman end
+
+	if(thePrefs.GetMaxGraphDownloadRate() == UNLIMITED)	//Cax2 - shouldn't be anymore...
+	{
+		if(m_nDownSpeedTxt > 64)		//Cax2 - why 64 ???
+			m_nDownSpeedTxt = 64;
+	} else {
+		if(m_nDownSpeedTxt > thePrefs.GetMaxGraphDownloadRate())
+			m_nDownSpeedTxt = thePrefs.GetMaxGraphDownloadRate();
+	}
+
+	//Xman
+	/*
+	m_ctrlDownSpeedSld.SetPos(m_nDownSpeedTxt);
+	
+	if(m_nDownSpeedTxt < 1){
+		m_nDownSpeedTxt = 0;
+		m_DownSpeedInput.EnableWindow(false);
+	}
+	*/
+	m_ctrlDownSpeedSld.SetPos(int(m_nDownSpeedTxt*10.0f));
+	
+	if(m_nDownSpeedTxt < 0.1f){
+		m_nDownSpeedTxt = 0.0f;
+		m_DownSpeedInput.EnableWindow(false);
+	}
+	if(m_nDownSpeedTxt != m_nDownSpeedTxtOld)
+	{
+		strBuffer.Format(_T("%.1f"),m_nDownSpeedTxt);
+		GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+	}
+	//Xman end
+
+	thePrefs.SetMaxDownload((m_nDownSpeedTxt == 0) ? UNLIMITED : m_nDownSpeedTxt);
+
+	UpdateData(FALSE);
 }
 
 void CMuleSystrayDlg::OnChangeUptxt() 
 {
-	if (GetDlgItem(IDC_UPTXT)->GetWindowTextLength()){
-		UpdateData();
-
-		m_nUpSpeedTxt = min(max(m_nUpSpeedTxt,0),m_iMaxUp);
-		
-		m_ctrlUpSpeedSld.SetPos(m_nUpSpeedTxt);
-		thePrefs.SetMaxUpload(m_nUpSpeedTxt);
-		theApp.scheduler->SaveOriginals(); //Added by SiRoB, Fix for Param used in scheduler
-		UpdateData(FALSE);
+	UpdateData();
+	//Xman
+	/*
+	if(thePrefs.GetMaxGraphUploadRate(true) == UNLIMITED)
+	{
+		if(m_nUpSpeedTxt > 16)
+			m_nUpSpeedTxt = 16;
+	} else {
+		if(m_nUpSpeedTxt > thePrefs.GetMaxGraphUploadRate(true))
+			m_nUpSpeedTxt = thePrefs.GetMaxGraphUploadRate(true);
 	}
-}
-
-void CMuleSystrayDlg::OnChangeMinUptxt() 
-{
-	if (GetDlgItem(IDC_MINUPTXT)->GetWindowTextLength()){
-		UpdateData();
-
-		m_nMinUpSpeedTxt = min(max(m_nMinUpSpeedTxt,1),m_iMaxUp);
-		
-		m_ctrlMinUpSpeedSld.SetPos(m_nMinUpSpeedTxt);
-		thePrefs.SetMinUpload(m_nMinUpSpeedTxt);
-		theApp.scheduler->SaveOriginals(); //Added by SiRoB, Fix for Param used in scheduler
-		UpdateData(FALSE);
+	m_ctrlUpSpeedSld.SetPos(m_nUpSpeedTxt);
+	
+	if(m_nUpSpeedTxt < 1){
+		m_nUpSpeedTxt = 0;
+		m_UpSpeedInput.EnableWindow(false);
 	}
+	thePrefs.SetMaxUpload((m_nUpSpeedTxt == 0) ? UNLIMITED : m_nUpSpeedTxt);
+	*/
+	if(GetDlgItem(IDC_UPTXT)->GetWindowTextLength())
+	{
+		CString strBuffer;
+		GetDlgItem(IDC_UPTXT)->GetWindowText(strBuffer);
+		m_nUpSpeedTxt = (float)_tstof(strBuffer);
+		// auto complete to float (removed)
+		/*
+		if(strBuffer.FindOneOf(_T(".,")) == -1)
+		{
+			strBuffer.Format(_T("%.1f"),m_nUpSpeedTxt);
+			GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+		}
+		*/
+	}
+
+	if(m_nUpSpeedTxt > thePrefs.GetMaxGraphUploadRate())
+	{
+		m_nUpSpeedTxt = thePrefs.GetMaxGraphUploadRate();
+		CString strBuffer;
+		strBuffer.Format(_T("%.1f"), m_nUpSpeedTxt);
+		GetDlgItem(IDC_UPTXT)->SetWindowText(strBuffer);
+	}
+	if(m_nUpSpeedTxt < 0.1f)
+	{
+		m_nUpSpeedTxt = 0.1f;
+		CString strBuffer;
+		strBuffer.Format(_T("%.1f"), m_nUpSpeedTxt);
+		GetDlgItem(IDC_UPTXT)->SetWindowText(strBuffer);
+	}
+
+	m_ctrlUpSpeedSld.SetPos(int(m_nUpSpeedTxt*10.0f));
+
+	thePrefs.SetMaxUpload(m_nUpSpeedTxt);
+	//Xman end
+
+	UpdateData(FALSE);
 }
 
 void CMuleSystrayDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar) 
 {
 	if(pScrollBar == (CScrollBar*)&m_ctrlDownSpeedSld)
 	{
+		//Xman
+		/*
 		m_nDownSpeedTxt = m_ctrlDownSpeedSld.GetPos();
+		if(m_nDownSpeedTxt < 1){
+			m_nDownSpeedTxt = 0;
+		*/
+		m_nDownSpeedTxt = m_ctrlDownSpeedSld.GetPos()/10.0f;
+		if(m_nDownSpeedTxt < 0.1f){
+			m_nDownSpeedTxt = 0.0f;
+		//Xman end
+			m_DownSpeedInput.EnableWindow(false);
+		}
+		else{
+			m_DownSpeedInput.EnableWindow(true);
+		}
+		//Xman
+		CString strBuffer;
+		strBuffer.Format(_T("%.1f"), m_nDownSpeedTxt);
+		GetDlgItem(IDC_DOWNTXT)->SetWindowText(strBuffer);
+		//Xman end
 		UpdateData(FALSE);
-		thePrefs.SetMaxDownload(m_nDownSpeedTxt);
+		thePrefs.SetMaxDownload((m_nDownSpeedTxt == 0) ? UNLIMITED : m_nDownSpeedTxt);
 	}
 	else if(pScrollBar == (CScrollBar*)&m_ctrlUpSpeedSld)
 	{
+		//Xman
+		/*
 		m_nUpSpeedTxt = m_ctrlUpSpeedSld.GetPos();
+		if(m_nUpSpeedTxt < 1){
+			m_nUpSpeedTxt = 0;
+			m_UpSpeedInput.EnableWindow(false);
+		}
+		else{
+			m_UpSpeedInput.EnableWindow(true);
+		}
+		UpdateData(FALSE);
+		thePrefs.SetMaxUpload((m_nUpSpeedTxt == 0) ? UNLIMITED : m_nUpSpeedTxt);
+		*/
+		m_nUpSpeedTxt = m_ctrlUpSpeedSld.GetPos()/10.0f;
+		if(m_nUpSpeedTxt < 0.1f)
+			m_nUpSpeedTxt = 0.1f;
+		CString strBuffer;
+		strBuffer.Format(_T("%.1f"), m_nUpSpeedTxt);
+		GetDlgItem(IDC_UPTXT)->SetWindowText(strBuffer);
 		UpdateData(FALSE);
 		thePrefs.SetMaxUpload(m_nUpSpeedTxt);
+		//Xman end
 	}
-	else if(pScrollBar == (CScrollBar*)&m_ctrlMinUpSpeedSld)
-	{
-		m_nMinUpSpeedTxt = m_ctrlMinUpSpeedSld.GetPos();
-		UpdateData(FALSE);
-		thePrefs.SetMinUpload(m_nMinUpSpeedTxt);
-	}
-	theApp.scheduler->SaveOriginals(); //Added by SiRoB, Fix for Param used in scheduler
+	
 	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
 }
 
 void CMuleSystrayDlg::OnLButtonUp(UINT nFlags, CPoint point) 
 {
-	ReleaseCapture();	
+	ReleaseCapture();
 	EndDialog(m_nExitCode);
 	m_bClosingDown = true;
 
@@ -520,7 +624,7 @@ void CMuleSystrayDlg::OnRButtonDown(UINT nFlags, CPoint point)
 void CMuleSystrayDlg::OnKillFocus(CWnd* pNewWnd) 
 {
 	CDialog::OnKillFocus(pNewWnd);
-
+	
 	if(!m_bClosingDown)
 	{
 		ReleaseCapture();

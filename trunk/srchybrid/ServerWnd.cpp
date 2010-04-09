@@ -35,20 +35,7 @@
 #include "NetworkInfoDlg.h"
 #include "Log.h"
 #include "UserMsgs.h"
-#include <share.h> //Morph
-
-// Mighty Knife: Popup-Menu for editing news feeds
-#include "MenuCmds.h"
-#include "InputBox.h"
-// [end] Mighty Knife
-
-//MORPH START - Added by SiRoB, XML News [O²]
-#define PUGAPI_VARIANT 0x58475550
-#define PUGAPI_VERSION_MAJOR 1
-#define PUGAPI_VERSION_MINOR 2
-#include "pugxml.h"
-#define NEWSOFFSET 23
-//MORPH END   - Added by SiRoB, XML News [O²]
+#include "opcodes.h" //Xman ModID
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -60,7 +47,7 @@ static char THIS_FILE[] = __FILE__;
 #define	SVWND_SPLITTER_HEIGHT	4
 
 #define	SERVERMET_STRINGS_PROFILE	_T("AC_ServerMetURLs.dat")
-#define SZ_DEBUG_LOG_TITLE			GetResString(IDS_VERBOSE_TITLE)
+#define SZ_DEBUG_LOG_TITLE			_T("Verbose")
 
 // CServerWnd dialog
 
@@ -83,16 +70,7 @@ BEGIN_MESSAGE_MAP(CServerWnd, CResizableDialog)
 	ON_EN_CHANGE(IDC_SERVERMETURL, OnSvrTextChange)
 	ON_STN_DBLCLK(IDC_SERVLST_ICO, OnStnDblclickServlstIco)
 	ON_NOTIFY(UM_SPN_SIZED, IDC_SPLITTER_SERVER, OnSplitterMoved)
-	//MORPH START - Added by SiRoB, XML News [O²]
-	ON_NOTIFY(EN_LINK, IDC_NEWSMSG, OnEnLinkNewsBox)
-	ON_BN_CLICKED(IDC_FEEDUPDATE, DownloadFeed)
-	ON_LBN_SELCHANGE(IDC_FEEDLIST, OnFeedListSelChange)
-	ON_CBN_DROPDOWN(IDC_FEEDLIST, ListFeeds)
-	//MORPH END   - Added by SiRoB, XML News [O²]
-	// Mighty Knife: News feed edit button
-	ON_BN_CLICKED(IDC_FEEDCHANGE, OnBnClickedFeedchange)
-	// [end] Mighty Knife
-	ON_BN_CLICKED(IDC_SERVER_LISTS, &CServerWnd::OnBnClickedServerLists)
+	ON_BN_CLICKED(IDC_SERVER_LISTS, OnBnClickedServerLists) // Links for Server list and nodes file [Stulle] - Stulle
 END_MESSAGE_MAP()
 
 CServerWnd::CServerWnd(CWnd* pParent /*=NULL*/)
@@ -101,12 +79,7 @@ CServerWnd::CServerWnd(CWnd* pParent /*=NULL*/)
 	servermsgbox = new CHTRichEditCtrl;
 	logbox = new CHTRichEditCtrl;
 	debuglog = new CHTRichEditCtrl;
-	//MORPH START - Added by SiRoB, XML News [O²]
-	newsmsgbox = new CHTRichEditCtrl; // Added by N_OxYdE: XML News
-	//MORPH END   - Added by SiRoB, XML News [O²]
-	//MORPH START - Added by SiRoB, Morph Log
-	morphlog = new CHTRichEditCtrl;
-	//MORPH END   - Added by SiRoB, Morph Log
+	leecherlog = new CHTRichEditCtrl; //Xman Anti-Leecher-Log
 	m_pacServerMetURL=NULL;
 	icon_srvlist = NULL;
 	memset(&m_cfDef, 0, sizeof m_cfDef);
@@ -122,13 +95,10 @@ CServerWnd::~CServerWnd()
 		m_pacServerMetURL->Unbind();
 		m_pacServerMetURL->Release();
 	}
+	delete leecherlog; //Xman Anti-Leecher-Log
 	delete debuglog;
 	delete logbox;
 	delete servermsgbox;
-	delete newsmsgbox; //MORPH - Added by SiRoB, XML News [O²]
-	delete morphlog;//MORPH - Added by SiRoB, Morph Log
-
-	if (m_FeedsMenu) VERIFY (m_FeedsMenu.DestroyMenu ()); // XP Style Menu [Xanatos] - Stulle
 }
 
 BOOL CServerWnd::OnInitDialog()
@@ -161,19 +131,31 @@ BOOL CServerWnd::OnInitDialog()
 		servermsgbox->ApplySkin();
 		servermsgbox->SetTitle(GetResString(IDS_SV_SERVERINFO));
 
-		//MORPH START - Changed by SiRoB, [itsonlyme: -modname-] & New Version Check
+		//Xman ModID
 		/*
 		servermsgbox->AppendText(_T("eMule v") + theApp.m_strCurVersionLong + _T("\n"));
 		*/
-		m_strMorphNewVersion = _T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]");
-		servermsgbox->AppendHyperLink(_T(""),_T(""),m_strMorphNewVersion,_T(""));
-		servermsgbox->AppendText(_T("\n"));
-		//MORPH END   - Changed by SiRoB, [itsonlyme: -modname-] & New Version Check
-
+		// ==> ModID [itsonlyme/SiRoB] - Stulle
+		/*
+		servermsgbox->AppendText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + MOD_VERSION + _T("]") + _T("\n"));
+		*/
+		servermsgbox->AppendText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]\n"));
+		// <== ModID [itsonlyme/SiRoB] - Stulle
+		//Xman end
 		// MOD Note: Do not remove this part - Merkur
 		m_strClickNewVersion = GetResString(IDS_EMULEW) + _T(" ") + GetResString(IDS_EMULEW3) + _T(" ") + GetResString(IDS_EMULEW2);
 		servermsgbox->AppendHyperLink(_T(""), _T(""), m_strClickNewVersion, _T(""));
 		// MOD Note: end
+
+		//Xman versions check
+		// ==> Removed Xtreme version check [Stulle] - Stulle
+		/*
+		servermsgbox->AppendText(_T("\n"));
+		m_strClickNewXtremeVersion=_T("Click to check for new Xtreme-Version");
+		servermsgbox->AppendHyperLink(_T(""),_T(""),m_strClickNewXtremeVersion,_T(""));
+		*/
+		// <== Removed Xtreme version check [Stulle] - Stulle
+		//Xman end
 		servermsgbox->AppendText(_T("\n\n"));
 	}
 
@@ -205,42 +187,23 @@ BOOL CServerWnd::OnInitDialog()
 		debuglog->SetAutoURLDetect(FALSE);
 	}
 
-	//MORPH START - Added by SiRoB, XML News [O²]
-	GetDlgItem(IDC_NEWSMSG)->GetWindowRect(rect);
-	GetDlgItem(IDC_NEWSMSG)->DestroyWindow();
+	//Xman Anti-Leecher-Log
+	GetDlgItem(IDC_LEECHERLOG)->GetWindowRect(rect);
+	GetDlgItem(IDC_LEECHERLOG)->DestroyWindow();
 	::MapWindowPoints(NULL, m_hWnd, (LPPOINT)&rect, 2);
-		if (newsmsgbox->Create(LOG_PANE_RICHEDIT_STYLES, rect, this, IDC_NEWSMSG)){
-		newsmsgbox->SetProfileSkinKey(_T("NewsInfoLog"));
-		newsmsgbox->ModifyStyleEx(0, WS_EX_STATICEDGE, SWP_FRAMECHANGED);
-		newsmsgbox->SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
-		newsmsgbox->SetEventMask(newsmsgbox->GetEventMask() | ENM_LINK);
-		newsmsgbox->SetFont(&theApp.m_fontHyperText);
-		newsmsgbox->ApplySkin();
-		newsmsgbox->SetTitle(GetResString(IDS_FEED));
-	}
-	//MORPH END   - Added by SiRoB, XML News [O²]
-
-	//MORPH START - Added by SiRoB, Morph Log
-	GetDlgItem(IDC_MORPH_LOG)->GetWindowRect(rect);
-	GetDlgItem(IDC_MORPH_LOG)->DestroyWindow();
-	::MapWindowPoints(NULL, m_hWnd, (LPPOINT)&rect, 2);
-	if (morphlog->Create(LOG_PANE_RICHEDIT_STYLES, rect, this, IDC_MORPH_LOG)){
-		morphlog->SetProfileSkinKey(_T("MorphLog"));
-		morphlog->ModifyStyleEx(0, WS_EX_STATICEDGE, SWP_FRAMECHANGED);
-		morphlog->SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
+	if (leecherlog->Create(LOG_PANE_RICHEDIT_STYLES, rect, this, IDC_LEECHERLOG)){
+		leecherlog->SetProfileSkinKey(_T("VerboseLog"));
+		leecherlog->ModifyStyleEx(0, WS_EX_STATICEDGE, SWP_FRAMECHANGED);
+		leecherlog->SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
 		if (theApp.m_fontLog.m_hObject)
-			morphlog->SetFont(&theApp.m_fontLog);
-		morphlog->ApplySkin();
-		morphlog->SetTitle(GetResString(IDS_MORPH_LOG));
-		morphlog->SetAutoURLDetect(FALSE);
+			leecherlog->SetFont(&theApp.m_fontLog);
+		leecherlog->ApplySkin();
+		leecherlog->SetTitle(GetResString(IDS_LEERCHERLOGTITLE));
+		leecherlog->SetAutoURLDetect(FALSE);
 	}
-	//MORPH END   - Added by SiRoB, Morph Log
+	//Xman end
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	SetAllIcons();
 	Localize();
@@ -272,23 +235,14 @@ BOOL CServerWnd::OnInitDialog()
 	newitem.iImage = 0;
 	VERIFY( StatusSelector.InsertItem(StatusSelector.GetItemCount(), &newitem) == PaneVerboseLog );
 
-	//MORPH START - Added by SiRoB, XML News [O²]
-	name = GetResString(IDS_FEED);
+	//Xman Anti-Leecher-Log
+	name=GetResString(IDS_LEERCHERLOGTITLE);
 	name.Replace(_T("&"), _T("&&"));
 	newitem.mask = TCIF_TEXT|TCIF_IMAGE;
 	newitem.pszText = const_cast<LPTSTR>((LPCTSTR)name);
 	newitem.iImage = 0;
-	VERIFY( StatusSelector.InsertItem(StatusSelector.GetItemCount(), &newitem) == PaneNews );
-	//MORPH END   - Added by SiRoB, XML News [O²]
-
-	//MORPH START - Added by SiRoB, Morph Log
-	name = GetResString(IDS_MORPH_LOG);
-	name.Replace(_T("&"), _T("&&"));
-	newitem.mask = TCIF_TEXT|TCIF_IMAGE;
-	newitem.pszText = const_cast<LPTSTR>((LPCTSTR)name);
-	newitem.iImage = 0;
-	VERIFY( StatusSelector.InsertItem(StatusSelector.GetItemCount(), &newitem) == PaneMorphLog );
-	//MORPH END   - Added by SiRoB, Morph Log
+	VERIFY( StatusSelector.InsertItem(StatusSelector.GetItemCount(), &newitem) == PaneLeecherLog );
+	//Xman end
 
 	AddAnchor(IDC_SERVLST_ICO, TOP_LEFT);
 	AddAnchor(IDC_SERVLIST_TEXT, TOP_LEFT);
@@ -307,15 +261,8 @@ BOOL CServerWnd::OnInitDialog()
 	AddAnchor(m_ctrlUpdateServerFrm, TOP_RIGHT);
 	AddAnchor(IDC_SERVERMETURL, TOP_RIGHT);
 	AddAnchor(IDC_UPDATESERVERMETFROMURL, TOP_RIGHT);
-	// >> add by Ken
 	AddAnchor(IDC_SERVER_LISTS, TOP_RIGHT); // Links for Server list and nodes file [Stulle] - Stulle
-	// << add by Ken
 	AddAnchor(StatusSelector, MIDDLE_LEFT, BOTTOM_RIGHT);
-	//MORPH START - Added by SiRoB, XML News [O²]
-	AddAnchor(IDC_FEEDUPDATE, MIDDLE_RIGHT);
-	AddAnchor(IDC_FEEDCHANGE, MIDDLE_RIGHT);
-	AddAnchor(IDC_FEEDLIST, MIDDLE_LEFT, MIDDLE_RIGHT);
-	//MORPH END   - Added by SiRoB, XML News [O²]
 	AddAnchor(IDC_LOGRESET, MIDDLE_RIGHT); // avoid resizing GUI glitches with the tab control by adding this control as the last one (Z-order)
 	AddAnchor(IDC_ED2KCONNECT, TOP_RIGHT);
 	AddAnchor(IDC_DD, TOP_RIGHT);
@@ -323,43 +270,19 @@ BOOL CServerWnd::OnInitDialog()
 	AddAnchor(*servermsgbox, MIDDLE_LEFT, BOTTOM_RIGHT);
 	AddAnchor(*logbox, MIDDLE_LEFT, BOTTOM_RIGHT);
 	AddAnchor(*debuglog, MIDDLE_LEFT, BOTTOM_RIGHT);
+	AddAnchor(*leecherlog, MIDDLE_LEFT, BOTTOM_RIGHT); //Xman Anti-Leecher-Log
 
 	// Set the tab control to the bottom of the z-order. This solves a lot of strange repainting problems with
 	// the rich edit controls (the log panes).
 	::SetWindowPos(StatusSelector, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOSIZE);
 
 	debug = true;
-	AddAnchor(*newsmsgbox, MIDDLE_LEFT, BOTTOM_RIGHT);//MORPH - Added by SiRoB, XML News [O²]
-	AddAnchor(*morphlog, MIDDLE_LEFT, BOTTOM_RIGHT); //MORPH - Added by SiRoB, Morph Log
 	ToggleDebugWindow();
 
-	morphlog->ShowWindow(SW_HIDE); //MORPH - Added by SiRoB, Morph Log
-	newsmsgbox->ShowWindow(SW_HIDE); //MORPH - Added by SiRoB, XML News [O²]
+	leecherlog->ShowWindow(SW_HIDE); //Xman Anti-Leecher-Log
 	debuglog->ShowWindow(SW_HIDE);
 	logbox->ShowWindow(SW_HIDE);
 	servermsgbox->ShowWindow(SW_SHOW);
-
-	// Mighty Knife: Context menu for editing news feeds
-	if (m_FeedsMenu) VERIFY (m_FeedsMenu.DestroyMenu ());
-	m_FeedsMenu.CreatePopupMenu();
-	m_FeedsMenu.AddMenuTitle(GetResString(IDS_FEED)); // XP Style Menu [Xanatos] - Stulle
-	// ==> more icons - Stulle
-	/*
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_NEWFEED,GetResString (IDS_FEEDNEW));
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_EDITFEED,GetResString (IDS_FEEDEDIT));
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_DELETEFEED,GetResString (IDS_FEEDDELETE));
-	m_FeedsMenu.AppendMenu(MF_STRING|MF_SEPARATOR);
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_DELETEALLFEEDS,GetResString (IDS_FEEDDELETEALL));
-    m_FeedsMenu.AppendMenu(MF_STRING,MP_DOWNLOADALLFEEDS,GetResString (IDS_DOWNLOADALLFEEDS)); //Commander - Added: Update All Feeds at once
-	*/
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_NEWFEED,GetResString (IDS_FEEDNEW), _T("NEW"));
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_EDITFEED,GetResString (IDS_FEEDEDIT), _T("EDIT"));
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_DELETEFEED,GetResString (IDS_FEEDDELETE), _T("DELETE"));
-	m_FeedsMenu.AppendMenu(MF_STRING|MF_SEPARATOR);
-	m_FeedsMenu.AppendMenu(MF_STRING,MP_DELETEALLFEEDS,GetResString (IDS_FEEDDELETEALL), _T("DELETE"));
-    m_FeedsMenu.AppendMenu(MF_STRING,MP_DOWNLOADALLFEEDS,GetResString (IDS_DOWNLOADALLFEEDS), _T("UPDATE")); //Commander - Added: Update All Feeds at once
-	// <== more icons - Stulle
-	// [end] Mighty Knife
 
 	// optional: restore last used log pane
 	if (thePrefs.GetRestoreLastLogPane())
@@ -417,15 +340,12 @@ BOOL CServerWnd::OnInitDialog()
 	CRect rcSpl;
 	rcSpl.left = 55;
 	rcSpl.right = 300;
-	rcSpl.top = 55+NEWSOFFSET;
+	rcSpl.top = 55;
 	rcSpl.bottom = rcSpl.top + SVWND_SPLITTER_HEIGHT;
 	m_wndSplitter.Create(WS_CHILD | WS_VISIBLE, rcSpl, this, IDC_SPLITTER_SERVER);
 	m_wndSplitter.SetDrawBorder(true);
 	InitSplitter();
 
-	//MORPH START - Added by SiRoB, XML News [O²]
-	ListFeeds(); // Added by O? XML News
-	//MORPH END   - Added by SiRoB, XML News [O²]
 	return true;
 }
 
@@ -438,9 +358,6 @@ void CServerWnd::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_MYINFO, m_ctrlMyInfoFrm);
 	DDX_Control(pDX, IDC_TAB3, StatusSelector);
 	DDX_Control(pDX, IDC_MYINFOLIST, m_MyInfo);
-	//MORPH START - Added by SiRoB, XML News [O²]
-	DDX_Control(pDX, IDC_FEEDLIST, m_feedlist); // Added by O? XML News
-	//MORPH END   - Added by SiRoB, XML News [O²]
 }
 
 bool CServerWnd::UpdateServerMetFromURL(CString strURL)
@@ -514,18 +431,13 @@ void CServerWnd::Localize()
 	GetDlgItem(IDC_SSTATIC3)->SetWindowText(GetResString(IDS_SW_NAME));
 	GetDlgItem(IDC_ADDSERVER)->SetWindowText(GetResString(IDS_SV_ADD));
 	m_ctrlUpdateServerFrm.SetWindowText(GetResString(IDS_SV_MET));
+	// >> add by Ken
+	GetDlgItem(IDC_SERVER_LISTS)->SetWindowText(GetResString(IDS_SERVER_LISTS));
+	// << add by Ken
 	GetDlgItem(IDC_UPDATESERVERMETFROMURL)->SetWindowText(GetResString(IDS_SV_UPDATE));
 	GetDlgItem(IDC_LOGRESET)->SetWindowText(GetResString(IDS_PW_RESET));
 	m_ctrlMyInfoFrm.SetWindowText(GetResString(IDS_MYINFO));
 
-    	//MORPH START - Added by SiRoB, XML News [O²]
-	GetDlgItem(IDC_FEEDUPDATE)->SetWindowText(GetResString(IDS_SF_RELOAD)); // Added by O? XML News
-	//MORPH END   - Added by SiRoB, XML News [O²]
-
-	// Mighty Knife: Popup-Menu for editing news feeds
-	GetDlgItem(IDC_FEEDCHANGE)->SetWindowText(GetResString(IDS_FEEDBUTTON));
-	// [end] Mighty Knife
-   
 	TCITEM item;
 	CString name;
 	name = GetResString(IDS_SV_SERVERINFO);
@@ -546,21 +458,13 @@ void CServerWnd::Localize()
 	item.pszText = const_cast<LPTSTR>((LPCTSTR)name);
 	StatusSelector.SetItem(PaneVerboseLog, &item);
 
-	//MORPH START - Added by SiRoB, XML News [O²]
-	name = GetResString(IDS_FEED);
+	//Xman Anti-Leecher-Log
+	name = GetResString(IDS_LEERCHERLOGTITLE);
 	name.Replace(_T("&"), _T("&&"));
 	item.mask = TCIF_TEXT;
 	item.pszText = const_cast<LPTSTR>((LPCTSTR)name);
-	StatusSelector.SetItem(PaneNews, &item);
-	//MORPH END   - Added by SiRoB, XML News [O²]
-
-	//MORPH START - Added by SiRoB, Morph LOg
-	name = GetResString(IDS_MORPH_LOG);
-	name.Replace(_T("&"), _T("&&"));
-	item.mask = TCIF_TEXT;
-	item.pszText = const_cast<LPTSTR>((LPCTSTR)name);
-	StatusSelector.SetItem(PaneMorphLog, &item);
-	//MORPH END   - Added by SiRoB, Morph Log
+	StatusSelector.SetItem(PaneLeecherLog, &item);
+	//Xman end
 
 	UpdateLogTabSelection();
 	UpdateControlsState();
@@ -732,22 +636,13 @@ void CServerWnd::OnBnClickedResetLog()
 	int cur_sel = StatusSelector.GetCurSel();
 	if (cur_sel == -1)
 		return;
-	//MORPH START - Changed by SiRoB, Morph Log
-	int cur_sel_offset = cur_sel;
-	if (!debug && cur_sel>=PaneVerboseLog) ++cur_sel_offset;
-	if( cur_sel_offset == PaneMorphLog)
+	//Xman Anti-Leecher-Log
+	if (cur_sel == PaneLeecherLog)
 	{
-		morphlog->Reset();
+		theApp.emuledlg->ResetLeecherLog();
 		theApp.emuledlg->statusbar->SetText(_T(""), SBarLog, 0);
 	}
-	else
-	//MORPH START - Changed by SiRoB, XML News
-	if (cur_sel_offset == PaneNews)
-	{
-		newsmsgbox->Reset();
-	}
-	else
-	//MORPH END   - Added by SiRoB, XML News
+	//Xman end
 	if (cur_sel == PaneVerboseLog)
 	{
 		theApp.emuledlg->ResetDebugLog();
@@ -776,47 +671,24 @@ void CServerWnd::UpdateLogTabSelection()
 	int cur_sel = StatusSelector.GetCurSel();
 	if (cur_sel == -1)
 		return;
-
-	//MORPH START - Added by SiRoB, Morph Log
-	int cur_sel_offset = cur_sel;
-	if (!debug) ++cur_sel_offset;
-	if( cur_sel_offset == PaneMorphLog)
+	//Xman Anti-Leecher-Log
+	if (cur_sel == PaneLeecherLog)
 	{
 		servermsgbox->ShowWindow(SW_HIDE);
 		logbox->ShowWindow(SW_HIDE);
 		debuglog->ShowWindow(SW_HIDE);
-		//MORPH START - Added by SiRoB, XML News [O²]
-		newsmsgbox->ShowWindow(SW_HIDE); // added by O? XML News
-		//MORPH START - Added by SiRoB, XML News [O²]
-		morphlog->ShowWindow(SW_SHOW);
-		if (morphlog->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
-			morphlog->ScrollToLastLine(true);
-		morphlog->Invalidate();
+		leecherlog->ShowWindow(SW_SHOW);
+		if (leecherlog->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
+			leecherlog->ScrollToLastLine(true);
+		leecherlog->Invalidate();
 		StatusSelector.HighlightItem(cur_sel, FALSE);
-	}else
-	//MORPH END   - Added by SiRoB, Morph Log
-	//MORPH START - Added by SiRoB, XML News
-	if( cur_sel_offset == PaneNews)
-	{
-		servermsgbox->ShowWindow(SW_HIDE);
-		logbox->ShowWindow(SW_HIDE);
-		debuglog->ShowWindow(SW_HIDE);
-		morphlog->ShowWindow(SW_HIDE); //Morph Log
-		newsmsgbox->ShowWindow(SW_SHOW);
-		if (newsmsgbox->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
-			newsmsgbox->ScrollToLastLine(true);
-		newsmsgbox->Invalidate();
-		StatusSelector.HighlightItem(cur_sel, FALSE);
-	}else
-	//MORPH END   - Added by SiRoB, XML News
+	}
+	//Xman end
 	if (cur_sel == PaneVerboseLog)
 	{
 		servermsgbox->ShowWindow(SW_HIDE);
 		logbox->ShowWindow(SW_HIDE);
-		//MORPH START - Added by SiRoB, XML News [O²]
-		newsmsgbox->ShowWindow(SW_HIDE); // added by O? XML News
-		//MORPH END   - Added by SiRoB, XML News [O²]
-		morphlog->ShowWindow(SW_HIDE); //Morph Log
+		leecherlog->ShowWindow(SW_HIDE);//Xman Anti-Leecher-Log
 		debuglog->ShowWindow(SW_SHOW);
 		if (debuglog->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
 			debuglog->ScrollToLastLine(true);
@@ -827,11 +699,8 @@ void CServerWnd::UpdateLogTabSelection()
 	{
 		debuglog->ShowWindow(SW_HIDE);
 		servermsgbox->ShowWindow(SW_HIDE);
+		leecherlog->ShowWindow(SW_HIDE);//Xman Anti-Leecher-Log
 		logbox->ShowWindow(SW_SHOW);
-		//MORPH START - Added by SiRoB, XML News [O²]
-		newsmsgbox->ShowWindow(SW_HIDE); // added by O? XML News
-		//MORPH END   - Added by SiRoB, XML News [O²]
-		morphlog->ShowWindow(SW_HIDE); //Morph Log
 		if (logbox->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
 			logbox->ScrollToLastLine(true);
 		logbox->Invalidate();
@@ -841,10 +710,7 @@ void CServerWnd::UpdateLogTabSelection()
 	{
 		debuglog->ShowWindow(SW_HIDE);
 		logbox->ShowWindow(SW_HIDE);
-		//MORPH START - Added by SiRoB, XML News [O²]
-		newsmsgbox->ShowWindow(SW_HIDE); // added by O? XML News
-		//MORPH END   - Added by SiRoB, XML News [O²]
-		morphlog->ShowWindow(SW_HIDE); //Morph Log
+		leecherlog->ShowWindow(SW_HIDE);//Xman Anti-Leecher-Log
 		servermsgbox->ShowWindow(SW_SHOW);
 		if (servermsgbox->IsAutoScroll() && (StatusSelector.GetItemState(cur_sel, TCIS_HIGHLIGHTED) & TCIS_HIGHLIGHTED))
 			servermsgbox->ScrollToLastLine(true);
@@ -865,25 +731,36 @@ void CServerWnd::ToggleDebugWindow()
 		newitem.mask = TCIF_TEXT | TCIF_IMAGE;
 		newitem.pszText = const_cast<LPTSTR>((LPCTSTR)name);
 		newitem.iImage = 0;
-		//MORPH START - Changed by SiRoB, XML News & Morph Log
-		/*
 		StatusSelector.InsertItem(StatusSelector.GetItemCount(),&newitem);
-		*/
-		StatusSelector.InsertItem(PaneVerboseLog,&newitem);
+
+		//Xman Anti-Leecher-Log
+		name = GetResString(IDS_LEERCHERLOGTITLE);
+		name.Replace(_T("&"), _T("&&"));
+		newitem.mask = TCIF_TEXT|TCIF_IMAGE;
+		newitem.pszText = const_cast<LPTSTR>((LPCTSTR)name);
+		newitem.iImage = 0;
+		StatusSelector.InsertItem(StatusSelector.GetItemCount(),&newitem);
+		//Xman end
+
 		debug = true;
 	}
 	else if (!thePrefs.GetVerbose() && debug)
 	{
+		//Xman Anti-Leecher-Log
+		/*
 		if (cur_sel == PaneVerboseLog)
+		*/
+		if (cur_sel == PaneVerboseLog || cur_sel == PaneLeecherLog)
+		//Xman end
 		{
 			StatusSelector.SetCurSel(PaneLog);
 			StatusSelector.SetFocus();
 		}
-		morphlog->ShowWindow(SW_HIDE); //MORPH - Added by SiRoB, Morph Log
-		newsmsgbox->ShowWindow(SW_HIDE); //MORPH - Added by SiRoB, XML News
 		debuglog->ShowWindow(SW_HIDE);
 		servermsgbox->ShowWindow(SW_HIDE);
+		leecherlog->ShowWindow(SW_HIDE); //Xman Anti-Leecher-Log
 		logbox->ShowWindow(SW_SHOW);
+		StatusSelector.DeleteItem(PaneLeecherLog); //Xman Anti-Leecher-Log
 		StatusSelector.DeleteItem(PaneVerboseLog);
 		debug = false;
 	}
@@ -981,10 +858,12 @@ void CServerWnd::OnEnLinkServerBox(NMHDR *pNMHDR, LRESULT *pResult)
 			strUrl = thePrefs.GetVersionCheckBaseURL()+strUrl;
 			// MOD Note: end
 		}
-		//MORPH START - Added by SiRoB, New Version Check
-		else if (strUrl == m_strMorphNewVersion)
-			strUrl = _T("http://emulemorph.sourceforge.net/");
-		//MORPH END   - Added by SiRoB, New Version Check
+		//Xman versions check
+		else if(strUrl==m_strClickNewXtremeVersion)
+		{
+			strUrl=MOD_HPLINK;
+		}
+		//Xman end
 		ShellExecute(NULL, NULL, strUrl, NULL, NULL, SW_SHOWDEFAULT);
 		*pResult = 1;
 	}
@@ -1059,13 +938,7 @@ void CServerWnd::DoResize(int delta)
 	CSplitterControl::ChangeHeight(servermsgbox, -delta,CW_BOTTOMALIGN);
 	CSplitterControl::ChangeHeight(logbox, -delta, CW_BOTTOMALIGN);
 	CSplitterControl::ChangeHeight(debuglog, -delta, CW_BOTTOMALIGN);
-	//MORPH START - Added by SiRoB, XML News [O²]
-	CSplitterControl::ChangeHeight(newsmsgbox, -delta, CW_BOTTOMALIGN);
-	//MORPH END   - Added by SiRoB, XML News [O²]
-	//MORPH START - Added by SiRoB, Morph Log
-	CSplitterControl::ChangeHeight(morphlog, -delta, CW_BOTTOMALIGN);
-	//MORPH END   - Added by SiRoB, Morph Log
-
+	CSplitterControl::ChangeHeight(leecherlog, -delta, CW_BOTTOMALIGN); //Xman Anti-Leecher-Log
 	UpdateSplitterRange();
 }
 
@@ -1075,7 +948,7 @@ void CServerWnd::InitSplitter()
 	GetWindowRect(rcWnd);
 	ScreenToClient(rcWnd);
 
-	m_wndSplitter.SetRange(rcWnd.top+100,rcWnd.bottom-50 - NEWSOFFSET);
+	m_wndSplitter.SetRange(rcWnd.top+100,rcWnd.bottom-50);
 	LONG splitpos = 5+(thePrefs.GetSplitterbarPositionServer() * rcWnd.Height()) / 100;
 
 	CRect rcDlgItem;
@@ -1085,96 +958,43 @@ void CServerWnd::InitSplitter()
 	rcDlgItem.bottom=splitpos-10;
 	serverlistctrl.MoveWindow(rcDlgItem);
 
-	//MORPH START - Added by SiRoB, XML News
-	GetDlgItem(IDC_FEEDUPDATE)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDUPDATE)->MoveWindow(rcDlgItem);
-
-	GetDlgItem(IDC_FEEDCHANGE)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDCHANGE)->MoveWindow(rcDlgItem);
-
-	GetDlgItem(IDC_FEEDLIST)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDLIST)->MoveWindow(rcDlgItem);
-	//MORPH END   - Added by SiRoB, XML News
-
 	GetDlgItem(IDC_LOGRESET)->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH START - Changed by SiRoB, XML News
-	/*
 	rcDlgItem.top = splitpos + 9;
 	rcDlgItem.bottom = splitpos + 30;
-	*/
-	rcDlgItem.top = splitpos + 9 + NEWSOFFSET;
-	rcDlgItem.bottom = splitpos + 30 + NEWSOFFSET;
-	//MORPH END   - Changed by SiRoB, XML News
 	GetDlgItem(IDC_LOGRESET)->MoveWindow(rcDlgItem);
 
 	StatusSelector.GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH START - Changed by SiRoB, XML News
-	/*
 	rcDlgItem.top = splitpos + 10;
-	*/
-	rcDlgItem.top = splitpos + 10 + NEWSOFFSET;
-	//MORPH END   - Changed by SiRoB, XML News
 	rcDlgItem.bottom = rcWnd.bottom-5;
 	StatusSelector.MoveWindow(rcDlgItem);
 
 	servermsgbox->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH START - Changed by SiRoB, XML News
-	/*
 	rcDlgItem.top=splitpos+35;
-	*/
-	rcDlgItem.top=splitpos+35+NEWSOFFSET;
-	//MORPH END   - Changed by SiRoB, XML News
 	rcDlgItem.bottom = rcWnd.bottom-12;
 	servermsgbox->MoveWindow(rcDlgItem);
 
 	logbox->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH START - Changed by SiRoB, XML News
-	/*
 	rcDlgItem.top=splitpos+35;
-	*/
-	rcDlgItem.top=splitpos+35+NEWSOFFSET;
-	//MORPH END   - Changed by SiRoB, XML News
 	rcDlgItem.bottom = rcWnd.bottom-12;
 	logbox->MoveWindow(rcDlgItem);
 
 	debuglog->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH START - Changed by SiRoB, XML News
-	/*
 	rcDlgItem.top=splitpos+35;
-	*/
-	rcDlgItem.top=splitpos+35+NEWSOFFSET;
-	//MORPH END  - Changed by SiRoB, XML News
 	rcDlgItem.bottom = rcWnd.bottom-12;
 	debuglog->MoveWindow(rcDlgItem);
 
-	//MORPH START - Added by SiRoB, XML News
-	newsmsgbox->GetWindowRect(rcDlgItem);
+	//Xman Anti-Leecher-Log
+	leecherlog->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	rcDlgItem.top=splitpos+35+NEWSOFFSET;
+	rcDlgItem.top=splitpos+35;
 	rcDlgItem.bottom = rcWnd.bottom-12;
-	newsmsgbox->MoveWindow(rcDlgItem);
-	//MORPH END   - Added by SiRoB, XML News
-	//MORPH START - Added by SiRoB, Morph Log
-	morphlog->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top=splitpos+35+NEWSOFFSET;
-	rcDlgItem.bottom = rcWnd.bottom-12;
-	morphlog->MoveWindow(rcDlgItem);
-	//MORPH END   - Added by SiRoB, Morph Log
+	leecherlog->MoveWindow(rcDlgItem);
+	//Xman end
 
 	long right=rcDlgItem.right;
 	GetDlgItem(IDC_SPLITTER_SERVER)->GetWindowRect(rcDlgItem);
@@ -1193,35 +1013,15 @@ void CServerWnd::ReattachAnchors()
 	RemoveAnchor(*servermsgbox);
 	RemoveAnchor(*logbox);
 	RemoveAnchor(*debuglog);
-	//MORPH START - Added by SiRoB, XML News
-	RemoveAnchor(IDC_FEEDUPDATE);
-	RemoveAnchor(IDC_FEEDCHANGE);
-	RemoveAnchor(IDC_FEEDLIST);
-	//MORPH END   - Added by SiRoB, XML News
-	//MORPH START - Added by SiRoB, XML News
-	RemoveAnchor(*newsmsgbox);
-	//MORPH END   - Added by SiRoB, XML News
-	//MORPH START - Added by SiRoB, Morph Log
-	RemoveAnchor(*morphlog);
-	//MORPH END   - Added by SiRoB, Morph Log
+	RemoveAnchor(*leecherlog); //Xman Anti-Leecher-Log
 
 	AddAnchor(serverlistctrl, TOP_LEFT, CSize(100, thePrefs.GetSplitterbarPositionServer()));
 	AddAnchor(StatusSelector, CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
-	//MORPH START - Added by SiRoB, XML News
-	AddAnchor(IDC_FEEDUPDATE, BOTTOM_RIGHT);
-	AddAnchor(IDC_FEEDCHANGE, BOTTOM_RIGHT);
-	AddAnchor(IDC_FEEDLIST, BOTTOM_LEFT, BOTTOM_RIGHT);
-	//MORPH END   - Added by SiRoB, XML News
 	AddAnchor(IDC_LOGRESET, MIDDLE_RIGHT);
 	AddAnchor(*servermsgbox, CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
 	AddAnchor(*logbox, CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
 	AddAnchor(*debuglog, CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
-	//MORPH START - Added by SiRoB, XML News
-	AddAnchor(*newsmsgbox,  CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
-	//MORPH END   - Added by SiRoB, XML News
-	//MORPH START - Added by SiRoB, Morph Log
-	AddAnchor(*morphlog,  CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT);
-	//MORPH END   - Added by SiRoB, Morph Log
+	AddAnchor(*leecherlog, CSize(0, thePrefs.GetSplitterbarPositionServer()), BOTTOM_RIGHT); //Xman Anti-Leecher-Log
 
 	GetDlgItem(IDC_LOGRESET)->Invalidate();
 
@@ -1231,14 +1031,10 @@ void CServerWnd::ReattachAnchors()
 		logbox->Invalidate();
 	if (debuglog->IsWindowVisible())
 		debuglog->Invalidate();
-	//MORPH START - Added by SiRoB, XML News
-	if (newsmsgbox->IsWindowVisible())
-		newsmsgbox->Invalidate();
-	//MORPH END   - Added by SiRoB, XML News
-	//MORPH START - Added by SiRoB, Morph Log
-	if (morphlog->IsWindowVisible())
-		morphlog->Invalidate();
-	//MORPH END   - Added by SiRoB, Morph Log
+	//Xman Anti-Leecher-Log
+	if (leecherlog->IsWindowVisible())
+		leecherlog->Invalidate();
+	//Xman end
 }
 
 void CServerWnd::UpdateSplitterRange()
@@ -1251,40 +1047,15 @@ void CServerWnd::UpdateSplitterRange()
 	serverlistctrl.GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
 
-	m_wndSplitter.SetRange(rcWnd.top + 100, rcWnd.bottom - 50-NEWSOFFSET);
+	m_wndSplitter.SetRange(rcWnd.top + 100, rcWnd.bottom - 50);
 
 	LONG splitpos = rcDlgItem.bottom + SVWND_SPLITTER_YOFF;
 	thePrefs.SetSplitterbarPositionServer((splitpos  * 100) / rcWnd.Height());
 
-	//MORPH START - Added by SiRoB, XML News
-	GetDlgItem(IDC_FEEDUPDATE)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDUPDATE)->MoveWindow(rcDlgItem);
-	
-	GetDlgItem(IDC_FEEDCHANGE)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDCHANGE)->MoveWindow(rcDlgItem);
-
-	GetDlgItem(IDC_FEEDLIST)->GetWindowRect(rcDlgItem);
-	ScreenToClient(rcDlgItem);
-	rcDlgItem.top = splitpos + 9;
-	rcDlgItem.bottom = splitpos + 30;
-	GetDlgItem(IDC_FEEDLIST)->MoveWindow(rcDlgItem);
-	//MORPH END   - Added by SiRoB, XML News
-
 	GetDlgItem(IDC_LOGRESET)->GetWindowRect(rcDlgItem);
 	ScreenToClient(rcDlgItem);
-	//MORPH - Chnaged by SiRoB, XML News
-	/*
 	rcDlgItem.top = splitpos + 9;
 	rcDlgItem.bottom = splitpos + 30;
-	*/
-	rcDlgItem.top = splitpos + 9 + NEWSOFFSET;
-	rcDlgItem.bottom = splitpos + 30 + NEWSOFFSET;
 	GetDlgItem(IDC_LOGRESET)->MoveWindow(rcDlgItem);
 
 	ReattachAnchors();
@@ -1335,13 +1106,14 @@ void CServerWnd::OnSplitterMoved(NMHDR* pNMHDR, LRESULT* /*pResult*/)
 
 HBRUSH CServerWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
+/*
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
 	if (hbr)
 		return hbr;
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
-#else
+}
+*/
 	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	if (nCtlColor == CTLCOLOR_DLG)
@@ -1355,510 +1127,8 @@ HBRUSH CServerWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
 }
 
-//MORPH START - Added by SiRoB, XML News [O²]
-void CServerWnd::ListFeeds()
-{
-	while (m_feedlist.GetCount()>0)
-		m_feedlist.DeleteString(0);
-	aFeedUrls.RemoveAll();
-	int counter=0;
-	CString sbuffer;
-	char buffer[1024];
-	int lenBuf = 1024;
-
-	FILE* readFile= _tfsopen(CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("XMLNews.dat"), _T("r"), _SH_DENYWR);
-	if (readFile!=NULL)
-	{
-		GetDlgItem(IDC_FEEDLIST)->EnableWindow();
-		while (!feof(readFile))
-		{
-			if (fgets(buffer,lenBuf,readFile)==0)
-				break;
-			sbuffer=buffer;
-			
-			// ignore comments & too short lines
-			if (sbuffer.GetAt(0) == '#' || sbuffer.GetAt(0) == '/' || sbuffer.GetLength()<5)
-				continue;
-			
-			int pos=sbuffer.Find(',');
-			if (pos>0 && pos<sbuffer.GetLength())
-			{
-				counter++;
-				m_feedlist.AddString(sbuffer.Left(pos).Trim());
-				aFeedUrls.Add(sbuffer.Right(sbuffer.GetLength()-pos-1).Trim());
-			}
-		}
-		fclose(readFile);
-	}
-	else
-	{
-		GetDlgItem(IDC_FEEDUPDATE)->EnableWindow(false);
-		GetDlgItem(IDC_FEEDLIST)->EnableWindow(false);
-	}
-}
-
-void CServerWnd::DownloadFeed()
-{
-	CString sbuffer;
-	int numero = m_feedlist.GetCurSel();
-	// if no item is selected there's nothing to do...
-	if (numero==CB_ERR) return;
-
-	// Get the URL to download
-	CString strURL = aFeedUrls.GetAt(numero);
-	TCHAR szTempFilePath[_MAX_PATH]; 
-	_stprintf(szTempFilePath, _T("%s%d.xml.tmp"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR), numero);
-	TCHAR szFilePath[_MAX_PATH]; 
-	_stprintf(szFilePath, _T("%s%d.xml"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR), numero);
-	
-	// Start the download dialog and retrieve the file
-	CHttpDownloadDlg dlgDownload;
-	dlgDownload.m_strTitle = _T("Download RSS feed file");
-	dlgDownload.m_sURLToDownload = strURL;
-	dlgDownload.m_sFileToDownloadInto = szTempFilePath;
-	if (dlgDownload.DoModal() != IDOK)
-	{
-		_tremove(szTempFilePath);
-		AddLogLine(true, _T("Error downloading %s"), strURL);
-		return;
-	}
-	_tremove(szFilePath);
-
-	//Morph Start - added by AndCycle, XML news unicode hack
-	FILE *tempFP = _tfopen(szTempFilePath, _T("r"));
-	FILE *targetFP = _tfopen(szFilePath, _T("wb"));
-	fputwc(0xFEFF, targetFP);
-	while(!feof(tempFP)){
-		TCHAR temp[1024];
-		_fgetts(temp, 1023, tempFP);
-		fwrite(temp, 1, _tcslen(temp)*sizeof(TCHAR), targetFP);
-	}
-	fclose(tempFP);
-	fclose(targetFP);
-	_tremove(szTempFilePath);
-	//Morph End - added by AndCycle, XML news unicode hack
-
-	// Parse it
-	ParseNewsFile(szFilePath);
-}
-
-//Commander - Added: Update All Feeds at once - Start
-void CServerWnd::DownloadAllFeeds()
-{   
-	int itemcount = m_feedlist.GetCount();
-	for(int i=0;i<itemcount;i++){
-		CString sbuffer;
-		if (i==CB_ERR) return;
-		CString strURL = aFeedUrls.GetAt(i);
-
-		TCHAR szTempFilePath[_MAX_PATH]; 
-		_stprintf(szTempFilePath, _T("%s%d.xml.tmp"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR), i);
-		TCHAR szFilePath[_MAX_PATH]; 
-		_stprintf(szFilePath, _T("%s%d.xml"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR), i);
-
-		// Start the download dialog and retrieve the file
-		CHttpDownloadDlg dlgDownload;
-		dlgDownload.m_strTitle = _T("Download RSS feed file");
-		dlgDownload.m_sURLToDownload = strURL;
-		dlgDownload.m_sFileToDownloadInto = szTempFilePath;
-		if (dlgDownload.DoModal() != IDOK)
-		{
-			_tremove(szTempFilePath);
-			AddLogLine(true, _T("Error downloading %s"), strURL);
-			return;
-		}
-		_tremove(szFilePath);
-		//Morph Start - added by AndCycle, XML news unicode hack
-		FILE *tempFP = _tfopen(szTempFilePath, _T("r"));
-		FILE *targetFP = _tfopen(szFilePath, _T("wb"));
-		fputwc(0xFEFF, targetFP);
-		while(!feof(tempFP)){
-			TCHAR temp[1024];
-			_fgetts(temp, 1023, tempFP);
-			fwrite(temp, 1, _tcslen(temp)*sizeof(TCHAR), targetFP);
-		}
-		fclose(tempFP);
-		fclose(targetFP);
-		_tremove(szTempFilePath);
-		//Morph End - added by AndCycle, XML news unicode hack
-		// Parse it
-		ParseNewsFile(szFilePath);
-	}
-}
-//Commander - Added: Update All Feeds at once - End
-
-// Parses a node of the news file.
-// Add all "item" nodes to the news messagebox of the server window.
-// Don't add the message _xmlbuffer - that was already added since it
-// represents the description of the news page itself.
-void CServerWnd::ParseNewsNode(pug::xml_node _node, CString _xmlbuffer) {
-	CString sbuffer;
-	CString sxmlbuffer;
-	using namespace pug;
-	xml_node_list item;
-	for(xml_node::child_iterator i = _node.children_begin(); i < _node.children_end(); ++i) {
-		CString c = CString(i->name());
-		if (CString(i->name()) == _T("item")) {
-			sbuffer = i->first_element_by_path(_T("./link")).child(0).value();
-			HTMLParse(sbuffer);
-			aXMLUrls.Add(sbuffer);
-			sbuffer = i->first_element_by_path(_T("./title")).child(0).value();
-			HTMLParse(sbuffer);
-			TCHAR symbol[4] = _T("\n\x2022 ");
-			newsmsgbox->AppendText(symbol);
-			newsmsgbox->AppendHyperLink(_T(""),_T(""),sbuffer,_T(""));
-			aXMLNames.Add(sbuffer);
-			if (!i->first_element_by_path(_T("./author")).child(0).empty())
-			{
-				sxmlbuffer = i->first_element_by_path(_T("./author")).child(0).value();
-				newsmsgbox->AppendText(_T(" - By ")+sxmlbuffer);
-			}
-			CString buffer = i->first_element_by_path(_T("./description")).child(0).value();
-			HTMLParse(buffer);
-			if (buffer != _xmlbuffer && !buffer.IsEmpty())
-			{
-				if (sxmlbuffer.IsEmpty())
-					newsmsgbox->AppendText(_T("\n"));
-				int index = 0;
-				while (buffer.Find(_T("<a href=\"")) != -1)
-				{
-					index = buffer.Find(_T("<a href=\""));
-					newsmsgbox->AppendText(buffer.Left(index));
-					buffer = buffer.Mid(index+9);
-					index = buffer.Find(_T("\""));
-					sbuffer = buffer.Left(index);
-					aXMLUrls.Add(sbuffer);
-					buffer = buffer.Mid(index+1);
-					index = buffer.Find(_T(">"));
-					buffer = buffer.Mid(index+1);
-					index = buffer.Find(_T("</a>"));
-					sbuffer = buffer.Left(index);
-					aXMLNames.Add(sbuffer);
-					newsmsgbox->AppendHyperLink(_T(""),_T(""),sbuffer,_T(""));
-					buffer = buffer.Mid(index+4);
-				}
-				newsmsgbox->AppendText(buffer+_T("\n"));
-			}
-		}
-	}
-}
-
-void CServerWnd::ParseNewsFile(LPCTSTR strTempFilename)
-{
-	CString sbuffer;
-	newsmsgbox->Reset();
-	aXMLUrls.RemoveAll();
-	aXMLNames.RemoveAll();
-
-	// Look if the news file exists in the "feed" subdirectory
-	if (!PathFileExists(strTempFilename)){
-		StatusSelector.SetCurSel(PaneNews-(debug?0:1));
-		UpdateLogTabSelection();
-		return;
-	}
-
-	// Generate an XML parser. THat thing can be found in the "pugxml" library.
-	// It uses the namespace "pug".
-	using namespace pug;
-	xml_parser* xml = new xml_parser();
-    
-	// Load and parse the XML file
-	xml->parse_file(strTempFilename);
-
-	// Create two XML nodes. One node represents the root and one represets
-	// the "channel" section in the file.
-	xml_node itelem;
-	xml_node itelemroot;
-	if (!xml->document().first_element_by_path(_T("./rss")).empty()) {
-		itelemroot = xml->document().first_element_by_path(_T("./rss"));
-		itelem = xml->document().first_element_by_path(_T("./rss/channel"));
-	} else if (!xml->document().first_element_by_path(_T("./rdf:RDF")).empty()) {
-		itelemroot = xml->document().first_element_by_path(_T("./rdf:RDF"));
-		itelem = xml->document().first_element_by_path(_T("./rdf:RDF/channel"));
-	} else {
-		delete xml;
-		return;
-	}
-
-	// We'll only continue if we find the "channel" section.
-	if(!itelem.empty()) {
-		// Add the data in this section to the News box. 
-		// It represents the title of the news channel and so on...
-		sbuffer = itelem.first_element_by_path(_T("./link")).child(0).value();
-		aXMLUrls.Add(sbuffer);
-		sbuffer = itelem.first_element_by_path(_T("./title")).child(0).value();
-		HTMLParse(sbuffer);
-		sbuffer.Replace(_T("'"),_T("`"));
-		newsmsgbox->AppendHyperLink(_T(""),_T(""),sbuffer,_T(""));
-		aXMLNames.Add(sbuffer);
-		// The xmlbuffer stores the description of the newsfile itself.
-		// We pass this to ParseNewsNode to prevent this description to be
-		// added twice: Some news pages put the most important message
-		// in both the page description and the first item.
-		CString xmlbuffer = itelem.first_element_by_path(_T("./description")).child(0).value();
-		HTMLParse(xmlbuffer);
-		newsmsgbox->AddEntry(CString("\n	")+xmlbuffer);
-		// News-items can be found either in the "channel"-node...
-		ParseNewsNode (itelem, xmlbuffer);
-		// ...and in the root node of the xml file. 
-		ParseNewsNode (itelemroot, xmlbuffer);
-		// On which node they can fe found depends on the one who generates 
-		// the XML file.
-		newsmsgbox->AppendText(_T("\n"));
-	}
-	delete xml;
-	newsmsgbox->ScrollToFirstLine();
-	StatusSelector.SetCurSel(PaneNews-(debug?0:1));
-	UpdateLogTabSelection();
-}
-
-void CServerWnd::OnEnLinkNewsBox(NMHDR *pNMHDR, LRESULT *pResult)
-{
-	*pResult = 0;
-	ENLINK* pEnLink = reinterpret_cast<ENLINK *>(pNMHDR);
-	if (pEnLink && pEnLink->msg == WM_LBUTTONDOWN)
-	{
-		CString strUrl;
-		newsmsgbox->GetTextRange(pEnLink->chrg.cpMin, pEnLink->chrg.cpMax, strUrl);
-		for (int i=0;i<aXMLNames.GetCount();i++)
-			if (aXMLNames[i] == strUrl)
-			{
-				strUrl = aXMLUrls[i];
-				break;
-			}
-		ShellExecute(NULL, NULL, strUrl, NULL, NULL, SW_SHOWDEFAULT);
-		*pResult = 1;
-	}
-}
-
-void CServerWnd::OnFeedListSelChange()
-{
-	GetDlgItem(IDC_FEEDUPDATE)->EnableWindow();
-	CString strTempFilename;
-	strTempFilename.Format(_T("%s%d.xml"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR),m_feedlist.GetCurSel());
-	ParseNewsFile(strTempFilename);
-}
-//MORPH END - Added by SiRoB, XML News [O²]
-
-// Mighty Knife: News feed edit button
-void CServerWnd::OnBnClickedFeedchange()
-{
-	// Generate a popup menu directly next to the button.
-	// The user can change the news-feeds with the items in this menu.
-	CWnd* FeedButton = GetDlgItem (IDC_FEEDCHANGE);
-	CRect R;
-	FeedButton->GetWindowRect (R);
-	R.left += R.Width ();
-	m_FeedsMenu.TrackPopupMenu (TPM_LEFTALIGN,R.left,R.top,this);
-}
-
-BOOL CServerWnd::OnCommand(WPARAM wParam, LPARAM lParam) {
-	switch (wParam) {
-		case MP_NEWFEED: {
-			// Show two input boxes so that the user can enter the URL
-			// and optionally a name for that feed
-			InputBox inp;
-			inp.SetLabels (GetResString (IDS_ADDNEWSFEED),
-						   GetResString (IDS_FEEDURL),
-						   _T(""));
-			inp.DoModal ();
-			CString url = inp.GetInput ();
-			if ((!inp.WasCancelled()) && (url != "")) {
-				// Create a 2nd Input box because the default implementation
-				// of this class does not reset the m_Cancel variable!
-				InputBox inp2;
-				inp2.SetLabels (GetResString (IDS_ADDNEWSFEED),
-								GetResString (IDS_FEEDNAME),
-							    _T(""));
-				inp2.DoModal ();
-				if (!inp2.WasCancelled()) {
-					CString name = inp2.GetInput ();
-					// Reload the XML list
-					CStringList names;
-					CStringList urls;
-					ReadXMLList (names,urls);
-					// Append the new adresses
-					names.AddTail (name);
-					urls.AddTail (url);
-					// Rewrite the XML News file
-					WriteXMLList (names,urls);
-					ListFeeds ();
-				}
-			}
-			return true;
-		} break;
-		case MP_EDITFEED: {
-			// Show two input boxes so that the user can edit the URL
-			// and the name for that feed
-			int i=m_feedlist.GetCurSel ();
-			if (i != CB_ERR) {
-				// Reload the XML list
-				CStringList names;
-				CStringList urls;
-				ReadXMLList (names,urls);
-				// Find our entry
-				if (i < names.GetCount ()) {
-					// But first we have to walk to it
-					POSITION namepos = names.GetHeadPosition ();
-					POSITION urlpos = urls.GetHeadPosition ();
-					while (i > 0) {
-						names.GetNext (namepos);
-						urls.GetNext (urlpos);
-						i--;
-					}
-					// Create an input box
-					InputBox inp;
-					inp.SetLabels (GetResString (IDS_EDITNEWSFEED),
-								GetResString (IDS_FEEDURL),
-								urls.GetAt (urlpos));
-					inp.DoModal ();
-					CString url = inp.GetInput ();
-					if ((!inp.WasCancelled()) && (url != "")) {
-					    // Create a 2nd Input box because the default implementation
-						// of this class does not reset the m_Cancel variable!
-						InputBox inp2;
-						inp2.SetLabels (GetResString (IDS_EDITNEWSFEED),
-										GetResString (IDS_FEEDNAME),
-										names.GetAt (namepos));
-						inp2.DoModal ();
-						if (!inp2.WasCancelled()) {
-							CString name = inp2.GetInput ();
-							// Append the new adresses
-							names.SetAt (namepos,name);
-							urls.SetAt (urlpos,url);
-							// Rewrite the XML News file
-							WriteXMLList (names,urls);
-							ListFeeds ();
-							m_feedlist.SetCurSel (-1);
-						}
-					}
-				}
-			}
-			return true;
-		} break;
-		case MP_DELETEFEED: {
-			int sel=m_feedlist.GetCurSel ();
-			if (sel != CB_ERR) {
-				// Reload the XML list
-				CStringList names;
-				CStringList urls;
-				ReadXMLList (names,urls);
-				// Remove the entry
-				int i=sel;
-				if (i < names.GetCount ()) {
-					// But first we have to walk to it
-					POSITION namepos = names.GetHeadPosition ();
-					POSITION urlpos = urls.GetHeadPosition ();
-					while (i > 0) {
-						names.GetNext (namepos);
-						urls.GetNext (urlpos);
-						i--;
-					}
-					// Got it - throw it away
-					names.RemoveAt (namepos);
-					urls.RemoveAt (urlpos);
-					// Rewrite the XML News file
-					WriteXMLList (names,urls);
-					// The last thing we have to do is to rename all 
-					// files in the "feed" subdirectory (temporary stored
-					// news) so that their numbers fit again to the
-					// corresponding number of the entrys in the ComboBox.
-					for (int j=sel; j < names.GetSize (); j++) {
-						CString Source, Dest;
-						Source.Format(_T("%s%d.xml"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR),j+1);
-						Dest.Format(_T("%s%d.xml"),thePrefs.GetMuleDirectory(EMULE_FEEDSDIR),j);
-						DeleteFile (Dest);
-						_trename(Source, Dest);
-					}
-
-				}
-			}
-			// Reload the list, change the ComboBox to "nothing", remove the
-			// content of the "news" window.
-			ListFeeds();
-			m_feedlist.SetCurSel (-1);
-			GetDlgItem(IDC_FEEDUPDATE)->EnableWindow(false);
-			newsmsgbox->Reset();
-			return true;
-		} break;
-		case MP_DELETEALLFEEDS: {
-			// Delete the file and reload the feeds for the ComboBox
-			DeleteFile (CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("XMLNews.dat"));
-			ListFeeds ();
-			return true;
-		} break;
-        //Commander - Added: Update All Feeds at once - Start
-		case MP_DOWNLOADALLFEEDS: {
-			theApp.emuledlg->serverwnd->DownloadAllFeeds();
-			return true;
-		} break;
-        //Commander - Added: Update All Feeds at once - End
-	}
- 	return CResizableDialog::OnCommand (wParam, lParam);
-}
-
-// Read the content of the XMLNews.dat file. The file is constructed as:
-//    name, url
-//    name, url
-//    name, url
-// ...
-// There's no "," sign allowed in the name!
-void CServerWnd::ReadXMLList (CStringList& _names, CStringList& _urls) {
-	FILE* readfile = _tfsopen(CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("XMLNews.dat"), _T("r"), _SH_DENYWR);
-	if (readfile == NULL) return; 
-	while (!feof (readfile)) {
-		// Read the current line
-		CString url;
-		TCHAR buffer[1024];
-		if(_fgetts(buffer, ARRSIZE(buffer),readfile)==NULL)
-			break;
-		url = buffer;
-		// Remove all LF characters
-		url = url.SpanExcluding (_T("\n"));
-		// Split the string on the place of the ","
-		int i=url.Find (',');
-		if (i != -1) {
-			CString name = url.Left (i);
-			url.Delete (0,i+1);
-			// If the name is empty, use the URL as name
-			if (name.IsEmpty ()) 
-				name = url;
-			_names.AddTail (name);
-			_urls.AddTail (url);
-		}
-	}
-	fclose (readfile);
-}
-
-// Rewrite the XMLNews.dat file.
-// Filter all "," characters if some exist
-void CServerWnd::WriteXMLList (CStringList& _names, CStringList& _urls) {
-	FILE* writefile = _tfsopen(CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("XMLNews.dat"), _T("w"), _SH_DENYWR);
-	if (writefile == NULL) return; 
-	POSITION posnames = _names.GetHeadPosition ();
-	POSITION posurls = _urls.GetHeadPosition ();
-	while ((posnames != NULL) && (posurls != NULL)) {
-		CString name = _names.GetNext (posnames);
-		CString url = _urls.GetNext (posurls);
-		// If the name is empty, use the URL as name
-		if (name.IsEmpty ()) 
-			name = url;
-		// Replace all "," by " "
-		name.Replace (',',' ');
-		// Write the info; append CR/LF characters to the end of the line
-		_ftprintf (writefile,_T("%s,%s\n"), name, url);
-	}
-	fclose (writefile);
-}
-
-// [end] Mighty Knife
-
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
 void CServerWnd::OnBackcolor() 
 {
 	clrSrvColor = thePrefs.GetStyleBackColor(window_styles, style_w_server);
@@ -1874,14 +1144,11 @@ void CServerWnd::OnBackcolor()
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 	SetAllIcons();
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max
 
-// >> add by Ken -- copy from ScareAngle
 // ==> Links for Server list and nodes file [Stulle] - Stulle
 void CServerWnd::OnBnClickedServerLists()
 {
 	ShellExecute(NULL, NULL, _T("http://www.server-met.de/"), NULL, thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR), SW_SHOWDEFAULT);
 }
-// <== Links for Server list and nodes file [Stulle] - Stulle}
-// << add by Ken
+// <== Links for Server list and nodes file [Stulle] - Stulle

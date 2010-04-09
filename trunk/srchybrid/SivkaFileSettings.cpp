@@ -61,6 +61,8 @@ BEGIN_MESSAGE_MAP(CSivkaFileSettings, CDialog)
 	ON_BN_CLICKED(IDC_HQRS_TIMER_TAKEOVER, OnBnClickedAutoHQRS_TimerTakeOver)
 	ON_BN_CLICKED(IDC_REMOVEQRS_TAKEOVER, OnBnClickedMaxRemoveQRSTakeOver)
 	ON_BN_CLICKED(IDC_MAXREMOVEQRSLIMIT_TAKEOVER, OnBnClickedMaxRemoveQRSLimitTakeOver)
+	ON_BN_CLICKED(IDC_HQR_XMAN_TAKEOVER, OnBnClickedHQRXmanTakeOver)
+	ON_BN_CLICKED(IDC_HQR_XMAN, OnBnClickedHQRXman)
 	ON_BN_CLICKED(IDC_GLOBAL_HL_TAKEOVER, OnBnClickedGlobalHlTakeOver) // Global Source Limit (customize for files) - Stulle
 END_MESSAGE_MAP()
 
@@ -77,6 +79,7 @@ BOOL CSivkaFileSettings::OnInitDialog()
 	app_prefs->m_AutoHQRS_TimerTakeOver = false;
 	app_prefs->m_MaxRemoveQRSTakeOver = false;
 	app_prefs->m_MaxRemoveQRSLimitTakeOver = false;
+	app_prefs->m_bHQRXmanTakeOver = false;
 	app_prefs->m_bGlobalHlTakeOver = false; // Global Source Limit (customize for files) - Stulle
 	
 	m_RestoreDefault = false;
@@ -130,6 +133,8 @@ void CSivkaFileSettings::LoadSettings(void)
 		GetDlgItem(IDC_REMOVEQRS)->SetWindowText(strBuffer);
 		strBuffer.Format(_T("%d"), app_prefs->m_MaxRemoveQRSLimitTemp);
 		GetDlgItem(IDC_MAXREMOVEQRSLIMIT)->SetWindowText(strBuffer);
+		CheckDlgButton(IDC_HQR_XMAN, app_prefs->m_bHQRXmanTemp);
+		CheckDlgButton(IDC_HQR_XMAN_TAKEOVER, app_prefs->m_bHQRXmanTakeOver);
 		OnBnClickedEnableAutoDropQRSTakeOver();
 	}
 }
@@ -142,7 +147,7 @@ void CSivkaFileSettings::OnBnClickedTakeOver()
 	if(GetDlgItem(IDC_HARDLIMIT)->GetWindowTextLength() && thePrefs.m_MaxSourcesPerFileTakeOver)
 	{
 		GetDlgItem(IDC_HARDLIMIT)->GetWindowText(buffer,20);
-			app_prefs->m_MaxSourcesPerFileTemp = (uint32)_tstoi(buffer);
+			app_prefs->m_MaxSourcesPerFileTemp = (uint16)_tstoi(buffer);
 	}
 	// ==> Global Source Limit (customize for files) - Stulle
 	app_prefs->m_bGlobalHlTakeOver = (IsDlgButtonChecked(IDC_GLOBAL_HL_TAKEOVER))!=0;
@@ -193,7 +198,7 @@ void CSivkaFileSettings::OnBnClickedTakeOver()
 	if(GetDlgItem(IDC_HQRS_TIMER)->GetWindowTextLength() && app_prefs->m_AutoHQRS_TimerTakeOver && app_prefs->m_EnableAutoDropQRSTemp)
 	{
 		GetDlgItem(IDC_HQRS_TIMER)->GetWindowText(buffer,20);
-		if (_tstoi(buffer) >= 0 && _tstoi(buffer) <= 60)
+		if (_tstoi(buffer) >= 0 && _tstoi(buffer) <= 120)
 			app_prefs->m_AutoHQRS_TimerTemp = _tstoi(buffer)*1000;
 	}
 	app_prefs->m_MaxRemoveQRSTakeOver = (IsDlgButtonChecked(IDC_REMOVEQRS_TAKEOVER))!=0;
@@ -210,6 +215,9 @@ void CSivkaFileSettings::OnBnClickedTakeOver()
 		if (_tstoi(buffer) >= 50 && _tstoi(buffer) <= 100)
 			app_prefs->m_MaxRemoveQRSLimitTemp = (uint16)_tstoi(buffer);
 	}
+	app_prefs->m_bHQRXmanTakeOver = (IsDlgButtonChecked(IDC_HQR_XMAN_TAKEOVER))!=0;
+	if(app_prefs->m_bHQRXmanTakeOver)
+		app_prefs->m_bHQRXmanTemp = (IsDlgButtonChecked(IDC_HQR_XMAN))!=0;
 
 	LoadSettings();
 	app_prefs->m_TakeOverFileSettings = true;
@@ -245,6 +253,7 @@ void CSivkaFileSettings::Localize(void)
 		GetDlgItem(IDC_HQRS_TIMERLABEL)->SetWindowText(GetResString(IDS_HQRS_TIMERLABEL));
 		GetDlgItem(IDC_REMOVEQRSLABEL)->SetWindowText(GetResString(IDS_REMOVEQRSLABEL));
 		GetDlgItem(IDC_REMOVEQRSLIMITLABEL)->SetWindowText(GetResString(IDS_REMOVEQRSLIMITLABEL));
+		GetDlgItem(IDC_HQR_XMAN)->SetWindowText(GetResString(IDS_XMAN_DROPPING));
 		GetDlgItem(IDC_TAKEOVER)->SetWindowText(GetResString(IDS_TAKEOVER));
 		GetDlgItem(IDC_DEFAULT_BUTTON)->SetWindowText(GetResString(IDS_DEFAULT));
 		GetDlgItem(IDOK)->SetWindowText(GetResString(IDS_FD_CLOSE));
@@ -316,9 +325,10 @@ void CSivkaFileSettings::SetWithDefaultValues()
 		GetDlgItem(IDC_MAXREMOVEQRSLIMIT)->EnableWindow(thePrefs.GetEnableAutoDropQRSDefault());
 		strBuffer.Format(_T("%d"), thePrefs.GetMaxRemoveQRSLimitDefault());
 		GetDlgItem(IDC_MAXREMOVEQRSLIMIT)->SetWindowText(strBuffer);
-		GetDlgItem(IDC_MAXREMOVEQRSLIMIT_TAKEOVER)->EnableWindow(thePrefs.GetEnableAutoDropQRSDefault());
+		GetDlgItem(IDC_MAXREMOVEQRSLIMIT_TAKEOVER)->EnableWindow(thePrefs.GetEnableAutoDropQRSDefault() && thePrefs.GetHQRXmanDefault());
 		CheckDlgButton(IDC_MAXREMOVEQRSLIMIT_TAKEOVER, thePrefs.GetEnableAutoDropQRSDefault());
-
+		CheckDlgButton(IDC_HQR_XMAN, thePrefs.GetHQRXmanDefault());
+		CheckDlgButton(IDC_HQR_XMAN_TAKEOVER, thePrefs.GetEnableAutoDropQRSDefault());
 	}
 }
 
@@ -371,7 +381,7 @@ void CSivkaFileSettings::OnBnClickedEnableAutoFQS()
 	GetDlgItem(IDC_FQS_TIMER_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL_TAKEOVER));
 	CheckDlgButton(IDC_FQS_TIMER_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL_TAKEOVER) && app_prefs->m_AutoFQS_TimerTakeOver);
 	OnBnClickedAutoFQS_TimerTakeOver();
-	
+
 	GetDlgItem(IDC_MAXREMOVEFQSLIMIT_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL_TAKEOVER));
 	CheckDlgButton(IDC_MAXREMOVEFQSLIMIT_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEFQSLIMITLABEL_TAKEOVER) && app_prefs->m_MaxRemoveFQSLimitTakeOver);
 	OnBnClickedMaxRemoveFQSLimitTakeOver();
@@ -398,13 +408,17 @@ void CSivkaFileSettings::OnBnClickedEnableAutoQRS()
 	CheckDlgButton(IDC_HQRS_TIMER_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_AutoHQRS_TimerTakeOver);
 	OnBnClickedAutoHQRS_TimerTakeOver();
 
-	GetDlgItem(IDC_REMOVEQRS_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER));
-	CheckDlgButton(IDC_REMOVEQRS_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_MaxRemoveQRSTakeOver);
-	OnBnClickedMaxRemoveQRSTakeOver();
-	
 	GetDlgItem(IDC_MAXREMOVEQRSLIMIT_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER));
 	CheckDlgButton(IDC_MAXREMOVEQRSLIMIT_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_MaxRemoveQRSLimitTakeOver);
 	OnBnClickedMaxRemoveQRSLimitTakeOver();
+	
+	GetDlgItem(IDC_HQR_XMAN_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER));
+	CheckDlgButton(IDC_HQR_XMAN_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_bHQRXmanTakeOver);
+	OnBnClickedHQRXmanTakeOver();
+
+	GetDlgItem(IDC_REMOVEQRS_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
+	CheckDlgButton(IDC_REMOVEQRS_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_MaxRemoveQRSTakeOver && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
+	OnBnClickedMaxRemoveQRSTakeOver();
 }
 void CSivkaFileSettings::OnBnClickedAutoHQRS_TimerTakeOver()
 {
@@ -413,10 +427,20 @@ void CSivkaFileSettings::OnBnClickedAutoHQRS_TimerTakeOver()
 }
 void CSivkaFileSettings::OnBnClickedMaxRemoveQRSTakeOver()
 {
-	GetDlgItem(IDC_REMOVEQRSLABEL)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_REMOVEQRS_TAKEOVER));
-	GetDlgItem(IDC_REMOVEQRS)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_REMOVEQRS_TAKEOVER));
+	GetDlgItem(IDC_REMOVEQRSLABEL)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_REMOVEQRS_TAKEOVER) && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
+	GetDlgItem(IDC_REMOVEQRS)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_REMOVEQRS_TAKEOVER) && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
 }
 void CSivkaFileSettings::OnBnClickedMaxRemoveQRSLimitTakeOver()
 {
 	GetDlgItem(IDC_MAXREMOVEQRSLIMIT)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_MAXREMOVEQRSLIMIT_TAKEOVER));
+}
+void CSivkaFileSettings::OnBnClickedHQRXmanTakeOver()
+{
+	GetDlgItem(IDC_HQR_XMAN)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_HQR_XMAN_TAKEOVER));
+}
+void CSivkaFileSettings::OnBnClickedHQRXman()
+{
+	GetDlgItem(IDC_REMOVEQRS_TAKEOVER)->EnableWindow(IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
+	CheckDlgButton(IDC_REMOVEQRS_TAKEOVER, IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL) && IsDlgButtonChecked(IDC_REMOVEQRSLIMITLABEL_TAKEOVER) && app_prefs->m_MaxRemoveQRSTakeOver && IsDlgButtonChecked(IDC_HQR_XMAN) == false);
+	OnBnClickedMaxRemoveQRSTakeOver();
 }

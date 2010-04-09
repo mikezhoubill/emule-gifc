@@ -100,7 +100,6 @@
 #include "Pinger.h"
 #include "emuledlg.h"
 #include "OtherFunctions.h"
-#include "preferences.h" // MORPH leuk_he ICMP ping datasize <> 0 setting
 
 extern CString GetErrorMessage(DWORD dwError, DWORD dwFlags);
 
@@ -361,15 +360,9 @@ PingStatus Pinger::PingUDP(uint32 lAddr, uint32 ttl, bool doLog) {
 		if (nRet==SOCKET_ERROR) { 
 			DWORD lastError = WSAGetLastError();
             PingStatus returnValue;
-            if(lastError == WSAETIMEDOUT) {
 			returnValue.success = false;
 			returnValue.delay = TIMEOUT;
-                returnValue.error = IP_REQ_TIMED_OUT;
-            } else {
 			returnValue.error = lastError;
-			    returnValue.success = false;
-			    returnValue.delay = TIMEOUT;
-            }
 			//if (toNowTimeOut < 3) toNowTimeOut++;
 			//	lastTimeOut = 3;
 			return returnValue;
@@ -453,13 +446,8 @@ PingStatus Pinger::PingICMP(uint32 lAddr, uint32 ttl, bool doLog) {
     // Send the ICMP Echo Request and read the Reply
     DWORD dwReplyCount = lpfnIcmpSendEcho(hICMP, 
                                     stDestAddr.s_addr,
-									/* START MORPH leuk_he ICMP ping datasize <> 0 setting
                                     0, // databuffer
                                     0, // DataLen, length of databuffer
-									*/
-									thePrefs.m_sPingDataSize?&achRepData:0, // option send some dummy data to workarrond some buggy firewalls
-									thePrefs.m_sPingDataSize,
-									// END MORPH leuk_he ICMP ping datasize <> 0 setting
                                     &stIPInfo, 
                                     achRepData, 
                                     sizeof(achRepData), 

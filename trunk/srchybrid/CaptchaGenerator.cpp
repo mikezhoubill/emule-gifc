@@ -62,7 +62,7 @@ void CCaptchaGenerator::ReGenerateCaptcha(uint32 nLetterCount)
 		
 		CString strLetter(schCaptchaContent[GetRandomUInt16() % ARRSIZE(schCaptchaContent)]);
 		m_strCaptchaText += strLetter;
-
+		
 		uint16 nRandomSize = GetRandomUInt16() % 10;
 		uint16 nRandomOffset = 3 + GetRandomUInt16() % 11;
 		imgLetter.DrawString(NULL, nRandomOffset, 32, strLetter, imgLetter.RGBtoRGBQUAD(RGB(0, 0, 0)), _T("Arial"), 40 - nRandomSize, 1000);
@@ -77,14 +77,7 @@ void CCaptchaGenerator::ReGenerateCaptcha(uint32 nLetterCount)
 					pimgResult->SetPixelIndex(nOffset + k, j, imgLetter.GetPixelIndex(k, j));
 	}
 	pimgResult->Jitter(1);
-// MORPH
-/*
 	//pimgResult->Save("D:\\CaptchaTest.bmp", CXIMAGE_FORMAT_BMP);
-*/
-#ifdef DEBUG
-	pimgResult->Save(_T("C:\\CaptchaTest.bmp"), CXIMAGE_FORMAT_BMP);
-#endif
-// MORPH
 	m_pimgCaptcha = pimgResult;
 }
 

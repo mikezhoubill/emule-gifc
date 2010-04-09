@@ -29,11 +29,14 @@
 #include "ListenSocket.h"
 #include "preferences.h"
 #include "IP2Country.h" //EastShare - added by AndCycle, IP to Country
+#include "UploadQueue.h" //Xman Queuerank at clientdetail
+#include "Preferences.h" // CreditSystems [EastShare/ MorphXT] - Stulle
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 
@@ -47,7 +50,7 @@ BEGIN_MESSAGE_MAP(CClientDetailPage, CResizablePage)
 END_MESSAGE_MAP()
 
 CClientDetailPage::CClientDetailPage()
-	: CResizablePage(CClientDetailPage::IDD,0)
+	: CResizablePage(CClientDetailPage::IDD, 0 )
 {
 	m_paClients = NULL;
 	m_bDataChanged = false;
@@ -73,6 +76,12 @@ BOOL CClientDetailPage::OnInitDialog()
 	AddAnchor(IDC_STATIC30, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_STATIC40, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_STATIC50, TOP_LEFT, TOP_RIGHT);
+	//zz_fly :: let it resize together with the dialog
+	AddAnchor(IDC_DNAME, TOP_LEFT, TOP_RIGHT); 
+	CSize tAnchor(40,0);
+	AddAnchor(IDC_DSOFT, TOP_LEFT, tAnchor);
+	AddAnchor(IDC_DLOC, tAnchor, TOP_RIGHT);
+	//zz_fly :: end
 	AddAnchor(IDC_DDOWNLOADING, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_UPLOADING, TOP_LEFT, TOP_RIGHT);
 
@@ -90,6 +99,13 @@ BOOL CClientDetailPage::OnSetActive()
 
 	if (m_bDataChanged)
 	{
+
+		//Xman Code Fix
+		//don't know how this happend, but happend with a friend:
+		if(m_paClients==NULL)
+			return FALSE;
+		//Xman end
+
 		CUpDownClient* client = STATIC_DOWNCAST(CUpDownClient, (*m_paClients)[0]);
 
 		CString buffer;
@@ -97,33 +113,22 @@ BOOL CClientDetailPage::OnSetActive()
 			GetDlgItem(IDC_DNAME)->SetWindowText(client->GetUserName());
 		else
 			GetDlgItem(IDC_DNAME)->SetWindowText(_T("?"));
-	
+		
 		//EastShare Start - added by AndCycle, IP to Country
-		// Superlexx
-		bool longCountryName = true;
-		GetDlgItem(IDC_DLOC)->SetWindowText(client->GetCountryName(longCountryName));
-		//MORPH START - Added by Commander, CountryFlag
-		if (theApp.ip2country->ShowCountryFlag()){
-			countryflag = theApp.ip2country->GetFlagImageList()->ExtractIcon(client->GetCountryFlagIndex());
-			((CStatic*)GetDlgItem(IDC_COUNTRYFLAG))->SetIcon(countryflag);
-			((CStatic*)GetDlgItem(IDC_COUNTRYFLAG))->ShowWindow(SW_SHOW);
-			RECT rect1;
-			RECT rect2;
-			((CStatic*)GetDlgItem(IDC_COUNTRYFLAG))->GetWindowRect(&rect1);
-			GetDlgItem(IDC_DLOC)->GetWindowRect(&rect2);
-			ScreenToClient(&rect1);
-			ScreenToClient(&rect2);
-			GetDlgItem(IDC_DLOC)->MoveWindow(CRect(rect1.right+2, rect2.top, rect2.right, rect2.bottom),TRUE);
-		}
-		//MORPH END - Added by Commander, CountryFlag
+		GetDlgItem(IDC_DLOC)->SetWindowText(client->GetCountryName(true));
 		//EastShare End - added by AndCycle, IP to Country
 
 		if (client->HasValidHash())
 			GetDlgItem(IDC_DHASH)->SetWindowText(md4str(client->GetUserHash()));
 		else
 			GetDlgItem(IDC_DHASH)->SetWindowText(_T("?"));
-	
+		
+		//Xman ModId
+		/*
 		GetDlgItem(IDC_DSOFT)->SetWindowText(client->GetClientSoftVer());
+		*/
+		GetDlgItem(IDC_DSOFT)->SetWindowText(client->DbgGetFullClientSoftVer());
+		//Xman end
 
 		if (client->SupportsCryptLayer() && thePrefs.IsClientCryptLayerSupported() && (client->RequestsCryptLayer() || thePrefs.IsClientCryptLayerRequested()) 
 			&& (client->IsObfuscatedConnectionEstablished() || !(client->socket != NULL && client->socket->IsConnected())))
@@ -142,7 +147,7 @@ BOOL CClientDetailPage::OnSetActive()
 
 		buffer.Format(_T("%s"),(client->HasLowID() ? GetResString(IDS_IDLOW):GetResString(IDS_IDHIGH)));
 		GetDlgItem(IDC_DID)->SetWindowText(buffer);
-	
+		
 		if (client->GetServerIP()){
 			GetDlgItem(IDC_DSIP)->SetWindowText(ipstr(client->GetServerIP()));
 			CServer* cserver = theApp.serverlist->GetServerByIPTCP(client->GetServerIP(), client->GetServerPort());
@@ -156,9 +161,34 @@ BOOL CClientDetailPage::OnSetActive()
 			GetDlgItem(IDC_DSNAME)->SetWindowText(_T("?"));
 		}
 
+		//Xman Queuerank at clientdetail
+		if(client->GetUploadState()==US_ONUPLOADQUEUE)
+			buffer.Format(_T("%u"),theApp.uploadqueue->GetWaitingPosition(client));
+		else
+			buffer.Format(_T("-"));
+		GetDlgItem(IDC_DOWNQUEUERANK)->SetWindowText(buffer);
+		if(client->GetDownloadState()==DS_ONQUEUE)
+		{
+			if(client->IsRemoteQueueFull())
+				buffer = GetResString(IDS_QUEUEFULL);
+			else
+				buffer.Format(_T("%u"), client->GetRemoteQueueRank());
+		}
+		else
+			buffer.Format(_T("-"));
+		GetDlgItem(IDC_UPLOADQUEURANK)->SetWindowText(buffer);
+		//Xman end
+
+		//Xman Anti-Leecher
+		if(client->IsLeecher()>0 && client->GetBanMessageString().IsEmpty()==false)
+			GetDlgItem(IDC_LEECHERINFO)->SetWindowText(client->GetBanMessageString());
+		else
+			GetDlgItem(IDC_LEECHERINFO)->SetWindowText(_T(" "));
+		//Xman end
+
 		CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
 		if (file)
-			GetDlgItem(IDC_DDOWNLOADING)->SetWindowText(file->GetFileName() );
+			GetDlgItem(IDC_DDOWNLOADING)->SetWindowText(file->GetFileName());
 		else
 			GetDlgItem(IDC_DDOWNLOADING)->SetWindowText(_T("-"));
 
@@ -171,33 +201,33 @@ BOOL CClientDetailPage::OnSetActive()
 
 		GetDlgItem(IDC_DDOWN)->SetWindowText(CastItoXBytes(client->GetTransferredUp(), false, false));
 
-		//MORPH START - Changed by SiRoB, Average display [wistily]
-		/*
 		buffer.Format(_T("%s"), CastItoXBytes(client->GetDownloadDatarate(), false, true));
-		*/
-		buffer.Format(_T("%s"), CastItoXBytes(client->GetAvDownDatarate(), false, true));
-		//MORPH END   - Changed by SiRoB, Average display [wistily]
 		GetDlgItem(IDC_DAVUR)->SetWindowText(buffer);
 
-		//MORPH START - Changed by SiRoB, Average display [wistily]
+		//Xman // Maella -Accurate measure of bandwidth
 		/*
 		buffer.Format(_T("%s"),CastItoXBytes(client->GetDatarate(), false, true));
 		*/
-		buffer.Format(_T("%s"),CastItoXBytes(client->GetAvUpDatarate(), false, true));
-		//MORPH END   - Changed by SiRoB, Average display [wistily]
+		buffer.Format(_T("%s"),CastItoXBytes(client->GetUploadDatarate(), false, true));
+		//Xman end
 		GetDlgItem(IDC_DAVDR)->SetWindowText(buffer);
-	
+		
 		if (client->Credits()){
 			GetDlgItem(IDC_DUPTOTAL)->SetWindowText(CastItoXBytes(client->Credits()->GetDownloadedTotal(), false, false));
 			GetDlgItem(IDC_DDOWNTOTAL)->SetWindowText(CastItoXBytes(client->Credits()->GetUploadedTotal(), false, false));
-			//MORPH START - Changed by IceCream, VQB: ownCredits
+			// Xman Creditsystem
 			/*
-			buffer.Format(_T("%.1f"),(float)client->Credits()->GetScoreRatio(m_client->GetIP()));
+			buffer.Format(_T("%.1f"),(float)client->Credits()->GetScoreRatio(client->GetIP()));
 			*/
-			buffer.Format(_T("%.1f  [%.1f]"),(float)client->Credits()->GetScoreRatio(client->GetIP()),(float)client->Credits()->GetMyScoreRatio(client->GetIP()));
-			//MORPH END   - Changed by IceCream, VQB: ownCredits
+			// ==> CreditSystems [EastShare/ MorphXT] - Stulle
+			if (thePrefs.GetCreditSystem() == 7) // is Xman CS¿
+			buffer.Format(_T("%.1f %+.1f [%.1f]"),(float)client->Credits()->GetScoreRatio(client)- (float)client->Credits()->GetBonusFaktor(client),(float)client->Credits()->GetBonusFaktor(client),(float)client->Credits()->GetMyScoreRatio(client->GetIP()));	//  See own credits VQB
+			else
+				buffer.Format(_T("%.1f [%.1f]"),(float)client->Credits()->GetScoreRatio(client),(float)client->Credits()->GetMyScoreRatio(client->GetIP()));	//  See own credits VQB
+			// <== CreditSystems [EastShare/ MorphXT] - Stulle
+			//Xman Creditsystem end
 			GetDlgItem(IDC_DRATIO)->SetWindowText(buffer);
-		
+			
 			if (theApp.clientcredits->CryptoAvailable()){
 				switch(client->Credits()->GetCurrentIdentState(client->GetIP())){
 					case IS_NOTAVAILABLE:
@@ -222,19 +252,13 @@ BOOL CClientDetailPage::OnSetActive()
 			GetDlgItem(IDC_DRATIO)->SetWindowText(_T("?"));
 			GetDlgItem(IDC_CDIDENT)->SetWindowText(_T("?"));
 		}
-		// ==> Reduce Score for leecher - Stulle
-		buffer.Format(_T("%s"),(client->GetBanReason()!=GOOD_BOY)?GetResString(IDS_BANREASON):client->GetBanReasonString());
-		GetDlgItem(IDC_BANREASON_LABEL)->SetWindowText(buffer);
-		buffer.Format(_T("%s"),(client->GetBanReason()!=GOOD_BOY)?client->GetBanReasonString():_T(""));
-		GetDlgItem(IDC_BANREASON)->SetWindowText(buffer);
-		// <== Reduce Score for leecher - Stulle
 
 		if (client->GetUserName() && client->Credits()!=NULL){
 			buffer.Format(_T("%.1f"),(float)client->GetScore(false,client->IsDownloading(),true));
 			GetDlgItem(IDC_DRATING)->SetWindowText(buffer);
 		}
 		else
-		GetDlgItem(IDC_DRATING)->SetWindowText(_T("?"));
+			GetDlgItem(IDC_DRATING)->SetWindowText(_T("?"));
 
 		if (client->GetUploadState() != US_NONE && client->Credits()!=NULL){
 			if (!client->GetFriendSlot()){
@@ -252,36 +276,7 @@ BOOL CClientDetailPage::OnSetActive()
 		else
 			buffer.Format( _T("%s"), GetResString(IDS_DISCONNECTED));
 		GetDlgItem(IDC_CLIENTDETAIL_KADCON)->SetWindowText(buffer);
-	
-		// [MightyKnife] Private modification
-		#ifdef MIGHTY_TWEAKS
-		CString AddInfo;
-		uint32 ClientIP = client->GetIP ();
-		AddInfo.Format (_T("User-ID: %u   IP: %d.%d.%d.%d:%d"),
-						client->GetUserIDHybrid (),
-						ClientIP & 0xFF, (ClientIP >> 8) & 0xFF, 
-						(ClientIP >> 16) & 0xFF, (ClientIP >> 24) & 0xFF, 
-						client->GetUserPort ());
-		CRect R (19,450,300,464);
-		m_sAdditionalInfo.Create (AddInfo,WS_CHILD|WS_VISIBLE,R,this);
-		VERIFY(m_fStdFont.CreateFont(
-						12,                        // nHeight
-						0,                         // nWidth
-						0,                         // nEscapement
-						0,                         // nOrientation
-						FW_NORMAL,                 // nWeight
-						FALSE,                     // bItalic
-						FALSE,                     // bUnderline
-						0,                         // cStrikeOut
-						ANSI_CHARSET,              // nCharSet
-						OUT_DEFAULT_PRECIS,        // nOutPrecision
-						CLIP_DEFAULT_PRECIS,       // nClipPrecision
-						DEFAULT_QUALITY,           // nQuality
-						DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-						_T("MS Shell Dlg")));      // lpszFacename
-		m_sAdditionalInfo.SetFont (&m_fStdFont);
-		#endif
-		// [MightyKnife] end: Private Modifications
+
 		m_bDataChanged = false;
 	}
 	return TRUE;
@@ -318,7 +313,6 @@ void CClientDetailPage::Localize()
 	GetDlgItem(IDC_STATIC52)->SetWindowText(GetResString(IDS_CD_RATING));
 	GetDlgItem(IDC_STATIC53)->SetWindowText(GetResString(IDS_CD_USCORE));
 	GetDlgItem(IDC_STATIC133x)->SetWindowText(GetResString(IDS_CD_IDENT));
-	GetDlgItem(IDC_DLOC2)->SetWindowText(GetResString(IDS_COUNTRY) + _T(":"));
 	GetDlgItem(IDC_CLIENTDETAIL_KAD)->SetWindowText(GetResString(IDS_KADEMLIA) + _T(":"));
 }
 

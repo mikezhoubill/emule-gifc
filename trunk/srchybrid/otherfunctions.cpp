@@ -49,7 +49,6 @@
 #include "Kademlia/Kademlia/kademlia.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
 #include "Log.h"
-#include "afxinet.h" // Connection Checker [eWombat/WiZaRd] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -92,7 +91,109 @@ static byte base16Lookup[BASE16_LOOKUP_MAX][2] = {
     { 'F', 0xF }
 };
 
-//MORPH - Changed by SiRoB, added flag to return US Text
+// ==> added flag to return US Text [SiRoB] - Stulle
+/*
+CString CastItoXBytes(uint16 count, bool isK, bool isPerSec, uint32 decimal){
+	return CastItoXBytes((double)count, isK, isPerSec, decimal);
+}
+
+CString CastItoXBytes(uint32 count, bool isK, bool isPerSec, uint32 decimal){
+	return CastItoXBytes((double)count, isK, isPerSec, decimal);
+}
+
+CString CastItoXBytes(uint64 count, bool isK, bool isPerSec, uint32 decimal){
+	return CastItoXBytes((double)count, isK, isPerSec, decimal);
+}
+
+#if defined(_DEBUG) && defined(USE_DEBUG_EMFILESIZE)
+CString CastItoXBytes(EMFileSize count, bool isK, bool isPerSec, uint32 decimal){
+	return CastItoXBytes((double)count, isK, isPerSec, decimal);
+}
+#endif
+
+CString CastItoXBytes(float count, bool isK, bool isPerSec, uint32 decimal){
+	return CastItoXBytes((double)count, isK, isPerSec, decimal);
+}
+
+CString CastItoXBytes(double count, bool isK, bool isPerSec, uint32 decimal){
+	if( count <= 0.0 )
+	{
+		if(isPerSec)
+			return _T("0 ") + GetResString(IDS_BYTESPERSEC);
+		else
+			return _T("0 ") + GetResString(IDS_BYTES);
+	}
+	else if( isK )
+	{
+		if( count >  1.7E+300 )
+			count =  1.7E+300;
+		else
+			count *= 1024.0;
+	}
+	CString buffer;
+	if( isPerSec )
+	{
+		//Xman Xtreme Mod
+		//use other system if decimal=99 (standard)
+		if(decimal==99)
+		{
+			if (count < 1024000.0)
+				buffer.Format(_T("%.1f %s"), count/1024.0, GetResString(IDS_KBYTESPERSEC));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.2f %s"), count/1048576.0, GetResString(IDS_MBYTESPERSEC));
+			else
+				buffer.Format(_T("%.3f %s"), count/1073741824.0, GetResString(IDS_GBYTESPERSEC));
+		}
+		else
+		{
+			if (count < 1024.0)
+				buffer.Format(_T("%.0f %s"), count, GetResString(IDS_BYTESPERSEC));
+			else if (count < 1024000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1024.0, GetResString(IDS_KBYTESPERSEC));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, GetResString(IDS_MBYTESPERSEC));
+			else if (count < 1073741824000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, GetResString(IDS_GBYTESPERSEC));
+			else 
+				buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, GetResString(IDS_TBYTESPERSEC));
+			//Xman end
+		}
+	}
+	else
+	{
+		//Xman Xtreme Mod
+		//use other system if decimal=99 (standard)
+		if(decimal==99)
+		{
+			if (count < 1024)
+				buffer.Format(_T("%.0f %s"),count, GetResString(IDS_BYTES));
+			else if (count < 1048576)
+				buffer.Format(_T("%.0f %s"),count/1024.0f, GetResString(IDS_KBYTES));
+			else if (count < 1073741824)
+				buffer.Format(_T("%.2f %s"),count/1048576.0f, GetResString(IDS_MBYTES));
+			else if (count < 1099511627776)
+				buffer.Format(_T("%.2f %s"),count/1073741824.0f, GetResString(IDS_GBYTES));
+			else 
+				buffer.Format(_T("%.3f %s"),count/1099511627776.0f, GetResString(IDS_TBYTES));
+		}
+		else
+		{
+			if (count < 1024.0)
+				buffer.Format(_T("%.0f %s"), count, GetResString(IDS_BYTES));
+			else if (count < 1024000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1024.0, GetResString(IDS_KBYTES));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, GetResString(IDS_MBYTES));
+			else if (count < 1073741824000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, GetResString(IDS_GBYTES));
+			else 
+				buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, GetResString(IDS_TBYTES));
+		}
+		//Xman end
+	}
+	return buffer;
+}
+*/
 CString CastItoXBytes(uint16 count, bool isK, bool isPerSec, uint32 decimal, bool isUS){
 	return CastItoXBytes((double)count, isK, isPerSec, decimal, isUS);
 }
@@ -133,32 +234,67 @@ CString CastItoXBytes(double count, bool isK, bool isPerSec, uint32 decimal, boo
 	CString buffer;
 	if( isPerSec )
 	{
-		if (count < 1024.0)
-			buffer.Format(_T("%.0f %s"), count, isUS?_T("B/s"):GetResString(IDS_BYTESPERSEC));
-		else if (count < 1024000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1024.0, isUS?_T("KB/s"):GetResString(IDS_KBYTESPERSEC));
-		else if (count < 1048576000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, isUS?_T("MB/s"):GetResString(IDS_MBYTESPERSEC));
-		else if (count < 1073741824000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, isUS?_T("GB/s"):GetResString(IDS_GBYTESPERSEC));
-		else 
-			buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, isUS?_T("TB/s"):GetResString(IDS_TBYTESPERSEC));
+		//Xman Xtreme Mod
+		//use other system if decimal=99 (standard)
+		if(decimal==99)
+		{
+			if (count < 1024000.0)
+				buffer.Format(_T("%.1f %s"), count/1024.0, isUS?_T("KB/s"):GetResString(IDS_KBYTESPERSEC));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.2f %s"), count/1048576.0, isUS?_T("MB/s"):GetResString(IDS_MBYTESPERSEC));
+			else
+				buffer.Format(_T("%.3f %s"), count/1073741824.0, isUS?_T("GB/s"):GetResString(IDS_GBYTESPERSEC));
+		}
+		else
+		{
+			if (count < 1024.0)
+				buffer.Format(_T("%.0f %s"), count, isUS?_T("B/s"):GetResString(IDS_BYTESPERSEC));
+			else if (count < 1024000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1024.0, isUS?_T("KB/s"):GetResString(IDS_KBYTESPERSEC));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, isUS?_T("MB/s"):GetResString(IDS_MBYTESPERSEC));
+			else if (count < 1073741824000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, isUS?_T("GB/s"):GetResString(IDS_GBYTESPERSEC));
+			else 
+				buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, isUS?_T("TB/s"):GetResString(IDS_TBYTESPERSEC));
+			//Xman end
+		}
 	}
 	else
 	{
-		if (count < 1024.0)
-			buffer.Format(_T("%.0f %s"), count, isUS?_T("Bytes"):GetResString(IDS_BYTES));
-		else if (count < 1024000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1024.0, isUS?_T("KB"):GetResString(IDS_KBYTES));
-		else if (count < 1048576000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, isUS?_T("MB"):GetResString(IDS_MBYTES));
-		else if (count < 1073741824000.0)
-			buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, isUS?_T("GB"):GetResString(IDS_GBYTES));
-		else 
-			buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, isUS?_T("TB"):GetResString(IDS_TBYTES));
+		//Xman Xtreme Mod
+		//use other system if decimal=99 (standard)
+		if(decimal==99)
+		{
+			if (count < 1024)
+				buffer.Format(_T("%.0f %s"),count, isUS?_T("Bytes"):GetResString(IDS_BYTES));
+			else if (count < 1048576)
+				buffer.Format(_T("%.0f %s"),count/1024.0f, isUS?_T("KB"):GetResString(IDS_KBYTES));
+			else if (count < 1073741824)
+				buffer.Format(_T("%.2f %s"),count/1048576.0f, isUS?_T("MB"):GetResString(IDS_MBYTES));
+			else if (count < 1099511627776)
+				buffer.Format(_T("%.2f %s"),count/1073741824.0f, isUS?_T("GB"):GetResString(IDS_GBYTES));
+			else 
+				buffer.Format(_T("%.3f %s"),count/1099511627776.0f, isUS?_T("TB"):GetResString(IDS_TBYTES));
+		}
+		else
+		{
+			if (count < 1024.0)
+				buffer.Format(_T("%.0f %s"), count, isUS?_T("Bytes"):GetResString(IDS_BYTES));
+			else if (count < 1024000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1024.0, isUS?_T("KB"):GetResString(IDS_KBYTES));
+			else if (count < 1048576000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1048576.0, isUS?_T("MB"):GetResString(IDS_MBYTES));
+			else if (count < 1073741824000.0)
+				buffer.Format(_T("%.*f %s"), decimal, count/1073741824.0, isUS?_T("GB"):GetResString(IDS_GBYTES));
+			else 
+				buffer.Format(_T("%.*f %s"), decimal, count/1099511627776.0, isUS?_T("TB"):GetResString(IDS_TBYTES));
+		}
+		//Xman end
 	}
 	return buffer;
 }
+// <== added flag to return US Text [SiRoB] - Stulle
 
 CString CastItoIShort(uint16 count, bool isK, uint32 decimal){
 	return CastItoIShort((double)count, isK, decimal);
@@ -350,6 +486,8 @@ CString ShellGetFolderPath(int iCSIDL)
 
 namespace {
 	bool IsHexDigit(int c) {
+		//zz_fly :: Optimizations :: DolphinX :: Start
+		/*
 		switch (c) {
 		case '0': return true;
 		case '1': return true;
@@ -375,8 +513,42 @@ namespace {
 		case 'f': return true;
 		default: return false;
 		}
+		*/
+		return( (c>='0' && c<='9') || (c>='A' && c<='F') || (c>='a' && c<='f') );
+		//zz_fly :: Optimizations :: DolphinX :: End
 	}
 }
+
+//Xman: netfinity: P2PThreat - Detect worms that could be harmful to the network or eMule
+bool IsHexDigit(TCHAR c)
+{
+	switch (c) {
+	case _T('0'): return true;
+	case _T('1'): return true;
+	case _T('2'): return true;
+	case _T('3'): return true;
+	case _T('4'): return true;
+	case _T('5'): return true;
+	case _T('6'): return true;
+	case _T('7'): return true;
+	case _T('8'): return true;
+	case _T('9'): return true;
+	case _T('A'): return true;
+	case _T('B'): return true;
+	case _T('C'): return true;
+	case _T('D'): return true;
+	case _T('E'): return true;
+	case _T('F'): return true;
+	case _T('a'): return true;
+	case _T('b'): return true;
+	case _T('c'): return true;
+	case _T('d'): return true;
+	case _T('e'): return true;
+	case _T('f'): return true;
+	default: return false;
+	}
+}
+//Xman end
 
 CString URLDecode(const CString& inStr, bool bKeepNewLine)
 {
@@ -1099,17 +1271,6 @@ int CWebServices::GetAllMenuEntries(CTitleMenu* pMenu, DWORD dwFlags)
 			continue;
 		if ((dwFlags & WEBSVC_FILE_URLS) && !rSvc.bFileMacros)
 			continue;
-		//MORPH START - Added by SiRoB, Webservices PopupMenuSeparator Intelligent Detection
-		int pos;
-		for(pos=1;rSvc.strMenuLabel.GetAt(0)==rSvc.strMenuLabel.GetAt(pos)&&pos<4;pos++) continue;
-
-		if (( pos>2 || rSvc.strMenuLabel.GetAt(0)=='-') && iMenuEntries && iMenuEntries != m_aServices.GetCount()-1)
-		{
-			pMenu->AppendMenu(MF_SEPARATOR);
-			continue;
-		}
-		//MORPH END   - Added by SiRoB, Webservices PopupMenuSeparator Intelligent Detection
-		
 		if (pMenu->AppendMenu(MF_STRING, MP_WEBURL + i, rSvc.strMenuLabel, _T("WEB")))
 			iMenuEntries++;
 	}
@@ -1195,13 +1356,7 @@ bool SelectDir(HWND hWnd, LPTSTR pszPath, LPCTSTR pszTitle, LPCTSTR pszDlgTitle)
 		BROWSEINFO BrsInfo = {0};
 		BrsInfo.hwndOwner = hWnd;
 		BrsInfo.lpszTitle = (pszTitle != NULL) ? pszTitle : pszDlgTitle;
-		//MORPH START - Changed by JackieKu, Network mapped drives could not be selected
-		//see http://social.msdn.microsoft.com/Forums/en-US/vcgeneral/thread/95f7b7e8-87fe-4566-bf9a-4f49a6c21811/
-		/*
 		BrsInfo.ulFlags = BIF_VALIDATE | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS | BIF_SHAREABLE | BIF_DONTGOBELOWDOMAIN;
-		*/
-		BrsInfo.ulFlags = BIF_VALIDATE | BIF_NEWDIALOGSTYLE | BIF_RETURNONLYFSDIRS | BIF_DONTGOBELOWDOMAIN; // kumod ^= allow network mapped drives
-		//MORPH END   - Changed by JackieKu, Network mapped drives could not be selected
 
 		BROWSEINIT BrsInit = {0};
 		if (pszPath != NULL || pszTitle != NULL || pszDlgTitle != NULL){
@@ -2487,12 +2642,6 @@ int GetHashType(const uchar* hash)
 	else if (hash[5] == 14 && hash[14] == 111)
 		return SO_EMULE;
  	else if (hash[5] == 'M' && hash[14] == 'L')
-	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-		return SO_OLD_MLDONKEY; // was: SO_MLDONKEY
-	else if (hash[5] == 0x0E && hash[14] == 0x6F) 
-#endif
-	// <== Enhanced Client Recognition [Spike] - Stulle
 		return SO_MLDONKEY;
 	else
 		return SO_UNKNOWN;
@@ -2505,12 +2654,6 @@ LPCTSTR DbgGetHashTypeString(const uchar* hash)
 		return _T("eMule");
 	if (iHashType == SO_MLDONKEY)
 		return _T("MLdonkey");
-	// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
-	else if (iHashType == SO_OLD_MLDONKEY) 
-		return _T("Old MLdonkey");
-#endif
-	// <== Enhanced Client Recognition [Spike] - Stulle
 	if (iHashType == SO_OLDEMULE)
 		return _T("Old eMule");
 	ASSERT( iHashType == SO_UNKNOWN );
@@ -2914,15 +3057,16 @@ CString ipstr(uint32 nIP)
 	return strIP;
 }
 
-//MORPH START - Added by Stulle, IP Filter White List [Stulle]
+// ==> IP Filter White List [Stulle] - Stulle
 CString ipstr_rev(uint32 nIP)
 {
+	// following gives the same string as 'inet_ntoa(*(in_addr*)&nIP)' but is not restricted to ASCII strings
 	const BYTE* pucIP = (BYTE*)&nIP;
 	CString strIP;
 	strIP.ReleaseBuffer(_stprintf(strIP.GetBuffer(3+1+3+1+3+1+3), _T("%u.%u.%u.%u"), pucIP[3], pucIP[2], pucIP[1], pucIP[0]));
 	return strIP;
 }
-//MORPH END   - Added by Stulle, IP Filter White List [Stulle]
+// <== IP Filter White List [Stulle] - Stulle
 
 CString ipstr(uint32 nIP, uint16 nPort)
 {
@@ -3086,7 +3230,12 @@ bool IsAutoDaylightTimeSetActive()
 	return true; // default to 'Automatically adjust clock for daylight saving changes'
 }
 
-bool AdjustNTFSDaylightFileTime(time_t& ruFileDate, LPCTSTR pszFilePath) //vs2005
+// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+/*
+bool AdjustNTFSDaylightFileTime(uint32& ruFileDate, LPCTSTR pszFilePath)
+*/
+bool AdjustNTFSDaylightFileTime(time_t& ruFileDate, LPCTSTR pszFilePath)
+// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 {
 	if (!thePrefs.GetAdjustNTFSDaylightFileTime())
 		return false;
@@ -4066,223 +4215,9 @@ uint8 GetMyConnectOptions(bool bEncryption, bool bCallback){
 	return byCryptOptions;
 }
 
-// khaos::kmod+ Functions to return a random number within a given range.
-int GetRandRange( int from, int to )
-{
-    int power;
-    int number;
-    if ( ( to = to - from + 1 ) <= 1 )
-    	return from;
-    for ( power = 2; power < to; power <<= 1 )
-    	;
-    while ( ( number = RandNum() & ( power - 1 ) ) >= to )
-    	;
-    return from + number;
-}
-
-
-int RandNum()
-{
-    int *piState;
-    int iState1;
-    int iState2;
-    int iRand;
-    piState		= &rgiState[2];
-    iState1	 	= piState[-2];
-    iState2	 	= piState[-1];
-    iRand	 	= ( piState[iState1] + piState[iState2] )
-    			& ( ( 1 << 30 ) - 1 );
-    piState[iState1]	= iRand;
-    if ( ++iState1 == 55 )
-    	iState1 = 0;
-    if ( ++iState2 == 55 )
-    	iState2 = 0;
-    piState[-2]		= iState1;
-    piState[-1]		= iState2;
-    return iRand >> 6;
-}
-
-void InitRandGen()
-{
-    int *piState;
-    int iState;
-    piState	= &rgiState[2];
-    piState[-2]	= 55 - 55;
-    piState[-1]	= 55 - 24;
-    piState[0]	= ( (int) time( NULL ) ) & ( ( 1 << 30 ) - 1 );
-    piState[1]	= 1;
-    for ( iState = 2; iState < 55; iState++ )
-
-
-        {
-        	piState[iState] = ( piState[iState-1] + piState[iState-2] )
-        			& ( ( 1 << 30 ) - 1 );
-    }
-    return;
-}
-
-// khaos::categorymod+
-// Compares strings using wildcards * and ?.
-// Credited To: Jack Handy
-int wildcmp(LPCTSTR wild, LPCTSTR string) // kumod ^= constant parameters
-{
-	LPCTSTR cp, mp; // kumod ^= constant parameters
-
-	while ((*string) && (*wild != '*'))
-	{
-		if ((*wild != *string) && (*wild != '?'))
-			return 0;
-		wild++;
-		string++;
-	}
-
-	while (*string)
-	{
-		if (*wild == '*')
-		{
-			if (!*++wild)
-				return 1;
-			mp = wild;
-			cp = string+1;
-		}
-		else if ((*wild == *string) || (*wild == '?'))
-		{
-			wild++;
-			string++;
-		}
-		else
-		{
-			wild = mp;
-			string = cp++;
-		}
-	}
-
-	while (*wild == '*')
-		wild++;
-	return !*wild;
-}
-
-ULONG CastXBytesToI(const CString& strExpr)
-{
-	ULONG ulNum;
-	TCHAR szUnit[40];
-	int iArgs = _stscanf(strExpr, _T("%u%s"), &ulNum, szUnit);
-	if (iArgs <= 0)
-		return 0;
-	if (iArgs == 2){
-		CString strUnits(szUnit);
-		strUnits.Trim();
-		if (!strUnits.IsEmpty()){
-			//MORPH START - Fixed by SiRoB, Now Right For multilanguage
-			CString strBytes = GetResString(IDS_BYTES);
-			if (strUnits.CompareNoCase(strBytes.Left(1)) == 0 || strUnits.CompareNoCase(strBytes) == 0)
-				return ulNum * 1U; // Bytes
-			else if (strUnits.CompareNoCase(_T("k")) == 0 || strUnits.CompareNoCase(GetResString(IDS_KBYTES)) == 0 || strUnits.CompareNoCase(_T("k")+strBytes) == 0)
-				return ulNum * 1024U; // KBytes
-			else if (strUnits.CompareNoCase(_T("m")) == 0 || strUnits.CompareNoCase(GetResString(IDS_MBYTES)) == 0 || strUnits.CompareNoCase(_T("m")+strBytes) == 0)
-				return ulNum * 1024U*1024; // MBytes
-			else if (strUnits.CompareNoCase(_T("g")) == 0 || strUnits.CompareNoCase(GetResString(IDS_GBYTES)) == 0 || strUnits.CompareNoCase(_T("g")+strBytes) == 0)
-				return ulNum * 1024U*1024U*1024U; // GBytes
-			else{
-				AfxMessageBox(GetResString(IDS_SEARCH_EXPRERROR));
-				return 0;
-			}
-			//MORPH END - Fixed by SiRoB, Now Right For multilanguage
-		}
-	}
-
-	return ulNum * 1024U*1024U; // Default = MBytes
-}
-
-CString CastItoUIXBytes(uint64 count)
-{
-	CString buffer;
-	if (count < 1024)
-		buffer.Format(_T("%I64u%s"), count, GetResString(IDS_BYTES));
-	else if (count < 1048576)
-		buffer.Format(_T("%I64u%s"), (uint64)(count/1024), GetResString(IDS_KBYTES));
-	else if (count < 1073741824)
-		buffer.Format(_T("%I64u%s"), (uint64)(count/1048576), GetResString(IDS_MBYTES));
-	else
-		buffer.Format(_T("%I64u%s"), (uint64)(count/1073741824), GetResString(IDS_GBYTES));
-	return buffer;
-}
-// khaos::categorymod-
-// khaos::kmod-
-
-//MORPH START - Added by SiRoB, XML News [O²]
-void HTMLParse(CString &buffer)
-{
-	//ISO 8859-1 entity for XML? I don't know, http://www.bbsinc.com/iso8859.html, http://www.asciitable.com/, AndCycle
-
-	buffer.Replace(_T("&#34;"),_T("\""));
-	buffer.Replace(_T("&#034;"),_T("\""));
-	buffer.Replace(_T("&quot;"),_T("\""));
-	buffer.Replace(_T("&#38;"),_T("&"));
-	buffer.Replace(_T("&#038;"),_T("&"));
-	buffer.Replace(_T("&amp;"),_T("&"));
-	buffer.Replace(_T("&#39;"),_T("'"));
-	buffer.Replace(_T("&#039;"),_T("'"));
-	buffer.Replace(_T("&apos;"),_T("'"));
-	buffer.Replace(_T("&#60;"),_T("<"));
-	buffer.Replace(_T("&#060;"),_T("<"));
-	buffer.Replace(_T("&#lt;"),_T("<"));
-	buffer.Replace(_T("&#62;"),_T(">"));
-	buffer.Replace(_T("&#062;"),_T(">"));
-	buffer.Replace(_T("&#gt;"),_T(">"));
-	buffer.Replace(_T("&#63;"),_T("?"));
-	buffer.Replace(_T("&#063;"),_T("?"));
-	buffer.Replace(_T("&quest;"),_T("?"));
-	buffer.Replace(_T("&ccedil;"),_T("\xE7"));
-	buffer.Replace(_T("&eacute;"),_T("\xE9"));
-	buffer.Replace(_T("&egrave;"),_T("\xE8"));
-	buffer.Replace(_T("&agrave;"),_T("\xE0"));
-	if (buffer.Left(4) == "<br>")
-		buffer.Right(buffer.GetLength()-4);
-	if (buffer.Right(4) == "<br>")
-		buffer.Left(buffer.GetLength()-4);
-	buffer.Replace(_T("<br>"),_T("\n"));
-	buffer.Replace(_T("<br />"),_T("\n"));
-}
-//MORPH END  - Added by SiRoB, XML News [O²]
-
-//MORPH START - Added by SiRoB, Used in Fake and ipfilter updater
-ULONGLONG FileSize(LPCTSTR fileName){
-	CFile file;
-	CFileException e;
-	ULONGLONG size=0;
-	
-	if(file.Open(fileName, CFile::modeRead|CFile::shareDenyWrite|CFile::typeBinary, &e))
-	{
-		size=file.GetLength();
-		file.Close();
-		return size;
-	}
-	return 0;
-}
-//MORPH END   - Added by SiRoB, Used in Fake and ipfilter updater
-
-//Morph Start - added by AndCycle, minor tweak - prime
-int getPrime(int lower_bound)
-{
-	int cur_no = lower_bound-1;
-	bool prime = false;
-	while(!prime){
-		cur_no++;
-		prime = true;
-		for(int cur_i = 2,end = (int)sqrt((double)cur_no); cur_i<=end; cur_i++){
-			if(cur_no%cur_i==0){
-				prime = false;
-				break;
-			}
-		}
-	}
-	return cur_no;
-}
-//Morph End - added by AndCycle, minor tweak - prime
-
 // ==> Show in MSN7 [TPT] - Stulle
 //TODO: cycle around different informations: speed, server name,...
+// done some of it! :) - Stulle
 /* This code is based in toaster winamp plugin code by shaneh
 http://forums.msnfanatic.com/index.php?showtopic=11311*/
 void UpdateMSN(float upRate, float upOvRate, float downRate, float downOvRate, bool killMSN)
@@ -4380,126 +4315,179 @@ void UpdateMSN2(CString Connection)
 }
 // <== Show in MSN7 [TPT] - Stulle
 
-// ==> Connection Checker [eWombat/WiZaRd] - Stulle
-#define SAFE_DELETE(p)       { if(p) { delete (p);     (p)=NULL; } } 
-
-int FindWebAddress(char* szAuthLine,DWORD &ip,CString *fullip) 
-{ 
-	DWORD dwRet = 0; 
-	BOOL bResult; 
-	struct in_addr inAddr; 
-	CString sAddr; 
-	DWORD dwIPNr; 
-	ip=0; 
-	//     We want to open a session to checkip.dyndns.org, because in the HTML source this site returns 
-	//     it reports our hostname and IP-number as the site sees us. 
-	CInternetSession *pSession = new CInternetSession(_T("GetIPNr"), 1, INTERNET_OPEN_TYPE_PRECONFIG); 
-	CHttpConnection* pConnection = pSession->GetHttpConnection(_T("checkip.dyndns.org")); 
-
-	CHttpFile* pFile = pConnection->OpenRequest(CHttpConnection::HTTP_VERB_GET, _T("/")); 
-
-	//     Do we have proxy information to send with this request ? 
-	if(szAuthLine[0])                    // Userid/ password specified? 
-		pFile->AddRequestHeaders(CString(szAuthLine), HTTP_ADDREQ_FLAG_ADD, strlen(szAuthLine));  
-
-	//     Now see if we can connect to checkip.dyndns.org 
-	try 
-	{ 
-		bResult = pFile->SendRequest(NULL); 
-	}
-	catch (CInternetException* pEx) 
-	{ 
-		pEx->Delete(); 
-		pFile->Close(); 
-		SAFE_DELETE(pFile); 
-		pConnection->Close(); 
-		SAFE_DELETE(pConnection); 
-		SAFE_DELETE(pSession); 
-		return 0;                              // Apparently no way to go to the Internet 
-	} 
-
-	pFile->QueryInfoStatusCode(dwRet);      
-
-	//     dwRet now contains HTTP return code.  
-	//     Return code in 2xx range means successful connection. 
-	//     Return code 407 means authorization is required. 
-	//     Request successful (returncode 200 through 299)? 
-	if(dwRet / 100 == 2) // Yes! 
-	{ 
-		//<<< eWombat [SMALLFIX] avoid buffer overrun due other html-layout as expected 
-		uint64 size = min(1024*8,pFile->GetLength()); 
-		char *p = new char[(UINT)((ULONGLONG)size+1U)]; 
-		char *q = p; 
-		UINT len=pFile->Read(p, (UINT)((ULONGLONG)size));               // Now read max. first 1024*8 bytes of HTML. Should be enough. 
-		p[len]=(char)0; 
-		dwIPNr = 0; 
-		while(len && *p) 
-		//<<< eWombat [SMALLFIX] avoid buffer overrun due other html-layout as expected 
-		{ 
-			int n = strcspn(p, "1234567890"); 
-			p += n; 
-			dwIPNr = GetValidIP(&p);     // Go find IP-number 
-			if(dwIPNr)  
-				{      
-				// Found IP-number other than 0.0.0.0 ? 
-				ip=(uint32)dwIPNr;           
-				memmove (&inAddr, &dwIPNr, 4); 
-				sAddr = inet_ntoa (inAddr); 
-				if (fullip!=NULL) 
-					fullip->Format(_T("%s"), sAddr);  
-			} 
-		} 
-		SAFE_DELETE(q); 
-	} 
-	pFile->Close(); 
-	SAFE_DELETE(pFile); 
-	pConnection->Close(); 
-	SAFE_DELETE(pConnection); 
-	SAFE_DELETE(pSession); 
-	return dwRet; 
-}
-long GetValidIP(char **szText)          //     Find a valid IP-number in szText 
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+// Compares strings using wildcards * and ?.
+// Credited To: Jack Handy
+int wildcmp(TCHAR *wild, TCHAR *string)
 {
-	char *p, *s; 
-	int n; 
+	TCHAR *cp = NULL, *mp = NULL;
 
-	p = s = *szText; 
-
-	// An IP address can never be shorter than 7 characters 
-	n = strspn(p, "1234567890."); 
-	if (n < 7)  
-	{ 
-		*szText = p + n; 
-		return 0; 
+	while ((*string) && (*wild != '*'))
+	{
+		if ((*wild != *string) && (*wild != '?'))
+			return 0;
+		wild++;
+		string++;
 	}
-	// It should consist of 4 groups 
-	for (int i = 0; i < 4; i++)  
-	{ 
-		// Each group should be a number of at least 1 and at most 3 digits 
-		n = strspn(p, "1234567890"); 
-		if ((n < 1) || (n > 3))  
-		{ 
-			*szText = p + n; 
-			return 0; 
-		} 
-		p += n; 
-		// And separated by a period 
-		if (i == 3)  
-		{ 
-			if (*p == '.')  
-			{ 
-				*szText = p + 1; 
-				return 0; 
-			} 
-			else  
-				*p = '\0'; 
-		} 
-		p++; 
-	} 
-	*szText = p; 
-	return inet_addr(s); 
+
+	while (*string)
+	{
+		if (*wild == '*')
+		{
+			if (!*++wild)
+				return 1;
+			mp = wild;
+			cp = string+1;
+		}
+		else if ((*wild == *string) || (*wild == '?'))
+		{
+			wild++;
+			string++;
+		}
+		else
+		{
+			wild = mp;
+			string = cp++;
+		}
+	}
+
+	while (*wild == '*')
+		wild++;
+	return !*wild;
 }
-// <== Connection Checker [eWombat/WiZaRd] - Stulle
+
+ULONG CastXBytesToI(const CString& strExpr)
+{
+	ULONG ulNum;
+	TCHAR szUnit[40];
+	int iArgs = _stscanf(strExpr, _T("%u%s"), &ulNum, szUnit);
+	if (iArgs <= 0)
+		return 0;
+	if (iArgs == 2){
+		CString strUnits(szUnit);
+		strUnits.Trim();
+		if (!strUnits.IsEmpty()){
+			//MORPH START - Fixed by SiRoB, Now Right For multilanguage
+			CString strBytes = GetResString(IDS_BYTES);
+			if (strUnits.CompareNoCase(strBytes.Left(1)) == 0 || strUnits.CompareNoCase(strBytes) == 0)
+				return ulNum * 1U; // Bytes
+			else if (strUnits.CompareNoCase(_T("k")) == 0 || strUnits.CompareNoCase(GetResString(IDS_KBYTES)) == 0 || strUnits.CompareNoCase(_T("k")+strBytes) == 0)
+				return ulNum * 1024U; // KBytes
+			else if (strUnits.CompareNoCase(_T("m")) == 0 || strUnits.CompareNoCase(GetResString(IDS_MBYTES)) == 0 || strUnits.CompareNoCase(_T("m")+strBytes) == 0)
+				return ulNum * 1024U*1024; // MBytes
+			else if (strUnits.CompareNoCase(_T("g")) == 0 || strUnits.CompareNoCase(GetResString(IDS_GBYTES)) == 0 || strUnits.CompareNoCase(_T("g")+strBytes) == 0)
+				return ulNum * 1024U*1024U*1024U; // GBytes
+			else{
+				AfxMessageBox(GetResString(IDS_SEARCH_EXPRERROR) + _T("\n\n") + GetResString(IDS_SEARCH_INVALIDMINMAX));
+				return 0;
+			}
+			//MORPH END - Fixed by SiRoB, Now Right For multilanguage
+		}
+	}
+
+	return ulNum * 1024U*1024U; // Default = MBytes
+}
+
+CString CastItoUIXBytes(uint64 count)
+{
+	CString buffer;
+	if (count < 1024)
+		buffer.Format(_T("%I64u%s"), count, GetResString(IDS_BYTES));
+	else if (count < 1048576)
+		buffer.Format(_T("%I64u%s"), (uint64)(count/1024), GetResString(IDS_KBYTES));
+	else if (count < 1073741824)
+		buffer.Format(_T("%I64u%s"), (uint64)(count/1048576), GetResString(IDS_MBYTES));
+	else
+		buffer.Format(_T("%I64u%s"), (uint64)(count/1073741824), GetResString(IDS_GBYTES));
+	return buffer;
+}
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
+// ==> Feedback personalization [Stulle] - Stulle
+CString GetColorHex(COLORREF clr)
+{
+	CString strRes,tmp;
+	tmp.Format(_T("%X"),GetRValue(clr));
+	if(tmp.GetLength() < 2)
+		strRes.AppendFormat(_T("0%s"),tmp);
+	else
+		strRes.Append(tmp);
+
+	tmp.Format(_T("%X"),GetGValue(clr));
+	if(tmp.GetLength() < 2)
+		strRes.AppendFormat(_T("0%s"),tmp);
+	else
+		strRes.Append(tmp);
+
+	tmp.Format(_T("%X"),GetBValue(clr));
+	if(tmp.GetLength() < 2)
+		strRes.AppendFormat(_T("0%s"),tmp);
+	else
+		strRes.Append(tmp);
+	return strRes;
+}
+
+CString GetColoredText(UINT in, int iStyle)
+{
+	CString strRes;
+	strRes.Format(_T("%u"),in);
+	return GetColoredText(strRes,iStyle);
+}
+
+CString GetColoredText(CString str, int iStyle)
+{
+	// just give the string back if we don't use personalized settings
+	if(thePrefs.GetColorFeedback() == false)
+		return str;
+
+	// Get styles
+	StylesStruct style, defaultStyle;
+	thePrefs.GetStyle(feedback_styles, abs(iStyle), &style);
+	thePrefs.GetStyle(feedback_styles, style_f_default, &defaultStyle);
+
+	// Merge styles
+	DWORD nFlags = 0;
+	COLORREF nFontColor = CLR_DEFAULT;
+	nFlags = style.nFlags;
+	if((nFlags & STYLE_FONTMASK) == 0)
+		nFlags = defaultStyle.nFlags;
+	nFontColor = style.nFontColor;
+	if(nFontColor == CLR_DEFAULT)
+		nFontColor = defaultStyle.nFontColor;
+
+	// Create resulting string and empty it for sure
+	CString strRes;
+	strRes.Empty();
+
+	if(iStyle != -style_f_label)
+	{
+		if(nFontColor != CLR_DEFAULT)
+			strRes.AppendFormat(_T("[color=#%s]"),GetColorHex(nFontColor));
+		if(nFlags & STYLE_BOLD)
+			strRes.Append(_T("[b]"));
+		if(nFlags & STYLE_UNDERLINE)
+			strRes.Append(_T("[u]"));
+		if(nFlags & STYLE_ITALIC)
+			strRes.Append(_T("[i]"));
+
+		strRes.Append(str);
+	}
+
+	if(iStyle != style_f_label)
+	{
+		if(nFlags & STYLE_ITALIC)
+			strRes.Append(_T("[/i]"));
+		if(nFlags & STYLE_UNDERLINE)
+			strRes.Append(_T("[/u]"));
+		if(nFlags & STYLE_BOLD)
+			strRes.Append(_T("[/b]"));
+		if(nFontColor != CLR_DEFAULT)
+			strRes.Append(_T("[/color]"));
+	}
+
+	return strRes;
+}
+// <== Feedback personalization [Stulle] - Stulle
 
 // >> add by Ken
 CString EmptyString;

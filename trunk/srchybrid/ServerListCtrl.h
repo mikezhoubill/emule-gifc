@@ -39,10 +39,10 @@ protected:
 
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 
-        //Commander - Added: CountryFlag - Start
+	//Commander - Added: CountryFlag - Start IP to Country
 	virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct);
 	CImageList imagelist;
-        //Commander - Added: CountryFlag - End
+	//Commander - Added: CountryFlag - End
 
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);

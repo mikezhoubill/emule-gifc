@@ -11,8 +11,8 @@
 #define	MP_ABOUTBOX				0x150
 #define MP_VERSIONCHECK			0x160
 #define MP_MINIMIZETOTRAY		0x170
-#define MP_MVERSIONCHECK		0x180//MORPH - Added by SiRoB, New Version check
-#define MP_SVERSIONCHECK		0x190 // StulleMule Version Check - Stulle
+#define MP_MVERSIONCHECK		0x180 //Xman versions check
+#define MP_SVERSIONCHECK		0x190 // ScarAngel Version Check - Stulle
 
 #define MP_MESSAGE				10102
 #define MP_DETAIL				10103
@@ -20,56 +20,7 @@
 #define MP_REMOVEFRIEND			10105
 #define MP_SHOWLIST				10106
 #define MP_FRIENDSLOT			10107
-//MORPH START - Added by SiRoB, Friend Addon
-#define MP_REMOVEALLFRIENDSLOT	10108
-//MORPH END   - Added by SiRoB, Friend Addon
 
-//MORPH START - Added by SiRoB, ZZ Upload System
-#define MP_POWERSHARE_DEFAULT	10150
-#define MP_POWERSHARE_OFF       10151
-#define MP_POWERSHARE_ON        10152
-#define MP_POWERSHARE_AUTO      10153
-//MORPH START - Added by SiRoB, POWERSHARE Limit
-#define MP_POWERSHARE_LIMITED   10154
-#define MP_POWERSHARE_LIMIT     10155
-#define MP_POWERSHARE_LIMIT_SET 10156
-//MORPH END   - Added by SiRoB, POWERSHARE Limit
-
-//MORPH	Start	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-#define MP_SPREADBAR_DEFAULT	10160
-#define MP_SPREADBAR_OFF		10161
-#define MP_SPREADBAR_ON			10162
-#define MP_SPREADBAR_RESET		10163
-//MORPH	End	- Added by AndCycle, SLUGFILLER: Spreadbars - per file
-
-//MORPH START - Added by SiRoB, Keep Permission flag
-#define MP_PERMDEFAULT			10165
-#define MP_PERMALL				10166
-#define MP_PERMFRIENDS			10167
-#define MP_PERMNONE				10168
-// Mighty Knife: Community visible filelist
-#define MP_PERMCOMMUNITY		10169
-// [end] Mighty Knife
-//MORPH END   - Added by SiRoB, Keep Permission flag
-
-//MORPH START - Added by SiRoB, HIDEOS
-#define MP_HIDEOS_DEFAULT       10170
-#define MP_HIDEOS_SET           10171
-#define MP_SELECTIVE_CHUNK      10180
-#define MP_SELECTIVE_CHUNK_0    10181
-#define MP_SELECTIVE_CHUNK_1    10182
-//MORPH END   - Added by SiRoB, HIDEOS
-//MORPH START - Added by SiRoB, SHARE_ONLY_THE_NEED
-#define MP_SHAREONLYTHENEED     10190
-#define MP_SHAREONLYTHENEED_0   10191
-#define MP_SHAREONLYTHENEED_1   10192
-//MORPH END   - Added by SiRoB, SHARE_ONLY_THE_NEED
-//MORPH START - Added by IceCream, copy feedback feature
-#define	MP_COPYFEEDBACK			10197
-#define MP_COPYFEEDBACK_US		10198
-//MORPH END   - Added by IceCream, copy feedback feature
-#define MP_LIST_REQUESTED_FILES	10199	//MORPH START - Added by Yun.SF3, List Requested Files
-#define MP_FORCE				10200	//shadow#(onlydownloadcompletefiles) //EastShare - Added by AndCycle, Only download complete files v2.1 (shadow)
 #define MP_CANCEL				10201
 #define MP_STOP					10202
 #define MP_PAUSE				10203
@@ -128,13 +79,6 @@
 #define MP_VIEW1_ONQUEUE		10258
 #define MP_VIEW1_DOWNLOADING	10259
 #define MP_VIEW1_CLIENTS		10260
-#define MP_VIEW1_DOWNLOADCLIENT	10261 //MORPH - Added by SiRoB, DownloadClientList
-#define MP_VIEW2_DOWNLOADCLIENT	10262 //MORPH - Added by SiRoB, DownloadClientList
-// ==> Set and save Follow the Majority per file - Stulle
-/*
-#define MP_FOLLOW_THE_MAJORITY  10263 // EastShare       - FollowTheMajority by AndCycle
-*/
-// <== Set and save Follow the Majority per file - Stulle
 // >> add by Ken
 #define MP_HM_GIFC				10270 // auto download GIFC tools menu item
 #define MP_HM_GIFC1				10271 // search/download GIFC tools menu item
@@ -152,12 +96,9 @@
 #define MP_GETED2KLINK			10305
 #define MP_GETHTMLED2KLINK		10306
 #define MP_METINFO				10307
-//MORPH - Removed by SiRoB, See on top
-/*
 #define MP_PERMALL				10308
 #define MP_PERMFRIENDS			10309
 #define MP_PERMNONE				10310
-*/
 #define MP_CONNECTTO			10311
 #define MP_REMOVE				10312
 #define MP_REMOVEALL			10313
@@ -208,46 +149,6 @@
 #define	MP_SHOW_FILESIZE_MBYTE	10358
 #define MP_MARKASSPAM			10359
 #define MP_UNSHAREFILE			10360
-
-// khaos::categorymod+
-#define MP_CAT_SHOWHIDEPAUSED	10360
-#define MP_CAT_SETRESUMEORDER	10361
-#define	MP_CAT_ORDERAUTOINC		10362
-#define MP_CAT_ORDERSTEPTHRU	10363
-#define MP_CAT_ORDERALLSAME		10364
-//#define MP_CAT_RESUMENEXT		10365 see MP_RESUMENEXT
-#define	MP_CAT_PAUSELAST		10366
-#define MP_CAT_STOPLAST			10367
-#define MP_CAT_MERGE			10368
-
-// For the downloadlist menu
-#define MP_FORCEA4AF			10370
-#define	MP_FORCEA4AFONFLAG		10371
-#define MP_FORCEA4AFOFFFLAG		10372
-
-// 10373 to 10375 reserved for A4AF menu items.
-#define MP_CAT_A4AF			10373
-// khaos::categorymod-
-
-// Mighty Knife: CRC32-Tag
-#define MP_CRC32_CALCULATE	 10380
-#define MP_CRC32_TAG         10381
-#define MP_CRC32_ABORT		 10382
-#define MP_CRC32_RECALCULATE 10383
-// [end] Mighty Knife
-
-// Mighty Knife: Mass Rename
-#define MP_MASSRENAME    		10385
-// [end] Mighty Knife
-
-// Mighty Knife: Context menu for editing news feeds
-#define MP_NEWFEED				10390
-#define MP_EDITFEED				10391
-#define MP_DELETEFEED           10392
-#define MP_DELETEALLFEEDS		10393
-// [end] Mighty Knife
-
-#define MP_DOWNLOADALLFEEDS		10394 //Commander - Added: Update All Feeds at once
 
 // quick-speed changer
 #define MP_QS_U10				10501
@@ -303,38 +204,94 @@
 //Note: reserve at least 100 ID's (Irc_ChanCommands-Irc_ChanCommands+99).
 #define Irc_ChanCommands		Irc_OpCommands+50
 
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+
+//Xman Xtreme Downloadmanager
+#define MP_SWAP_A4AF_TO_THIS	14003
+#define MP_SWAP_A4AF_TO_OTHER   14004
+#define MP_STOP_CLIENT			14005
+#define MP_ALL_A4AF_TO_THIS	    14006
+#define MP_ALL_A4AF_TO_OTHER	14007
+#define MP_DROPNONEEDEDSRCS		14008
+#define MP_DROPQUEUEFULLSRCS	14009
+//Xman PowerRelease
+#define MP_PRIOPOWER			14010
+//Xman add search to cancelled
+#define MP_ADDSEARCHCANCELLED	14011
+
+#define	MP_LIST_REQUESTED_FILES 14012 // - show requested files (sivka/Xman)
+
+//Xman [MoNKi: -Downloaded History-]
+#define MP_VIEWSHAREDFILES		14013
+#define MP_CLEARHISTORY			14014
+#define MP_MERGEHISTORY			14015
+//Xman end
+
+#define MP_ULFEEDBACK           14016 // Xman: IcEcRacKer Copy UL-feedback
+#define MP_DROPLEECHER			14017 //Xman Anti-Leecher
+#define	MP_PREALOCATE			14018 //Xman manual file allocation (Xanatos)
+#define MP_MASSRENAME    		14019 //Xman Mass Rename (Morph)
+
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 #define MP_GETFRIENDED2KLINK		15008
 #define MP_GETHTMLFRIENDED2KLINK	15009
 #define MP_GETEMFRIENDMETFROMURL	15010
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 
-//MORPH START - Added, Downloaded History [Monki/Xman]
-#define MP_VIEWSHAREDFILES			150011
-#define MP_CLEARHISTORY				150012
-#define MP_MERGEHISTORY				150013
-//MORPH END   - Added, Downloaded History [Monki/Xman]
+#define MP_SIVKA_FILE_SETTINGS	20000 // File Settings [sivka/Stulle] - Stulle
 
-// ==> drop sources - Stulle
-#define MP_SIVKA_FILE_SETTINGS	20000
+// ==> advanced manual dropping - Stulle
 #define MP_DROPLOWTOLOWIPSRCS	20001
 #define MP_DROPUNKNOWNERRORBANNEDSRCS 20002
-#define MP_DROPNONEEDEDSRCS		20003
-#define MP_DROPFULLQSRCS		20004
-#define MP_DROPHIGHQRSRCS		20005
-#define MP_CLEANUP_NNS_FQS_HQRS_NONE_ERROR_BANNED_LOWTOLOWIP 20006
-#define MP_DROPLEECHER          20007
-// <== drop sources - Stulle
+#define MP_DROPHIGHQRSRCSXMAN	20003
+#define MP_DROPHIGHQRSRCSSIVKA	20004
+#define MP_CLEANUP_NNS_FQS_NONE_ERROR_BANNED_LOWTOLOWIP 20005
+// <== advanced manual dropping - Stulle
 
-#define MP_HM_BMI 20010 // BMI calculator - Stulle
+// ==> Copy feedback feature [MorphXT] - Stulle
+#define	MP_COPYFEEDBACK			20020
+#define MP_COPYFEEDBACK_US		20021
+// <== Copy feedback feature [MorphXT] - Stulle
 
-// ==> Limit PS by amount of data uploaded - Stulle
-#define MP_PS_AMOUNT_LIMIT     20020
-#define MP_PS_AMOUNT_LIMIT_SET 20021
-// <== Limit PS by amount of data uploaded - Stulle
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+#define MP_CAT_SHOWHIDEPAUSED	20040
+#define MP_CAT_SETRESUMEORDER	20041
+#define	MP_CAT_ORDERAUTOINC		20042
+#define MP_CAT_ORDERSTEPTHRU	20043
+#define MP_CAT_ORDERALLSAME		20044
+//#define MP_CAT_RESUMENEXT		20045 see MP_RESUMENEXT
+#define	MP_CAT_PAUSELAST		20046
+#define MP_CAT_STOPLAST			20047
+#define MP_CAT_MERGE			20048
+#define MP_CAT_DL_MODE          20049
+// reserved till 20051
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
-// ==> Set and save Follow the Majority per file - Stulle
-#define MP_FOLLOWTHEMAJORITY     20030
-#define MP_FOLLOWTHEMAJORITY_0   20031
-#define MP_FOLLOWTHEMAJORITY_1   20032
-// <== Set and save Follow the Majority per file - Stulle
+#define MP_SPREADBAR_RESET      20100 // Spread bars [Slugfiller/MorphXT] - Stulle
+// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+#define MP_HIDEOS_DEFAULT       20110
+#define MP_HIDEOS_SET           20111
+#define MP_SELECTIVE_CHUNK      20120
+#define MP_SELECTIVE_CHUNK_0    20121
+#define MP_SELECTIVE_CHUNK_1    20122
+#define MP_SHAREONLYTHENEED     20130
+#define MP_SHAREONLYTHENEED_0   20131
+#define MP_SHAREONLYTHENEED_1   20132
+// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+// ==> PowerShare [ZZ/MorphXT] - Stulle
+#define MP_POWERSHARE_DEFAULT	20140
+#define MP_POWERSHARE_OFF       20141
+#define MP_POWERSHARE_ON        20142
+#define MP_POWERSHARE_AUTO      20143
+#define MP_POWERSHARE_LIMITED   20144
+#define MP_POWERSHARE_LIMIT     20145
+#define MP_POWERSHARE_LIMIT_SET 20146
+// <== PowerShare [ZZ/MorphXT] - Stulle
+// ==> Limit PS by amount of data uploaded [Stulle] - Stulle
+#define MP_PS_AMOUNT_LIMIT      20150
+#define MP_PS_AMOUNT_LIMIT_SET  20151
+// <== Limit PS by amount of data uploaded [Stulle] - Stulle
+// ==> Follow The Majority [AndCycle/Stulle] - Stulle
+#define MP_FOLLOWTHEMAJORITY     20160
+#define MP_FOLLOWTHEMAJORITY_0   20161
+#define MP_FOLLOWTHEMAJORITY_1   20162
+// <== Follow The Majority [AndCycle/Stulle] - Stulle

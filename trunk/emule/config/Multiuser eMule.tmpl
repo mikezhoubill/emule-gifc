@@ -26,6 +26,7 @@
 <html>
 <meta http-equiv="content-type" content="text/html; charset=[CharSet]">
 <head>
+<META NAME="ROBOTS" CONTENT="NOINDEX,NOFOLLOW">
 <link rel="SHORTCUT ICON" href="favicon.ico">
 <title>[eMuleAppName] [version] - [WebControl]</title>
 <script type="text/javascript">
@@ -95,7 +96,7 @@ function preload_images()
 </script>
 
 </head>
-<body background="main_bg.gif" text=white link=white vlink=white alink=white onload="javascript:preload_images(); document.login.p.focus();">
+<body background="main_bg.gif" text=white link=white vlink=white alink=white onload="javascript:preload_images(); [InputFocus]">
 <table align=center border=0 cellpadding=4 cellspacing=0 width="100%" height="100%">
 <tr>
         <td align=center valign=middle>
@@ -200,6 +201,131 @@ function preload_images()
 </body>
 </html>
 <--TMPL_LOGIN_END-->
+
+
+
+
+<-- ################################################################# -->
+<-- ############################ FAILEDLOGIN ######################## -->
+<-- ################################################################# -->
+
+<--TMPL_FAILEDLOGIN-->
+<html>
+<meta http-equiv="content-type" content="text/html; charset=[CharSet]">
+<head>
+    <META NAME="ROBOTS" CONTENT="NOINDEX,NOFOLLOW">
+    <title>
+       log failed [eMuleAppName] [version] - [WebControl]
+    </title>
+</head>
+<body background="main_bg.gif" text=white link=white vlink=white alink=white onload="javascript:document.login.p.focus();">
+<table align=center border=0 cellpadding=4 cellspacing=0 width="100%" height="100%">
+<tr>
+        <td align=center valign=middle>
+
+          <table align=center border=0 cellpadding=0 cellspacing=0 width="407">
+            <tr>
+              <td style="height: 12px" background="./login_top.gif" height="12">
+              </td>
+            </tr>
+            <tr>
+              <td height="320">
+
+                <table align=center border=0 cellpadding=0 cellspacing=0 width="100%" height="100%">
+                  <tr>
+                    <td width="4" background="./login_lefttop.gif">
+                      <img src="./transparent.gif" alt="" border="0" />
+                    </td>
+                    <td background="./login_topdown.gif" align="center">
+
+                      <table align=center border=0 cellpadding=0 cellspacing=0 width="100%" height="100%">
+                        <tr>
+                          <td align="center">
+                            <a href="http://emule-project.net" target="_blank"><img src="logo.jpg"></a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" height="70">
+                            <font face=Tahoma style="font-size:10pt;"><p><b>[WebControl]</b> | [Login]</p>
+                            [BanMessage]</font>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </td>
+                    <td width="5" background="./login_righttop.gif">
+                      <img src="./transparent.gif" alt="" border="0" />
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+            <tr>
+              <td style="height: 3px" background="./login_topseperator.gif" height="3">
+              </td>
+            </tr>
+            <tr>
+              <td height="130">
+
+                <table align=center border=0 cellpadding=0 cellspacing=0 width="100%" height="100%">
+                  <tr>
+                    <td width="4" background="./login_lefttop.gif">
+                      <img src="./transparent.gif" alt="" border="0" />
+                    </td>
+                    <td background="./login_downmain.gif" align="center">
+                      <form action="" method="POST" name="login">
+                <!-- [iONiX] - Aireoreion: Advanced Webinterface //-->
+                <table border=0 cellspacing=4>
+                  <tr>
+                    <td colspan=2>&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;">[Username]  </font></td>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;"><input disabled type="text" name=u maxlength=12 size=30 style="border-width: 1px; border-color: black; border-style:none;" value=""></font>
+                    <input type="hidden" name=w value="password" disabled></td>
+                  </tr>
+                  <tr>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;">[Password]  </font></td>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;"><input disabled type="password" name=p maxlength=12 size=30 style="border-width: 1px; border-color: black; border-style:none;" value=""></font>
+                    <input type="hidden" name=v value="username" disabled></td>
+                  </tr>
+                  <tr>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;">[RemainLoggedIn] </font></td>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;"><input disabled type="checkbox" name=RemainLoggedIn style="border-width: 1px; border-color: black; border-style:none;"></font></td>
+                  </tr>
+                  <tr>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;">[MemLastUser] </font></td>
+                    <td align="left"><font face=Tahoma style="font-size:10pt;"><input disabled type="checkbox" [MemLastUserChecked] name=MemLastUser style="border-width: 1px; border-color: black; border-style:none;"></font></td>
+                  </tr>
+                  <tr>
+                    <td align="center" colspan=2><input disabled type="submit" value="[LoginNow]"></td>
+                  </tr>
+                  </table>
+                <!-- [iONiX] - Aireoreion: Advanced Webinterface //-->
+                    </td>
+                    <td width="5" background="./login_righttop.gif">
+                      <img src="./transparent.gif" alt="" border="0" />
+                    </td>
+                  </tr>
+                </table>
+
+              </td>
+            </tr>
+            <tr>
+              <td style="height: 12px" background="./login_bottom.gif" height="12">
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    </form>
+</body>
+</html>
+<--TMPL_FAILEDLOGIN_END-->
+
+
 
 
 
@@ -379,9 +505,15 @@ function upmenu(event,admin,clientextra,userhash)
 
 	if(admin == "admin")
 	{
-		if(clientextra == "friend")
+		if(clientextra == "friendslot")
 		{
 			code = '<a href="?ses=[Session]&amp;w=transfer&op=removefriend&amp;userhash=' + userhash + '"><div class="menuitems"><img class="menuimages" src="l_friend.gif" alt="[Friend]"><img class="menuchecked" src="checked.gif">[Friend]&nbsp;</div></a>'
+			code += '<a href="?ses=[Session]&amp;w=transfer&op=removefriendslot&amp;userhash=' + userhash + '"><div class="menuitems"><img class="menuimages" src="l_friendslot.gif" alt="[Friendslot]"><img class="menuchecked" src="checked.gif">[Friendslot]&nbsp;</div></a>'
+		}
+		else if(clientextra == "friend")
+		{
+			code = '<a href="?ses=[Session]&amp;w=transfer&op=removefriend&amp;userhash=' + userhash + '"><div class="menuitems"><img class="menuimages" src="l_friend.gif" alt="[Friend]"><img class="menuchecked" src="checked.gif">[Friend]&nbsp;</div></a>'
+			code += '<a href="?ses=[Session]&amp;w=transfer&op=addfriendslot&amp;userhash=' + userhash + '"><div class="menuitems"><img class="menuimages" src="l_friendslot.gif" alt="[Friendslot]"><img class="menuchecked" src="checked_no.gif">[Friendslot]&nbsp;</div></a>'
 		}
 		else
 		{
@@ -498,7 +630,7 @@ function powersharemenu(event,admin,session,filehash,newmode)
 {
 	var code = new Array()
 
-	if(admin == "admin")
+	if(admin == "admin" && newmode != "Incomplete")
 	{
 		if(newmode == "Default")
 			code = '<a href="?ses=' + session + '&w=shared&ps=def&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked.gif">[PsDefault]&nbsp;</div></a>'
@@ -551,6 +683,10 @@ function sharedpriomenu(event,admin,session,filehash,priority)
 			code += '<a href="?ses=' + session + '&w=shared&prio=release&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked.gif">[PriorityRelease]&nbsp;</div></a>'
 		else
 			code += '<a href="?ses=' + session + '&w=shared&prio=release&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked_no.gif">[PriorityRelease]&nbsp;</div></a>'
+		if(priority == "PowerRelease")
+			code += '<a href="?ses=' + session + '&w=shared&prio=PowerRelease&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked.gif">[PriorityPower-Release]&nbsp;</div></a>'
+		else
+			code += '<a href="?ses=' + session + '&w=shared&prio=PowerRelease&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked_no.gif">[PriorityPower-Release]&nbsp;</div></a>'
 		if(priority == "Auto")
 			code += '<a href="?ses=' + session + '&w=shared&prio=auto&hash=' + filehash + '"><div class="menuitems"><img class="menuchecked" src="checked.gif">[PriorityAuto]&nbsp;</div></a>'
 		else
@@ -608,7 +744,7 @@ function showmenu(e,code,downstate)
 
 function contains_ns6(a, b)
 {
-	if (b = null)
+	if (b == null)
 		return false;
 	//Determines if 1 element in contained in another- by Brainjar.com
 	while (b.parentNode)
@@ -1187,6 +1323,7 @@ text-decoration: none;
 .upqueue-none-line, .upqueue-none-line-left,
 .upqueue-banned-line, .upqueue-banned-line-left,
 .upqueue-friend-line, .upqueue-friend-line-left,
+.upqueue-friendslot-line, .upqueue-friendslot-line-left,
 .upqueue-credit-line, .upqueue-credit-line-left,
 .upqueue-next-line, .upqueue-next-line-left,
 .search-header, .search-header-left, .search-header-right, .search-main, .search-line, .search-line-left, .search-line-right,
@@ -1228,7 +1365,7 @@ background-color : #005784;
 .up-header, .up-line-connecting, .up-line-uploading,
 .server-header, .server-line-disconnected, .server-line-high, .server-line-low, .server-line-connecting, .server-line-failed,
 .shared-header, .shared-line-file, .shared-line-filedown,
-.upqueue-header, .upqueue-none-line, .upqueue-banned-line, .upqueue-friend-line, .upqueue-credit-line, .upqueue-next-line,
+.upqueue-header, .upqueue-none-line, .upqueue-banned-line, .upqueue-friend-line, .upqueue-friendslot-line, .upqueue-credit-line, .upqueue-next-line,
 .search-header, .search-line, .addserver-header, .addserver-line
 {
 text-align : center;
@@ -1237,7 +1374,7 @@ text-align : center;
 .up-header-left, .upqueue-header-left, .up-line-uploading-left, .up-line-connecting-left,
 .server-header-left, .server-line-disconnected-left, .server-line-high-left, .server-line-low-left, .server-line-connecting-left, .server-line-failed-left, .shared-header-left,
 .shared-line-file-left, .shared-line-filedown-left,
-.upqueue-none-line-left, .upqueue-banned-line-left, .upqueue-friend-line-left, .upqueue-credit-line-left, .upqueue-next-line-left,
+.upqueue-none-line-left, .upqueue-banned-line-left, .upqueue-friend-line-left, .upqueue-friendslot-line-left, .upqueue-credit-line-left, .upqueue-next-line-left,
 .search-line-left, .search-header-left, .search-main
 {
 text-align : left;
@@ -1285,6 +1422,7 @@ color : #000000;
 .upqueue-none-line, .upqueue-none-line-left,
 .upqueue-banned-line, .upqueue-banned-line-left,
 .upqueue-friend-line, .upqueue-friend-line-left,
+.upqueue-friendslot-line, .upqueue-friendslot-line-left,
 .upqueue-credit-line, .upqueue-credit-line-left,
 .upqueue-next-line, .upqueue-next-line-left,
 .search-line, .search-line-left, .search-line-right, .addserver-line
@@ -1299,6 +1437,7 @@ color : #ffffff;
 }
 .server-line-high, .server-line-high-left, .server-line-high a:active, .server-line-high a:link, .server-line-high a:visited,
 .upqueue-friend-line, .upqueue-friend-line-left,
+.upqueue-friendslot-line, .upqueue-friendslot-line-left,
 .up-line-uploading, .up-line-uploading-left,
 .down-line-downloading, .down-line-downloading-left, .down-line-downloading-right, .down-line-downloading a:link, .down-line-downloading a:active, .down-line-downloading a:visited
 {
@@ -2161,7 +2300,7 @@ function searchange2() {
 <br />
 <table align=center border=0 cellpadding=4 cellspacing=0 width="95%">
 <tr>
- <td class="smallheader" colspan=8 style="background-color: #000000"><b><img src="l_shared.gif" align="middle">&nbsp;<a href="#" onMouseover="columnmenu(event,'shared','menu','[FilenameM]','[Filename]','[FileTransferredM]','[FileTransferred]','[FileRequestsM]','[FileRequests]','[FileAcceptsM]','[FileAccepts]','[SizeM]','[Size]','[CompletesM]','[Completes]','[PowerShareM]','[PowerShare]','[PriorityM]','[Priority]','','','','','','','','')" onMouseout="delayhidemenu()">[SharedList]</a>&nbsp;[Message]</b></td>
+ <td class="smallheader" colspan=9 style="background-color: #000000"><b><img src="l_shared.gif" align="middle">&nbsp;<a href="#" onMouseover="columnmenu(event,'shared','menu','[FilenameM]','[Filename]','[FileTransferredM]','[FileTransferred]','[FileRequestsM]','[FileRequests]','[FileAcceptsM]','[FileAccepts]','[SizeM]','[Size]','[CompletesM]','[Completes]','[PowerShareM]','[PowerShare]','[PriorityM]','[Priority]','','','','','','','','')" onMouseout="delayhidemenu()">[SharedList]</a>&nbsp;[Message]</b></td>
 </tr>
 <tr>
  <td valign=middle class="shared-header-left"><table cellspacing="0" cellpadding="0" border="0" valign=top class="shared-header-left"><tr><td width="16" align="center"><a href="?ses=[Session]&amp;w=shared&[SortState]"><b>&times;</b></a></td><td>&nbsp;</td><td width="16" align="center"><a href="?ses=[Session]&amp;w=shared&[SortType]"><b>&times;</b></a></td><td><a href="?ses=[Session]&amp;w=shared&[SortName]"><b>[Filename][FilenameI]</b></a></td></tr></table></td>

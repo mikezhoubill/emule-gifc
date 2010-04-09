@@ -19,7 +19,7 @@ enum EUserWndMessages
 	WEB_ADDDOWNLOADS,
 	WEB_CATPRIO,
 	WEB_ADDREMOVEFRIEND,
-    WEB_COPYDATA, // MORPH leuk_he:run as ntservice v1..
+	WEB_COPYDATA, // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
 	// VC
 	UM_VERSIONCHECK_RESPONSE,
@@ -46,26 +46,24 @@ enum EUserWndMessages
 	UM_OSCOPEPOSITION,
 	UM_DELAYED_EVALUATE,
 	UM_ARCHIVESCANDONE,
-
-#ifdef USE_OFFICIAL_UPNP
-	// UPnP
-	UM_UPNP_RESULT,
-#endif
-
-	// Mighty Knife: CRC32-Tag - save rename
-	UM_CRC32_RENAMEFILE,
-	UM_CRC32_UPDATEFILE,
-	// [end] Mighty Knife
-	//MORPH START - Added by SiRoB, Version check
+	//Xman versions check
 	UM_MVERSIONCHECK_RESPONSE,
-	//MORPH END   - Added by SiRoB, Version check
-	//MORPH START leuk_he run as a ntservice v1
-	UM_SERVERSTATUS,
-	//MORPH START leuk_he run as a ntservice v1
-	//MORPH START - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
+	UM_DLPVERSIONCHECK_RESPONSE, //Xman DLP
+	//Xman end
+	// ==> ScarAngel Version Check - Stulle
+	UM_SVERSIONCHECK_RESPONSE,
+	// <== ScarAngel Version Check - Stulle
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	UM_DLPAUTOVERCHECK_RESPONSE,
 	UM_IPFFILTERAUTOVERCHECK_RESPONSE,
-	//MORPH END   - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-	// ==> StulleMule Version Check - Stulle
-	UM_SVERSIONCHECK_RESPONSE
-	// <== StulleMule Version Check - Stulle
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
+
+	UM_SERVERSTATUS // Run eMule as NT Service [leuk_he/Stulle] - Stulle
+
+	// UPnP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+	UM_UPNP_RESULT
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 };

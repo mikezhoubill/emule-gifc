@@ -45,9 +45,6 @@ public:
 	CFriendListCtrl m_FriendListCtrl;
 	CChatSelector chatselector;
 
-	// MORPH (CB) Friendnote START
-	CEdit m_FriendNote;
-	// MORPH (CB) Friendnote END
 protected:
 	friend class CChatSelector;
 	HICON icon_friend;
@@ -82,21 +79,20 @@ protected:
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnStnDblClickFriendIcon();
 	afx_msg void OnSysColorChange();
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 public:
 	bool	UpdateEmfriendsMetFromURL(const CString& strURL);
 protected:
 	afx_msg void	OnBnClickedBnmenu();
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	// ==> Design Settings [eWombat/Stulle] - Max
 protected:
 	CBrush m_brMyBrush;
 	HBRUSH hbr;	
 	COLORREF clrChatColor;
 public:
 	void OnBackcolor(); 
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

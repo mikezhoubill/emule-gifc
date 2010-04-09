@@ -159,15 +159,13 @@ protected:
 	afx_msg LRESULT OnChangeFilter(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnSearchListMenuBtnDropDown(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg HBRUSH OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnNMClickCattab2(NMHDR *pNMHDR, LRESULT *pResult); //MORPH - Added by SiRoB, Selection category support
-
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	
+	afx_msg void OnNMClickCattab2(NMHDR *pNMHDR, LRESULT *pResult); // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	// ==> Design Settings [eWombat/Stulle] - Max
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	void ResizeTab();
 	CBrush m_brMyBrush;
 public:
 	void OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
 };

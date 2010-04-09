@@ -75,7 +75,7 @@ void CSettingsSaver::LoadSettings()
 		cur_file->SetMaxRemoveQRSLimit((uint16)ini.GetInt(L"QRSLimit",thePrefs.GetMaxRemoveQRSLimitDefault()));
 
 		cur_file->SetGlobalHL(ini.GetBool(L"GlobalHL",thePrefs.GetGlobalHlDefault()));
-		cur_file->SetHQRXman(ini.GetBool(L"XmanHQR",true));
+		cur_file->SetHQRXman(ini.GetBool(L"XmanHQR",thePrefs.GetHQRXmanDefault()));
 		cur_file->SetFollowTheMajority(ini.GetInt(L"FTM",-1));
 	}
 
@@ -172,6 +172,7 @@ bool CSettingsSaver::SaveSettings()
 }
 
 /* IMPORT OLD */
+#pragma warning(disable:4296) // expression is always true
 void CSettingsSaver::ImportOldSettings(CPartFile* file)
 {
 	SettingsList daten;
@@ -285,6 +286,7 @@ void CSettingsSaver::ImportOldSettings(CPartFile* file)
 	if (_tremove(datafilepath)) if (errno != ENOENT)
 		AddLogLine(true, _T("Failed to delete %s, you will need to do this manually"), datafilepath);
 }
+#pragma warning(default:4296) // expression is always true
 
 void CSettingsSaver::DeleteOldSettings(CPartFile* file)
 {

@@ -38,7 +38,7 @@ enum EFOCAction{
 	FOC_FWCONNECTIONEXISTS
 };
 
-//MORPH START - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+// ==> Improved ICS-Firewall support [MoNKi] - Max
 /*
 #define EMULE_DEFAULTRULENAME_UDP	_T("eMule_UDP_Port")
 #define EMULE_DEFAULTRULENAME_TCP	_T("eMule_TCP_Port")
@@ -47,11 +47,11 @@ enum EFOCAction{
 #define EMULE_DEFAULTRULENAME_TCP			_T("TCP Port")
 #define EMULE_DEFAULTRULENAME_SERVERUDP		_T("Server UDP Port")
 #define EMULE_DEFAULTRULEDESCRIPTIONFORMAT 	_T("eMule (%s) [%s: %u]")
-// Added by MoNKi [MoNKi: -UPnPNAT Support-]
+// <== Improved ICS-Firewall support [MoNKi] - Max
+// ==> UPnP support [MoNKi] - leuk_he
 #define EMULE_DEFAULTRULENAME_UPNP_TCP		_T("UPnP_TCP_Port")
 #define EMULE_DEFAULTRULENAME_UPNP_UDP		_T("UPnP_UDP_Port")
-// End -UPnPNAT Support-
-//MORPH END   - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+// <== UPnP support [MoNKi] - leuk_he
 
 #define NAT_PROTOCOL_TCP 6
 #define NAT_PROTOCOL_UDP 17
@@ -66,7 +66,7 @@ public:
 	{
 		m_nPortNumber = nPortNumber;
 		m_byProtocol = byProtocol;
-		//MORPH START - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+		// ==> Improved ICS-Firewall support [MoNKi] - Max
 		/*
 		m_strRuleName = strRuleName;
 		*/
@@ -74,7 +74,7 @@ public:
 			strRuleName,
 			(byProtocol == NAT_PROTOCOL_TCP) ? _T("TCP") : _T("UDP"),
 			nPortNumber);
-		//MORPH END   - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+		// <== Improved ICS-Firewall support [MoNKi] - Max
 		m_bRemoveOnExit = bRemoveOnExit;
 	}
 
@@ -117,13 +117,13 @@ protected:
 	bool			DoAction(const EFOCAction eAction, const CICSRuleInfo& riPortRule);			
 	bool			FindRule(const EFOCAction eAction, const CICSRuleInfo& riPortRule, const INetSharingConfigurationPtr pNSC, INetSharingPortMappingPropsPtr* outNSPMP);
 
-	CArray<CICSRuleInfo>	m_liAddedRules;
+	CArray<CICSRuleInfo> m_liAddedRules;
 
 private:
 	INetSharingManager*		m_pINetSM;
 	bool					m_bInited;
 
-//MORPH START - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+// ==> Improved ICS-Firewall support [MoNKi] - Max
 public:
 	void		ClearOld();
 	void		ClearMappingsAtEnd();
@@ -134,5 +134,5 @@ private:
 	bool		AddToICFdat(CICSRuleInfo &mapping);
 	bool		ReadFromICFdat(CFile &file, CICSRuleInfo &mapping);
 	CString		GetICFdatFileName();
-//MORPH END   - Changed by SiRoB [MoNKi: -Improved ICS-Firewall support-]
+// <== Improved ICS-Firewall support [MoNKi] - Max
 };

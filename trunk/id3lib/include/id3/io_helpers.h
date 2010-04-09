@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// $Id: io_helpers.h,v 1.1 2006/05/22 21:45:26 stulleamgym Exp $
+// $Id: io_helpers.h,v 1.1 2006/01/17 21:09:53 stulleamgym Exp $
 
 // id3lib: a software library for creating and manipulating id3v1/v2 tags
 // Copyright 1999, 2000  Scott Thomas Haug

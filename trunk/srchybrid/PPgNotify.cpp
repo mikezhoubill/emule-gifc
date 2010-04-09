@@ -75,9 +75,12 @@ void CPPgNotify::DoDataExchange(CDataExchange* pDX)
 
 BOOL CPPgNotify::OnInitDialog()
 {
+/* Xman removed
 #if _ATL_VER >= 0x0710
 	m_bEnableEMail = (IsRunningXPSP2OrHigher() > 0);
 #endif
+*/
+//Xman end
 
 	CPropertyPage::OnInitDialog();
 	InitWindowStyles(this);

@@ -236,11 +236,7 @@ BOOL CIrcWnd::OnInitDialog()
 	m_wndNicks.SetColumnWidth(0, LVSCW_AUTOSIZE_USEHEADER);
 	m_wndChanSel.Init();
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	OnChatTextChange();
 
@@ -1560,18 +1556,16 @@ void CIrcWnd::OnEnRequestResizeTitle(NMHDR *pNMHDR, LRESULT *pResult)
 	*pResult = 0;
 }
 
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
 HBRUSH CIrcWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
+// ==> Design Settings [eWombat/Stulle] - Max
+/*
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
 	if (hbr)
 		return hbr;
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
-#else
-HBRUSH CIrcWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
-{
+*/
 	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	if (nCtlColor == CTLCOLOR_DLG)
@@ -1601,5 +1595,4 @@ void CIrcWnd::OnBackcolor()
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 }
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// <== Design Settings [eWombat/Stulle] - Max

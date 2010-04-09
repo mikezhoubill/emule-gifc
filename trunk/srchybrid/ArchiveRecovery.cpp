@@ -100,11 +100,12 @@ UINT AFX_CDECL CArchiveRecovery::run(LPVOID lpParam)
 	DbgSetThreadName("ArchiveRecovery");
 	InitThreadLocale();
 
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	if (!performRecovery(tp->partFile, tp->filled, tp->preview, tp->bCreatePartFileCopy))
 		theApp.QueueLogLine(true, _T("%s \"%s\""), GetResString(IDS_RECOVERY_FAILED), tp->partFile->GetFileName());
@@ -1090,7 +1091,7 @@ RAR_BlockFile *CArchiveRecovery::scanForRarFileHeader(CFile *input, archiveScann
 					retVal->FTIME			= calcUInt32(&checkCRC[18]);
 					retVal->UNP_VER			= checkCRC[22];
 					retVal->METHOD			= checkCRC[23];
-					retVal->NAME_SIZE_var   = lenFileName;	  // MORPH leuk_he rename to prevent conflict with upnp lib define (dumb...)
+					retVal->NAME_SIZE		= lenFileName;
 					retVal->ATTR			= calcUInt32(&checkCRC[26]);
 					// Optional values, present only if bit 0x100 in HEAD_FLAGS is set.
 					if ((retVal->HEAD_FLAGS & 0x100) == 0x100) {
@@ -1175,12 +1176,12 @@ bool CArchiveRecovery::validateRarFileBlock(RAR_BlockFile *block)
 	
 	if (block->HEAD_FLAGS & 0x0200) {
 		// ANSI+Unicode name
-		if (block->NAME_SIZE_var > MAX_PATH + MAX_PATH*2) // MORPH leuk_he rename to prevent conflict with upnp lib define (dumb...)
+		if (block->NAME_SIZE > MAX_PATH + MAX_PATH*2)
 			return false;
 	}
 	else {
 		// ANSI+Unicode name
-		if (block->NAME_SIZE_var > MAX_PATH)  // MORPH leuk_he rename to prevent conflict with upnp lib define (dumb...)
+		if (block->NAME_SIZE > MAX_PATH)
 			return false;
 	}
 
@@ -1207,14 +1208,14 @@ void CArchiveRecovery::writeRarBlock(CFile *input, CFile *output, RAR_BlockFile 
 		writeUInt32(output, block->FTIME);
 		output->Write(&block->UNP_VER, 1);
 		output->Write(&block->METHOD, 1);
-		writeUInt16(output, block->NAME_SIZE_var); // MORPH leuk_he rename to prevent conflict with upnp lib define (dumb...)
+		writeUInt16(output, block->NAME_SIZE);
 		writeUInt32(output, block->ATTR);
 		// Optional values, present only if bit 0x100 in HEAD_FLAGS is set.
 		if ((block->HEAD_FLAGS & 0x100) == 0x100) {
 			writeUInt32(output, block->HIGH_PACK_SIZE);
 			writeUInt32(output, block->HIGH_UNP_SIZE);
 		}
-		output->Write(block->FILE_NAME, block->NAME_SIZE_var); // MORPH leuk_he rename to prevent conflict with upnp lib define (dumb...)
+		output->Write(block->FILE_NAME, block->NAME_SIZE);
 		if (block->HEAD_FLAGS & 0x0400/*LHD_SALT*/)
 			output->Write(block->SALT, sizeof block->SALT);
 		output->Write(block->EXT_DATE, block->EXT_DATE_SIZE);

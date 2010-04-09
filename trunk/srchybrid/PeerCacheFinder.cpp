@@ -25,7 +25,12 @@
 #pragma warning(disable:4244) // conversion from 'type1' to 'type2', possible loss of data
 #pragma warning(disable:4100) // unreferenced formal parameter
 #pragma warning(disable:4702) // unreachable code
+//Xman
+/*
+#include <crypto51/rsa.h>
+*/
 #include <cryptopp/rsa.h>
+//Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4244) // conversion from 'type1' to 'type2', possible loss of data
@@ -428,11 +433,12 @@ BOOL CPCValditeThread::InitInstance()
 }
 
 BOOL CPCValditeThread::Run(){
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return 0;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	if (theApp.emuledlg != NULL && theApp.emuledlg->IsRunning()){
 		if (Valdite()){
@@ -707,11 +713,12 @@ BOOL CPCReverseDnsThread::InitInstance()
 	ASSERT( m_dwIP != 0 );
 	InitThreadLocale();
 
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	CReadWriteLock lock(&theApp.m_threadlock);
 	if (!lock.ReadLock(0))
 		return FALSE;
-	// SLUGFILLER: SafeHash
+	// END SLUGFILLER: SafeHash
 
 	memset(s_acDNSBuffer, 0, sizeof s_acDNSBuffer);
 	CString strHostname = ReverseDnsLookup(m_dwIP);

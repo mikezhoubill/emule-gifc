@@ -26,7 +26,11 @@
 #include "Kademlia/net/kademliaudplistener.h"
 #include "kademlia/kademlia/UDPFirewallTester.h"
 #include "kademlia/utils/UInt128.h"
+//Xman
+/*
 #include "LastCommonRouteFinder.h"
+*/
+//Xman end
 #include "UploadQueue.h"
 #include "DownloadQueue.h"
 #include "UpDownClient.h"
@@ -49,21 +53,27 @@ static char THIS_FILE[] = __FILE__;
 
 
 CClientList::CClientList(){
+	// ==> {relax on startup} [WiZaRd] 
+	/*
 	m_dwLastBannCleanUp = 0;
 	m_dwLastTrackedCleanUp = 0;
 	m_dwLastClientCleanUp = 0;
-	m_nBuddyStatus = Disconnected;
+	*/
+	const uint32 cur_tick = ::GetTickCount(); 
+	m_dwLastBannCleanUp = cur_tick+CLIENTBANTIME; 
+	m_dwLastTrackedCleanUp = cur_tick+KEEPTRACK_TIME; 
+	m_dwLastClientCleanUp = cur_tick; 
+	// <== {relax on startup} [WiZaRd] 
 
-	// ==> drop sources - Stulle
+	m_nBuddyStatus = Disconnected;
+	//Xman
 	/*
 	m_bannedList.InitHashTable(331);
-	*/
-	m_bannedList.InitHashTable(2011);
-	m_dwLastCleanUpDontAskThisIP = 0;
-	m_DontAskThisIPList.InitHashTable(22229);
-	// <== drop sources - Stulle
-
 	m_trackedClientsList.InitHashTable(2011);
+	*/
+	m_bannedList.InitHashTable(571);
+	m_trackedClientsList.InitHashTable(4999);
+	//Xman end
 	m_globDeadSourceList.Init(true);
 	m_pBuddy = NULL;
 }
@@ -72,14 +82,95 @@ CClientList::~CClientList(){
 	RemoveAllTrackedClients();
 }
 
+//Xman
+// Slugfiller: modid
+void CClientList::GetModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
+	if (!clientMods)
+		return;
+	clientMods->RemoveAll();
+
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {		
+		CUpDownClient* cur_client =	list.GetNext(pos);
+
+		switch (cur_client->GetClientSoft()) {
+		case SO_EMULE   :
+		case SO_OLDEMULE:
+			break;
+		default:
+			continue;
+		}
+
+		CRBMap<CString, uint32> *versionMods;
+
+		if (!clientMods->Lookup(cur_client->GetVersion(), versionMods)){
+			versionMods = new CRBMap<CString, uint32>;
+			versionMods->RemoveAll();
+			clientMods->SetAt(cur_client->GetVersion(), versionMods);
+		}
+
+		uint32 count;
+
+		if (!versionMods->Lookup(cur_client->GetClientModVer(), count))
+			count = 1;
+		else
+			count++;
+
+		versionMods->SetAt(cur_client->GetClientModVer(), count);
+	}
+}
+
+void CClientList::ReleaseModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
+	if (!clientMods)
+		return;
+	POSITION pos = clientMods->GetHeadPosition();
+	while(pos != NULL)
+	{
+		uint32 version;
+		CRBMap<CString, uint32> *versionMods;
+		clientMods->GetNextAssoc(pos, version, versionMods);
+		delete versionMods;
+	}
+	clientMods->RemoveAll();
+}
+// Slugfiller: modid
+//Xman end
+
 void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST_STATS], 
 								CMap<uint32, uint32, uint32, uint32>& clientVersionEDonkey, 
 								CMap<uint32, uint32, uint32, uint32>& clientVersionEDonkeyHybrid, 
 								CMap<uint32, uint32, uint32, uint32>& clientVersionEMule, 
+								//Xman extended stats
+								/*
 								CMap<uint32, uint32, uint32, uint32>& clientVersionAMule)
+								*/
+								CMap<uint32, uint32, uint32, uint32>& clientVersionAMule,
+								CMap<POSITION, POSITION, uint32, uint32>& MODs,
+								uint32 &totalMODs,
+								CMap<Country_Struct*, Country_Struct*, uint32, uint32>& pCountries
+								//Xman end
+								)
 {
 	ruTotalClients = list.GetCount();
 	memset(stats, 0, sizeof(stats[0]) * NUM_CLIENTLIST_STATS);
+
+	//Xman extended stats
+	POSITION			pos_MOD;
+	CString				strMODName;
+	uint32				dwCount;
+	Country_Struct*		cstruct;
+
+	//reset values
+	totalMODs = 0;
+	MODs.RemoveAll();
+	pCountries.RemoveAll();
+	static uint32 lastmodlistclean;
+	if(::GetTickCount()-lastmodlistclean> HR2MS(6))
+	{
+		//don´t clean it up every time -> jumping statistics
+		lastmodlistclean=::GetTickCount();
+		liMODsTypes.RemoveAll(); //Xman extended stats
+	}
+	//Xman end
 
 	for (POSITION pos = list.GetHeadPosition(); pos != NULL; )
 	{
@@ -94,6 +185,42 @@ void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST
 			case SO_OLDEMULE:
 				stats[2]++;
 				clientVersionEMule[cur_client->GetVersion()]++;
+				//Xman extended stats
+				strMODName = cur_client->GetClientModVer();
+
+				if (!strMODName.IsEmpty())
+				{
+					//extract modname without version
+					int length=strMODName.GetLength();
+					int i;
+					for(i=0;i<length;i++)
+					{
+						if(strMODName.GetAt(i)>=_T('0') && strMODName.GetAt(i)<=_T('9'))
+							break;
+					}
+					if(i<length && i>0)
+						strMODName=strMODName.Left(i);
+					if(strMODName.Right(1)==_T('v') && strMODName.GetLength()>2)
+					{
+						strMODName = strMODName.Left(strMODName.GetLength()-1);
+					}
+					strMODName.Trim();
+
+					totalMODs++;
+					pos_MOD = liMODsTypes.Find(strMODName);
+					if (!pos_MOD)
+					{
+						pos_MOD = liMODsTypes.AddTail(strMODName);
+						MODs.SetAt(pos_MOD, 1);
+					}
+					else
+					{
+						dwCount = 0;
+						MODs.Lookup(pos_MOD, dwCount);
+						MODs.SetAt(pos_MOD, ++dwCount);
+					}
+				}
+				//Xman end
 				break;
 
 			case SO_EDONKEYHYBRID : 
@@ -121,11 +248,9 @@ void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST
 
 			// all remaining 'eMule Compatible' clients
 			// ==> Enhanced Client Recognition [Spike] - Stulle
-#ifdef ENHANCED_CLIENTS_RECOG
 			case SO_HYDRANODE:
 			case SO_EMULEPLUS:
 			case SO_TRUSTYFILES:
-#endif
 			// <== Enhanced Client Recognition [Spike] - Stulle
 			case SO_CDONKEY:
 			case SO_XMULE:
@@ -137,6 +262,18 @@ void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST
 				stats[0]++;
 				break;
 		}
+
+		//Xman extended stats
+		//count the countries
+		CMap<Country_Struct*, Country_Struct*, uint32, uint32>::CPair *pPair;
+
+		cstruct = cur_client->m_structUserCountry;
+		pPair = pCountries.PLookup(cstruct);
+		if (pPair != NULL)
+			pPair->value++;
+		else
+			pCountries.SetAt(cstruct, 1);
+		//Xman end
 
 		if (cur_client->Credits() != NULL)
 		{
@@ -182,64 +319,6 @@ void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST
 	}
 }
 
-//MOPRH START - Added by SiRoB, Slugfiller: modid
-void CClientList::GetModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
-	if (!clientMods)
-		return;
-	clientMods->RemoveAll();
-	
-	// [TPT] Code improvement
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {		
-		CUpDownClient* cur_client =	list.GetNext(pos);
-
-		switch (cur_client->GetClientSoft()) {
-		case SO_EMULE   :
-		case SO_OLDEMULE:
-			break;
-		default:
-			continue;
-		}
-
-		CRBMap<CString, uint32> *versionMods;
-
-		if (!clientMods->Lookup(cur_client->GetVersion(), versionMods)){
-			versionMods = new CRBMap<CString, uint32>;
-			versionMods->RemoveAll();
-			clientMods->SetAt(cur_client->GetVersion(), versionMods);
-		}
-
-		// ==> Don't count modid fakers - Stulle
-		if(cur_client->IsLeecher() && cur_client->IsStulleMule())
-			continue;
-		// <== Don't count modid fakers - Stulle
-
-		uint32 count;
-
-		if (!versionMods->Lookup(cur_client->GetClientModVer(), count))
-			count = 1;
-		else
-			count++;
-
-		versionMods->SetAt(cur_client->GetClientModVer(), count);
-	}
-	// [TPT] end
-}
-
-void CClientList::ReleaseModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
-	if (!clientMods)
-		return;
-	POSITION pos = clientMods->GetHeadPosition();
-	while(pos != NULL)
-	{
-		uint32 version;
-		CRBMap<CString, uint32> *versionMods;
-		clientMods->GetNextAssoc(pos, version, versionMods);
-		delete versionMods;
-	}
-	clientMods->RemoveAll();
-}
-//MOPRH END - Added by SiRoB, modID Slugfiller: modid
-
 void CClientList::AddClient(CUpDownClient* toadd, bool bSkipDupTest)
 {
 	// skipping the check for duplicate list entries is only to be done for optimization purposes, if the calling
@@ -253,23 +332,25 @@ void CClientList::AddClient(CUpDownClient* toadd, bool bSkipDupTest)
 	list.AddTail(toadd);
 }
 
+/* Xman
 // ZZ:UploadSpeedSense -->
 bool CClientList::GiveClientsForTraceRoute() {
     // this is a host that lastCommonRouteFinder can use to traceroute
     return theApp.lastCommonRouteFinder->AddHostsToCheck(list);
 }
 // ZZ:UploadSpeedSense <--
+*/
 
 void CClientList::RemoveClient(CUpDownClient* toremove, LPCTSTR pszReason){
 	POSITION pos = list.Find(toremove);
 	if (pos){
-        theApp.uploadqueue->RemoveFromUploadQueue(toremove, CString(_T("CClientList::RemoveClient: ")) + pszReason);
+		theApp.uploadqueue->RemoveFromUploadQueue(toremove, CString(_T("CClientList::RemoveClient: ")) + pszReason);
 		theApp.uploadqueue->RemoveFromWaitingQueue(toremove);
-		 // EastShare START - Added by TAHO, modified SUQWT
+		// ==> SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 		if ( toremove != NULL && toremove->Credits() != NULL) {
 			toremove->Credits()->ClearWaitStartTime();
 		}
-		 // EastShare END - Added by TAHO, modified SUQWT
+		// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 		theApp.downloadqueue->RemoveSource(toremove);
 		theApp.emuledlg->transferwnd->clientlistctrl.RemoveClient(toremove);
 		list.RemoveAt(pos);
@@ -288,6 +369,7 @@ void CClientList::DeleteAll(){
 		list.RemoveAt(pos2);
 		delete cur_client; // recursiv: this will call RemoveClient
 	}
+	liMODsTypes.RemoveAll(); //Xman extended stats
 }
 
 bool CClientList::AttachToAlreadyKnown(CUpDownClient** client, CClientReqSocket* sender){
@@ -317,13 +399,24 @@ bool CClientList::AttachToAlreadyKnown(CUpDownClient** client, CClientReqSocket*
 		if (sender){
 			if (found_client->socket){
 				if (found_client->socket->IsConnected() 
+					//Xman use ConnectIP instead of GetIP()
+					/*
 					&& (found_client->GetIP() != tocheck->GetIP() || found_client->GetUserPort() != tocheck->GetUserPort() ) )
+					*/
+					&& (found_client->GetConnectIP() != tocheck->GetConnectIP()
+					|| found_client->GetUserPort() != tocheck->GetUserPort() ) )
+					//Xman end
 				{
 					// if found_client is connected and has the IS_IDENTIFIED, it's safe to say that the other one is a bad guy
 					if (found_client->Credits() && found_client->Credits()->GetCurrentIdentState(found_client->GetIP()) == IS_IDENTIFIED){
 						if (thePrefs.GetLogBannedClients())
 							AddDebugLogLine(false, _T("Clients: %s (%s), Banreason: Userhash invalid"), tocheck->GetUserName(), ipstr(tocheck->GetConnectIP()));
+						//Xman
+						/*
 						tocheck->Ban();
+						*/
+						tocheck->Ban(_T("Userhash invalid"));
+						//Xman end
 						return false;
 					}
 	
@@ -353,11 +446,6 @@ CUpDownClient* CClientList::FindClientByIP(uint32 clientip, UINT port) const
 		CUpDownClient* cur_client = list.GetNext(pos);
 		if (cur_client->GetIP() == clientip && cur_client->GetUserPort() == port)
 			return cur_client;
-		//Fafner: error? (GetIP() doesn't always seem to work) - 070920
-		if (cur_client->GetConnectIP() == clientip && cur_client->GetUserPort() == port) {
-//			ASSERT(cur_client->GetConnectIP() == cur_client->GetIP()); // Official uses getip? do we have a bug here?
-			return cur_client;
-		}
 	}
 	return 0;
 }
@@ -385,11 +473,6 @@ CUpDownClient* CClientList::FindClientByIP(uint32 clientip) const
 		CUpDownClient* cur_client = list.GetNext(pos);
 		if (cur_client->GetIP() == clientip)
 			return cur_client;
-		//Fafner: error? (GetIP() doesn't always seem to work) - 070920
-		if (cur_client->GetConnectIP() == clientip) {
-			//ASSERT(cur_client->GetConnectIP() == cur_client->GetIP()); // Official uses getip? do we have a bug here?
-			return cur_client;
-		}
 	}
 	return 0;
 }
@@ -401,11 +484,6 @@ CUpDownClient* CClientList::FindClientByIP_UDP(uint32 clientip, UINT nUDPport) c
 		CUpDownClient* cur_client = list.GetNext(pos);
 		if (cur_client->GetIP() == clientip && cur_client->GetUDPPort() == nUDPport)
 			return cur_client;
-		//Fafner: error? (GetIP() doesn't always seem to work) - 070920
-		if (cur_client->GetConnectIP() == clientip && cur_client->GetUDPPort() == nUDPport) {
-			ASSERT(cur_client->GetConnectIP() == cur_client->GetIP()); // Official uses getip? do we have a bug here?
-         	return cur_client;
-		}
 	}
 	return 0;
 }
@@ -428,11 +506,6 @@ CUpDownClient* CClientList::FindClientByIP_KadPort(uint32 ip, uint16 port) const
 		CUpDownClient* cur_client = list.GetNext(pos);
 		if (cur_client->GetIP() == ip && cur_client->GetKadPort() == port)
 			return cur_client;
-		//Fafner: error? (GetIP() doesn't always seem to work) - 070920
-		if (cur_client->GetConnectIP() == ip && cur_client->GetKadPort() == port) {
-			ASSERT(cur_client->GetConnectIP() == cur_client->GetIP()); // Official uses getip? do we have a bug here?
-			return cur_client;
-		}
 	}
 	return 0;
 }
@@ -461,12 +534,7 @@ bool CClientList::IsBannedClient(uint32 dwIP) const
 {
 	uint32 dwBantime;
 	if (m_bannedList.Lookup(dwIP, dwBantime)){
-		// ==> adjust ClientBanTime - Stulle
-		/*
 		if (dwBantime + CLIENTBANTIME > ::GetTickCount())
-		*/
-		if (dwBantime + thePrefs.GetClientBanTime() > ::GetTickCount() )
-		// <== adjust ClientBanTime - Stulle
 			return true;
 	}
 	return false; 
@@ -484,6 +552,8 @@ void CClientList::RemoveAllBannedClients(){
 ///////////////////////////////////////////////////////////////////////////////
 // Tracked clients
 
+//Xman Extened credit- table-arragement
+/*
 void CClientList::AddTrackClient(CUpDownClient* toadd){
 	CDeletedClient* pResult = 0;
 	if (m_trackedClientsList.Lookup(toadd->GetIP(), pResult)){
@@ -502,6 +572,34 @@ void CClientList::AddTrackClient(CUpDownClient* toadd){
 		m_trackedClientsList.SetAt(toadd->GetIP(), new CDeletedClient(toadd));
 	}
 }
+*/
+//Xman end
+
+//Xman Extened credit- table-arragement
+//make the Tracked-client-list independent 
+void CClientList::AddTrackClient(CUpDownClient* toadd){
+	CDeletedClient* pResult = 0;
+	if (m_trackedClientsList.Lookup(toadd->GetIP(), pResult)){
+		pResult->m_dwInserted = ::GetTickCount();
+		for (int i = 0; i != pResult->m_ItemsList.GetCount(); i++){
+			if (pResult->m_ItemsList[i].nPort == toadd->GetUserPort()){
+				// already tracked, update
+				//Xman don't keep a track of the credit-pointer, but of the hash
+				md4cpy(pResult->m_ItemsList[i].pHash, toadd->GetUserHash());
+				return;
+			}
+		}
+		//Xman new tracked port & hash
+		PORTANDHASH porthash;
+		porthash.nPort=toadd->GetUserPort();
+		md4cpy(porthash.pHash,toadd->GetUserHash());
+		pResult->m_ItemsList.Add(porthash);
+	}
+	else{
+		m_trackedClientsList.SetAt(toadd->GetIP(), new CDeletedClient(toadd));
+	}
+}
+//Xman end
 
 // true = everything ok, hash didn't changed
 // false = hash changed
@@ -510,7 +608,13 @@ bool CClientList::ComparePriorUserhash(uint32 dwIP, uint16 nPort, void* pNewHash
 	if (m_trackedClientsList.Lookup(dwIP, pResult)){
 		for (int i = 0; i != pResult->m_ItemsList.GetCount(); i++){
 			if (pResult->m_ItemsList[i].nPort == nPort){
+				//Xman Extened credit- table-arragement
+				//make the Tracked-client-list independent 
+				/*
 				if (pResult->m_ItemsList[i].pHash != pNewHash)
+				*/
+				if (md4cmp(pResult->m_ItemsList[i].pHash , pNewHash)!=0)
+				//Xman end
 					return false;
 				else
 					break;
@@ -537,16 +641,10 @@ void CClientList::TrackBadRequest(const CUpDownClient* upcClient, int nIncreaseC
 	if (m_trackedClientsList.Lookup(upcClient->GetIP(), pResult)){
 		pResult->m_dwInserted = ::GetTickCount();
 		pResult->m_cBadRequest += nIncreaseCounter;
-		// morph some extra verbose tracking, read http://forum.emule-project.net/index.php?showtopic=136682
-		DebugLogError( _T("Client: %s (%s), Increased badrequestcounter to %d"), upcClient->GetUserName(), ipstr(upcClient->GetConnectIP()),pResult->m_cBadRequest);
 	}
 	else{
 		CDeletedClient* ccToAdd = new CDeletedClient(upcClient);
 		ccToAdd->m_cBadRequest = nIncreaseCounter;
-		// morph some extra verbose tracking, read http://forum.emule-project.net/index.php?showtopic=136682
-		// nIncreaseCounter equals ccToAdd->m_cBadRequest here so i will rather use the first
-		// anyway, pResult->m_cBadRequest is utterly wrong because pResult is a NULL-pointer here
-		DebugLogError( _T("Client: %s (%s), Increased set badrequestcounter to %d"), upcClient->GetUserName(), ipstr(upcClient->GetConnectIP()),nIncreaseCounter);
 		m_trackedClientsList.SetAt(upcClient->GetIP(), ccToAdd);
 	}
 }
@@ -581,22 +679,6 @@ void CClientList::Process()
 	// Cleanup banned client list
 	//
 	const uint32 cur_tick = ::GetTickCount();
-
-	// ==> drop sources - Stulle
-	if( (m_dwLastCleanUpDontAskThisIP + 7200000) < cur_tick ){
-		m_dwLastCleanUpDontAskThisIP = cur_tick;
-
-		POSITION pos = m_DontAskThisIPList.GetStartPosition();
-		uint32 uKey;
-		uint32 uDontAskTime;
-		while (pos != NULL){
-			m_DontAskThisIPList.GetNextAssoc( pos, uKey, uDontAskTime );
-			if( (uDontAskTime + 7200000) < cur_tick )
-				m_DontAskThisIPList.RemoveKey(uKey);
-		}
-	}
-	// <== drop sources - Stulle
-
 	if (m_dwLastBannCleanUp + BAN_CLEANUP_TIME < cur_tick)
 	{
 		m_dwLastBannCleanUp = cur_tick;
@@ -607,12 +689,7 @@ void CClientList::Process()
 		while (pos != NULL)
 		{
 			m_bannedList.GetNextAssoc( pos, nKey, dwBantime );
-			// ==> adjust ClientBanTime - Stulle
-			/*
 			if (dwBantime + CLIENTBANTIME < cur_tick )
-			*/
-			if (dwBantime + thePrefs.GetClientBanTime() < cur_tick )
-			// <== adjust ClientBanTime - Stulle
 				RemoveBannedClient(nKey);
 		}
 	}
@@ -623,7 +700,7 @@ void CClientList::Process()
 	if (m_dwLastTrackedCleanUp + TRACKED_CLEANUP_TIME < cur_tick)
 	{
 		m_dwLastTrackedCleanUp = cur_tick;
-		if (thePrefs.GetLogBannedClients())
+		if (thePrefs.GetLogBannedClients()) 
 			AddDebugLogLine(false, _T("Cleaning up TrackedClientList, %i clients on List..."), m_trackedClientsList.GetCount());
 		POSITION pos = m_trackedClientsList.GetStartPosition();
 		uint32 nKey;
@@ -833,7 +910,11 @@ void CClientList::Process()
 	///////////////////////////////////////////////////////////////////////////
 	// Cleanup client list
 	//
+	//Xman moved to uploadqueue
+	/*
 	CleanUpClientList();
+	*/
+	//Xman end
 
 	///////////////////////////////////////////////////////////////////////////
 	// Process Direct Callbacks for Timeouts
@@ -878,15 +959,12 @@ bool CClientList::RequestTCP(Kademlia::CContact* contact, uint8 byConnectOptions
 
 	CUpDownClient* pNewClient = FindClientByIP(nContactIP, contact->GetTCPPort());
 
-	bool bNewClient = true; //MOPRH - Added by SiRoB,  Fix adding multiple clientKnown with same ip port
+	const bool bNewClient = pNewClient == NULL; //Xman Code Improvement don't search new generated clients in lists (seen by Wizard)
+
 	if (!pNewClient)
 		pNewClient = new CUpDownClient(0, contact->GetTCPPort(), contact->GetIPAddress(), 0, 0, false );
 	else if (pNewClient->GetKadState() != KS_NONE)
 		return false; // already busy with this client in some way (probably buddy stuff), don't mess with it
-	//MORPH START - Added by SiRoB, Fix adding multiple clientKnown with same ip port
-	else
-		bNewClient = false;
-	//MORPH END   - Added by SiRoB, Fix adding multiple clientKnown with same ip port
 
 	//Add client to the lists to be processed.
 	pNewClient->SetKadPort(contact->GetUDPPort());
@@ -897,18 +975,22 @@ bool CClientList::RequestTCP(Kademlia::CContact* contact, uint8 byConnectOptions
 		pNewClient->SetUserHash(ID);
 		pNewClient->SetConnectOptions(byConnectOptions, true, false);
 	}
-	//MORPH START - Changed by SiRoB, Optimization & Fix
+	//Xman Code Improvement don't search new generated clients in lists (seen by Wizard)
 	/*
 	m_KadList.AddTail(pNewClient);
 	//This method checks if this is a dup already.
 	AddClient(pNewClient);
 	*/
-	if (bNewClient) {
+	//Xman no need to check for dupe in clientlist, either we found it or it's new
+	//if not new do a dupe check in kad-list and don't add to clientlist
+	if(bNewClient)
+	{
 		m_KadList.AddTail(pNewClient);
 		AddClient(pNewClient, true); 
-	} else
-		AddToKadList(pNewClient);
-	//MORPH END   - Changed by SiRoB, Optimization & Fix
+	}
+	else
+		AddToKadList(pNewClient); 
+	//Xman end
 	return true;
 }
 
@@ -919,7 +1001,9 @@ void CClientList::RequestBuddy(Kademlia::CContact* contact, uint8 byConnectOptio
 	if (theApp.serverconnect->GetLocalIP() == nContactIP && thePrefs.GetPort() == contact->GetTCPPort())
 		return;
 	CUpDownClient* pNewClient = FindClientByIP(nContactIP, contact->GetTCPPort());
-	bool bNewClient = true; //MOPRH - Added by SiRoB,  Fix adding multiple clientKnown with same ip port
+	
+	const bool bNewClient = pNewClient == NULL; //Xman Code Improvement don't search new generated clients in lists (seen by Wizard)
+
 	if (!pNewClient)
 		pNewClient = new CUpDownClient(0, contact->GetTCPPort(), contact->GetIPAddress(), 0, 0, false );
 	else if (pNewClient->GetKadState() != KS_NONE)
@@ -928,11 +1012,6 @@ void CClientList::RequestBuddy(Kademlia::CContact* contact, uint8 byConnectOptio
 		DEBUG_ONLY( DebugLogWarning(_T("KAD tcp Firewallcheck / Buddy request collosion for IP %s"), ipstr(nContactIP)) );
 		return;
 	}
-	//MORPH START - Added by SiRoB, Fix adding multiple clientKnown
-	else
-		bNewClient = false;
-	//MORPH END   - Added by SiRoB, Fix adding multiple clientKnown with same ip port
-	
 	//Add client to the lists to be processed.
 	pNewClient->SetKadPort(contact->GetUDPPort());
 	pNewClient->SetKadState(KS_QUEUED_BUDDY);
@@ -940,18 +1019,22 @@ void CClientList::RequestBuddy(Kademlia::CContact* contact, uint8 byConnectOptio
 	contact->GetClientID().ToByteArray(ID);
 	pNewClient->SetUserHash(ID);
 	pNewClient->SetConnectOptions(byConnectOptions, true, false);
-	//MORPH START - Added by SiRoB, Optimization
+	//Xman Code Improvement don't search new generated clients in lists (seen by Wizard)
 	/*
 	AddToKadList(pNewClient);
 	//This method checks if this is a dup already.
 	AddClient(pNewClient);
 	*/
-	if (bNewClient) {
+	//Xman no need to check for dupe in clientlist, either we found it or it's new
+	//if not new do a dupe check in kad-list and don't add to clientlist
+	if(bNewClient)
+	{
 		m_KadList.AddTail(pNewClient);
-		AddClient(pNewClient, true);
-	} else
-		AddToKadList(pNewClient);
-	//MORPH END   - Changed by SiRoB, Optimization
+		AddClient(pNewClient, true); 
+	}
+	else
+		AddToKadList(pNewClient); 
+	//Xman end
 }
 
 bool CClientList::IncomingBuddy(Kademlia::CContact* contact, Kademlia::CUInt128* buddyID )
@@ -977,14 +1060,15 @@ bool CClientList::IncomingBuddy(Kademlia::CContact* contact, Kademlia::CUInt128*
 	pNewClient->SetUserHash(ID); //??
 	buddyID->ToByteArray(ID);
 	pNewClient->SetBuddyID(ID);
-	//MORPH START - Changed by SiRoB, Optimization
+	//Xman Code Improvement don't search new generated clients in lists (seen by Wizard)
+	//Xman it's a new client -> no dupe check
 	/*
 	AddToKadList(pNewClient);
 	AddClient(pNewClient);
 	*/
 	m_KadList.AddTail(pNewClient);
-	AddClient(pNewClient, true);
-	//MORPH END   - Changed by SiRoB, Optimization
+	AddClient(pNewClient, true); 
+	//Xman end
 	return true;
 }
 
@@ -1046,6 +1130,9 @@ bool CClientList::DoRequestFirewallCheckUDP(const Kademlia::CContact& contact){
 
 
 
+// Maella -Extended clean-up II- //rework by Xman
+//Note: this feature is important for Xtreme Downloadmanager
+/*
 void CClientList::CleanUpClientList(){
 	// we remove clients which are not needed any more by time
 	// this check is also done on CUpDownClient::Disconnected, however it will not catch all
@@ -1077,16 +1164,119 @@ void CClientList::CleanUpClientList(){
 		DEBUG_ONLY(AddDebugLogLine(false,_T("Cleaned ClientList, removed %i not used known clients"), cDeleted));
 	}
 }
+*/
+void CClientList::CleanUpClientList(){
+	const uint32 cur_tick = ::GetTickCount();
+	if (m_dwLastClientCleanUp + CLIENTLIST_CLEANUP_TIME < cur_tick ){
+		m_dwLastClientCleanUp = cur_tick;
+		uint32 cDeleted = 0;
+		for (POSITION pos = list.GetHeadPosition(); pos != NULL;){
+			CUpDownClient* pCurClient =	list.GetNext(pos);
+			if ((pCurClient->GetUploadState() == US_NONE /*|| pCurClient->GetUploadState() == US_BANNED && !pCurClient->IsBanned()*/) //Xman Code Improvement: how should this happen ?
+				&& pCurClient->GetDownloadState() == DS_NONE
+				&& pCurClient->GetChatState() == MS_NONE
+				&& pCurClient->GetKadState() == KS_NONE
+				&& pCurClient->socket == NULL)
+			{
+				const DWORD delta = GetTickCount() - pCurClient->m_lastCleanUpCheck;
+				if(delta > 7200000){ // 2 hour
+					if(!pCurClient->m_OtherNoNeeded_list.IsEmpty() || !pCurClient->m_OtherRequests_list.IsEmpty())
+					{
+						AddDebugLogLine(false, _T("Extended clean-up reports an error in CleanUpProcess with client %s"),pCurClient->DbgGetClientInfo());
+						pCurClient->m_lastCleanUpCheck = GetTickCount();
+					}
+					else
+					{
+						cDeleted++;
+						delete pCurClient;
+					}
+				}
+			}
+			else{
+				pCurClient->m_lastCleanUpCheck = GetTickCount();
+			}
+		}
+		AddDebugLogLine(false,_T("Cleaned ClientList, removed %i not used known clients"), cDeleted);
+	}
+}
+void CClientList::CleanUp(CPartFile* pDeletedFile){
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL;){		
+		CUpDownClient* cur_client =	list.GetNext(pos);
+		cur_client->CleanUp(pDeletedFile);
+	}	
+}
+// Maella end
+
+#ifdef PRINT_STATISTIC
+void CClientList::PrintStatistic()
+{
+	AddLogLine(false,_T("Clients in Clientlist: %u"), list.GetSize());
+	AddLogLine(false, _T("Clients in Bannedlist: %u"), m_bannedList.GetSize());
+	AddLogLine(false, _T("Tracked Clients: %u"), m_trackedClientsList.GetSize());
+	AddLogLine(false, _T("Clients in Kadlist: %u"), m_KadList.GetSize());
+
+	AddLogLine(false, _T("sum of listelements of all known clients:"));
+	uint32 PartStatusMapCount=0;
+	uint32 upHistoryCount=0;
+	uint32 downHistoryCount=0;
+	uint32 DontSwapListCount=0;
+	uint32 BlockRequestedCount=0;
+	uint32 DoneBlocksCount=0;
+	uint32 RequestedFilesCount=0;
+	uint32 PendingBlockCount=0;
+	uint32 DownloadBlockCount=0;
+	uint32 NoNeededListCount=0;
+	uint32 OtherRequestListCount=0;
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL;){		
+		CUpDownClient* cur_client =	list.GetNext(pos);
+		PartStatusMapCount += cur_client->GetPartStatusMapCount();
+		upHistoryCount += cur_client->GetupHistoryCount();
+		downHistoryCount += cur_client->GetdownHistoryCount();
+		DontSwapListCount += cur_client->GetDontSwapListCount();
+		BlockRequestedCount += cur_client->GetBlockRequestedCount();
+		DoneBlocksCount += cur_client->GetDoneBlocksCount();
+		RequestedFilesCount += cur_client->GetRequestedFilesCount();
+		PendingBlockCount += cur_client->GetPendingBlockCount();
+		DownloadBlockCount += cur_client->GetDownloadBlockCount();
+		NoNeededListCount += cur_client->GetNoNeededListCount();
+		OtherRequestListCount += cur_client->GetOtherRequestListCount();
+	}	
+	AddLogLine(false, _T("PartStatusMapCount: %u"), PartStatusMapCount);
+	AddLogLine(false, _T("upHistoryCount: %u"), upHistoryCount);
+	AddLogLine(false, _T("downHistoryCount %u"), downHistoryCount);
+	AddLogLine(false, _T("DontSwapListCount: %u"), DontSwapListCount);
+	AddLogLine(false, _T("BlockRequestedCount: %u"), BlockRequestedCount);
+	AddLogLine(false, _T("DoneBlocksCount: %u"), DoneBlocksCount);
+	AddLogLine(false, _T("RequestedFilesCount: %u"), RequestedFilesCount);
+	AddLogLine(false, _T("PendingBlockCount: %u"), PendingBlockCount);
+	AddLogLine(false, _T("DownloadBlockCount: %u"), DownloadBlockCount);
+	AddLogLine(false, _T("NoNeededListCount: %u"), NoNeededListCount);
+	AddLogLine(false, _T("OtherRequestListCount: %u"), OtherRequestListCount);
+	AddLogLine(false, _T("------------------------------------------------"));
+}
+#endif
+//Xman end
 
 
 CDeletedClient::CDeletedClient(const CUpDownClient* pClient)
 {
 	m_cBadRequest = 0;
 	m_dwInserted = ::GetTickCount();
+	//Xman Extened credit- table-arragement
+	//make the Tracked-client-list independent 
+	//track new port & hash
+	/*
 	PORTANDHASH porthash = { pClient->GetUserPort(), pClient->Credits()};
+	*/
+	PORTANDHASH porthash;
+	porthash.nPort= pClient->GetUserPort();
+	md4cpy(porthash.pHash,pClient->GetUserHash());
+	//Xman end
 	m_ItemsList.Add(porthash);
 }
 
+//Xman
+/*
 // ZZ:DownloadManager -->
 void CClientList::ProcessA4AFClients() const {
     //if(thePrefs.GetLogA4AF()) AddDebugLogLine(false, _T(">>> Starting A4AF check"));
@@ -1105,6 +1295,8 @@ void CClientList::ProcessA4AFClients() const {
     //if(thePrefs.GetLogA4AF()) AddDebugLogLine(false, _T(">>> Done with A4AF check"));
 }
 // <-- ZZ:DownloadManager
+*/
+//Xman end
 
 void CClientList::AddKadFirewallRequest(uint32 dwIP){
 	IPANDTICS add = {dwIP, ::GetTickCount()};
@@ -1184,6 +1376,22 @@ bool CClientList::AllowCalbackRequest(uint32 dwIP) const
 	return true;
 }
 
+//Xman -Reask sources after IP change- v4 
+void CClientList::TrigReaskForDownload(bool immediate){
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL;){				
+		CUpDownClient* cur_client =	list.GetNext(pos);
+		if(immediate == true){
+			// Compute the next time that the file might be saftly reasked (=> no Ban())
+			cur_client->SetNextTCPAskedTime(0);
+		}
+		else{
+			// Compute the next time that the file might be saftly reasked (=> no Ban())
+			cur_client->TrigNextSafeAskForDownload(cur_client->GetRequestFile());
+		}
+	}	
+}
+//Xman end
+
 //EastShare Start - added by AndCycle, IP to Country
 void CClientList::ResetIP2Country(){
 
@@ -1197,143 +1405,7 @@ void CClientList::ResetIP2Country(){
 }
 //EastShare End - added by AndCycle, IP to Country
 
-// ==> Inform Clients after IP Change - Stulle
-// this feature also contains ideas and code from: Maella, Xman, Spike2, Xanatos
-void CClientList::TrigReask(){
-	const DWORD dwCurTick = ::GetTickCount();
-	bool lowID = false;
-	if((theApp.serverconnect->IsConnected() && theApp.serverconnect->IsLowID())||
-		(Kademlia::CKademlia::IsConnected() && Kademlia::CKademlia::IsFirewalled())) // we will not inform but do a complete reask, if we are on LowID
-		lowID = true;
-
-	for(POSITION pos = list.GetHeadPosition(); pos;){
-		CUpDownClient* cur_client = list.GetNext(pos);
-
-		DWORD ReAskTime = cur_client->GetSpreadReAskTime()+thePrefs.GetReAskTimeDif();
-		CKnownFile* currequpfile = cur_client->CheckAndGetReqUpFile();
-
-		if (thePrefs.IsRASAIC() && cur_client->reqfile) // we request something
-		{
-			// early abort if reask soon!
-			if(cur_client->GetTimeUntilReask() <= MIN2MS(2))
-				continue;
-			/*
-			** Let's add some pseudo code here:
-			** I'm setting the last asked time to a value that the client will be reasked
-			** real soon
-			**
-			** a = time now
-			** b = ReAsk time
-			** c = time till MIN_REQUESTTIME
-			**
-			** SetLastAskedTime(a-(b-c))
-			**
-			** The result should be that the client will be reasked either immediatly
-			** or as soon as the MIN_REQUESTTIME expired.
-			**
-			** Hell am I proud of this solution! *rofl*
-			*/
-			if (	(cur_client->GetClientSoft() == SO_EMULE || 
-					cur_client->GetClientSoft() == SO_EDONKEY || 
-					cur_client->GetClientSoft() == SO_EDONKEYHYBRID) && 
-				!lowID)
-			{
-				cur_client->DoSendIP();
-				cur_client->SendIPChange();
-			}
-			else
-				cur_client->SetLastAskedTime(cur_client->reqfile,dwCurTick-(ReAskTime-cur_client->GetTimeUntilReask(cur_client->reqfile,true,false,false)));
-		}
-		else if (thePrefs.IsIQCAOC() && currequpfile) // he requests something
-		{
-			if (	(cur_client->GetClientSoft() == SO_EMULE || 
-					cur_client->GetClientSoft() == SO_EDONKEY || 
-					cur_client->GetClientSoft() == SO_EDONKEYHYBRID) && 
-				!lowID)
-			{
-				cur_client->DoSendIP();
-				cur_client->SendIPChange();
-			}
-		}
-	}
-	return;
-}
-// <== Inform Clients after IP Change - Stulle
-
-// ==> drop sources - Stulle
-bool CClientList::DontAskThisIP(uint32 dwIP){
-	uint32 uDontAskTime = 0;
-	if( m_DontAskThisIPList.Lookup(dwIP, uDontAskTime) ){
-		if( (uDontAskTime + 10800000) > ::GetTickCount() ) //<- 3:00h
-			return true;
-		else
-			m_DontAskThisIPList.RemoveKey(dwIP);
-	}
-	return false; 
-}
-// <== drop sources - Stulle
-
-// ==> Reduce Score for leecher - Stulle
-void CClientList::BanReducedLeechers()
-{
-	for(POSITION pos = list.GetHeadPosition(); pos;){
-		CUpDownClient* cur_client = list.GetNext(pos);
-
-		if(cur_client->GetScoreReduce())
-		{
-//			cur_client->SetBanReason(0);
-			cur_client->BanLeecher(_T("Reduce Score Disabled"));
-		}
-	}
-	return;
-}
-// <== Reduce Score for leecher - Stulle
-
-// ==> Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-#ifdef GLOBAL_MOD_STATS
-void CClientList::GetModPureStats(CRBMap<CString, int> *pureMods)
-{
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {		
-		CUpDownClient* cur_client =	list.GetNext(pos);
-
-		switch (cur_client->GetClientSoft()) {
-		case SO_EMULE   :
-		case SO_OLDEMULE:
-			break;
-		default:
-			continue;
-		}
-
-		// Don't count modid fakers
-		if(cur_client->IsLeecher() && cur_client->IsStulleMule())
-		{
-			int count;
-
-			if (!pureMods->Lookup(_T("StulleMule fake"), count))
-				count = 1;
-			else
-				count++;
-
-			pureMods->SetAt(_T("StulleMule fake"), count);
-		}
-		else
-		{
-			int count;
-
-			if (!pureMods->Lookup(cur_client->GetModPure(), count))
-				count = 1;
-			else
-				count++;
-
-			pureMods->SetAt(cur_client->GetModPure(), count);
-		}
-	}
-}
-#endif
-// <== Global Mod statistics [Stulle/some code by SlugFiller] - Stulle
-
-// ==> Compat Client Stats - Stulle
-#ifdef COMPAT_CLIENTS_STATS
+// ==> Compat Client Stats [Stulle] - Stulle
 void CClientList::GetCompatClientsStats(CRBMap<CString, uint32> *compatClients)
 {
 	CString strClient = _T("");
@@ -1372,5 +1444,48 @@ void CClientList::GetCompatClientsStats(CRBMap<CString, uint32> *compatClients)
 		compatClients->SetAt(strClient, count);
 	}
 }
-#endif
-// <== Compat Client Stats - Stulle
+// <== Compat Client Stats [Stulle] - Stulle
+
+// ==> Timer for ReAsk File Sources [Stulle] - Stulle
+void CClientList::RecalculateReAskTimes(){
+
+	CUpDownClient *cur_client;
+
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL; list.GetNext(pos)) { 
+		cur_client = theApp.clientlist->list.GetAt(pos); 
+		cur_client->CalculateJitteredFileReaskTime(false);
+	}
+
+}
+// <== Timer for ReAsk File Sources [Stulle] - Stulle
+
+// ==> Ban clients with reduced score immediatly on setting changed [Stulle] - Stulle
+void CClientList::BanReducedClients(bool bCommunity, bool bThief)
+{
+	CUpDownClient *cur_client;
+
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL; list.GetNext(pos)) { 
+		cur_client = theApp.clientlist->list.GetAt(pos); 
+		uint8 uLeecherReason = cur_client->IsLeecher();
+		switch(uLeecherReason) 
+		{
+		case 1:
+		case 4:
+		case 10:
+		case 14:
+		case 15:
+		case 17:
+			if(bCommunity)
+				cur_client->BanLeecher(cur_client->GetBanMessageString(), uLeecherReason);
+			break;
+		case 6:
+		case 11:
+			if(bThief)
+				cur_client->BanLeecher(cur_client->GetBanMessageString(), uLeecherReason);
+			break;
+		default:
+			break; // do nothing
+		}
+	}
+
+}// <== Ban clients with reduced score immediatly on setting changed [Stulle] - Stulle

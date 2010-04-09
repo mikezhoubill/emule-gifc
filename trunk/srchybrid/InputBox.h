@@ -30,10 +30,7 @@ public:
 	const CString& GetInput() const { return m_return; }
 	bool	WasCancelled() const { return m_cancel;}
 	void	SetEditFilenameMode(bool isfilenamemode = true) { m_bFilenameMode = isfilenamemode; }
-	// khaos::categorymod+
-	void	SetNumber(bool isNum = false) { isNumber = isNum; }
-	const int	GetInputInt() const { return _tstoi(m_return); };
-	// khaos::categorymod-
+
 protected:
 	CString m_label;
 	CString m_title;
@@ -42,16 +39,20 @@ protected:
 	bool	m_cancel;
 	bool	m_bFilenameMode;
 	HICON	m_icMain;
-	// khaos::categorymod+
-	bool	isNumber;
-	// khaos::categorymod-
+
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
 
 	afx_msg void OnOK();
 	afx_msg void OnCleanFilename();
-	// khaos::categorymod+
-	afx_msg void OnCancel();
-	// khaos::categorymod-
 	DECLARE_MESSAGE_MAP()
+
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	bool	isNumber;
+
+	afx_msg void OnCancel();
+public:
+	void	SetNumber(bool isNum = false) { isNumber = isNum; }
+	const int	GetInputInt() const { return _tstoi(m_return); };
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 };

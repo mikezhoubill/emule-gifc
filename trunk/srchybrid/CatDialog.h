@@ -18,9 +18,11 @@
 #include "ColorButton.h"
 
 struct Category_Struct;
-/* morph delete: no regexp
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+/*
 class CCustomAutoComplete;
 */
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 class CCatDialog : public CDialog
 {
@@ -34,29 +36,28 @@ public:
 protected:
 	Category_Struct* m_myCat;
 	DWORD newcolor;
-  CColorButton m_ctlColor;
-  
-
-	// khaos::kmod+ Category Advanced A4AF Mode
-	CComboBox m_prio, m_comboA4AF;
-	// khaos::kmod-
-
-
-//	afx_msg void OnCbnSelchangeColorselector();
-/* morph  No regex delete:
+	CColorButton m_ctlColor;
 	CComboBox m_prio;
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
 	CCustomAutoComplete* m_pacRegExp;
-*/
-	
+	*/
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+
 	void Localize();
 	void UpdateData();
 
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-DECLARE_MESSAGE_MAP()
+	DECLARE_MESSAGE_MAP()
 	afx_msg LONG OnSelChange(UINT lParam, LONG wParam);
-
 	afx_msg void OnBnClickedBrowse();
 	afx_msg void OnBnClickedOk();
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
+	afx_msg void OnDDBnClicked();
+	*/
+	CComboBox m_comboDlMode;
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 };

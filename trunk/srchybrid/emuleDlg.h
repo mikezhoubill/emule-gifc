@@ -23,7 +23,7 @@
 */
 #include "MenuXP.h"
 // <== XP Style Menu [Xanatos] - Stulle
-#include "SpeedGraph.h" // High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+#include "SpeedGraph.h" // High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
 namespace Kademlia {
 	class CSearch;
@@ -47,7 +47,12 @@ class CStatisticsDlg;
 class CTaskbarNotifier;
 class CTransferWnd;
 struct Status;
+//Xman Splashscreen
+/*
 class CSplashScreen;
+*/
+class CSplashScreenEx;
+//Xman end
 class CMuleSystrayDlg;
 class CMiniMule;
 
@@ -61,7 +66,7 @@ class CMiniMule;
 
 class CemuleDlg : public CTrayDialog
 {
-	friend class CTBHMM; // TBH: minimule - Stulle
+	friend class CTBHMM; // TBH: minimule - Max
 	friend class CMuleToolbarCtrl;
 	friend class CMiniMule;
 
@@ -88,6 +93,7 @@ public:
 	void ResetLog();
 	void ResetDebugLog();
 	void ResetServerInfo();
+	void ResetLeecherLog();		//Xman Anti-Leecher-Log
 	CString GetLastLogEntry();
 	CString	GetLastDebugLogEntry();
 	CString	GetAllLogEntries();
@@ -102,13 +108,16 @@ public:
 
 	void StopTimer();
 	void DoVersioncheck(bool manual);
-	//MORPH START - Added by SiRoB, New Version check
+	//Xman versions check
 	void DoMVersioncheck(bool manual);
-	//MORPH END   - Added by SiRoB, New Version check
-	void DoIPFilterVersioncheck(); //MORPH - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-	// ==> StulleMule Version Check - Stulle
+	//Xman end
+	// ==> ScarAngel Version Check - Stulle
 	void DoSVersioncheck(bool manual);
-	// <== StulleMule Version Check - Stulle
+	// <== ScarAngel Version Check - Stulle
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	void DoDLPVersioncheck();
+	void DoIPFilterVersioncheck();
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
 	void ApplyHyperTextFont(LPLOGFONT pFont);
 	void ApplyLogFont(LPLOGFONT pFont);
 	void ProcessED2KLink(LPCTSTR pszData);
@@ -117,10 +126,12 @@ public:
 	bool IsPreferencesDlgOpen() const;
 	bool IsTrayIconToFlash()	{ return m_iMsgIcon!=0; }
 	void SetToolTipsDelay(UINT uDelay);
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	void StartUPnP(bool bReset = true, uint16 nForceTCPPort = 0, uint16 nForceUDPPort = 0);
 	void RefreshUPnP(bool bRequestAnswer = false);
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	HBRUSH GetCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 
 	void RunMiniMule(); // TBH: minimule (open on tray) - Stulle
@@ -160,15 +171,15 @@ protected:
 	HICON			m_icoSysTrayConnected;		// do not use those icons for anything else than the traybar!!!
 	HICON			m_icoSysTrayDisconnected;	// do not use those icons for anything else than the traybar!!!
 	HICON			m_icoSysTrayLowID;	// do not use those icons for anything else than the traybar!!!
-	// ==> Completed in Tray - Stulle
-	HICON			m_icoSysTrayConnectedPlus;		// do not use those icons for anything else than the traybar!!!
-	HICON			m_icoSysTrayDisconnectedPlus;	// do not use those icons for anything else than the traybar!!!
-	HICON			m_icoSysTrayLowIDPlus;	// do not use those icons for anything else than the traybar!!!
-	// <== Completed in Tray - Stulle
 	int				m_iMsgIcon;
 	UINT			m_uLastSysTrayIconCookie;
 	uint32			m_uUpDatarate;
 	uint32			m_uDownDatarate;
+	//Xman
+	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	uint32			m_uploadOverheadRate;
+	uint32			m_downloadOverheadRate;
+	//Xman end
 	CImageList		imagelist;
 	CTitleMenu		trayPopup;
 	CMuleSystrayDlg* m_pSystrayDlg;
@@ -178,26 +189,36 @@ protected:
 	CMenu			m_menuDownloadCtrl;
 	char			m_acVCDNSBuffer[MAXGETHOSTSTRUCT];
 	bool			m_iMsgBlinkState;
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	bool			m_bConnectRequestDelayedForUPnP;
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	bool			m_bKadSuspendDisconnect;
 	bool			m_bEd2kSuspendDisconnect;
-	//MORPH START - Added by SiRoB, Version check
+
+	//Xman versions check
 	char			m_acMVCDNSBuffer[MAXGETHOSTSTRUCT];
-	//MORPH END   - Added by SiRoB, Version check
-	//MORPH START - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-	char			m_acIPFilterAutoBuffer[MAXGETHOSTSTRUCT];
-	//MORPH END   - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-	// ==> StulleMule Version Check - Stulle
+	char			m_acDLPBuffer[MAXGETHOSTSTRUCT]; //Xman DLP
+	bool			m_bCheckwasDone;
+	//Xman end
+	// ==> ScarAngel Version Check - Stulle
 	char			m_acSVCDNSBuffer[MAXGETHOSTSTRUCT];
-	// <== StulleMule Version Check - Stulle
+	// <== ScarAngel Version Check - Stulle
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	char			m_acDLPAutoBuffer[MAXGETHOSTSTRUCT];
+	char			m_acIPFilterAutoBuffer[MAXGETHOSTSTRUCT];
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 	// Splash screen
+	//Xman new slpash-screen arrangement
+	/*
 	CSplashScreen *m_pSplashWnd;
 	DWORD m_dwSplashTime;
 	void ShowSplash();
 	void DestroySplash();
+	*/
+	//Xman end
 
 	// Mini Mule
 	CMiniMule* m_pMiniMule;
@@ -211,16 +232,18 @@ protected:
 	UINT_PTR m_hTimer;
 	static void CALLBACK StartupTimer(HWND hwnd, UINT uiMsg, UINT idEvent, DWORD dwTime);
 
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	// UPnP TimeOutTimer
 	UINT_PTR m_hUPnPTimeOutTimer;
 	static void CALLBACK UPnPTimeOutTimer(HWND hwnd, UINT uiMsg, UINT idEvent, DWORD dwTime);
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 
-	public://MORPH leuk_he:run as ntservice v1.. 
+public: // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	void StartConnection();
 	void CloseConnection();
-	protected://MORPH leuk_he:run as ntservice v1.. 
+protected: // Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	void MinimizeWindow();
 	void PostStartupMinimized();
 	void UpdateTrayIcon(int iPercent);
@@ -228,7 +251,15 @@ protected:
 	void ShowTransferStateIcon();
 	void ShowUserStateIcon();
 	void AddSpeedSelectorMenus(CMenu* addToMenu);
+	//Xman
+	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
+	/*
 	int  GetRecMaxUpload();
+	*/
+public:
+	float  GetRecMaxUpload();
+protected:
+	//Xman end
 	void LoadNotifier(CString configuration);
 	bool notifierenabled;
 	void ShowToolPopup(bool toolsonly = false);
@@ -271,6 +302,10 @@ protected:
 	afx_msg BOOL OnChevronPushed(UINT id, NMHDR *pnm, LRESULT *pResult);
 	afx_msg LRESULT OnPowerBroadcast(WPARAM wParam, LPARAM lParam);
 
+	// ==> XP Style Menu [Xanatos] - Stulle
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	// <== XP Style Menu [Xanatos] - Stulle
+
 	// quick-speed changer -- based on xrmb
 	afx_msg void QuickSpeedUpload(UINT nID);
 	afx_msg void QuickSpeedDownload(UINT nID);
@@ -281,36 +316,28 @@ protected:
 	afx_msg LRESULT OnWMData(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnFileHashed(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnHashFailed(WPARAM wParam,LPARAM lParam);
-	// SLUGFILLER: SafeHash
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash
 	afx_msg LRESULT OnPartHashedOK(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedCorrupt(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedOKAICHRecover(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedCorruptAICHRecover(WPARAM wParam,LPARAM lParam);
-	// SLUGFILLER: SafeHash
-	//MORPH START - Added by SiRoB, ReadBlockFromFileThread
+	// END SLUGFILLER: SafeHash
+	// BEGIN SiRoB: ReadBlockFromFileThread
 	afx_msg LRESULT OnReadBlockFromFileDone(WPARAM wParam,LPARAM lParam);
-	//MORPH END   - Added by SiRoB, ReadBlockFromFileThread
-	//MORPH START - Added by SiRoB, Flush Thread
+	// BEGIN SiRoB: ReadBlockFromFileThread
+	// END SiRoB: Flush Thread
 	afx_msg LRESULT OnFlushDone(WPARAM wParam,LPARAM lParam);
-	//MORPH END   - Added by SiRoB, Flush Thread
-	//MORPH START - Added by SiRoB, Import Part
+	// END SiRoB: Flush Thread
+	//MORPH START - Added by SiRoB, Import Parts - added by zz_fly
 	afx_msg LRESULT OnImportPart(WPARAM wParam,LPARAM lParam);
-	//MORPH END   - Added by SiRoB, Import Part
-	// ==> drop sources - Stulle
-#ifdef FILESETTINGS_SAVE_THREAD
-	afx_msg LRESULT OnSaveDone(WPARAM wParam,LPARAM lParam);
-#endif
-	// <== drop sources - Stulle
-	// ==> Threaded Known Files Saving - Stulle
-#ifdef KNOWNFILES_SAVE_THREAD
-	afx_msg LRESULT OnSaveKnownDone(WPARAM wParam,LPARAM lParam);
-#endif
-	// <== Threaded Known Files Saving - Stulle
+	//MORPH END   - Added by SiRoB, Import Parts
+	afx_msg LRESULT OnSaveDone(WPARAM wParam,LPARAM lParam); // File Settings [sivka/Stulle] - Stulle
+	afx_msg LRESULT OnSaveKnownDone(WPARAM wParam,LPARAM lParam); // Threaded Known Files Saving [Stulle] - Stulle
+
 	afx_msg LRESULT OnFileAllocExc(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnFileCompleted(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnFileOpProgress(WPARAM wParam,LPARAM lParam);
-	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct); // XP Style Menu [Xanatos] - Stulle
-	afx_msg LRESULT OnConChecker(WPARAM wParam, LPARAM lParam); // Connection Checker [eWombat/WiZaRd] - Stulle
 
 	//Framegrabbing
 	afx_msg LRESULT OnFrameGrabFinished(WPARAM wParam,LPARAM lParam);
@@ -325,19 +352,24 @@ protected:
 	afx_msg LRESULT OnWebSetCatPrio(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnAddRemoveFriend(WPARAM wParam, LPARAM lParam);
 
-	afx_msg LRESULT  OnServiceStatus(WPARAM wParam, LPARAM lParam); // MORPH leuk_he run as a ntservice v1.
-
 	// VersionCheck DNS
 	afx_msg LRESULT OnVersionCheckResponse(WPARAM wParam, LPARAM lParam);
 
-	//MORPH - Added by SiRoB, New Version check
+	//Xman versions check
 	afx_msg LRESULT OnMVersionCheckResponse(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnDLPVersionCheckResponse(WPARAM wParam, LPARAM lParam); //Xman DLP
+	//Xman end
 
-	//MORPH - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
+	afx_msg LRESULT DoTimer(WPARAM wParam, LPARAM lParam); //Xman process timer code via messages (Xanatos)
+
+	// ScarAngel Version Check - Stulle
+	afx_msg	LRESULT	OnSVersionCheckResponse(WPARAM wParam, LPARAM lParam);
+	// Advanced Updates [MorphXT/Stulle] - Stulle
+	afx_msg LRESULT OnDLPAutoVerCheckResponse(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnIPFilterAutoVerCheckResponse(WPARAM wParam, LPARAM lParam);
 
-	// StulleMule Version Check - Stulle
-	afx_msg	LRESULT	OnSVersionCheckResponse(WPARAM wParam, LPARAM lParam);
+	// Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	afx_msg LRESULT  OnServiceStatus(WPARAM wParam, LPARAM lParam);
 
 	// Peercache DNS
 	afx_msg LRESULT OnPeerCacheResponse(WPARAM wParam, LPARAM lParam);
@@ -348,13 +380,28 @@ protected:
 	// Terminal Services
 	afx_msg LRESULT OnConsoleThreadEvent(WPARAM wParam, LPARAM lParam);
 
-#ifdef USE_OFFICIAL_UPNP
 	// UPnP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	afx_msg LRESULT OnUPnPResult(WPARAM wParam, LPARAM lParam);
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 
-//Commander - Added: Invisible Mode [TPT] - Start	
+// ==> Show in MSN7 [TPT] - Stulle
+protected:
+	DWORD m_dwMSNtime;
+	uint8 m_uMSNup2Date;
+// <== Show in MSN7 [TPT] - Stulle
+
+	// ==> TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 public:
+	// >> add by Ken
+	void ShowLessControls(bool enable);
+	// << add by Ken
+	void SaveSettings (bool _shutdown=false);
+	// <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
+
+	// ==> Invisible Mode [TPT/MoNKi] - Stulle
 	BOOL	RegisterInvisibleHotKey();
 	BOOL	UnRegisterInvisibleHotKey();
 protected:
@@ -365,63 +412,44 @@ protected:
 	static BOOL CALLBACK AskEmulesForInvisibleMode(HWND hWnd, LPARAM lParam);
 
 private:
-	//MORPH - Added by SiRoB, Toggle Show Hide window
 	void	ToggleShow();
 	void	ToggleHide();
 	BOOL	b_TrayWasVisible;
 	BOOL	b_WindowWasVisible;
 	bool	b_HideApp;
-	//MORPH - Added by SiRoB, Toggle Show Hide window
 
-//Commander - Added: Invisible Mode [TPT] - End
+	// <== Invisible Mode [TPT/MoNKi] - Stulle
 
-	// Mighty Knife: Save settings
-public:
-	void SaveSettings (bool _shutdown=false);
-	// [end] Mighty Knife
-	// MORPH START show less controls
-	void ShowLessControls(bool enable);
-	// MORPH END less controls
-	// MORPH START leuk_he clipboard chain instead of timer
-	HWND m_hwndClipChainNext;
-	bool m_bChained; 
-	bool m_bClipboardChainIsOk;
-	void SetClipboardWatch(bool enable);
-	afx_msg void OnDrawClipboard();
-	afx_msg void OnChangeCbChain(HWND hWndRemove, HWND hWndAfter);
-	// MORPH END leuk_he clipboard chain instead of timer
-
-	void	CheckIPFilter(); //MORPH - Added by Stulle, New IP Filter by Ozzy [Stulle/Ozzy]
-
-// ==> Show in MSN7 [TPT] - Stulle
-protected:
-	DWORD m_dwMSNtime;
-	uint8 m_uMSNup2Date;
-// <== Show in MSN7 [TPT] - Stulle
-
-// ==> Completed in Tray - Stulle
-	DWORD m_dwTrayTime;
-	bool m_bTrayBool;
-	bool m_bTrayBoolOld;
-// <== Completed in Tray - Stulle
-
-// ==> High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 public:
 	CSpeedGraph m_co_UpTrafficGraph;
 	CSpeedGraph m_co_DownTrafficGraph;
 
 	void Update_TrafficGraph();
-	void Resize_TrafficGraph();
-// <== High resulution speedmeter on toolbar [eFMod/Stulle] - Stulle
+	void Reposition_TrafficGraph();
+// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
+	// ==> Design Settings [eWombat/Stulle] - Max
 private:
 	HBRUSH	m_hbrWndClr;
 public:
 	HBRUSH	GetWndClr()	{return m_hbrWndClr;}
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
+	// <== Design Settings [eWombat/Stulle] - Max
+
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	void	DownloadDLP();
+	void	CheckIPFilter();
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
+
+	// ==> Completed in Tray [Stulle] - Stulle
+protected:
+	HICON m_icoSysTrayConnectedPlus;
+	HICON m_icoSysTrayDisconnectedPlus;
+	HICON m_icoSysTrayLowIDPlus;
+	DWORD m_dwTrayTime;
+	bool m_bTrayBool;
+	bool m_bTrayBoolOld;
+	// <== Completed in Tray [Stulle] - Stulle
 };
 
 
@@ -430,25 +458,19 @@ enum EEMuleAppMsgs
 	//thread messages
 	TM_FINISHEDHASHING = WM_APP + 10,
 	TM_HASHFAILED,
-	// SLUGFILLER: SafeHash - new handling
+	//Xman
+	// BEGIN SLUGFILLER: SafeHash - new handling
 	TM_PARTHASHEDOK,
 	TM_PARTHASHEDCORRUPT,
 	TM_PARTHASHEDOKAICHRECOVER,
 	TM_PARTHASHEDCORRUPTAICHRECOVER,
-	// SLUGFILLER: SafeHash
-	TM_READBLOCKFROMFILEDONE, //MORPH - Added by SiRoB, ReadBlockFromFileThread
-	TM_FLUSHDONE, //MORPH - Added by SiRoB, Flush Thread
-	TM_IMPORTPART, //MORPH START - Added by SiRoB, Import Part
-	// ==> drop sources - Stulle
-#ifdef FILESETTINGS_SAVE_THREAD
-	TM_SAVEDONE,
-#endif
-	// <== drop sources - Stulle
-	// ==> Threaded Known Files Saving - Stulle
-#ifdef KNOWNFILES_SAVE_THREAD
-	TM_SAVEKNOWNDONE,
-#endif
-	// <== Threaded Known Files Saving - Stulle
+	// END SLUGFILLER: SafeHash
+	TM_READBLOCKFROMFILEDONE, // SiRoB: ReadBlockFromFileThread
+	TM_FLUSHDONE, // SiRoB: Flush Thread
+	TM_IMPORTPART, //MORPH - Added by SiRoB, Import Parts - added by zz_fly
+	TM_DOTIMER, //Xman process timer code via messages (Xanatos)
+	TM_SAVEDONE, // File Settings [sivka/Stulle] - Stulle
+	TM_SAVEKNOWNDONE, // Threaded Known Files Saving [Stulle] - Stulle
 	TM_FRAMEGRABFINISHED,
 	TM_FILEALLOCEXC,
 	TM_FILECOMPLETED,
@@ -479,7 +501,7 @@ enum EWebinterfaceOrders
 	WEBGUIIA_KAD_RCFW
 };
 
-//Commander - Added: Invisible Mode [TPT] - Start
+// ==> Invisible Mode [TPT/MoNKi] - Stulle
 enum EEmuleHotKeysIDs
 {
 	HOTKEY_INVISIBLEMODE_ID
@@ -489,6 +511,6 @@ enum EEMuleInvisibleModeEnumOptions
 {
 	INVMODE_RESTOREWINDOW,
 	INVMODE_REGISTERHOTKEY,
-	INVMODE_HIDEWINDOW //MORPH - Added by SiRoB, Toggle Show Hide window 
+	INVMODE_HIDEWINDOW
 };
-//Commander - Added: Invisible Mode [TPT] - End
+// <== Invisible Mode [TPT/MoNKi] - Stulle

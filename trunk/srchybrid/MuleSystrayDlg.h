@@ -1,5 +1,7 @@
 #pragma once
 
+#include "NumEdit.h" //Xman
+
 class CInputBox : public CEdit
 {
 protected:
@@ -18,59 +20,72 @@ protected:
 
 class CMuleSystrayDlg : public CDialog
 {
-	// Construction
+// Construction
 public:
+	//Xman
+	/*
 	CMuleSystrayDlg(CWnd* pParent, CPoint pt, int iMaxUp, int iMaxDown, int iCurUp, int iCurDown);
+	*/
+	CMuleSystrayDlg(CWnd* pParent, CPoint pt, float iMaxUp, float iMaxDown, float iCurUp, float iCurDown);
+	//Xman end
 	~CMuleSystrayDlg();
-
-	// Dialog Data
+    
+// Dialog Data
 	//{{AFX_DATA(CMuleSystrayDlg)
 	enum { IDD = IDD_MULETRAYDLG };
 	CStatic	m_ctrlUpArrow;
 	CStatic	m_ctrlDownArrow;
-	CStatic	m_ctrlMinUpIcon;
 	CGradientStatic	m_ctrlSidebar;
 	CSliderCtrl	m_ctrlUpSpeedSld;
 	CSliderCtrl	m_ctrlDownSpeedSld;
-	CSliderCtrl	m_ctrlMinUpSpeedSld;
+	//Xman
+	/*
 	CInputBox	m_DownSpeedInput;
 	CInputBox	m_UpSpeedInput;
-	CInputBox	m_MinUpSpeedInput;
-	int		m_nMinUpSpeedTxt;
 	int		m_nDownSpeedTxt;
 	int		m_nUpSpeedTxt;
+	*/
+	CNumEdit m_DownSpeedInput;
+	CNumEdit m_UpSpeedInput;
+	float	m_nDownSpeedTxt;
+	float	m_nUpSpeedTxt;
+	//Xman end
 	//}}AFX_DATA
 
 
-	// Overrides
+// Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMuleSystrayDlg)
-protected:
+	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
-	// Implementation
+// Implementation
 protected:
 	CTrayMenuBtn m_ctrlSpeed;
 	CTrayMenuBtn m_ctrlAllToMax;
-	/*CTrayMenuBtn m_ctrlAllToMin;*/
+	CTrayMenuBtn m_ctrlAllToMin;
 	CTrayMenuBtn m_ctrlRestore;
 	CTrayMenuBtn m_ctrlDisconnect;
 	CTrayMenuBtn m_ctrlConnect;
 	CTrayMenuBtn m_ctrlExit;
 	CTrayMenuBtn m_ctrlPreferences;
-	CTrayMenuBtn m_ctrlReloadShares;
 
 	bool m_bClosingDown;
-
+	
+	//Xman
+	/*
 	int m_iMaxUp;
 	int m_iMaxDown;
+	*/
+	float m_iMaxUp;
+	float m_iMaxDown;
+	//Xman end
 	CPoint m_ptInitialPosition;
 
 	HICON m_hUpArrow;
 	HICON m_hDownArrow;
-	HICON m_hSUCIcon;
 
 	UINT m_nExitCode;
 
@@ -80,7 +95,6 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnChangeDowntxt();
 	afx_msg void OnChangeUptxt();
-	afx_msg void OnChangeMinUptxt();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);

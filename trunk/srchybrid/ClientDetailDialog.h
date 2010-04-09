@@ -16,8 +16,8 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 
-#include "../ResizableLib/ResizablePage.h"
-#include "../ResizableLib/ResizableSheet.h"
+#include "ResizableLib/ResizablePage.h"
+#include "ResizableLib/ResizableSheet.h"
 #include "ListViewWalkerPropertySheet.h"
 
 class CUpDownClient;
@@ -48,18 +48,8 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnSetActive();
 
-	// [MightyKnife] Private modification
-	#ifdef MIGHTY_TWEAKS
-	CStatic m_sAdditionalInfo;
-	CFont   m_fStdFont;
-
-	#endif
-	// [MightyKnife] end: Private Modifications
-
 	DECLARE_MESSAGE_MAP()
 	afx_msg LRESULT OnDataChanged(WPARAM, LPARAM);
-private:
-	HICON countryflag; // MORPH - Added by Commander, CountryFlag
 };
 
 

@@ -65,7 +65,11 @@ protected:
 	afx_msg		void	OnRButtonDown( UINT nFlags, CPoint point );
 	afx_msg		void	OnContextMenu( CWnd* pWnd, CPoint point );
 	afx_msg		void	OnItemExpanded( NMHDR* pNMHDR, LRESULT* pResult );
-	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct); // XP Style Menu [Xanatos] - Stulle
+
+	// ==> XP Style Menu [Xanatos] - Stulle
+	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
+	// <== XP Style Menu [Xanatos] - Stulle
 
 public:
 	void				Init();
@@ -85,16 +89,11 @@ public:
 	void				DoMenu(CPoint doWhere, UINT nFlags);
 	void				ExpandAll(bool onlyBold = false, HTREEITEM theItem = NULL);
 	void				CollapseAll(HTREEITEM theItem = NULL);
+	void				DeleteChildItems(HTREEITEM parentItem); //Xman extended stats (taken from emule plus)
 	CString				GetExpandedMask(HTREEITEM theItem = NULL);
 	int					ApplyExpandedMask(CString theMask, HTREEITEM theItem = NULL, int theStringIndex = 0);
 private:
 	CTitleMenu			mnuContext;
 	CTitleMenu			mnuHTML;
 	bool				m_bExpandingAll;
-
-//MORPH START - Added by SiRoB / Commander, Wapserver [emulEspaña]
-public:
-	CString				GetWML( bool onlyVisible = true, bool onlyBold = false, bool noRecursive = false, HTREEITEM theItem = NULL, int theItemLevel = 0, bool firstItem = true );
-	bool				ItemExist(HTREEITEM item, HTREEITEM curItem = NULL);
-//MORPH END - Added by SiRoB / Commander, Wapserver [emulEspaña]
 };

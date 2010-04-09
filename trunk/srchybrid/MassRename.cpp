@@ -24,7 +24,6 @@
 #include "MassRename.h"
 #include "OtherFunctions.h"
 #include "SimpleCleanup.h"
-#include ".\massrename.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -133,6 +132,7 @@ void CMassRenameDialog::Localize() {
 	GetDlgItem (IDC_SIMPLECLEANUP)->SetWindowText (GetResString (IDS_SIMPLECLEANUP));
 	GetDlgItem (IDC_INSERTTEXTCOLUMN)->SetWindowText (GetResString (IDS_INSERTTEXTCOLUMN));
 	GetDlgItem (IDC_RESETBUTTON)->SetWindowText (GetResString (IDS_RESETFILENAMES));
+	GetDlgItem (IDOK)->SetWindowText (GetResString(IDS_TREEOPTIONS_OK));
 	GetDlgItem (IDCANCEL)->SetWindowText (GetResString (IDS_CANCEL));
 }
 
@@ -567,7 +567,8 @@ CString SimpleCleanupFilename (CString _filename) {
 
 void CMassRenameDialog::OnBnClickedSimplecleanup()
 {
-	/*
+	//Xman changed: use the simple method
+	/* // Simple cleanup [MorphXT] - Stulle
 	// Choose the current active RichEdit - the one which shows the filenames
 	// left justified or right justified
 	CRichEditCtrl* NFNEdit = NFNLeft;
@@ -581,9 +582,9 @@ void CMassRenameDialog::OnBnClickedSimplecleanup()
 	// Now process through each line and cleanup that filename
 	for (int i=0; i < NFNEdit->GetLineCount (); i++) {
 		// Get the filename
-		CString filename;
-		NFNEdit->GetLine (i,filename.GetBuffer (MAX_PATH+1),MAX_PATH);
-		filename.ReleaseBuffer();
+		CString filename;int newcount;
+		newcount= NFNEdit->GetLine (i,filename.GetBuffer (MAX_PATH+1),MAX_PATH);
+		filename.ReleaseBuffer(newcount);
 		// Clean it up
 		filename = SimpleCleanupFilename (filename);
 		// and add it to the current list of filenames
@@ -594,8 +595,9 @@ void CMassRenameDialog::OnBnClickedSimplecleanup()
 	// at the end save the list of filenames to the Richedit controls
 	NFNLeft->SetWindowText( filenames );
 	NFNRight->SetWindowText( filenames );
-	*/
+	*/ // Simple cleanup [MorphXT] - Stulle
 
+//	/* Simple cleanup [MorphXT] - Stulle
 	CSimpleCleanupDialog sclean;
 	sclean.SetConfig (thePrefs.GetSimpleCleanupOptions (),
 		thePrefs.GetSimpleCleanupSearch (),
@@ -646,6 +648,7 @@ void CMassRenameDialog::OnBnClickedSimplecleanup()
 		NFNRight->SetWindowText( filenames );
 
 	}
+//	*/ Simple cleanup [MorphXT] - Stulle
 }
 
 void CMassRenameDialog::OnBnClickedInserttextcolumn()

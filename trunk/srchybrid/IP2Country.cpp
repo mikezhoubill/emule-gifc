@@ -17,19 +17,26 @@ the IP to country data is provided by http://ip-to-country.webhosting.info/
 #include "emule.h"
 #include "otherfunctions.h"
 #include <flag/resource.h>
-#include "log.h"
+#include "Log.h"
+#include "Preferences.h" //Xman
 
 //refresh list
-#include "serverlist.h"
-#include "clientlist.h"
+//#include "serverlist.h"
+//#include "clientlist.h"
 
 //refresh server list ctrl
-#include "emuledlg.h"
-#include "serverwnd.h"
-#include "serverlistctrl.h"
+//#include "emuledlg.h"
+//#include "serverwnd.h"
+//#include "serverlistctrl.h"
 
-#include "HttpDownloadDlg.h"//MORPH - Added by SiRoB, IP2Country auto-updating
-#include "ZipFile.h"//MORPH - Added by SiRoB, ZIP File download decompress
+//#include "HttpDownloadDlg.h"//MORPH - Added by SiRoB, IP2Country auto-updating
+//#include "ZipFile.h"//MORPH - Added by SiRoB, ZIP File download decompress
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+#include "HttpDownloadDlg.h"
+#include "ZipFile.h"
+#include "serverlist.h"
+#include "clientlist.h"
+// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -39,6 +46,9 @@ static char THIS_FILE[] = __FILE__;
 
 // N/A flag is the first Res, so it should at index zero
 #define NO_FLAG 0
+
+CImageList CIP2Country::CountryFlagImageList;
+Country_Struct CIP2Country::defaultCountry;
 
 void FirstCharCap(CString *pstrTarget)
 {
@@ -60,22 +70,20 @@ CIP2Country::CIP2Country(){
 
 	m_bRunning = false;
 
-	defaultIP2Country.IPstart = 0;
-	defaultIP2Country.IPend = 0;
+	//defaultCountry.ShortCountryName = GetResString(IDS_IP2COUNTRY_NASHORT);
+	//defaultCountry.MidCountryName = GetResString(IDS_IP2COUNTRY_NASHORT);
+	defaultCountry.LongCountryName = GetResString(IDS_IP2COUNTRY_NALONG);
 
-	defaultIP2Country.ShortCountryName = GetResString(IDS_IP2COUNTRY_NASHORT);
-	defaultIP2Country.MidCountryName = GetResString(IDS_IP2COUNTRY_NASHORT);
-	defaultIP2Country.LongCountryName = GetResString(IDS_IP2COUNTRY_NALONG);
-
-	defaultIP2Country.FlagIndex = NO_FLAG;
+	defaultCountry.FlagIndex = NO_FLAG;
 
 	EnableIP2Country = false;
 	EnableCountryFlag = false;
 
-	if(thePrefs.GetIP2CountryNameMode() != IP2CountryName_DISABLE || 
-		thePrefs.IsIP2CountryShowFlag()){
+	//Xman always load
+	//if(thePrefs.GetIP2CountryNameMode() != IP2CountryName_DISABLE || 
+	//	thePrefs.IsIP2CountryShowFlag()){
 		Load();
-	}
+	//}
 
 	AddLogLine(false, GetResString(IDS_IP2COUNTRY_MSG1));
 	AddLogLine(false, GetResString(IDS_IP2COUNTRY_MSG2));
@@ -94,7 +102,9 @@ void CIP2Country::Load(){
 	EnableCountryFlag = LoadCountryFlagLib();//flag lib first, so ip range can map to flag
 	EnableIP2Country = LoadFromFile();
 
-	if(m_bRunning) Reset();
+	//if(m_bRunning) Reset(); //Xman not needed
+	if(m_bRunning) Reset(); // Advanced Updates [MorphXT/Stulle] - Stulle
+	CountryIDtoFlagIndex.RemoveAll(); //Xman after loading /mapping we don't need it anymore
 
 	AddLogLine(false, GetResString(IDS_IP2COUNTRY_LOADED));
 }
@@ -104,7 +114,8 @@ void CIP2Country::Unload(){
 	EnableIP2Country = false;
 	EnableCountryFlag = false;
 
-	if(m_bRunning) Reset();
+	//if(m_bRunning) Reset(); //Xman not needed
+	if(m_bRunning) Reset(); // Advanced Updates [MorphXT/Stulle] - Stulle
 
 	RemoveAllIPs();
 	RemoveAllFlags();
@@ -112,15 +123,18 @@ void CIP2Country::Unload(){
 	AddDebugLogLine(false, GetResString(IDS_IP2COUNTRY_UNLOADED));
 }
 
+/* //Xman not needed
+Advanced Updates [MorphXT/Stulle] - Stulle */
 void CIP2Country::Reset(){
 	theApp.serverlist->ResetIP2Country();
 	theApp.clientlist->ResetIP2Country();
 }
 
+/* Advanced Updates [MorphXT/Stulle] - Stulle
 void CIP2Country::Refresh(){
 	theApp.emuledlg->serverwnd->serverlistctrl.RefreshAllServer();
 }
-
+*/
 static int __cdecl CmpIP2CountryByStartAddr(const void* p1, const void* p2)
 {
 	const IPRange_Struct2* rng1 = *(IPRange_Struct2**)p1;
@@ -130,7 +144,7 @@ static int __cdecl CmpIP2CountryByStartAddr(const void* p1, const void* p2)
 
 bool CIP2Country::LoadFromFile(){
 	DWORD startMesure = GetTickCount();
-	TCHAR* szbuffer = new TCHAR[512+8];
+	TCHAR* szbuffer = new TCHAR[88];
 	CString ip2countryCSVfile = GetDefaultFilePath();
 	FILE* readFile = _tfsopen(ip2countryCSVfile, _T("r"), _SH_DENYWR);
 	try{
@@ -140,10 +154,7 @@ bool CIP2Country::LoadFromFile(){
 			int iDuplicate = 0;
 			int iMerged = 0;
 			bool error = false;
-			while (!feof(readFile)) {
-				error = false;
-				if (_fgetts(szbuffer,512,readFile)==0) break;
-				++iLine;
+			TCHAR *szIPStart,*szIPEnd,*sz2L,*sz3L,*szCountry;
 				/*
 				http://ip-to-country.webhosting.info/node/view/54
 
@@ -163,38 +174,46 @@ bool CIP2Country::LoadFromFile(){
 				// we assume that the ip-to-country.csv is valid and doesn't cause any troubles
 				// Since dec 2007 the file is provided without " so we tokenize on ,
 				// get & process IP range
-				CString sbuffer = szbuffer;
-				sbuffer.Remove(L'"'); // get rid of the " signs
 				
-				CString tempStr[5];
-				int curPos = 0;
-				for(int forCount = 0; forCount < 5; ++forCount)
-				{
-					tempStr[forCount] = sbuffer.Tokenize(_T(","), curPos);
-					if(tempStr[forCount].IsEmpty()) 
-					{
-						if(forCount == 0 || forCount == 1) 
-						{
-							error = true; //no empty ip field
-							break;
-						}
-						//no need to throw an exception, keep reading in next line
-						//throw CString(_T("error line in"));
-					}
-				}
-				if(error)
-				{
-					theApp.QueueDebugLogLineEx(LOG_ERROR,_T( "error line number : %i"),  iCount+1);
-					theApp.QueueDebugLogLineEx(LOG_ERROR, _T("possible error line in %s"), ip2countryCSVfile);
+			while (!feof(readFile)) {
+				error = false;
+				if (_fgetts(szbuffer, 88,readFile)==0) break;
+				++iLine;
+				
+				if (*szbuffer != _T('"'))
 					continue;
-				}
-				//tempStr[4] is full country name, capitalize country name from rayita
-				FirstCharCap(&tempStr[4]);
-
+				szIPStart=++szbuffer;
+				#pragma warning(disable:4555) //Xman
+				for ( szbuffer ; *szbuffer != 0 && *szbuffer != '"'; szbuffer++ );
+				*szbuffer = '\0';
+				szIPEnd=szbuffer+=3;
+				for ( szbuffer ; *szbuffer != 0 && *szbuffer != '"'; szbuffer++ );
+				*szbuffer = '\0';
+				sz2L = szbuffer+=3;
+				for ( szbuffer ; *szbuffer != 0 && *szbuffer != '"'; szbuffer++ );
+				*szbuffer = '\0';
+				sz3L = szbuffer+=3;
+				for ( szbuffer ; *szbuffer != 0 && *szbuffer != '"'; szbuffer++ );
+				*szbuffer = '\0';
+				szCountry = szbuffer+=3;
+				++szbuffer;
+				#pragma warning(disable:4245) //Xman
+				for ( szbuffer ; *szbuffer != 0 && *szbuffer != '"'; szbuffer++ )
+					if ( (*szbuffer >= (TCHAR)L'A') && (*szbuffer <= (TCHAR)L'Z') )
+						*szbuffer -= L'A' - L'a';
+					else if (*szbuffer == (TCHAR)L' ')
+						++szbuffer;
+				*szbuffer= '\0';
+				szbuffer=szIPStart-1;
 				++iCount;
-     			//AddIPRange((UINT)_tstol(tempStr[0]), (UINT)_tstol(tempStr[1]), tempStr[2].GetString(), tempStr[3], tempStr[4]);
-				AddIPRange(_tcstoul(tempStr[0], NULL, 10), _tcstoul(tempStr[1], NULL, 10), tempStr[2].GetString(), tempStr[3], tempStr[4]); //Fafner: vs2005 - 061130
-
+				#pragma warning(default:4245)
+				#pragma warning(default:4555)
+				//zz_fly :: VS2005 compatibility :: thanks Stulle/dolphin87
+				/*
+				AddIPRange((uint32)_tstoi(szIPStart),(uint32)_tstoi(szIPEnd), sz2L, sz3L, szCountry);
+				*/
+				AddIPRange(_tcstoul(szIPStart,NULL,10), _tcstoul(szIPEnd,NULL,10), sz2L, sz3L, szCountry);
+				//zz_fly :: VS2005 compatibility :: end
 			}
 			fclose(readFile);
 
@@ -208,7 +227,8 @@ bool CIP2Country::LoadFromFile(){
 				{
 					IPRange_Struct2* pCur = m_iplist[i];
 					if (   pCur->IPstart >= pPrv->IPstart && pCur->IPstart <= pPrv->IPend	 // overlapping
-						|| pCur->IPstart == pPrv->IPend+1 && pCur->ShortCountryName == pPrv->ShortCountryName) // adjacent
+						//Xman: Xtreme only uses the long names... use it here too
+						|| pCur->IPstart == pPrv->IPend+1 && pCur->country->LongCountryName == pPrv->country->LongCountryName) // adjacent
 					{
 						if (pCur->IPstart != pPrv->IPstart || pCur->IPend != pPrv->IPend) // don't merge identical entries
 						{
@@ -249,6 +269,7 @@ bool CIP2Country::LoadFromFile(){
 	catch(CString strerror){
 		AddLogLine(false, _T("%s %s"), strerror, ip2countryCSVfile);
 		RemoveAllIPs();
+		delete[] szbuffer;
 		return false;
 	}
 	delete[] szbuffer;
@@ -263,7 +284,7 @@ bool CIP2Country::LoadCountryFlagLib(){
 	try{
 
 		//detect windows version
-		if(thePrefs.GetWindowsVersion() == _WINVER_XP_){
+		if(thePrefs.GetWindowsVersion() == _WINVER_XP_ || thePrefs.GetWindowsVersion() == _WINVER_2003_ || thePrefs.GetWindowsVersion() == _WINVER_VISTA_){
 			//it's XP, we can use beautiful 32bits flags with alpha channel :)
 			ip2countryCountryFlag = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)+_T("countryflag32.dll");
 		}
@@ -345,7 +366,7 @@ bool CIP2Country::LoadCountryFlagLib(){
 			IDI_COUNTRY_FLAG_CS, //by propaganda
 			IDI_COUNTRY_FLAG_TP, //by commander
 
-			65535//the end
+			242//the end ->242 used country-flags
 		};
 
 		CString countryID[] = {
@@ -378,16 +399,18 @@ bool CIP2Country::LoadCountryFlagLib(){
 		CountryFlagImageList.Create(18,16,theApp.m_iDfltImageListColorFlags|ILC_MASK,0,1);
 		CountryFlagImageList.SetBkColor(CLR_NONE);
 
+		//Xman Code Improcement
 		//the res Array have one element to be the STOP
-		for(int cur_pos = 0; resID[cur_pos] != 65535; cur_pos++){
-
-			CountryIDtoFlagIndex.SetAt(countryID[cur_pos], (uint16)cur_pos);
-
+		uint16 elemens=sizeof(countryID)/sizeof(CString);
+		//for(uint16 cur_pos = 0; resID[cur_pos] != 242; cur_pos++){
+		for(uint16 cur_pos = 0; cur_pos < elemens; cur_pos++){
+			CountryIDtoFlagIndex.SetAt(countryID[cur_pos], cur_pos);
 			iconHandle = LoadIcon(_hCountryFlagDll, MAKEINTRESOURCE(resID[cur_pos]));
 			if(iconHandle == NULL) throw CString(GetResString(IDS_IP2COUNTRY_ERROR5));
 			
 			CountryFlagImageList.Add(iconHandle);
 		}
+		//Xman end
 	
 
 	}
@@ -409,6 +432,18 @@ bool CIP2Country::LoadCountryFlagLib(){
 
 void CIP2Country::RemoveAllIPs(){
 
+	//first remove all country structs
+	CString key;
+	Country_Struct* value;
+	POSITION pos = countryList.GetHeadPosition();
+	while(pos)
+	{
+		countryList.GetNextAssoc(pos, key, value);
+		delete value;
+	}
+	countryList.RemoveAll();
+
+	//now the ip structs
 	for (int i = 0; i < m_iplist.GetCount(); i++)
 		delete m_iplist[i];
 	m_iplist.RemoveAll();
@@ -427,30 +462,39 @@ void CIP2Country::RemoveAllFlags(){
 	AddLogLine(false, GetResString(IDS_IP2COUNTRY_FLAGUNLD));
 }
 
-void CIP2Country::AddIPRange(uint32 IPfrom,uint32 IPto, const TCHAR* shortCountryName, const TCHAR* midCountryName, const TCHAR* longCountryName){
+void CIP2Country::AddIPRange(uint32 IPfrom,uint32 IPto, TCHAR* shortCountryName, TCHAR* /*midCountryName*/, TCHAR* longCountryName){
 	IPRange_Struct2* newRange = new IPRange_Struct2();
 	newRange->IPstart = IPfrom;
 	newRange->IPend = IPto;
-	newRange->ShortCountryName = shortCountryName;
-	newRange->MidCountryName = midCountryName;
-	newRange->LongCountryName = longCountryName;
 
-	if(EnableCountryFlag){
+	const CRBMap<CString, Country_Struct*>::CPair* pair;
+	pair = countryList.Lookup(longCountryName);
+	if (pair == NULL) {
+		//AddCountry
+		Country_Struct* newCountry = new Country_Struct();
+		newCountry->LongCountryName = longCountryName;
+		//newCountry->MidCountryName = midCountryName;
+		//newCountry->LongCountryName = longCountryName;
+		countryList.SetAt(longCountryName, newCountry);
 
-		const CRBMap<CString, uint16>::CPair* pair;
-		pair = CountryIDtoFlagIndex.Lookup(shortCountryName);
+		//Add Flag
+		if(EnableCountryFlag){
 
-		if(pair != NULL){
-			newRange->FlagIndex = pair->m_value;
+			const CRBMap<CString, uint16>::CPair* pair2;
+			pair2 = CountryIDtoFlagIndex.Lookup(shortCountryName);
+
+			if(pair2 != NULL){
+				newCountry->FlagIndex = pair2->m_value;
+			}
+			else{
+				newCountry->FlagIndex = NO_FLAG;
+			}
 		}
-		else{
-			newRange->FlagIndex = NO_FLAG;
-		}
+
+		pair = countryList.Lookup(longCountryName);
 	}
-	else{
-		//this valuse is useless if the country flag havn't been load up, should be safe I think ...
-		//newRange->FlagIndex = 0;
-	}
+	ASSERT(pair!=NULL);
+	newRange->country = pair->m_value;
 	
 	m_iplist.Add(newRange);
 }
@@ -467,29 +511,32 @@ static int __cdecl CmpIP2CountryByAddr(const void* pvKey, const void* pvElement)
 	return 0;
 }
 
-struct IPRange_Struct2* CIP2Country::GetCountryFromIP(uint32 ClientIP){
+//struct 
+Country_Struct* CIP2Country::GetCountryFromIP(uint32 ClientIP) const
+{
 
 	if(EnableIP2Country == false || ClientIP == 0){
-		return &defaultIP2Country;
+		return &defaultCountry;
 	}
 	if(m_iplist.GetCount() == 0){
 		AddDebugLogLine(false, _T("CIP2Country::GetCountryFromIP iplist doesn't exist"));
-		return &defaultIP2Country;
+		return &defaultCountry;
 	}
 	ClientIP = htonl(ClientIP);
 	IPRange_Struct2** ppFound = (IPRange_Struct2**)bsearch(&ClientIP, m_iplist.GetData(), m_iplist.GetCount(), sizeof(m_iplist[0]), CmpIP2CountryByAddr);
 	if (ppFound)
 	{
-		return *ppFound;
+		return (*ppFound)->country;
 	}
 
-	return &defaultIP2Country;
+	return &defaultCountry;
 }
-CString CIP2Country::GetCountryNameFromRef(IPRange_Struct2* m_structCountry, bool longName){
+CString CIP2Country::GetCountryNameFromRef(Country_Struct* m_structCountry, bool longName){
 	if(EnableIP2Country)
 	{
 		if(longName)
 			return m_structCountry->LongCountryName;
+		/* //Xman only the long name
 		switch(thePrefs.GetIP2CountryNameMode()){
 			case IP2CountryName_SHORT:
 				return m_structCountry->ShortCountryName;
@@ -498,16 +545,18 @@ CString CIP2Country::GetCountryNameFromRef(IPRange_Struct2* m_structCountry, boo
 			case IP2CountryName_LONG:
 				return m_structCountry->LongCountryName;
 		}
+		*/
 	}
 	else if(longName)
 		return GetResString(IDS_DISABLED);	
 	return _T("");
 }
-bool CIP2Country::ShowCountryFlag(){
+bool CIP2Country::ShowCountryFlag() const
+{
 
 	return 
 		//user wanna see flag,
-		(thePrefs.IsIP2CountryShowFlag() && 
+		(// thePrefs.IsIP2CountryShowFlag() && //Xman if we wan't to make it optional
 		//flag have been loaded
 		EnableCountryFlag && 
 		//ip table have been loaded
@@ -515,8 +564,117 @@ bool CIP2Country::ShowCountryFlag(){
 }
 
 //EastShare End - added by AndCycle, IP to Country
-
+/*
 //Commander - Added: IP2Country auto-updating - Start
+void CIP2Country::UpdateIP2CountryURL()
+{   
+	CString sbuffer;
+	CString strURL = thePrefs.GetUpdateVerURLIP2Country(); //Version URL to keep it separated
+
+	TCHAR szTempFilePath[_MAX_PATH];
+	_tmakepath(szTempFilePath, NULL, thePrefs.GetAppDir(), DFLT_IP2COUNTRY_FILENAME, _T("tmp"));
+	FILE* readFile= _tfsopen(szTempFilePath, _T("r"), _SH_DENYWR);
+
+	CHttpDownloadDlg dlgDownload;
+	dlgDownload.m_strTitle = GetResString(IDS_IP2COUNTRY_VERFILE);
+	dlgDownload.m_sURLToDownload = strURL;
+	dlgDownload.m_sFileToDownloadInto = szTempFilePath;
+	if (dlgDownload.DoModal() != IDOK)
+	{
+		_tremove(szTempFilePath);
+		AddLogLine(true, GetResString(IDS_LOG_ERRDWN), strURL);
+		return;
+	}
+	readFile = _tfsopen(szTempFilePath, _T("r"), _SH_DENYWR);
+
+	char buffer[9]; //Versionformat: Ymmdd -> 20040101
+	int lenBuf = 9;
+	fgets(buffer,lenBuf,readFile);
+	sbuffer = buffer;
+	sbuffer = sbuffer.Trim();
+	fclose(readFile);
+	_tremove(szTempFilePath);
+
+    // Compare the Version numbers
+	if ((thePrefs.GetIP2CountryVersion()< (uint32) _tstoi(sbuffer)) || !PathFileExists(GetDefaultFilePath())) {
+		
+		CString IP2CountryURL = thePrefs.GetUpdateURLIP2Country();
+		
+		_tmakepath(szTempFilePath, NULL, thePrefs.GetConfigDir(), DFLT_IP2COUNTRY_FILENAME, _T("tmp"));
+
+		CHttpDownloadDlg dlgDownload;
+		dlgDownload.m_strTitle = GetResString(IDS_IP2COUNTRY_DWNFILE);
+		dlgDownload.m_sURLToDownload = IP2CountryURL;
+		dlgDownload.m_sFileToDownloadInto = szTempFilePath;
+		if (dlgDownload.DoModal() != IDOK)
+		{
+			_tremove(szTempFilePath);
+			LogError(LOG_STATUSBAR, GetResString(IDS_IP2COUNTRY_ERROR6));
+			return;
+		}
+        
+		bool bIsZipFile = false;
+		bool bUnzipped = false;
+		CZIPFile zip;
+		if (zip.Open(szTempFilePath))
+		{
+			bIsZipFile = true;
+
+			CZIPFile::File* zfile = zip.GetFile(DFLT_IP2COUNTRY_FILENAME); // It has to be a zip-file which includes a file called: ip-to-country.csv
+			if (zfile)
+			{
+				TCHAR szTempUnzipFilePath[MAX_PATH];
+				_tmakepath(szTempUnzipFilePath, NULL, thePrefs.GetConfigDir(), DFLT_IP2COUNTRY_FILENAME, _T(".unzip.tmp"));
+				if (zfile->Extract(szTempUnzipFilePath))
+				{
+					zip.Close();
+					zfile = NULL;
+
+					if (_tremove(GetDefaultFilePath()) != 0)
+						TRACE("*** Error: Failed to remove default IP to Country file \"%s\" - %s\n", GetDefaultFilePath(), _tcserror(errno));
+					if (_trename(szTempUnzipFilePath, GetDefaultFilePath()) != 0)
+						TRACE("*** Error: Failed to rename uncompressed IP to Country file \"%s\" to default IP to Country file \"%s\" - %s\n", szTempUnzipFilePath, GetDefaultFilePath(), _tcserror(errno));
+					if (_tremove(szTempFilePath) != 0)
+						TRACE("*** Error: Failed to remove temporary IP to Country file \"%s\" - %s\n", szTempFilePath, _tcserror(errno));
+					bUnzipped = true;
+				}
+				else
+					LogError(LOG_STATUSBAR, GetResString(IDS_IP2COUNTRY_ERROR7), szTempFilePath);
+			}
+			else
+				LogError(LOG_STATUSBAR, GetResString(IDS_IP2COUNTRY_ERROR8), szTempFilePath); //File not found inside the zip-file
+
+			zip.Close();
+		}
+        
+		if (!bIsZipFile && !bUnzipped)
+		{
+			_tremove(GetDefaultFilePath());
+			_trename(szTempFilePath, GetDefaultFilePath());
+		}
+
+		if(bIsZipFile && !bUnzipped){
+			return;
+		}
+
+		if(thePrefs.GetIP2CountryNameMode() != IP2CountryName_DISABLE || thePrefs.IsIP2CountryShowFlag()){
+			theApp.ip2country->Unload();
+			AddLogLine(false,GetResString(IDS_IP2COUNTRY_UPUNLOAD));
+			theApp.ip2country->Load();
+			AddLogLine(false,GetResString(IDS_IP2COUNTRY_UPLOAD));
+		}
+
+		thePrefs.SetIP2CountryVersion(_tstoi(sbuffer)); //Commander - Added: Update version number
+		thePrefs.Save();
+	}
+}
+//Commander - Added: IP2Country auto-updating - End
+*/
+CString CIP2Country::GetDefaultFilePath() const
+{
+	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + DFLT_IP2COUNTRY_FILENAME;
+}
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
 void CIP2Country::UpdateIP2CountryURL()
 {   
 	CString sbuffer;
@@ -592,16 +750,11 @@ void CIP2Country::UpdateIP2CountryURL()
 		return;
 	}
 
-	if(thePrefs.GetIP2CountryNameMode() != IP2CountryName_DISABLE || thePrefs.IsIP2CountryShowFlag()){
+//	if(thePrefs.GetIP2CountryNameMode() != IP2CountryName_DISABLE || thePrefs.IsIP2CountryShowFlag()){
 		theApp.ip2country->Unload();
 		AddLogLine(false,GetResString(IDS_IP2COUNTRY_UPUNLOAD));
 		theApp.ip2country->Load();
 		AddLogLine(false,GetResString(IDS_IP2COUNTRY_UPLOAD));
-	}
+//	}
 }
-//Commander - Added: IP2Country auto-updating - End
-
-CString CIP2Country::GetDefaultFilePath() const
-{
-	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + DFLT_IP2COUNTRY_FILENAME;
-}
+// <== Advanced Updates [MorphXT/Stulle] - Stulle

@@ -24,11 +24,12 @@
 #include "Statistics.h"
 #include "ListenSocket.h"
 #include "ClientUDPSocket.h"
-
-#ifdef USE_OFFICIAL_UPNP
+// ==> UPnP support [MoNKi] - leuk_he
+/*
 #include "UPnPImpl.h"
 #include "UPnPImplWrapper.h"
-#endif
+*/
+// <== UPnP support [MoNKi] - leuk_he
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -272,24 +273,31 @@ public:
 	virtual ~CPPgWiz1Ports();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnStartConTest();
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	afx_msg void OnStartUPnP();
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	afx_msg void OnEnChangeUDPDisable();
 
 	afx_msg void OnEnChangeUDP();
 	afx_msg void OnEnChangeTCP();
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	afx_msg void OnTimer(UINT nIDEvent);
 	
 	BOOL	OnKillActive();
 	void	OnOK();
 	void	OnCancel();
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
+
 	void OnPortChange();
 
 	CString m_sTestURL,m_sUDP,m_sTCP;
-	int   uPnPNAT;
+	// ==> UPnP support [MoNKi] - leuk_he
+	int   uPnPNAT; 
+	// <== UPnP support [MoNKi] - leuk_he
 	uint16 GetTCPPort();
 	uint16 GetUDPPort();
 
@@ -299,17 +307,21 @@ public:
 	enum { IDD = IDD_WIZ1_PORTS };
 
 protected:
-	CString lastudp;
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-#ifdef USE_OFFICIAL_UPNP
+	CString			lastudp;
+	virtual void	DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	void			ResetUPnPProgress();
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 
 	DECLARE_MESSAGE_MAP()
-	
-#ifdef USE_OFFICIAL_UPNP
+
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	int m_nUPnPTicks;
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 };
 
 IMPLEMENT_DYNAMIC(CPPgWiz1Ports, CDlgPageWizard)
@@ -317,14 +329,18 @@ IMPLEMENT_DYNAMIC(CPPgWiz1Ports, CDlgPageWizard)
 BEGIN_MESSAGE_MAP(CPPgWiz1Ports, CDlgPageWizard)
 	ON_BN_CLICKED(IDC_STARTTEST, OnStartConTest)
 	ON_BN_CLICKED(IDC_UDPDISABLE, OnEnChangeUDPDisable)
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	ON_BN_CLICKED(IDC_UPNPSTART, OnStartUPnP)
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	ON_EN_CHANGE(IDC_TCP, OnEnChangeTCP)
 	ON_EN_CHANGE(IDC_UDP, OnEnChangeUDP)
-#ifdef USE_OFFICIAL_UPNP
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	ON_WM_TIMER()
-#endif
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 END_MESSAGE_MAP()
 
 CPPgWiz1Ports::CPPgWiz1Ports()
@@ -342,7 +358,7 @@ void CPPgWiz1Ports::DoDataExchange(CDataExchange* pDX)
 	CDlgPageWizard::DoDataExchange(pDX);
 	DDX_Text(pDX, IDC_TCP, m_sTCP);
 	DDX_Text(pDX, IDC_UDP, m_sUDP);
-	DDX_Check(pDX, IDC_ENABLE_PNP  , uPnPNAT); // leuk_he add upnp to startupwizard
+	DDX_Check(pDX, IDC_ENABLE_PNP  , uPnPNAT); // UPnP support [MoNKi] - leuk_he
 }
 
 void CPPgWiz1Ports::OnEnChangeTCP() {
@@ -360,7 +376,7 @@ uint16 CPPgWiz1Ports::GetTCPPort() {
 }
 
 uint16 CPPgWiz1Ports::GetUDPPort() {
-	uint16 udp=0;
+	uint16 udp = 0;
 	if (IsDlgButtonChecked(IDC_UDPDISABLE)==0) {
 		CString buffer;
 		GetDlgItem(IDC_UDP)->GetWindowText(buffer);
@@ -382,7 +398,8 @@ void CPPgWiz1Ports::OnPortChange() {
 	GetDlgItem(IDC_STARTTEST)->EnableWindow(flag);
 }
 
-#ifdef USE_OFFICIAL_UPNP
+// ==> UPnP support [MoNKi] - leuk_he
+/*
 BOOL CPPgWiz1Ports::OnKillActive(){
 	ResetUPnPProgress();
 	return CDlgPageWizard::OnKillActive();
@@ -410,7 +427,7 @@ void CPPgWiz1Ports::OnStartUPnP() {
 	VERIFY( SetTimer(1, 1000, NULL) );
 }
 
-void CPPgWiz1Ports::OnTimer(UINT /*nIDEvent*/){
+void CPPgWiz1Ports::OnTimer(UINT /*nIDEvent*//*){
 	m_nUPnPTicks++;
 	if (theApp.m_pUPnPFinder && theApp.m_pUPnPFinder->GetImplementation()->ArePortsForwarded() == TRIS_UNKNOWN)
 	{
@@ -440,17 +457,19 @@ void CPPgWiz1Ports::ResetUPnPProgress(){
 	((CProgressCtrl*)GetDlgItem(IDC_UPNPPROGRESS))->SetPos(0);
 	GetDlgItem(IDC_UPNPSTART)->EnableWindow(TRUE);
 }
+*/
+// <== UPnP support [MoNKi] - leuk_he
 
 // **
-#endif
 
 void CPPgWiz1Ports::OnStartConTest() {
 
 	uint16 tcp=GetTCPPort();
 	uint16 udp=GetUDPPort();
 
-	theApp.m_UPnP_IGDControlPoint->SetUPnPNat(IsDlgButtonChecked(IDC_ENABLE_PNP)==BST_CHECKED); // add upnp to startup wizard [leuk_he]
-
+    // ==> UPnP support [MoNKi] - leuk_he
+	theApp.m_UPnP_IGDControlPoint->SetUPnPNat(IsDlgButtonChecked(IDC_ENABLE_PNP)==BST_CHECKED); // add upnpnat to startup wizard [leuk_he]
+    // <== UPnP support [MoNKi] - leuk_he
 	if (tcp==0)
 		return;
 
@@ -477,6 +496,11 @@ BOOL CPPgWiz1Ports::OnInitDialog()
 	CDlgPageWizard::OnInitDialog();
 	CheckDlgButton(IDC_UDPDISABLE, m_sUDP.IsEmpty() || m_sUDP == _T("0"));
 	GetDlgItem(IDC_UDP)->EnableWindow(IsDlgButtonChecked(IDC_UDPDISABLE) == 0);
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+	((CProgressCtrl*)GetDlgItem(IDC_UPNPPROGRESS))->SetRange(0, 40);
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
 	InitWindowStyles(this);
 	
 	lastudp = m_sUDP;
@@ -486,15 +510,19 @@ BOOL CPPgWiz1Ports::OnInitDialog()
 	SetDlgItemText(IDC_TESTFRAME , GetResString(IDS_CONNECTIONTEST) );
 	SetDlgItemText(IDC_TESTINFO , GetResString(IDS_TESTINFO) );
 	SetDlgItemText(IDC_STARTTEST, GetResString(IDS_STARTTEST) );
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
 	SetDlgItemText(IDC_UDPDISABLE, GetResString(IDS_UDPDISABLED));
-// MORPH START leuk_he add upnp to startup wizard 
-	SetDlgItemText(IDC_ENABLE_PNP, GetResString(IDS_UPNP_ENABLE)); // enable upnp
+	SetDlgItemText(IDC_UPNPSTART, GetResString(IDS_UPNPSTART));
+	SetDlgItemText(IDC_UPNPSTATUS, _T(""));
+	*/
+	SetDlgItemText(IDC_ENABLE_PNP, GetResString(IDS_CN_UPNPNAT)); // enable upnpnat
 
 	switch(thePrefs.GetUpnpDetect()) {
 	    case   UPNP_DO_AUTODETECT :
 		case   UPNP_NOT_DETECTED :
 		case   UPNP_NO_DETECTEDTION:
-					CheckDlgButton(IDC_ENABLE_PNP,thePrefs.IsUPnPNat());
+			      CheckDlgButton(IDC_ENABLE_PNP,thePrefs.IsUPnPEnabled());
                     break; // let the user decide, disabled by def. 
 		case UPNP_DETECTED:
 			        CheckDlgButton(IDC_ENABLE_PNP,1);/* enable since a upnp device is available */
@@ -504,7 +532,8 @@ BOOL CPPgWiz1Ports::OnInitDialog()
 			        GetDlgItem(IDC_ENABLE_PNP)->EnableWindow(0); // disable window
 				break;
 	}
-// MORPH END leuk_he add upnp to startup wizard 
+	// <== UPnP support [MoNKi] - leuk_he
+
 	return TRUE;
 }
 
@@ -664,7 +693,6 @@ public:
 		m_iSafeServerConnect = 0;
 		m_iKademlia = 1;
 		m_iED2K = 1;
-		m_iReqObfus = thePrefs.m_bCryptLayerRequiredStrictServer ; // // MORPH lh require obfuscated server connection, default 
 	}
 	virtual ~CPPgWiz1Server();
 	virtual BOOL OnInitDialog();
@@ -677,7 +705,6 @@ public:
 	int m_iED2K;
 
 	bool* m_pbUDPDisabled;
-	int m_iReqObfus; // // MORPH lh require obfuscated server connection
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
@@ -698,7 +725,6 @@ CPPgWiz1Server::CPPgWiz1Server()
 	m_iKademlia = 1;
 	m_iED2K = 1;
 	m_pbUDPDisabled = NULL;
-	m_iReqObfus = thePrefs.m_bCryptLayerRequiredStrictServer; // // MORPH lh require obfuscated server connection
 }
 
 CPPgWiz1Server::~CPPgWiz1Server()
@@ -711,7 +737,6 @@ void CPPgWiz1Server::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_SAFESERVERCONNECT, m_iSafeServerConnect);
 	DDX_Check(pDX, IDC_WIZARD_NETWORK_KADEMLIA, m_iKademlia);
 	DDX_Check(pDX, IDC_WIZARD_NETWORK_ED2K, m_iED2K);
-	DDX_Check(pDX, IDC_WIZARDREQUIREOBFUSCATED, m_iReqObfus); // // MORPH lh require obfuscated server connection
 }
 
 BOOL CPPgWiz1Server::OnInitDialog()
@@ -721,7 +746,6 @@ BOOL CPPgWiz1Server::OnInitDialog()
 	GetDlgItem(IDC_SAFESERVERCONNECT)->SetWindowText(GetResString(IDS_FIRSTSAFECON));
 	GetDlgItem(IDC_WIZARD_NETWORK)->SetWindowText(GetResString(IDS_WIZARD_NETWORK));
 	GetDlgItem(IDC_WIZARD_ED2K)->SetWindowText(GetResString(IDS_WIZARD_ED2K));
-	GetDlgItem(IDC_WIZARDREQUIREOBFUSCATED)->SetWindowText(GetResString(IDS_WIZARDREQUIREOBFUSCATED)); //// MORPH lh require obfuscated server connection
 	return TRUE;
 }
 
@@ -731,11 +755,6 @@ BOOL CPPgWiz1Server::OnSetActive(){
 		if (*m_pbUDPDisabled){
 			CheckDlgButton(IDC_SHOWOVERHEAD, 0);
 			GetDlgItem(IDC_WIZARD_NETWORK_KADEMLIA)->EnableWindow(FALSE);
-			// MORPH START
-			m_iReqObfus = 0;
-			CheckDlgButton(IDC_WIZARDREQUIREOBFUSCATED,BST_UNCHECKED); // if udp is disabled obfuscated server is not a good default because crptping will fail.
-			// MORPH END
-		
 		}
 		else{
 			CheckDlgButton(IDC_SHOWOVERHEAD, m_iKademlia);
@@ -745,104 +764,6 @@ BOOL CPPgWiz1Server::OnSetActive(){
 	}
 	return CDlgPageWizard::OnSetActive();
 }
-
-// MORPH START startup wizard
-///////////////////////////////////////////////////////////////////////////////
-// CPPgWiz7Morphdialog
-
-class CPPgWiz7Morph: public CDlgPageWizard
-{
-	DECLARE_DYNAMIC(CPPgWiz7Morph)
-
-public:
-	CPPgWiz7Morph();
-	CPPgWiz7Morph(UINT nIDTemplate, LPCTSTR pszCaption = NULL, LPCTSTR pszHeaderTitle = NULL, LPCTSTR pszHeaderSubTitle = NULL)
-		: CDlgPageWizard(nIDTemplate, pszCaption, pszHeaderTitle, pszHeaderSubTitle)
-	{
-		m_iShowMoreControls=0;
-		m_iShowLessControls=0;
-		m_iRunNetworkWizard=1;
-		m_iRunImportTool=0;
-	}
-	virtual ~CPPgWiz7Morph();
-	virtual BOOL OnInitDialog();
-	afx_msg void OnShowMoreClicked();
-	afx_msg void OnShowLessClicked();
-
-
-// Dialog Data
-	enum { IDD = IDD_WIZ8_MORPH };
-
-	int m_iShowMoreControls;
-	int m_iShowLessControls;
-	int m_iRunNetworkWizard;
-	int m_iRunImportTool;
-
-protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-	DECLARE_MESSAGE_MAP()
-};
-
-IMPLEMENT_DYNAMIC(CPPgWiz7Morph, CDlgPageWizard)
-
-BEGIN_MESSAGE_MAP(CPPgWiz7Morph, CDlgPageWizard)
-	ON_BN_CLICKED(IDC_MORPHWIZ_SHOWMORE, OnShowMoreClicked)
-	ON_BN_CLICKED(IDC_MORPHWIZ_SHOWLESS, OnShowLessClicked)
-END_MESSAGE_MAP()
-
-CPPgWiz7Morph::CPPgWiz7Morph()
-	: CDlgPageWizard(CPPgWiz7Morph::IDD)
-{
-	m_iShowMoreControls=0;
-	m_iShowLessControls=0;
-	m_iRunNetworkWizard=1;
-	m_iRunImportTool=0;
-}
-
-CPPgWiz7Morph::~CPPgWiz7Morph()
-{
-}
-
-void CPPgWiz7Morph::DoDataExchange(CDataExchange* pDX)
-{
-	CDlgPageWizard::DoDataExchange(pDX);
-	DDX_Check(pDX, IDC_MORPHWIZ_SHOWMORE, m_iShowMoreControls);
-	DDX_Check(pDX, IDC_MORPHWIZ_SHOWLESS, m_iShowLessControls);
-	DDX_Check(pDX, IDC_MORPHWIZ_NET1	, m_iRunNetworkWizard);
-	DDX_Check(pDX, IDC_MORPHWIZ_IMPORT  , m_iRunImportTool); // // MORPH lh require obfuscated server connection
-}
-
-BOOL CPPgWiz7Morph::OnInitDialog()
-{
-	CDlgPageWizard::OnInitDialog();
-	InitWindowStyles(this);
-	GetDlgItem(IDC_MORPHWIZ_SHOWMORE)->SetWindowText(GetResString(IDS_MORPHWIZ_SHOWMORE));
-	GetDlgItem(IDC_MORPHWIZ_SHOWLESS)->SetWindowText(GetResString(IDS_MORPHWIZ_SHOWLESS));
-	GetDlgItem(IDC_MORPHWIZ_NET1)->SetWindowText(GetResString(IDS_MORPHWIZ_NET1));
-	GetDlgItem(IDC_MORPHWIZ_IMPORT)->SetWindowText(GetResString(IDS_MORPHWIZ_IMPORT)); 
-	GetDlgItem(IDC_MORPHWIZ_GUI)->SetWindowText(GetResString(IDS_MORPHWIZ_GUI)); 
-	GetDlgItem(IDC_MORPHWIZ_NEXT)->SetWindowText(GetResString(IDS_MORPHWIZ_NEXT)); 
-	return TRUE;
-}
-
-void CPPgWiz7Morph::OnShowMoreClicked()
-{
-	if (IsDlgButtonChecked(IDC_MORPHWIZ_SHOWMORE) )
-		CheckDlgButton(IDC_MORPHWIZ_SHOWLESS,BST_UNCHECKED);
-}
-	   
-void CPPgWiz7Morph::OnShowLessClicked()
-{
-	if (IsDlgButtonChecked(IDC_MORPHWIZ_SHOWLESS) )
-		CheckDlgButton(IDC_MORPHWIZ_SHOWMORE,BST_UNCHECKED);
-}
-// MORPH END startup wizard
-  
-
-
-
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -941,10 +862,7 @@ CPShtWiz1::~CPShtWiz1()
 {
 }
 
-/*
 BOOL FirstTimeWizard()
-*/
-int FirstTimeWizard() //lh ftw
 {
 	CEnBitmap bmWatermark;
 	VERIFY( bmWatermark.LoadImage(IDR_WIZ1_WATERMARK, _T("GIF"), NULL, GetSysColor(COLOR_WINDOW)) );
@@ -967,47 +885,27 @@ int FirstTimeWizard() //lh ftw
 	CPPgWiz1Ports page3(IDD_WIZ1_PORTS, GetResString(IDS_WIZ1), GetResString(IDS_PORTSCON), GetResString(IDS_PW_CONNECTION));
 	sheet.AddPage(&page3);
 	
-	/* MORPH replace priorities with some other zird things.
 	CPPgWiz1UlPrio page4(IDD_WIZ1_ULDL_PRIO, GetResString(IDS_WIZ1), GetResString(IDS_PW_CON_DOWNLBL) + _T(" / ") + GetResString(IDS_PW_CON_UPLBL), GetResString(IDS_PRIORITY));
 	sheet.AddPage(&page4);
-	*/
-
+	
 	CPPgWiz1Upload page5(IDD_WIZ1_UPLOAD, GetResString(IDS_WIZ1), GetResString(IDS_SECURITY), GetResString(IDS_OBFUSCATION));
 	sheet.AddPage(&page5);
 	
 	CPPgWiz1Server page6(IDD_WIZ1_SERVER, GetResString(IDS_WIZ1), GetResString(IDS_PW_SERVER), GetResString(IDS_NETWORK));
 	sheet.AddPage(&page6);
 	
-	// MORPH START startup wizard
-//	CEnBitmap bmHeader_mor;
-//	VERIFY( bmHeader_mor.LoadImage(IDR_WIZ1_HEADER_MORPH, _T("GIF"), NULL, GetSysColor(COLOR_WINDOW)) );
-	CPPgWiz7Morph page6b(IDD_WIZ8_MORPH, GetResString(IDS_WIZ1), GetResString(IDS_WIZ8_MORPH),NULL);
-//	page6b.m_psh.hbmHeader = bmHeader_mor;
-	sheet.AddPage(&page6b);
-	// MORPH END startup wizard
-
-
 	CPPgWiz1End page7(IDD_WIZ1_END, GetResString(IDS_WIZ1));
 	page7.m_psp.dwFlags |= PSP_HIDEHEADER;
 	sheet.AddPage(&page7);
 
-
-
 	page2.m_strNick = thePrefs.GetUserNick();
 	if (page2.m_strNick.IsEmpty())
 		page2.m_strNick = DEFAULT_NICK;
-	// >> modified by Ken
-	//page2.m_iAutoConnectAtStart = 0;
 	page2.m_iAutoConnectAtStart = 0;
-	// << modified by Ken
 	page3.m_sTCP.Format(_T("%u"), thePrefs.GetPort());
 	page3.m_sUDP.Format(_T("%u"), thePrefs.GetUDPPort());
-// MORPH less is more
-/*	
-  page4.m_iDAP = 1;
-  page4.m_iUAP = 1;
-*/
-// MORPH less is more
+	page4.m_iDAP = 1;
+	page4.m_iUAP = 1;
 	page5.m_iObfuscation = thePrefs.IsClientCryptLayerRequested() ? 1 : 0;
 	page6.m_iSafeServerConnect = 0;
 	page6.m_iKademlia = 1;
@@ -1017,26 +915,28 @@ int FirstTimeWizard() //lh ftw
 	page3.m_pbUDPDisabled = &bUDPDisabled;
 	page6.m_pbUDPDisabled = &bUDPDisabled;
 
-	page6b.m_iShowLessControls = thePrefs.IsLessControls(); // MORPH START show less controls
-  page6b.m_iShowMoreControls = thePrefs.IsExtControlsEnabled(); // MORPH startup wizard
-
-	/* MORPH only when changed. (RANDOMIZE PORTS) */
+	// ==> Random Ports [MoNKi] - Stulle
+	/*
+	uint16 oldtcpport=thePrefs.GetPort();
+	uint16 oldudpport=thePrefs.GetUDPPort();
+	*/
 	uint16 oldtcpport=thePrefs.GetPort(false,true);
 	uint16 oldudpport=thePrefs.GetUDPPort(false,true);
-	/* MORPH only when changed. or the sockets are rest when the first time wiz is stated again */
+	// <== Random Ports [MoNKi] - Stulle
 
 	int iResult = sheet.DoModal();
 	if (iResult == IDCANCEL) {
 
 		// restore port settings?
-		/* MORPH only when changed...(required icw wiht random ports)  */
-		if (thePrefs.GetPort(false,true)!=oldtcpport || thePrefs.GetUDPPort(false,true)!=oldudpport){
+		// ==> Random Ports [MoNKi] - Stulle
+		if (thePrefs.GetPort(false,true)!=oldtcpport || thePrefs.GetUDPPort(false,true)!=oldudpport)
+		{
+		// <== Random Ports [MoNKi] - Stulle
 		thePrefs.port=oldtcpport;
 		thePrefs.udpport=oldudpport;
 		theApp.listensocket->Rebind() ;
 		theApp.clientudp->Rebind();
-		}
-		/* MOPRH END only when changed */
+		} // Random Ports [MoNKi] - Stulle
 
 		return FALSE;
 	}
@@ -1052,27 +952,20 @@ int FirstTimeWizard() //lh ftw
 		AddAutoStart();
 	else
 		RemAutoStart();
-//MORPH START - Removed, Less is more
-/*
- 	thePrefs.SetNewAutoDown(page4.m_iDAP!=0); 
-  thePrefs.SetNewAutoUp(page4.m_iUAP!=0);
-*/
-//MORPH END   - Removed, Less is more 
+	thePrefs.SetNewAutoDown(page4.m_iDAP!=0);
+	thePrefs.SetNewAutoUp(page4.m_iUAP!=0);
 	thePrefs.m_bCryptLayerRequested = page5.m_iObfuscation != 0;
 	if (page5.m_iObfuscation != 0)
 		thePrefs.m_bCryptLayerSupported = true;
 	thePrefs.SetSafeServerConnectEnabled(page6.m_iSafeServerConnect!=0);
 	thePrefs.SetNetworkKademlia(page6.m_iKademlia!=0);
 	thePrefs.SetNetworkED2K(page6.m_iED2K!=0);
-	thePrefs.m_bCryptLayerRequested = page5.m_iObfuscation != 0;
-	if (page5.m_iObfuscation != 0)
-		thePrefs.m_bCryptLayerSupported = true;
-	thePrefs.SetExtControls(page6b.m_iShowMoreControls!=0 ); //morph show more controls in wizard
-	thePrefs.SetLessControls(page6b.m_iShowLessControls!=0); // MORPH START show less controls
-
+	// ==> UPnP support [MoNKi] - leuk_he
 	theApp.m_UPnP_IGDControlPoint->SetUPnPNat(page3.uPnPNAT!=0); // leuk_he add upnp to startup wizard
-	// set ports
 	thePrefs.SetUpnpDetect(UPNP_NO_DETECTEDTION);// leuk_he add upnp to startup wizard no more detecion next time.
+	// <== UPnP support [MoNKi] - leuk_he
+
+	// set ports
 	thePrefs.port=(uint16)_tstoi(page3.m_sTCP);
 	thePrefs.udpport=(uint16)_tstoi(page3.m_sUDP);
 	ASSERT( thePrefs.port!=0 && thePrefs.udpport!=0+10 );
@@ -1088,9 +981,6 @@ int FirstTimeWizard() //lh ftw
 			theApp.clientudp->Rebind();
 		}
 	
-	/* MORPH
-    return TRUE;
-	*/
-	return page6b.m_iRunNetworkWizard + 2* page6b.m_iRunImportTool ; // MORPH  startup wizard (1= run net, 2= run improt , 3 = both) 
+	return TRUE;
 }
 

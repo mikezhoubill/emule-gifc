@@ -1,13 +1,7 @@
 #pragma once
 #include "DirectoryTreeCtrl.h"
 
-
-// MORPH START leuk_he tooltipped
-/*
 class CPPgDirectories : public CPropertyPage
-*/
-class CPPgDirectories : public CPPgtooltipped  
-// MORPH END leuk_he tooltipped
 {
 	DECLARE_DYNAMIC(CPPgDirectories)
 
@@ -44,28 +38,3 @@ protected:
 	afx_msg void OnBnClickedSeltempdiradd();
 	afx_msg void OnDestroy();
 };
-// MOROPH START sharesubdir
-class CAddSharedDirDialog : public CDialog
-{
-	DECLARE_DYNAMIC(CAddSharedDirDialog )
-
-public:
-	CAddSharedDirDialog (LPTSTR  sUnc,bool bSubdir,CWnd* pParent = NULL);   //  constructor
-//	virtual ~CAddSharedDirDialog ();
-	virtual BOOL OnInitDialog();
-	afx_msg void OnOK();
-	enum { IDD = IDD_ADDSHAREDIR };
-private:
-	CString m_sUnc;
-	bool m_bSubdir ;
-
-public:
-	CString GetUNC () { return m_sUnc; } ;
-	bool    GetSubDir () { return m_bSubdir ;}  ;
-
-protected:
-	DECLARE_MESSAGE_MAP()
-
-};
-// MOROPH END sharesubdir
-

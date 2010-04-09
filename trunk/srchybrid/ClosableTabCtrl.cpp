@@ -468,7 +468,6 @@ void CClosableTabCtrl::SetAllIcons()
 		const int iIconHeight = 16;
 		m_ImgLstCloseButton.DeleteImageList();
 		m_ImgLstCloseButton.Create(iIconWidth, iIconHeight, theApp.m_iDfltImageListColorFlags | ILC_MASK, 0, 1);
-		m_ImgLstCloseButton.SetBkColor(CLR_NONE);
 		m_ImgLstCloseButton.Add(CTempIconLoader(_T("CloseTabSelected"), iIconWidth, iIconHeight));
 		m_ImgLstCloseButton.Add(CTempIconLoader(_T("CloseTab"), iIconWidth, iIconHeight));
 		m_ImgLstCloseButton.GetImageInfo(0, &m_iiCloseButton);

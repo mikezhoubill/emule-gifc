@@ -15,7 +15,6 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "stdafx.h"
-#include "emule.h" //UPNP
 #include "IrcSocket.h"
 #include "AsyncProxySocketLayer.h"
 #include "IrcMain.h"
@@ -24,6 +23,10 @@
 #include "Statistics.h"
 #include "Log.h"
 #include "Exceptions.h"
+//Xman
+#include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+#include "emule.h"
+//Xman end
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -41,7 +44,7 @@ CIrcSocket::CIrcSocket(CIrcMain* pIrcMain)
 CIrcSocket::~CIrcSocket()
 {
 	RemoveAllLayers();
-	// emulEspaña: Added by MoNKi [MoNKi: -UPnPNAT Support-]
+	// ==> UPnP support [MoNKi] - leuk_he
 	CString client;
 	UINT port;
 
@@ -49,7 +52,7 @@ CIrcSocket::~CIrcSocket()
 	theApp.m_UPnP_IGDControlPoint->DeletePortMapping((uint16)port,
 		CUPnP_IGDControlPoint::UNAT_TCP,
 		_T("IRC"));
-	// End -UPnPNAT Support-
+	// <== UPnP support [MoNKi] - leuk_he
 }
 
 BOOL CIrcSocket::Create(UINT uSocketPort, int uSocketType, long lEvent, LPCSTR lpszSocketAddress)
@@ -78,7 +81,7 @@ BOOL CIrcSocket::Create(UINT uSocketPort, int uSocketType, long lEvent, LPCSTR l
 		AddLayer(m_pProxyLayer);
 	}
 
-	//MORPH START - Changed by SiRoB, [MoNKi: -UPnPNAT Support-]
+	// ==> UPnP support [MoNKi] - leuk_he
 	/*
 	return CAsyncSocketEx::Create(uSocketPort, uSocketType, lEvent, lpszSocketAddress);
 	*/
@@ -96,7 +99,7 @@ BOOL CIrcSocket::Create(UINT uSocketPort, int uSocketType, long lEvent, LPCSTR l
 	}
 	else
 		return false;
-	//MORPH END   - Changed by SiRoB, [MoNKi: -UPnPNAT Support-]
+	// <== UPnP support [MoNKi] - leuk_he
 }
 
 void CIrcSocket::Connect()
@@ -140,12 +143,17 @@ void CIrcSocket::OnReceive(int iErrorCode)
 			}
 			if (iLength > 0)
 			{
+				//Xman
+				// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+				theApp.pBandWidthControl->AddeMuleInTCPOverall(iLength);
+				//Maella end
+
 				cBuffer[iLength] = '\0';
 				theStats.AddDownDataOverheadOther(iLength);
 				m_pIrcMain->PreParseMessage(cBuffer);
 			}
 		}
-		while( iLength > 1022 );
+		while (iLength > 1022);
 	}
 	CATCH_DFLT_EXCEPTIONS(_T(__FUNCTION__))
 	CATCH_DFLT_ALL(_T(__FUNCTION__))
@@ -193,6 +201,10 @@ int CIrcSocket::SendString(const CString& sMessage)
 	sMessageA += "\r\n";
 	int iSize = sMessageA.GetLength();
 	theStats.AddUpDataOverheadOther(iSize);
+	//Xman not too accurate but enough for the few IRC-strings
+	// - Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
+	theApp.pBandWidthControl->AddeMuleOutTCPOverall(iSize);
+	//Maella end
 	int iResult = Send(sMessageA, iSize);
 	ASSERT( iResult == iSize );
 	return iResult;
@@ -217,21 +229,21 @@ int CIrcSocket::OnLayerCallback(const CAsyncSocketExLayer* pLayer, int nType, in
 				case PROXYERROR_NOCONN:
 				case PROXYERROR_REQUESTFAILED:
 					{
-					CString strError(GetProxyError(nCode));
+						CString strError(GetProxyError(nCode));
 						if (lParam)
 						{
-						strError += _T(" - ");
-						strError += (LPCSTR)lParam;
-					}
+							strError += _T(" - ");
+							strError += (LPCSTR)lParam;
+						}
 						if (wParam)
 						{
-						CString strErrInf;
-						if (GetErrorMessage(wParam, strErrInf, 1))
-							strError += _T(" - ") + strErrInf;
+							CString strErrInf;
+							if (GetErrorMessage(wParam, strErrInf, 1))
+								strError += _T(" - ") + strErrInf;
+						}
+						LogWarning(LOG_STATUSBAR, _T("IRC socket: %s"), strError);
+						break;
 					}
-					LogWarning(LOG_STATUSBAR, _T("IRC socket: %s"), strError);
-					break;
-				}
 				default:
 					LogWarning(LOG_STATUSBAR, _T("IRC socket: %s"), GetProxyError(nCode));
 			}

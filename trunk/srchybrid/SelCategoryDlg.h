@@ -1,15 +1,15 @@
 // khaos::categorymod+
 #pragma once
-#include "PPGtooltipped.h"
+//#include "PPGtooltipped.h"
 
 // CSelCategoryDlg dialog
 
-class CSelCategoryDlg : public CPPgtooltippedDialog
+class CSelCategoryDlg : public CPropertyPage
 {
 	DECLARE_DYNAMIC(CSelCategoryDlg)
 
 public:
-	CSelCategoryDlg(CWnd* pWnd = NULL,bool bFromClipboard=false);
+	CSelCategoryDlg(CWnd* pWnd = NULL);
 	virtual	~CSelCategoryDlg();
 
 	virtual BOOL	OnInitDialog();
@@ -27,7 +27,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	int	m_Return;
-	bool    m_bFromClipboard; // Morph - Added by leuk_he
 	bool	m_cancel; //MORPH - Added by SiRoB
 	bool	m_bCreatedNew;
 };

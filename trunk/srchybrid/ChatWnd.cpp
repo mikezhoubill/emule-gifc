@@ -29,15 +29,13 @@
 #include "IconStatic.h"
 #include "UserMsgs.h"
 #include "SmileySelector.h"
-#include "IP2Country.h" //Commander - Added: IP2Country
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 #include "HttpDownloadDlg.h"
 #include "ED2KLink.h"
 #include "InputBox.h"
 #include "MenuCmds.h"
 #include "Log.h"
-#include ".\chatwnd.h"
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -54,10 +52,6 @@ static char THIS_FILE[] = __FILE__;
 
 // CChatWnd dialog
 
-// MORPH (CB) Friendnote START
-// Used to acess latest selected entry data, even when the list has changed (add/remove actions)
-CFriend *pFriend = NULL;
-// MORPH (CB) Friendnote END
 IMPLEMENT_DYNAMIC(CChatWnd, CDialog)
 
 BEGIN_MESSAGE_MAP(CChatWnd, CResizableDialog)
@@ -73,7 +67,7 @@ BEGIN_MESSAGE_MAP(CChatWnd, CResizableDialog)
 	ON_STN_DBLCLK(IDC_FRIENDSICON, OnStnDblClickFriendIcon)
 	ON_BN_CLICKED(IDC_CSEND, OnBnClickedSend)
 	ON_BN_CLICKED(IDC_CCLOSE, OnBnClickedClose)
-	// MORPH START - Added by Commander, Friendlinks [emulEspaa] 	 
+	// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly 	 
 	ON_BN_CLICKED(IDC_BTN_MENU, OnBnClickedBnmenu) 	 
 	// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 END_MESSAGE_MAP()
@@ -108,9 +102,6 @@ void CChatWnd::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CMESSAGE, m_wndMessage);
 	DDX_Control(pDX, IDC_CSEND, m_wndSend);
 	DDX_Control(pDX, IDC_CCLOSE, m_wndClose);
-	// MORPH (CB) Friendnote START
-	DDX_Control(pDX, IDC_FRIENDNOTE_EDIT, m_FriendNote);
-	// MORPH (CB) Friendnote END
 }
 
 void CChatWnd::OnLvnItemActivateFriendList(NMHDR* /*pNMHDR*/, LRESULT* /*pResult*/)
@@ -121,34 +112,23 @@ void CChatWnd::OnLvnItemActivateFriendList(NMHDR* /*pNMHDR*/, LRESULT* /*pResult
 void CChatWnd::UpdateSelectedFriendMsgDetails()
 {
 	int iSel = m_FriendListCtrl.GetSelectionMark();
-
 	if (iSel != -1) {
-/* official: friendnote replaced
 		CFriend* pFriend = (CFriend*)m_FriendListCtrl.GetItemData(iSel);
 		ShowFriendMsgDetails(pFriend);
 	}
 	else
-*/
-		// MORPH (CB) Friendnote START
-		m_FriendNote.EnableWindow(true);
-		// MORPH (CB) Friendnote END
-		pFriend = (CFriend*)m_FriendListCtrl.GetItemData(iSel);
-		ShowFriendMsgDetails(pFriend);
-	}
-	else {
-		// MORPH (CB) Friendnote START
-		m_FriendNote.EnableWindow(false);
-		// MORPH (CB) Friendnote END
-
-
 		ShowFriendMsgDetails(NULL);
-	}
 }
 
 void CChatWnd::ShowFriendMsgDetails(CFriend* pFriend)
 {
 	if (pFriend)
 	{
+		//Xman quick fix: some leechers(I think) can cause a crash here, a simple try catch should do the job
+		try
+		{
+		//Xman end
+
 		CString buffer;
 
 		// Name
@@ -169,7 +149,7 @@ void CChatWnd::ShowFriendMsgDetails(CFriend* pFriend)
 
 		// Client
 		if (pFriend->GetLinkedClient())
-			GetDlgItem(IDC_FRIENDS_CLIENTE_EDIT)->SetWindowText(pFriend->GetLinkedClient()->DbgGetFullClientSoftVer()); //MORPH - Changed by SiRoB, To get full version display
+			GetDlgItem(IDC_FRIENDS_CLIENTE_EDIT)->SetWindowText(pFriend->GetLinkedClient()->GetClientSoftVer());
 		else
 			GetDlgItem(IDC_FRIENDS_CLIENTE_EDIT)->SetWindowText(_T("?"));
 
@@ -209,27 +189,20 @@ void CChatWnd::ShowFriendMsgDetails(CFriend* pFriend)
 			GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT)->SetWindowText(CastItoXBytes(pFriend->GetLinkedClient()->Credits()->GetUploadedTotal(), false, false));
 		else
 			GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT)->SetWindowText(_T("?"));
-	   //Commander - Added: IP2Country - Start
-		if (pFriend->GetLinkedClient())
-		{   
-			if(theApp.ip2country->IsIP2Country())
-			{
-				GetDlgItem(IDC_FRIENDS_COUNTRY_EDIT)->SetWindowText(pFriend->GetLinkedClient()->GetCountryName(true));
-			}
-			else {
-				GetDlgItem(IDC_FRIENDS_COUNTRY_EDIT)->SetWindowText(GetResString(IDS_DISABLED));
-			}
-		
+
+		//Xman quickfix:
 		}
-		else
-			GetDlgItem(IDC_FRIENDS_COUNTRY_EDIT)->SetWindowText(_T("?"));
-		//Commander - Added: IP2Country - End
-		// MORPH (CB) Friendnote START
-		if (!pFriend->m_frNote.IsEmpty())
-			m_FriendNote.SetWindowText(pFriend->m_frNote);
-		else
-			m_FriendNote.SetWindowText(_T(""));
-		// MORPH (CB) Friendnote END
+		catch(...)
+		{
+			GetDlgItem(IDC_FRIENDS_NAME_EDIT)->SetWindowText(_T("-"));
+			GetDlgItem(IDC_FRIENDS_USERHASH_EDIT)->SetWindowText(_T("-"));
+			GetDlgItem(IDC_FRIENDS_CLIENTE_EDIT)->SetWindowText(_T("-"));
+			GetDlgItem(IDC_FRIENDS_IDENTIFICACION_EDIT)->SetWindowText(_T("-"));
+			GetDlgItem(IDC_FRIENDS_DESCARGADO_EDIT)->SetWindowText(_T("-"));
+			GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT)->SetWindowText(_T("-"));
+		}
+		//Xman end
+
 	}
 	else
 	{
@@ -239,7 +212,6 @@ void CChatWnd::ShowFriendMsgDetails(CFriend* pFriend)
 		GetDlgItem(IDC_FRIENDS_IDENTIFICACION_EDIT)->SetWindowText(_T("-"));
 		GetDlgItem(IDC_FRIENDS_DESCARGADO_EDIT)->SetWindowText(_T("-"));
 		GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT)->SetWindowText(_T("-"));
-		GetDlgItem(IDC_FRIENDNOTE_EDIT)->SetWindowText(_T("")); // Morph Friendnote
 	}
 }
 
@@ -263,18 +235,14 @@ BOOL CChatWnd::OnInitDialog()
 
 	chatselector.Init(this);
 	m_FriendListCtrl.Init();
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-	OnBackcolor();
-#endif
-	// <== Design Settings [eWombat/Stulle] - Stulle
-    // MORPH START - Added by Commander, Friendlinks [emulEspaña]
+	// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 	if ( theApp.m_fontSymbol.m_hObject )
 	{
 		GetDlgItem(IDC_BTN_MENU)->SetFont(&theApp.m_fontSymbol);
 		GetDlgItem(IDC_BTN_MENU)->SetWindowText(_T("6")); // show a down-arrow
 	}
-	// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+	// MORPH END - Added by Commander, Friendlinks [emulEspaa]
+	OnBackcolor(); // Design Settings [eWombat/Stulle] - Max
 
 	CRect rcSpl;
 	m_FriendListCtrl.GetWindowRect(rcSpl);
@@ -315,9 +283,6 @@ BOOL CChatWnd::OnInitDialog()
 	AddAnchor(m_wndMessage, BOTTOM_LEFT, BOTTOM_RIGHT);
 	AddAnchor(m_wndSend, BOTTOM_RIGHT);
 	AddAnchor(m_wndClose, BOTTOM_RIGHT);
-	//Commander - Added: IP2Country - Start
-	AddAnchor(IDC_FRIENDS_COUNTRY, BOTTOM_LEFT);
-    //Commander - Added: IP2Country - End
 
 	int iPosStatInit = rcSpl.left;
 	int iPosStatNew = thePrefs.GetSplitterbarPositionFriend();
@@ -350,19 +315,12 @@ void CChatWnd::DoResize(int iDelta)
 	CSplitterControl::ChangeWidth(GetDlgItem(IDC_FRIENDS_IDENTIFICACION_EDIT), iDelta);
 	CSplitterControl::ChangeWidth(GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT), iDelta);
 	CSplitterControl::ChangeWidth(GetDlgItem(IDC_FRIENDS_DESCARGADO_EDIT), iDelta);
-	//Commander - Added: IP2Country - Start
-	CSplitterControl::ChangeWidth(GetDlgItem(IDC_FRIENDS_COUNTRY_EDIT), iDelta);
-    //Commander - Added: IP2Country - End
 	CSplitterControl::ChangeWidth(&chatselector, -iDelta, CW_RIGHTALIGN);
 	CSplitterControl::ChangePos(GetDlgItem(IDC_MESSAGES_LBL), -iDelta, 0);
 	CSplitterControl::ChangePos(GetDlgItem(IDC_MESSAGEICON), -iDelta, 0);
 	CSplitterControl::ChangePos(&m_wndFormat, -iDelta, 0);
 	CSplitterControl::ChangePos(&m_wndMessage, -iDelta, 0);
 	CSplitterControl::ChangeWidth(&m_wndMessage, -iDelta);
-
-	// MORPH (CB) Friendnote START
-	CSplitterControl::ChangeWidth(GetDlgItem(IDC_FRIENDNOTE_EDIT), iDelta);
-	// MORPH (CB) Friendnote END
 
 	CRect rcSpl;
 	m_wndSplitterHorz.GetWindowRect(rcSpl);
@@ -379,12 +337,6 @@ void CChatWnd::DoResize(int iDelta)
 	AddAnchor(IDC_MESSAGES_LBL, TOP_LEFT);
 	RemoveAnchor(IDC_MESSAGEICON);
 	AddAnchor(IDC_MESSAGEICON, TOP_LEFT);
-
-	// MORPH (CB) Friendnote START
-	RemoveAnchor(IDC_FRIENDNOTE_EDIT);
-	AddAnchor(IDC_FRIENDNOTE_EDIT, BOTTOM_LEFT, BOTTOM_LEFT);
-	// MORPH (CB) Friendnote END
-
 	RemoveAnchor(IDC_FRIENDS_NAME_EDIT);
 	AddAnchor(IDC_FRIENDS_NAME_EDIT, BOTTOM_LEFT);
 	RemoveAnchor(IDC_FRIENDS_USERHASH_EDIT);
@@ -397,11 +349,6 @@ void CChatWnd::DoResize(int iDelta)
 	AddAnchor(IDC_FRIENDS_SUBIDO_EDIT, BOTTOM_LEFT);
 	RemoveAnchor(IDC_FRIENDS_DESCARGADO_EDIT);
 	AddAnchor(IDC_FRIENDS_DESCARGADO_EDIT, BOTTOM_LEFT);
-	//Commander - Added: IP2Country - Start
-	RemoveAnchor(IDC_FRIENDS_COUNTRY_EDIT);
-	AddAnchor(IDC_FRIENDS_COUNTRY_EDIT, BOTTOM_LEFT);
-    //Commander - Added: IP2Country - End
-
 	RemoveAnchor(m_wndSplitterHorz);
 	AddAnchor(m_wndSplitterHorz, TOP_LEFT, BOTTOM_LEFT);
 	RemoveAnchor(m_wndFormat);
@@ -504,15 +451,6 @@ BOOL CChatWnd::PreTranslateMessage(MSG* pMsg)
 	{
 		if (pMsg->hwnd == m_FriendListCtrl.m_hWnd)
 			OnLvnItemActivateFriendList(0, 0);
-
-		// MORPH (CB) Friendnote START
-		// Save friend note whenever it is changed
-		else if (pMsg->hwnd == GetDlgItem(IDC_FRIENDNOTE_EDIT)->m_hWnd) {
-			if (pFriend) {
-				m_FriendNote.GetWindowText(pFriend->m_frNote);
-			}
-		}
-		// MORPH (CB) Friendnote END
 	}
 
 	return CResizableDialog::PreTranslateMessage(pMsg);
@@ -556,9 +494,6 @@ void CChatWnd::Localize()
 	GetDlgItem(IDC_FRIENDS_CLIENT)->SetWindowText(GetResString(IDS_CD_CSOFT));
 	GetDlgItem(IDC_FRIENDS_NAME)->SetWindowText(GetResString(IDS_CD_UNAME));
 	GetDlgItem(IDC_FRIENDS_USERHASH)->SetWindowText(GetResString(IDS_CD_UHASH));
-	//MORPH START - Added by SiRoB, New friend message window
-	GetDlgItem(IDC_FRIENDS_COUNTRY)->SetWindowText(GetResString(IDS_COUNTRY) + _T(":"));
-	//MORPH END   - Added by SiRoB, New friend message window
 	m_wndSend.SetWindowText(GetResString(IDS_CW_SEND));
 	m_wndClose.SetWindowText(GetResString(IDS_CW_CLOSE));
 	m_wndFormat.SetBtnText(IDC_SMILEY, _T("Smileys"));
@@ -622,7 +557,7 @@ BOOL CChatWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 		case IDC_SMILEY:
 			OnBnClickedSmiley();
 			break;
-		// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+		// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 		case MP_GETFRIENDED2KLINK:
 			{
 				CString sLink;
@@ -652,7 +587,7 @@ BOOL CChatWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 					UpdateEmfriendsMetFromURL(url);
 		} break;
 		//MORPH END - Added by Commander, Manual eMfriend.met download
-		// MORPH END - Added by Commander, Friendlinks [emulEspaña]
+		// MORPH END - Added by Commander, Friendlinks [emulEspaa]
 	}
 	return CResizableDialog::OnCommand(wParam, lParam);
 }
@@ -698,13 +633,14 @@ void CChatWnd::OnBnClickedSend()
 
 HBRUSH CChatWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+// ==> Design Settings [eWombat/Stulle] - Max
+/*
 	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
 	if (hbr)
 		return hbr;
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
-#else
+}
+*/
 	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
 	if (nCtlColor == CTLCOLOR_DLG)
@@ -718,11 +654,25 @@ HBRUSH CChatWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle}
 }
 
-// MORPH START - Added by Commander, Friendlinks [emulEspaña]
+void CChatWnd::OnBackcolor() 
+{
+	clrChatColor = thePrefs.GetStyleBackColor(window_styles, style_w_messages);
+
+	if(clrChatColor == CLR_DEFAULT)
+		clrChatColor = thePrefs.GetStyleBackColor(window_styles, style_w_default);
+
+	m_brMyBrush.DeleteObject();
+
+	if(clrChatColor != CLR_DEFAULT)
+		m_brMyBrush.CreateSolidBrush(clrChatColor);
+	else
+		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+}
+// <== Design Settings [eWombat/Stulle] - Max
+
+// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 bool CChatWnd::UpdateEmfriendsMetFromURL(const CString& strURL)
 {
 	if ( strURL.IsEmpty() || strURL.Find(_T("://")) == -1 )	// not a valid URL
@@ -768,23 +718,4 @@ void CChatWnd::OnBnClickedBnmenu()
 	tmColumnMenu.TrackPopupMenu(TPM_LEFTALIGN | TPM_RIGHTBUTTON, rectBtn.right, rectBtn.bottom, this);
 	VERIFY( tmColumnMenu.DestroyMenu() );
 }
-// MORPH END - Added by Commander, Friendlinks [emulEspaña]
-
-// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifdef DESIGN_SETTINGS
-void CChatWnd::OnBackcolor() 
-{
-	clrChatColor = thePrefs.GetStyleBackColor(window_styles, style_w_messages);
-
-	if(clrChatColor == CLR_DEFAULT)
-		clrChatColor = thePrefs.GetStyleBackColor(window_styles, style_w_default);
-
-	m_brMyBrush.DeleteObject();
-
-	if(clrChatColor != CLR_DEFAULT)
-		m_brMyBrush.CreateSolidBrush(clrChatColor);
-	else
-		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
-}
-#endif
-// <== Design Settings [eWombat/Stulle] - Stulle
+// MORPH END - Added by Commander, Friendlinks [emulEspaa]

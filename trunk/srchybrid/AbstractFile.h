@@ -96,7 +96,12 @@ public:
 	void	SetHasComment(bool in) { m_bHasComment = in; }
 	UINT	UserRating(bool bKadSearchIndicator = false) const { return (bKadSearchIndicator && m_bKadCommentSearchRunning)  ? 6 : m_uUserRating; }
 	bool	HasRating()	const { return m_uUserRating > 0; }
+	//Xman Code Improvement by Avi-3k
+	/*
 	bool	HasBadRating()	const { return ( HasRating() && (m_uUserRating < 2)); }
+	*/
+	bool	HasBadRating()  const { return (m_uUserRating == 1); }
+	//Xman end
 	void	SetUserRating(UINT in) { m_uUserRating = in; }
 	const CString& GetFileComment() /*const*/;
 	UINT	GetFileRating() /*const*/;
@@ -109,6 +114,13 @@ public:
 
 	bool			IsKadCommentSearchRunning() const						{ return m_bKadCommentSearchRunning; }
 	void			SetKadCommentSearchRunning(bool bVal);
+
+	//Xman Code Improvement for choosing to use compression
+	bool IsCompressible() const {return compressible;}
+	//Xman end
+	//Xman Code Improvement for HasCollectionExtention
+	bool HasCollectionExtenesion_Xtreme() const {return m_bhasCollectionExtention;}
+	//Xman end
 
 #ifdef _DEBUG
 	// Diagnostic Support
@@ -129,4 +141,11 @@ protected:
 	CString m_strFileType;
 	CArray<CTag*, CTag*> taglist;
 	CKadEntryPtrList m_kadNotes;
+	//Xman Code Improvement for choosing to use compression
+	bool compressible;
+	//Xman end
+	//Xman Code Improvement for HasCollectionExtention
+	bool m_bhasCollectionExtention;
+	//Xman end
+
 };

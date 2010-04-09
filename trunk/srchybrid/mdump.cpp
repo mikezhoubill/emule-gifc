@@ -148,12 +148,17 @@ LONG CMiniDumper::TopLevelFilter(struct _EXCEPTION_POINTERS* pExceptionInfo)
 					if (bOK)
 					{
 						// Do *NOT* localize that string (in fact, do not use MFC to load it)!
-						//MORPH START - Changed by SiRoB
+						//Xman Xtreme Mod
 						/*
 						_sntprintf(szResult, _countof(szResult) - 1, _T("Saved dump file to \"%s\".\r\n\r\nPlease send this file together with a detailed bug report to dumps@emule-project.net !\r\n\r\nThank you for helping to improve eMule."), szDumpPath);
 						*/
-						_sntprintf(szResult, _countof(szResult) - 1, _T("Saved dump file to \"%s\".\r\n\r\nPlease send this file together with a DETAILED bug report to Stulleamgym@gmx.net !\r\n\r\nThank you for helping to improve eMule MorphXT."), szDumpPath);
-						//MORPH END  - Changed by SiRoB
+						// ==> ScarAngel mod - Stulle
+						/*
+						_sntprintf(szResult, _countof(szResult) - 1, _T("Saved dump file to \"%s\".\r\n\r\nPlease send this file together with a detailed bug report to emulextreme@yahoo.de !\r\n\r\nThank you for helping to improve eMule."), szDumpPath);
+						*/
+						_sntprintf(szResult, _countof(szResult) - 1, _T("Saved dump file to \"%s\".\r\n\r\nPlease send this file together with a detailed bug report to stulleamgym@gmx.net !\r\n\r\nThank you for helping to improve eMule."), szDumpPath);
+						// <== ScarAnel mod - Stulle
+						//Xman end
 						szResult[_countof(szResult) - 1] = _T('\0');
 						lRetValue = EXCEPTION_EXECUTE_HANDLER;
 					}

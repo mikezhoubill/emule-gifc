@@ -28,14 +28,17 @@ public:
 	CClientListCtrl();
 
 	void	Init();
-	void	AddClient(const CUpDownClient *client);
-	void	RemoveClient(const CUpDownClient *client);
-	void	RefreshClient(const CUpDownClient *client);
-	void	Hide() { ShowWindow(SW_HIDE); }
+	void	AddClient(const CUpDownClient* client);
+	void	RemoveClient(const CUpDownClient* client);
+	void	RefreshClient(const CUpDownClient* client);
+	void	Hide() {ShowWindow(SW_HIDE);}
 	void	Show() { ShowWindow(SW_SHOW); }
 	void	Localize();
 	void	ShowSelectedUserDetails();
 	void	ShowKnownClients();
+	//Xman SortingFix for Morph-Code-Improvement Don't Refresh item if not needed
+	void	UpdateAll();
+	//Xman end
 
 protected:
 	CImageList m_ImageList;
@@ -54,8 +57,7 @@ protected:
 	afx_msg void OnNmDblClk(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnSysColorChange();
 
-	// Mighty Knife: Community visualization
+	// ==> Mod Icons - Stulle
 	CImageList m_overlayimages;
-	// [end] Mighty Knife
-
+	// <== Mod Icons - Stulle
 };

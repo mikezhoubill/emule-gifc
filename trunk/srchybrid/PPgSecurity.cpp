@@ -17,7 +17,6 @@
 #include "stdafx.h"
 #include <share.h>
 #include "emule.h"
-#include "PPGtooltipped.h" //MORPH leuk_he addded tooltipped
 #include "PPgSecurity.h"
 #include "OtherFunctions.h"
 #include "IPFilter.h"
@@ -36,7 +35,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
-static char THIS_FILE[]=__FILE__;
+static char THIS_FILE[] = __FILE__;
 #endif
 
 bool GetMimeType(LPCTSTR pszFilePath, CString& rstrMimeType);
@@ -68,12 +67,7 @@ BEGIN_MESSAGE_MAP(CPPgSecurity, CPropertyPage)
 END_MESSAGE_MAP()
 
 CPPgSecurity::CPPgSecurity()
-//MORPH START leuk_he tooltipped
-	: CPPgtooltipped(CPPgSecurity::IDD)
-/*
 	: CPropertyPage(CPPgSecurity::IDD)
-	*/
-//MORPH END leuk_he tooltipped
 {
 	m_pacIPFilterURL = NULL;
 }
@@ -91,7 +85,7 @@ void CPPgSecurity::LoadSettings(void)
 {
 	CString strBuffer;
 	
-	strBuffer.Format(_T("%i"),thePrefs.filterlevel);
+	strBuffer.Format(_T("%i"), thePrefs.filterlevel);
 	GetDlgItem(IDC_FILTERLEVEL)->SetWindowText(strBuffer);
 	CheckDlgButton(IDC_FILTERSERVERBYIPFILTER, thePrefs.filterserverbyip);
 
@@ -138,14 +132,11 @@ BOOL CPPgSecurity::OnInitDialog()
 {
 	CPropertyPage::OnInitDialog();
 	InitWindowStyles(this);
-	//MORPH START - Added by SiRoB, Allways use securedid
-	GetDlgItem(IDC_USESECIDENT)->EnableWindow(FALSE);
-	//MORPH END   - Added by SiRoB, Allways use securedid
+
 	LoadSettings();
-	InitTooltips();  //MORPH leuk_he tooltipped;
 	Localize();
 
-	if (thePrefs.GetUseAutocompletion()){
+	if (thePrefs.GetUseAutocompletion()) {
 		if (!m_pacIPFilterURL) {
 			m_pacIPFilterURL = new CCustomAutoComplete();
 			m_pacIPFilterURL->AddRef();
@@ -153,7 +144,7 @@ BOOL CPPgSecurity::OnInitDialog()
 				m_pacIPFilterURL->LoadList(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + IPFILTERUPDATEURL_STRINGS_PROFILE);
 		}
 		SetDlgItemText(IDC_UPDATEURL,m_pacIPFilterURL->GetItem(0));
-		if (theApp.m_fontSymbol.m_hObject){
+		if (theApp.m_fontSymbol.m_hObject) {
 			GetDlgItem(IDC_DD)->SetFont(&theApp.m_fontSymbol);
 			GetDlgItem(IDC_DD)->SetWindowText(_T("6")); // show a down-arrow
 		}
@@ -161,17 +152,39 @@ BOOL CPPgSecurity::OnInitDialog()
 	else
 		GetDlgItem(IDC_DD)->ShowWindow(SW_HIDE);
 
+	//Xman auto update IPFilter
+	CString url;
+	GetDlgItemText(IDC_UPDATEURL,url);
+	//in case we don't use Auto-completion we have to take the prefs-value
+	if (url.IsEmpty())
+		SetDlgItemText(IDC_UPDATEURL, thePrefs.GetAutoUpdateIPFilter_URL());
+	else
+	{
+		//in case we use the auto-completion we must update the prefs-value 
+		thePrefs.SetAutoUpdateIPFilter_URL(url);
+	}
+	//Xman end
+
 	return TRUE;  // return TRUE unless you set the focus to a control
-	// EXCEPTION: OCX Property Pages should return FALSE
+				  // EXCEPTION: OCX Property Pages should return FALSE
 }
 
 BOOL CPPgSecurity::OnApply()
 {
+	//Xman auto update IPFilter
+	CString url;
+	GetDlgItemText(IDC_UPDATEURL,url);
+	if(url.GetLength()>=_MAX_PATH)
+		AfxMessageBox(_T("typed url is too long"));
+	else
+		thePrefs.SetAutoUpdateIPFilter_URL(url);
+	//Xman end
+
 	bool bIPFilterSettingsChanged = false;
 
 	TCHAR buffer[510];
 	if (GetDlgItem(IDC_FILTERLEVEL)->GetWindowTextLength()) {
-		GetDlgItem(IDC_FILTERLEVEL)->GetWindowText(buffer,4);
+		GetDlgItem(IDC_FILTERLEVEL)->GetWindowText(buffer, 4);
 		int iNewFilterLevel = _tstoi(buffer);
 		if (iNewFilterLevel >= 0 && (UINT)iNewFilterLevel != thePrefs.filterlevel) {
 			thePrefs.filterlevel = iNewFilterLevel;
@@ -208,7 +221,7 @@ BOOL CPPgSecurity::OnApply()
 
 void CPPgSecurity::Localize(void)
 {
-	if(m_hWnd)
+	if (m_hWnd)
 	{
 		SetWindowText(GetResString(IDS_SECURITY));
 		GetDlgItem(IDC_STATIC_IPFILTER)->SetWindowText(GetResString(IDS_IPFILTER));
@@ -224,7 +237,7 @@ void CPPgSecurity::Localize(void)
 		SetDlgItemText(IDC_STATIC_UPDATEFROM,GetResString(IDS_UPDATEFROM));
 		SetDlgItemText(IDC_LOADURL,GetResString(IDS_LOADURL));
 
-        GetDlgItem(IDC_SEEMYSHARE_FRM)->SetWindowText(GetResString(IDS_PW_SHARE));
+		GetDlgItem(IDC_SEEMYSHARE_FRM)->SetWindowText(GetResString(IDS_PW_SHARE));
 		GetDlgItem(IDC_SEESHARE1)->SetWindowText(GetResString(IDS_PW_EVER));
 		GetDlgItem(IDC_SEESHARE2)->SetWindowText(GetResString(IDS_FSTATUS_FRIENDSONLY));
 		GetDlgItem(IDC_SEESHARE3)->SetWindowText(GetResString(IDS_PW_NOONE));
@@ -235,24 +248,6 @@ void CPPgSecurity::Localize(void)
 		GetDlgItem(IDC_SEC_OBFUSCATIONBOX)->SetWindowText(GetResString(IDS_PROTOCOLOBFUSCATION));
 		GetDlgItem(IDC_SEARCHSPAMFILTER)->SetWindowText(GetResString(IDS_SEARCHSPAMFILTER));
 		GetDlgItem(IDC_CHECK_FILE_OPEN)->SetWindowText(GetResString(IDS_CHECK_FILE_OPEN));
-
-        // MORPH START leuk_he tooltipped
-		SetTool(IDC_FILTERLEVEL,IDC_STATIC_FILTERLEVE_TIP);
-		SetTool(IDC_FILTERSERVERBYIPFILTER,IDC_FILTERSERVERBYIPFILTE_TIP);
-		SetTool(IDC_STATIC_FILTERLEVEL,IDC_STATIC_FILTERLEVE_TIP);
-		SetTool(IDC_FILTERLEVEL,IDC_STATIC_FILTERLEVE_TIP);
-		SetTool(IDC_RELOADFILTER,IDC_RELOADFILTE_TIP);
-		SetTool(IDC_EDITFILTER,IDC_EDITFILTE_TIP);
-		SetTool(IDC_STATIC_UPDATEFROM,IDC_LOADUR_TIP);
-		SetTool(IDC_UPDATEURL,IDC_LOADUR_TIP);
-		SetTool(IDC_LOADURL,IDC_LOADUR_TIP);
-		SetTool(IDC_RUNASUSER,IDC_RUNASUSER_TIP); 
-
-		SetTool(IDC_ONLYOBFUSCATED,IDC_ONLYOBFUSCATED_TIP)   ;
-		SetTool(IDC_ENABLEOBFUSCATION,IDC_ENABLEOBFUSCATION_TIP) ;
-        SetTool(IDC_DISABLEOBFUSCATION,IDC_DISABLEOBFUSCATION_TIP);
-		SetTool(IDC_CHECK_FILE_OPEN,IDS_CHECK_FILE_OPEN_TIP);
-		// MORPH END leuk_he tooltipped
 	}
 }
 
@@ -275,6 +270,10 @@ void CPPgSecurity::OnLoadIPFFromURL()
 	bool bHaveNewFilterFile = false;
 	CString url;
 	GetDlgItemText(IDC_UPDATEURL,url);
+	//Xman auto update IPFilter
+	SYSTEMTIME SysTime;
+	memset(&SysTime, 0, sizeof(SYSTEMTIME)); //just to avoid the warning
+	//Xman end
 	if (!url.IsEmpty())
 	{
 		// add entered URL to LRU list even if it's not yet known whether we can download from this URL (it's just more convenient this way)
@@ -297,10 +296,16 @@ void CPPgSecurity::OnLoadIPFFromURL()
 		dlgDownload.m_strTitle = GetResString(IDS_DWL_IPFILTERFILE);
 		dlgDownload.m_sURLToDownload = url;
 		dlgDownload.m_sFileToDownloadInto = strTempFilePath;
+		
+		//Xman auto update IPFilter
+		memset(&SysTime, 0, sizeof(SYSTEMTIME));
+		dlgDownload.m_pLastModifiedTime = &SysTime; //Xman remark: m_pLastModifiedTime is a pointer which points to the SysTime-struct
+		//Xman end
+
 		if (dlgDownload.DoModal() != IDOK)
 		{
 			(void)_tremove(strTempFilePath);
-			CString strError=GetResString(IDS_DWLIPFILTERFAILED);
+			CString strError = GetResString(IDS_DWLIPFILTERFAILED);
 			if (!dlgDownload.GetError().IsEmpty())
 				strError += _T("\r\n\r\n") + dlgDownload.GetError();
 			AfxMessageBox(strError, MB_ICONERROR);
@@ -350,7 +355,7 @@ void CPPgSecurity::OnLoadIPFFromURL()
 			}
 			else {
 				CString strError;
-				strError.Format( GetResString(IDS_ERR_IPFILTERCONTENTERR), strTempFilePath);
+				strError.Format(GetResString(IDS_ERR_IPFILTERCONTENTERR), strTempFilePath);
 				AfxMessageBox(strError, MB_ICONERROR);
 			}
 
@@ -477,7 +482,7 @@ void CPPgSecurity::OnLoadIPFFromURL()
 			}
 
 			if (bValidIPFilterFile)
-		{
+			{
 				(void)_tremove(theApp.ipfilter->GetDefaultFilePath());
 				VERIFY( _trename(strTempFilePath, theApp.ipfilter->GetDefaultFilePath()) == 0 );
 				bHaveNewFilterFile = true;
@@ -488,6 +493,15 @@ void CPPgSecurity::OnLoadIPFFromURL()
 			}
 		}
 	}
+
+	//Xman auto update IPFilter
+	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+	/*
+	struct tm tmTemp;
+	thePrefs.m_last_ipfilter_check = safe_mktime(CTime::GetCurrentTime().GetLocalTm(&tmTemp));
+	*/
+	// <== Advanced Updates [MorphXT/Stulle] - Stulle
+	//Xman end
 
 	if (url.IsEmpty() || bHaveNewFilterFile)
 		OnReloadIPFilter();
@@ -502,6 +516,10 @@ void CPPgSecurity::OnLoadIPFFromURL()
 		strError.Format(_T("%s\r\n\r\n%s"), GetResString(IDS_DWLIPFILTERFAILED), strLoaded);
 		AfxMessageBox(strError, MB_ICONERROR);
 	}
+	//Xman auto update IPFilter
+	else if(bHaveNewFilterFile)
+		memcpy(&thePrefs.m_IPfilterVersion, &SysTime, sizeof SysTime); 
+	//Xman end
 }
 
 void CPPgSecurity::OnDestroy()
@@ -531,7 +549,7 @@ BOOL CPPgSecurity::PreTranslateMessage(MSG* pMsg)
 		if (pMsg->wParam == VK_DELETE && m_pacIPFilterURL && m_pacIPFilterURL->IsBound() && pMsg->hwnd == GetDlgItem(IDC_UPDATEURL)->m_hWnd)
 		{
 			if (GetAsyncKeyState(VK_MENU)<0 || GetAsyncKeyState(VK_CONTROL)<0)
-			m_pacIPFilterURL->Clear();
+				m_pacIPFilterURL->Clear();
 			else
 				m_pacIPFilterURL->RemoveSelectedItem();
 		}
@@ -551,13 +569,8 @@ BOOL CPPgSecurity::PreTranslateMessage(MSG* pMsg)
 			}
 		}
 	}
-
-    //MORPH START leuk_he tooltipped
-	/*
+   
 	return CPropertyPage::PreTranslateMessage(pMsg);
-	*/
-	return CPPgtooltipped::PreTranslateMessage(pMsg);
-    //MORPH END  leuk_he tooltipped
 }
 
 void CPPgSecurity::OnEnChangeUpdateUrl()
@@ -589,7 +602,7 @@ BOOL CPPgSecurity::OnCommand(WPARAM wParam, LPARAM lParam)
 	}
 	return __super::OnCommand(wParam, lParam);
 }
-	
+
 BOOL CPPgSecurity::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 {
 	OnHelp();

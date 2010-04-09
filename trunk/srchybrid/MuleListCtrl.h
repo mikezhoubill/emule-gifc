@@ -7,37 +7,6 @@ class CMemDC;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CMuleListCtrl
-//MORPH START - UpdateItemThread
-struct update_info_struct{
-	DWORD	  dwUpdate;
-	DWORD	  bNeedToUpdate;
-};
-class CUpdateItemThread : public CWinThread
-{
-	DECLARE_DYNCREATE(CUpdateItemThread)
-protected:
-	CUpdateItemThread();
-	~CUpdateItemThread();
-public:
-	virtual	BOOL	InitInstance() {return true;}
-	virtual int		Run();
-	void	EndThread();
-	void	SetListCtrl(CListCtrl* listctrl);
-	void	AddItemToUpdate(LPARAM item);
-	void	AddItemUpdated(LPARAM item);
-private:
-	CListCtrl* m_listctrl;
-	CList<LPARAM>	queueditem;
-	CList<LPARAM>	updateditem;
-	CMap<LPARAM, LPARAM, update_info_struct*, update_info_struct*> ListItems;
-	CCriticalSection	listitemlocker;
-	CCriticalSection	queueditemlocker;
-	CCriticalSection	updateditemlocker;
-	CEvent	newitemEvent;
-	CEvent*	threadEndedEvent;
-	bool	doRun;
-};
-//MORPH END   - UpdateItemThread
 
 #define MLC_DT_TEXT (DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX | DT_END_ELLIPSIS)
 
@@ -219,9 +188,9 @@ protected:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnSysColorChange();
 	afx_msg void OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult);
-
 	// ==> XP Style Menu [Xanatos] - Stulle
 	afx_msg void OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
 	// <== XP Style Menu [Xanatos] - Stulle
 
 	int UpdateLocation(int iItem);
@@ -229,11 +198,10 @@ protected:
 	void SetColors();
 	void DrawFocusRect(CDC *pDC, const CRect &rcItem, BOOL bItemFocused, BOOL bCtrlFocused, BOOL bItemSelected);
 	// ==> Design Settings [eWombat/Stulle] - Stulle
-#ifndef DESIGN_SETTINGS
+	/*
 	void InitItemMemDC(CMemDC *dc, LPDRAWITEMSTRUCT lpDrawItemStruct, BOOL &bCtrlFocused);
-#else
+	*/
 	void InitItemMemDC(CMemDC *dc, LPDRAWITEMSTRUCT lpDrawItemStruct, BOOL &bCtrlFocused,int nList = -1);
-#endif
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
 	static __inline bool HaveIntersection(const CRect &rc1, const CRect &rc2) {
@@ -279,7 +247,16 @@ protected:
 	void OnFindStart();
 	void OnFindNext();
 	void OnFindPrev();
-	CUpdateItemThread* m_updatethread; //MORPH - UpdateItemThread
+
+	// ==> Design Settings [eWombat/Stulle] - Stulle
+	/*
+	//Xman narrow font at transferwindow
+	CFont		m_fontNarrow;
+	*/
+	// <== Design Settings [eWombat/Stulle] - Stulle
+
+	//Xman client percentage
+	CFont		m_fontBoldSmaller;
 
 private:
 	static int	IndexToOrder(CHeaderCtrl* pHeader, int iIndex);
@@ -327,12 +304,13 @@ private:
 				return ret;
 		}
 
-		return 0;	// Failed to sort
+		return 0; // Failed to sort
 	}
 	static int CALLBACK MultiSortCallback(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort) {
 		return ((CMuleListCtrl*)lParamSort)->MultiSortProc(lParam1, lParam2);
 	}
 	// SLUGFILLER: multiSort
+
 };
 
 void GetContextMenuPosition(CListCtrl& lv, CPoint& point);

@@ -44,7 +44,6 @@ public:
 	int		IsComplete(UINT uSources, UINT uCompleteSources) const;
 	time_t	GetLastSeenComplete() const;
 	uint32	GetSearchID() const { return m_nSearchID; }
-	LPCTSTR	GetFakeComment() const { return m_pszIsFake; } //MORPH - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
 	LPCTSTR GetDirectory() const { return m_pszDirectory; }
 
 	uint32	GetClientID() const				{ return m_nClientID; }
@@ -80,7 +79,6 @@ public:
 	void		 StoreToFile(CFileDataIO& rFile) const;
 
 	struct SClient {
-	public:
 		SClient() {
 			m_nIP = 0;
 			m_nPort = 0;
@@ -102,20 +100,24 @@ public:
 		uint16 m_nPort;
 		uint16 m_nServerPort;
 	};
-// vs2008 start
-class CSClientEqualHelper
-{
-public:
-	static bool IsEqual(const SClient & t1, const SClient & t2)
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	class CSClientEqualHelper
 	{
-		return ((t1.m_nIP == t2.m_nIP) &&
-		t1.m_nServerIP == t2.m_nServerIP );
-	}
+	public:
+		static bool IsEqual(const SClient & t1, const SClient & t2)
+		{
+			return ((t1.m_nIP == t2.m_nIP) &&
+			t1.m_nServerIP == t2.m_nServerIP );
+		}
 	};
-// vs2008 end
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	void AddClient(const SClient& client) { m_aClients.Add(client); }
-
-	const CSimpleArray<SClient,CSClientEqualHelper>& GetClients() const { return m_aClients; } //Morph
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
+	const CSimpleArray<SClient>& GetClients() const { return m_aClients; }
+	*/
+	const CSimpleArray<SClient,CSClientEqualHelper>& GetClients() const { return m_aClients; }
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 
 	struct SServer {
 		SServer() {
@@ -138,7 +140,7 @@ public:
 		UINT   m_uAvail;
 		bool   m_bUDPAnswer;
 	};
-// vs2008 start
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	class CSServerEqualHelper
 	{
 	public:
@@ -150,14 +152,14 @@ public:
 			t1.m_bUDPAnswer == t2.m_bUDPAnswer ;
 		}
 	};
-// vs2008 end
-
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	void AddServer(const SServer& server) { m_aServers.Add(server); }
-/* vs2008
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
 	const CSimpleArray<SServer>& GetServers() const { return m_aServers; }
-*/
+	*/
 	const CSimpleArray<SServer,CSServerEqualHelper>& GetServers() const { return m_aServers; }
-// end vs2008
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	SServer& GetServerAt(int iServer) { return m_aServers[iServer]; }
 	
 	void	AddPreviewImg(CxImage* img)	{	m_listImages.Add(img); }
@@ -187,19 +189,19 @@ private:
 	uint32	m_nClientServerIP;
 	uint16	m_nClientServerPort;
 	uint32	m_nKadPublishInfo;
-/* vs2008 start 
+	// ==> Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
+	/*
 	CSimpleArray<SClient> m_aClients;
 	CSimpleArray<SServer> m_aServers;
-*/
+	*/
 	CSimpleArray<SClient,CSClientEqualHelper> m_aClients;
 	CSimpleArray<SServer,CSServerEqualHelper> m_aServers;
-// vs200 end
+	// <== Make code VS 2005 and VS 2008 ready [MorphXT] - Stulle
 	CSimpleArray<CxImage*> m_listImages;
 	LPTSTR m_pszDirectory;
 	// spamfilter
 	CString	m_strNameWithoutKeywords;
 	uint32	m_nSpamRating;
-	LPTSTR m_pszIsFake; //MORPH - Added by SiRoB, FakeCheck, FakeReport, Auto-updating
 
 	// GUI helpers
 	bool		m_bPreviewPossible;

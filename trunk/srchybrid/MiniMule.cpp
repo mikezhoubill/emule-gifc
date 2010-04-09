@@ -27,6 +27,7 @@
 #include "MenuCmds.h"
 #include "IESecurity.h"
 #include "UserMsgs.h"
+#include "opcodes.h" //Xman ModID
 
 #if (WINVER < 0x0500)
 /* AnimateWindow() Commands */
@@ -260,13 +261,17 @@ BOOL CMiniMule::OnInitDialog()
 		m_layeredWnd.SetTransparentPercentage(m_hWnd, m_uWndTransparency);
 	}
 
-	//MORPH START - Changed by SiRoB, ModID
+	//Xman ModID
 	/*
 	SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong);
 	*/
+	// ==> ModID [itsonlyme/SiRoB] - Stulle
+	/*
+	SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + MOD_VERSION + _T("]"));
+	*/
 	SetWindowText(_T("eMule v") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]"));
-	//MORPH END   - Changed by SiRoB, ModID
-	
+	// <== ModID [itsonlyme/SiRoB] - Stulle
+	//Xman end
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
