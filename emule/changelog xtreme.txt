@@ -1,4 +1,4 @@
-Xtreme 7.2
+Xtreme 8.0
 ----------------
 
 Main Features:
@@ -19,11 +19,11 @@ supported languages:
 german, english, spanish,  french, italian, chinese, turkish, czech
 
 
-based on emule 0.49c
+based on emule 0.50a
 compiled with:
-libpng 1.2.28
-zlib 1.2.3
-crypto 5.5.2
+libpng 1.4.3
+zlib 1.2.5
+crypto 5.6.0
 CxImage version 6.00
 EditBinX
 ReplaceVistaIcon
@@ -31,6 +31,57 @@ Windows Media SDK
 DirectX SDK
 MiniUPnP Lib (as of official)
 
+
+Xtreme 8.0
+* this version is modded by Stulle
+- updated to 0.50a codebase
+- updated cryptolib Version to 5.6.0 (3/15/2009) (Stulle)
+- updated libpng to 1.4.3 (Stulle)
+- updated zlib to 1.2.5 (Stulle)
+- add: Some more countries to country flags feature (tomchen1989)
+- add: ATL Server code for VS2008/2010 compilation (Stulle)
+- add: added VS10 solution and project files (Stulle)
+- add: Ability to translate "Network Adapter" and "eMule control + data" for graphs (Stulle)
+- add: Own color option for Network Adapter graph line (Stulle)
+	requires Network Adapter color to be configured on update
+- improved: Made SafeHash ready for new AICH based file identifier (like official) (Stulle)
+- improved: update SafeHash from Morph (Stulle)
+- improved: update Flush Thread and Read Block From File Thread (Morph/Sirob)
+- improved: Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied]
+- improved: Don't reset Connection Settings for SysTrayIconMenu (Stulle)
+- improved: Sort progress bars by percentage (Fafner/Xman)
+- improved: Also include modstring when sorting by software for aMule (Stulle)
+- improved: Optimize Process Kad client list (WiZaRd)
+- changed: only use narrow font in TransferWnd if enabled (like in 6.1) (Stulle)
+- changed: Store antiLeech.dll in config directory (Stulle)
+	antiLeech.dll.new should henceforth also be placed in config dir
+- fixed: Reset for BkColor after coloring LowID clients was broken (zz_fly)
+- fixed: Possibly crash fix on ShowComment (WiZaRd)
+- fixed: Fix broken HTTP downloads from SourceForge (WiZaRd)
+- fixed: Only resolve hostnames for downloads if partfile found (WiZaRd)
+- fixed: Remove client from DownloadClientsList on RemoveSource (WiZaRd)
+- fixed: Don't publish incomplete small files (WiZaRd)
+- fixed: Fix for setting buddy state on removing buddy (WiZaRd)
+- fixed: Potential devision by zero in UploadBandwidthThrottler (Stulle)
+- removed: Send user agent for http downloads only when obfusc enabled code (redundant) (Xman)
+partially updated to 8.0 by zz_fly:
+- add: Fincan community hash detection (WiZaRd)
+- add: retrieve MTU from system (netfinity)
+- add: dual upnp lib support (in code only)(zz_fly)
+- add: AICHHashset write buffer, reduce diskio while hashing (zz_fly)
+- add: let unshared hashsets in a single file, reduce the size of Known2_64.met (zz_fly)
+- add: save URL source (DolphinX)
+- improved: Reduced CPU usage in CUInt128 (netfinity)
+- improved: better clients.met file backup and recovery (Enig123)
+- improved: remove useless sort process in downloadqueue (Enig123)
+- improved: optimized in download queue balance (Enig123)
+- improved: don't Failed-Download-Ban http sources (DolphinX)
+- fixed: a splash-screen UI problem in Vista (WiZaRd)
+- fixed: don't transmit for nested/overlapping data requests (emuleplus)
+- fixed: a possible crash when username contain %s (DolphinX)
+- fixed: don't reload sharedfiles when we need not (DolphinX)
+- removed: Xman's Multi-threaded disc access with threading-queue. see emule.h for details.
+- removed: MediaInfo 0.4 support
 
 Xtreme 7.2 second source edit
 * this version is modded by Stulle

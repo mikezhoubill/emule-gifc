@@ -1,6 +1,45 @@
 CHANGELOG FOR EMULE ScarAngel MOD
 
 
+eMule v0.50a ScarAngel v4.0:
+------------------------
+- 11.03.2011 -
+-------------------------------------------------------------------------------
+based on eMule 0.50a Xtreme 8.0 compiled with vs2010 SP1
+Merged to eMule v0.50a [Stulle]
+Updated with code from zz_fly's Xtreme
+
+Added: Possibility to directly add incoming of removed cat to shared folders [Stulle] - Stulle
+Added: Queue progress bar in Webserver (not in Light) [unknown/Stulle] - Stulle
+Added: File Percentage in title of progress images in WebServer [unknown/Stulle] - Stulle
+Added: More advanced official settings [Stulle] - Stulle
+
+Changed: Reworked coloring of windows (fixes some tab controls on Vista/7) [Stulle] - Stulle
+Changed: Grouping of advanced official settings [Stulle] - Stulle
+Changed: Refined dislpaying reasons for download limits in StatusBar [Stulle] - Stulle
+Changed: Auto join Morph IRC help channel [Stulle] - Stulle
+Changed: Improved picking correct download limit [Stulle] - Stulle
+	+ Might be a little more restrictive but is is also cleaner
+
+Fixed: Reboot in webserver invoked shutdown instead of reboot [Stulle] - Stulle
+Fixed: TxtEditor option in Advanced Preferences [Stulle] - Stulle
+Fixed: Setting HOS was cancled when setting remained unchanged for one file [Stulle] - Stulle
+Fixed: Minor display bug around default for PowerShare limit [Stulle] - Stulle
+Fixed: AutoUpdateIP2Country differed on loading and saving preferences [jerryBG] - Stulle
+Fixed: Localization of ScarAngel Settings was incomplete [Stulle] - Stulle
+Fixed: Bad graph label display when Source Graph was disabled [Stulle] - Stulle
+Fixed: Crashfix for reloading share via ASFU under certain circumstances [WiZaRd] - Stulle
+Fixed: Current window was not entirely redrawn on changing window color [Stulle] - Stulle
+Fixed: DLP version number was not updated on manual update in settings [Stulle] - Stulle
+
+Removed: New official Ask-On-Exit Dlg in favor of ScarAngel one (NTService) [Stulle] - Stulle
+
+Note: Following languages updated: German [Stulle]; Chinese (P.R.C.) [zz_fly];
+	Chinese (Taiwan) [AndCycle]; French [jamjam]; Spanish [Rajil/mself563];
+	Italian [xilolee/EvolutionCrazy]; Turkish (partially) [omeringen]
+Note: Added existing Czech ScarAngel translations to Czech translation file
+
+
 eMule v0.49c ScarAngel v3.3:
 ------------------------
 - 03.12.2009 -

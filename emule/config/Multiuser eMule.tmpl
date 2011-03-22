@@ -1010,6 +1010,10 @@ else
     <td style="font-size: 8pt">
 	<img src="l_users.gif" align="left" hspace="3" vspace="4"> [Users]: [CurUsers] ([MaxUsers])
 	<table width="125" border=1 class="percent_table" cellpadding=0 cellspacing=0 bordercolor="#005784" bgcolor="#99CCFF"><tr><td><img src="qs_user.jpg" width="[UserValue]%" height="8"></td></td></tr></table>
+    </td>
+    <td style="font-size: 8pt">
+	<img src="arrow_up_q.gif" align="left" hspace="3" vspace="4"> [Queue]: [CurQueue] ([MaxQueue])
+	<table width="125" border=1 class="percent_table" cellpadding=0 cellspacing=0 bordercolor="#005784" bgcolor="#99CCFF"><tr><td><img src="qs_que.jpg" width="[QueueValue]%" height="8"></td></td></tr></table>
    </td>
    <td></td>
    </tr>
@@ -1772,12 +1776,12 @@ function searchange3() {
 
 
 <--PROGRESSBARIMGS-->
-<img src="[PROGRESSGIFNAME]" height=13 width=[PROGRESSGIFINTERNAL]>
+<img src="[PROGRESSGIFNAME]" height=13 width=[PROGRESSGIFINTERNAL] title=[FilePercentage]>
 <--PROGRESSBARIMGS_END-->
 
 
 <--PROGRESSBARPERCENTIMG-->
-<img src="[PROGRESSGIFNAME]" height=3 width=[PROGRESSGIFINTERNAL]>
+<img src="[PROGRESSGIFNAME]" height=3 width=[PROGRESSGIFINTERNAL] title=[FilePercentage]>
 <--PROGRESSBARPERCENTIMG_END-->
 
 <--TMPL_CATARROW-->
