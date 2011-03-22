@@ -1,4 +1,4 @@
-// $Id: tag_parse.cpp,v 1.2 2008/10/07 17:20:33 stulleamgym Exp $
+// $Id: tag_parse.cpp,v 1.5 2008/01/15 11:20:41 stulleamgym Exp $
 
 // id3lib: a C++ library for creating and manipulating id3v1/v2 tags
 // Copyright 1999, 2000  Scott Thomas Haug
@@ -49,7 +49,7 @@ namespace
     size_t totalSize = 0;
     size_t frameSize = 0;
     while (!rdr.atEnd() && rdr.peekChar() != '\0')
-    {
+	{
       ID3D_NOTICE( "id3::v2::parseFrames(): rdr.getBeg() = " << rdr.getBeg() );
       ID3D_NOTICE( "id3::v2::parseFrames(): rdr.getCur() = " << rdr.getCur() );
       ID3D_NOTICE( "id3::v2::parseFrames(): rdr.getEnd() = " << rdr.getEnd() );

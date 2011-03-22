@@ -4,7 +4,7 @@
 # Created: 1993-05-16
 # Public domain
 
-# $Id: mkinstalldirs,v 1.1 2008/10/07 17:19:26 stulleamgym Exp $
+# $Id: mkinstalldirs,v 1.1 2007/12/11 20:21:19 pindakaasmod Exp $
 
 errstatus=0
 
