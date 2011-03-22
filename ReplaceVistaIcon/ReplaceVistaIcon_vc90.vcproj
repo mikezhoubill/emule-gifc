@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="ReplaceVistaIcon_vc90"
 	ProjectGUID="{58A54F98-FF3F-472F-9282-DA411EE850A2}"
 	RootNamespace="ReplaceVistaIcon"
