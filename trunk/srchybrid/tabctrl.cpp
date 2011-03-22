@@ -4,6 +4,12 @@
 #include "UserMsgs.h"
 #include "emule.h"
 #include "VisualStylesXP.h"
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+#include "Preferences.h"
+#include "otherfunctions.h"
+#endif
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,6 +33,11 @@ BEGIN_MESSAGE_MAP(TabControl, CTabCtrl)
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_CAPTURECHANGED()
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+	ON_WM_ERASEBKGND()
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 END_MESSAGE_MAP()
 
 //
@@ -519,3 +530,28 @@ void TabControl::SetTabTextColor(int index, DWORD color) {
 	tab.lParam=color;
 	SetItem(index,&tab);
 }
+
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+BOOL TabControl::OnEraseBkgnd(CDC* pDC)
+{
+	if(thePrefs.GetWindowsVersion() >= _WINVER_VISTA_)
+		return CTabCtrl::OnEraseBkgnd(pDC);
+
+	// Set brush to desired background color
+	CBrush backBrush(GetSysColor(COLOR_BTNFACE));
+
+	// Save old brush
+	CBrush* pOldBrush = pDC->SelectObject(&backBrush);
+
+	// So it seems this finally got broken on VS2010 for XP... so when we erase background now we just set it ourself now...
+	CRect rect;
+	pDC->GetClipBox(&rect);     // Erase the area needed
+
+	pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+        PATCOPY);
+	pDC->SelectObject(pOldBrush);
+	return TRUE;
+}
+#endif
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle

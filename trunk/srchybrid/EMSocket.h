@@ -1,5 +1,5 @@
 //this file is part of eMule
-//Copyright (C)2002-2008 Merkur ( strEmail.Format("%s@%s", "devteam", "emule-project.net") / http://www.emule-project.net )
+//Copyright (C)2002-2010 Merkur ( strEmail.Format("%s@%s", "devteam", "emule-project.net") / http://www.emule-project.net )
 //
 //This program is free software; you can redistribute it and/or
 //modify it under the terms of the GNU General Public License
@@ -8,7 +8,7 @@
 //
 //This program is distributed in the hope that it will be useful,
 //but WITHOUT ANY WARRANTY; without even the implied warranty of
-//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 //GNU General Public License for more details.
 //
 //You should have received a copy of the GNU General Public License
@@ -22,9 +22,9 @@
 class CAsyncProxySocketLayer;
 class Packet;
 
-#define	ES_DISCONNECTED		0xFF
-#define	ES_NOTCONNECTED		0x00
-#define	ES_CONNECTED		0x01
+#define ES_DISCONNECTED		0xFF
+#define ES_NOTCONNECTED		0x00
+#define ES_CONNECTED		0x01
 
 #define PACKET_HEADER_SIZE	6
 
@@ -34,8 +34,8 @@ class CUpDownClient;
 // Maella end
 
 struct StandardPacketQueueEntry {
-    uint32 actualPayloadSize;
-    Packet* packet;
+	uint32 actualPayloadSize;
+	Packet* packet;
 };
 
 class CEMSocket : public CEncryptedStreamSocket, public ThrottledFileSocket // ZZ:UploadBandWithThrottler (UDP)
@@ -46,14 +46,15 @@ public:
 	virtual ~CEMSocket();
 
 	virtual void 	SendPacket(Packet* packet, bool delpacket = true, bool controlpacket = true, uint32 actualPayloadSize = 0, bool bForceImmediateSend = false);
-    bool	IsConnected() const {return byConnected == ES_CONNECTED;}
+	bool	IsConnected() const {return byConnected == ES_CONNECTED;}
 	uint8	GetConState() const {return byConnected;}
 	virtual bool IsRawDataMode() const { return false; }
 	void	SetDownloadLimit(uint32 limit);
 	void	DisableDownloadLimit();
 	BOOL	AsyncSelect(long lEvent);
 	virtual bool IsBusy() const			{return m_bBusy;}
-	virtual bool HasQueues() const		{return (sendbuffer || standartpacket_queue.GetCount() > 0 || controlpacket_queue.GetCount() > 0);} // not trustworthy threaded? but it's ok if we don't get the correct result now and then
+    virtual bool HasQueues() const		{return (sendbuffer || standartpacket_queue.GetCount() > 0 || controlpacket_queue.GetCount() > 0);} // not trustworthy threaded? but it's ok if we don't get the correct result now and then
+	virtual bool UseBigSendBuffer();
 
 	virtual UINT GetTimeOut() const;
 	virtual void SetTimeOut(UINT uTimeOut);
@@ -69,15 +70,15 @@ public:
 	CString GetFullErrorMessage(DWORD dwError);
 
 	DWORD GetLastCalledSend() { return lastCalledSend; }
-    uint64 GetSentBytesCompleteFileSinceLastCallAndReset();
-    uint64 GetSentBytesPartFileSinceLastCallAndReset();
-    //Xman unused
-    /*
-    uint64 GetSentBytesControlPacketSinceLastCallAndReset();
-    */
-    //Xman end
-    uint64 GetSentPayloadSinceLastCallAndReset();
-    void TruncateQueues();
+	uint64 GetSentBytesCompleteFileSinceLastCallAndReset();
+	uint64 GetSentBytesPartFileSinceLastCallAndReset();
+	//Xman unused
+	/*
+	uint64 GetSentBytesControlPacketSinceLastCallAndReset();
+	*/
+	//Xman end
+	uint64 GetSentPayloadSinceLastCallAndReset();
+	void TruncateQueues();
 
     virtual SocketSentBytes SendControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, true); };
     virtual SocketSentBytes SendFileAndControlData(uint32 maxNumberOfBytesToSend, uint32 minFragSize) { return Send(maxNumberOfBytesToSend, minFragSize, false); };
@@ -142,6 +143,9 @@ public:
 	//Threadsafe Statechange
 	void			SetConnectedState(const uint8 state);
 
+	// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+	void		SetMSSFromSocket(SOCKET socket);
+
 #ifdef _DEBUG
 	// Diagnostic Support
 	virtual void AssertValid() const;
@@ -155,7 +159,7 @@ protected:
 	virtual bool	PacketReceived(Packet* packet) = 0;
 	virtual void	OnError(int nErrorCode) = 0;
 	virtual void	OnClose(int nErrorCode);
-	virtual void	OnSend(int nErrorCode);	
+	virtual void	OnSend(int nErrorCode);
 	virtual void	OnReceive(int nErrorCode);
 	//Xman
 	virtual void	OnConnect(int nErrorCode); // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
@@ -169,7 +173,7 @@ protected:
 
 private:
     virtual SocketSentBytes Send(uint32 maxNumberOfBytesToSend, uint32 minFragSize, bool onlyAllowedToSendControlPacket);
-	void	ClearQueues();	
+	void	ClearQueues();
 	virtual int Receive(void* lpBuf, int nBufLen, int nFlags = 0);
 
     uint32 GetNextFragSize(uint32 current, uint32 minFragSize);
@@ -178,7 +182,7 @@ private:
 	//Xman Code Improvement
 	bool	isreadyforsending;
 
-	// Download (pseudo) rate control	
+	// Download (pseudo) rate control
 	uint32	downloadLimit;
 	bool	downloadLimitEnable;
 	bool	pendingOnReceive;
@@ -189,7 +193,7 @@ private:
 
 	// Download partial packet
 	Packet* pendingPacket;
-	uint32  pendingPacketSize;
+	uint32	pendingPacketSize;
 
 	// Upload control
 	char*	sendbuffer;
@@ -198,30 +202,31 @@ private:
 
 	CTypedPtrList<CPtrList, Packet*> controlpacket_queue;
 	CList<StandardPacketQueueEntry> standartpacket_queue;
-    bool m_currentPacket_is_controlpacket;
-    CCriticalSection sendLocker;
-    uint64 m_numberOfSentBytesCompleteFile;
-    uint64 m_numberOfSentBytesPartFile;
-    //Xman unused
-    /*
-    uint64 m_numberOfSentBytesControlPacket;
-    */
-    //Xman end
-    bool m_currentPackageIsFromPartFile;
+	bool m_currentPacket_is_controlpacket;
+	CCriticalSection sendLocker;
+	uint64 m_numberOfSentBytesCompleteFile;
+	uint64 m_numberOfSentBytesPartFile;
 	//Xman unused
 	/*
-	bool	m_bAccelerateUpload;
+	uint64 m_numberOfSentBytesControlPacket;
 	*/
 	//Xman end
-    DWORD lastCalledSend;
-    DWORD lastSent; 
+	bool m_currentPackageIsFromPartFile;
 	//Xman unused
 	/*
-	uint32	lastFinishedStandard;
+	bool m_bAccelerateUpload;
 	*/
 	//Xman end
-    uint32 m_actualPayloadSize;
-    uint32 m_actualPayloadSizeSent;
+	DWORD lastCalledSend;
+    DWORD lastSent;
+	//Xman unused
+	/*
+	uint32 lastFinishedStandard;
+	*/
+	//Xman end
+	uint32 m_actualPayloadSize;
+	uint32 m_actualPayloadSizeSent;
     bool m_bBusy;
     bool m_hasSent;
+	bool m_bUsesBigSendBuffers;
 };

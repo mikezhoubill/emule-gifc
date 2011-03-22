@@ -490,7 +490,6 @@ BEGIN
     IDS_PW_USS              "Mettre à jour la liste de serveurs au démarrage"
     IDS_PW_MISC             "Options diverses"
     IDS_PW_TRAY             "Réduire en &icône"
-    IDS_PW_BEEP             "Bip sur erreurs"
     IDS_PW_PROMPT           "Confirmation en sortie"
     IDS_PW_SPLASH           "Afficher l'écran de démarrage"
     IDS_PW_DBLCLICK         "Double-clic pour voir les sources"
@@ -690,7 +689,6 @@ END
 STRINGTABLE 
 BEGIN
     IDS_DOWNLOADMOVIECHUNKS "Priorité aux parties nécessaires à l'aperçu"
-    IDS_UPDATEQUEUE         "Ne pas mettre à jour la file d'attente en temps réel"
     IDS_RECOVER_SINGLE      "1 fichier récupéré."
     IDS_RECOVER_MULTIPLE    "%u fichiers récupérés."
     IDS_ATTEMPTING_RECOVERY "Essai de récupération d'archives..."
@@ -1080,7 +1078,6 @@ BEGIN
     IDS_WEB_BADLOGINATTEMPT "Serveur Web : Echec de la tentative de connexion"
     IDS_ERR_TOOLARGEFILE    "Le fichier a une taille trop importante (>=4 Go). Ce n'est pas supporté par le protocole sur le réseau eDonkey "
     IDS_MSGONLYFRIENDS      "Autoriser seulement les amis"
-    IDS_MSGONLYSEC          "Autoriser seulement les clients valides"
     IDS_DAY_MO_SA           "Lun-Dim"
     IDS_LIMITSOURCES        "Limite sources"
     IDS_LIMITCONS5SEC       "Limite connexions/5secs"
@@ -1130,7 +1127,6 @@ BEGIN
     IDS_DL_RESUMENEXT       "Reprendre le prochain en pause"
     IDS_STARTPRIO           "Priorité pour cette catégorie"
     IDS_PREF_STARTNEXTFILECAT "Préférer la même catégorie"
-    IDS_REPAINTGRAPHS       "Ne pas recréer les graphes de stats au redimensionnement"
     IDS_SOFTFILES           "Limite faible de fichiers"
 END
 
@@ -1543,7 +1539,6 @@ BEGIN
     IDS_FO_PREF_FAILED      "La configuration du pare-feu XP pour les ports sélectionnés a échoué !"
     IDS_FO_PREF_STARTUP    "Ouverture/Fermeture des ports du pare-feu XP lors du lancement/fermeture d'eMule"
     IDS_LOG_LEVEL          "Niveau de consignation"
-    IDS_DISABLEPEERACHE    "Désactiver le téléchargement à partir du PeerCache"
     IDS_FO_TEMPTCP_S        "Port %u (TCP) ouvert dans le pare-feu XP pour cette session eMule"
     IDS_FO_TEMPTCP_F        "Echec de l'ouverture du port %u (TCP) dans le pare-feu XP pour cette session eMule"
     IDS_FO_TEMPUDP_S        "Port %u (UDP) ouvert dans le pare-feu XP pour cette session eMule"
@@ -1641,7 +1636,7 @@ BEGIN
     IDS_LD_COPYCLIPBOARD    "Copier vers le presse-papiers"
     IDS_LD_HOSTNAME         "Utiliser le nom d'hôte (des préférences) au lieu de l'IP lors de la création d'un lien avec source"
     IDS_SAVEACFAILED        "Echec lors de la sauvegarde de la table de hachage AICH !"
-    IDS_IACHHASH            "Hachage AICH "
+    IDS_AICHHASH            "Hachage AICH "
     IDS_BYTESPERSEC         "o/s"
     IDS_KBYTESPERSEC        "Ko/s"
     IDS_MBYTESPERSEC        "Mo/s"
@@ -1968,6 +1963,32 @@ END
 
 STRINGTABLE 
 BEGIN
+    IDS_DOWNLOADCOMMANDS    "Commandes de téléchargement"
+    IDS_CLOSETOOLBAR        "Fermer la barre d'outils"
+    IDS_SHOWTOOLBAR         "Montrer la barre d'outils"
+    IDS_SEARCH_BADOPERATORCOMBINATION 
+                            "Vous ne pouvez pas utiliser l'opérateur OR comme premier mot-clé lors d'une recherche KAD!\n\nPar exemple ""mot-clé1 OR mot-clé2"" n'est pas possible. Essayez ""mot-clé1 AND (mot-clé2 OR mot-clé3)"" ou bien faites une recherche multiple."
+    IDS_DISCOVEREDBY        "Découvert par"
+    IDS_NODES               "Noeud(s)"
+    IDS_ROUTINGTABLE        "Table de routage"
+    IDS_PROTOCOLVERSION     "Version du Protocole"
+    IDS_FOUNDNODESUSEFUL    "Noeuds trouvés (utiles)"
+    IDS_NORESPONSE          "Pas de réponse"
+    IDS_NOTASKED            "Non demandé"
+    IDS_LOOKUPGRAPH         "Détails de la recherche"
+    IDS_AUTOKADLOOKUPGRAPH  "Montrer automatiquement les recherches en cours"
+    IDS_PAUSEONPREVIEW      "Mettre en pause lorsque la prévisualisation est possible"
+    IDS_PREVIEWWITH         "Prévisualiser avec"
+    IDS_CLOSEEMULE          "Quitter eMule"
+    IDS_DONOTASKAGAIN       "Ne pas me le redemander"
+    IDS_POPULARITY          "Rang de popularité"
+    IDS_SHOWWIN7TASKBARGOODIES "Activer les effets Windows 7 de la barre des tâches"
+    IDS_LANMODE             "Mode LAN"
+    IDS_OPENPREFINI         "Ouvrir preferences.ini"
+END
+
+STRINGTABLE 
+BEGIN
     IDS_DROPNONEEDEDSRCS    "Élimine NNS"
     IDS_DROPQUEUEFULLSRCS   "Élimine FullQ"
     IDS_DROPQUEUETOOMANY    "Élimine Too Many"
@@ -2103,13 +2124,14 @@ BEGIN
     IDS_SHOWADDITIONALGRAPH "Montrer lignes de graphique additionnelles"
     IDS_CHECK4UPDATEMOD     "Vérifier si nouvelle Xtreme version tous les"
     IDS_ANTILEECHEREMCRYPT_CHECK "Détection des emcrypt"
+    IDS_UPLOADMANAGEMENT_FRAME "Gestion de l'Upload"
+    IDS_UPLOADSLOTSPEED_LABEL "Vitesse de Slots d'Upload"
     IDS_USENARROWFONT       "Utilisation de police condensé dans la fenètre transfert"
     IDS_SHOWBLOCKINGRATIO   "Affiche le ratio des sockets bloquants"
     IDS_FUNNYNICK           "Surnom rigolo"
     IDS_AUTOUPDATEIPFILTER  "Mise à jour automatique de l'IPFilter.dat"
     IDS_DROPBLOCKINGSOCKETS "Abandon des sockets bloquant trop souvent"
     IDS_LOGPARTMISMATCH     "Journaliser les erreurs de taille sur les fichiers demandés"
-    IDS_CN_UPNPNAT          "Activer le support de l'UPnP"
     IDS_CHUNKCHOOSER        "Méthode de sélection des parties"
     IDS_UPLOADINSTABLE      "Attention: votre limite en émission semble étre trop haute. Veuillez revoir votre configuration! \n Regardez le graphique de la vitesse d'émission dans les statistiques, les ligne blanches et jaunes (avec NAFC) doivent étre planent \n ce message ne sera affiché qu'une seule fois."
 END
@@ -2167,14 +2189,21 @@ BEGIN
     //Friendlinks
     IDS_GETFRIENDED2KLINK   "Copier le lien de l'ami vers le presse-papiers"
     IDS_GETHTMLFRIENDED2KLINK "Copier le lien de l'ami vers le presse-papiers (HTML)"
+    IDS_DOWNLOADEMFRIENDSMET "Téléchargement emfriends.met"
+    IDS_EMFRIENDSMETURL     "Entrez ici l'adresse URL de emfriends.met"
     IDS_ERR_FAILEDDOWNLOADEMFRIENDS "Echec du téléchargement de la liste d'amis depuis %s"
     IDS_GETMYFRIENDED2KLINK "Copier mon lien ami vers le presse-papiers"
     IDS_GETMYHTMLFRIENDED2KLINK "Copier mon lien ami vers le presse-papiers (HTML)"
     IDS_FRIENDLINKMENUTITLE "Lien des amis"
-    IDS_DOWNLOADEMFRIENDSMET "Téléchargement emfriends.met"
-    IDS_EMFRIENDSMETURL     "Entrez ici l'adresse URL de emfriends.met"
     IDS_USER_ALREADY_FRIEND "L'utilisateur ""%s"" est déjà dans ta liste d'amis"
     IDS_PROGRESSHASHDONE	"Hachage fait: %s"
+    IDS_RETRIEVEMTUFROMSOCKET "Tenter de Récupérer les MTU dans le System"
+    IDS_ENABLEKNOWN2BUFFER  "Activer le Tampon de l'AICHHashset (Limiter l'accès au Disque lorsque de nombreux hashs ont lieu)"
+    IDS_ANTILEECHERFINCAN_CHECK 
+                            "Détecter le Hash de la Communauté Fincan (Gourmand en CPU!)"
+    IDS_ENABLEKNOWN2SPLIT   "Diviser Known2_64.met, Laisser les AICHHashsets non-partagés dans un fichier unique"
+    IDS_EMULE_CTRL_DATA     "eMule Overhead + Datas des DLs"
+    IDS_NETWORK_ADAPTER     "Adaptateur de Réseau"
 END
 
 STRINGTABLE 
@@ -2294,7 +2323,7 @@ BEGIN
     IDS_BACKUP_AUTOBACKUP2  "Double sauvegarde"
     IDS_ABORT               "Stopper ?"
     IDS_CONTINUE            "&Continuer"
-    IDS_DONOTASKAGAIN       "Ne plus me redemander"
+//    IDS_DONOTASKAGAIN       "Ne plus me redemander"
     IDS_DONOTSHOWAGAIN      "Ne plus montrer"
     IDS_DONOTTELLAGAIN      "Ne plus me signaler"
     IDS_HELP                "&Aide"
@@ -2417,6 +2446,9 @@ BEGIN
     IDS_DL_MODE_DEFAULT     "Mode de lancement par défaut"
     IDS_DL_NONE             "Aucun"
     IDS_SEARCH_INVALIDMINMAX "Unités invalides pour les valeurs min/max du fichier spécifié"
+    IDS_KEEPCATINCSHARED  "Le dossier enlevée de incoming devrait-il être ajouté comme départ ?"
+    IDS_KEEPCATINCSHARED_TITLE  "Catégorie effacée"
+    IDS_ADD_REMOVED_INC  "Demandez si le dossier incoming entrant et supprimé est ajouté comme départ ?"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Gestion des fichiers partagés"
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2514,13 +2546,14 @@ BEGIN
     IDS_RATIO_GROUP         "EM:REC Ratio"
     IDS_ENFORCE_RATIO       "Toujours imposer le ratio"
     IDS_RATIO_VALUE         "Ratio max 1"
-    IDS_RATIO_REASON        "Raison"
-    IDS_RATIO_REASON2       "Limite forte globale pour l'équitabilité"
-    IDS_RATIO_REASON3       "Ratio basé sur quantité 1:3 si émission < 11"
-    IDS_RATIO_REASON4       "NAFC limitation dynamique de téléchargement"
-    IDS_RATIO_REASON5       "Ration imposé"
-    IDS_RATIO_ACTIVATION    "Limite de téléchargement activé"
-    IDS_RATIO_LIMIT         "EM:REC Ratio a été limité au max. 1"
+    IDS_DL_SES_RATIO            "Limite basée sur le Ratio de la Session activée"
+    IDS_DL_LIMIT_DEF            "Limite configurée de Réception active"
+    IDS_DL_UNL_NOUL             "Réception illimitée (Pas d'émission possible)"
+    IDS_DL_UNL_13RATIO          "Réception illimitée car le ratio < 1:3"
+    IDS_DL_NAFC_LIMIT           "Réception limitée par NAFC"
+    IDS_DL_RATIO_SRC            "Le Nombre Maxi de Sources est Refusé"
+    IDS_DL_RATIO_ENF            "Ratio Imposé"
+    IDS_DL_RATIO_LIMIT          "Le présent Ratio UL:DL est maxi. 1"
     // <== Enforce Ratio [Stulle] - Stulle
     // ==> Tabbed Preferences [TPT] - Stulle
     IDS_SCARANGEL           "ScarAngel"
@@ -2667,7 +2700,18 @@ BEGIN
     IDS_MEDIAINFO_MEDIADET  "Utiliser le détecteur de supports (MediaDet) pour récupérer des informations sur les fichiers multimédia"
     IDS_MEDIAINFO_RM        "Utiliser MediaInfo.dll pour reconnaître les fichiers Real Media"
     IDS_MEDIAINFO_WM        "Utiliser MediaInfo.dll pour reconnaître les fichiers Windows Media" 
-    // <== Advanced Options [Official/MorphXT] - Stulle
+    IDS_X_DATETIMEFORMAT4LIST       "Format de date & heure pour les listes"
+    IDS_UPDATEQUEUE         "Ne pas mettre à jour la file d'attente en temps réel"
+    IDS_REPAINTGRAPHS       "Ne pas recréer les graphes de stats au redimensionnement"
+    IDS_EXTRAPREVIEWWITHMENU  "Montrez la prévision avec le menu dans le menu de contexte"
+    IDS_SHOWUPDOWNICONINTASKBAR  "Utilisez le recouvrement pour indiquer le haut/ le bas dans taskbar "
+    IDS_FORCESPEEDSTOKB  "Montrez toutes les valeurs de vitesse dans KB/s"
+    IDS_X_FILE_BUFFER_TIME_LIMIT       "Durée limite du buffer fichier (en sec)"
+    IDS_X_REARRANGEKADSEARCH       "Réarrangez les mots-clés de recherche KAD"
+    IDS_PW_BEEP             "Bip sur erreurs"
+    IDS_MSGONLYSEC          "Autoriser seulement les clients valides"
+    IDS_DISABLEPEERACHE    "Désactiver le téléchargement à partir du PeerCache"
+    IDS_KEEPUNAVAILABLEFIXEDSHAREDDIRS  "Gardez les annuaires indisponibles sur les commandes fixes"
     // ==> Advanced Updates [MorphXT/Stulle] - Stulle
     IDS_UPDATEANTILEECHERONSTART "Mettre à jour antiLeech.dll au démarrage"
     IDS_AUTOUPWEEK          "MAJ hebdomadaire"

@@ -5,6 +5,7 @@
 
 #include "stdafx.h"
 #include "SplashScreenEx.h"
+#include "preferences.h" //zz_fly :: fix an UI problem in Vista :: WiZaRd
 
 #ifndef AW_HIDE
 #define AW_HIDE 0x00010000
@@ -269,7 +270,12 @@ void CSplashScreenEx::Show()
 {
 	SetWindowPos(NULL,m_nxPos,m_nyPos,m_nBitmapWidth,m_nBitmapHeight,SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
 
+	//zz_fly :: fix an UI problem in Vista :: WiZaRd :: start
+	/*
 	if ((m_dwStyle & CSS_FADEIN) && (m_fnAnimateWindow!=NULL))
+	*/
+	if (!thePrefs.IsRunningAeroGlassTheme() && (m_dwStyle & CSS_FADEIN) && (m_fnAnimateWindow!=NULL))
+	//zz_fly :: end
 	{
 		m_fnAnimateWindow(m_hWnd,500,AW_BLEND);
 	}

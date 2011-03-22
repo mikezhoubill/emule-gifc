@@ -1,6 +1,5 @@
 #pragma once
 #include "ColorButton.h"
-#include "afxcmn.h"
 
 class CPPgStats : public CPropertyPage
 {

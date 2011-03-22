@@ -13,8 +13,6 @@ public:
 
 	void Localize(void);
 
-
-
 protected:
 	BOOL m_bModified;
 	bool bCreated;

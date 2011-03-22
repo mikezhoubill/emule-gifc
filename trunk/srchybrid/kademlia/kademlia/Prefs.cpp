@@ -442,7 +442,7 @@ uint32 CPrefs::GetUDPVerifyKey(uint32 dwTargetIP) {
 
 bool CPrefs::GetUseExternKadPort() const
 {
-	return m_bUseExternKadPort;
+	return m_bUseExternKadPort && !Kademlia::CKademlia::IsRunningInLANMode();
 }
 
 void CPrefs::SetUseExternKadPort(bool bVal){
@@ -495,7 +495,7 @@ uint16 CPrefs::GetInternKadPort() const
 bool CPrefs::FindExternKadPort(bool bReset)
 {
 	if (!bReset)
-		return m_anExternPortIPs.GetCount() < EXTERNAL_PORT_ASKIPS;
+		return  m_anExternPortIPs.GetCount() < EXTERNAL_PORT_ASKIPS && !Kademlia::CKademlia::IsRunningInLANMode();
 	else
 	{
 		m_anExternPortIPs.RemoveAll();

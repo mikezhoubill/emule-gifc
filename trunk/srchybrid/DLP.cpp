@@ -30,6 +30,20 @@
 #include "stdafx.h"
 #include "DLP.h"
 #include "Log.h"
+//X-Ray :: Fincan Hash Detection :: Start
+#include "opcodes.h"
+#include "resource.h"
+#include "friend.h"
+#include "OtherFunctions.h"
+#include "HttpDownloadDlg.h"
+#include "SafeFile.h"
+//X-Ray :: Fincan Hash Detection :: End
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+#include "emule.h"
+#include "emuleDlg.h"
+#include "PreferencesDlg.h"
+#include "PPgScar.h"
+// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -37,9 +51,10 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-CDLP::CDLP(CString appdir_in)
+CDLP::CDLP(CString appdir_in, CString configdir_in)
 {
 	appdir=appdir_in;
+	configdir=configdir_in;
 
 	dlpavailable=false;
 	dlpInstance=NULL;
@@ -59,10 +74,13 @@ void CDLP::Reload()
 	dlpavailable=false;
 	bool waserror=false;
 
-	CString newdll=appdir + _T("antiLeech.dll.new");
-	CString olddll=appdir + _T("antiLeech.dll.old");
-	CString currentdll=appdir + _T("antiLeech.dll");
+	CString newdll=configdir + _T("antiLeech.dll.new");
+	CString olddll=configdir + _T("antiLeech.dll.old");
+	CString currentdll=configdir + _T("antiLeech.dll");
 
+	CString newdll_legacy=appdir + _T("antiLeech.dll.new");
+	CString olddll_legacy=appdir + _T("antiLeech.dll.old");
+	CString currentdll_legacy=appdir + _T("antiLeech.dll");
 
 	if(PathFileExists(newdll))
 	{
@@ -91,6 +109,76 @@ void CDLP::Reload()
 		}
 		if(waserror)
 			AddLogLine(false,_T("error during copying the antiLeech.dll's, try to load the old one"));
+
+		if(PathFileExists(newdll_legacy) && _tremove(newdll_legacy)!=0)
+			AddLogLine(true,_T("Also found new version of antiLeech.dll in appdir but couldn't remove antiLeech.dll.new from there. Please remove it manually from %s!"),appdir);
+		if(PathFileExists(currentdll_legacy) && _tremove(currentdll_legacy)!=0)
+			AddLogLine(true,_T("Couldn't remove antiLeech.dll from appdir after importing. Please remove it manually from %s!"),appdir);
+		if(PathFileExists(olddll_legacy) && _tremove(olddll_legacy)!=0)
+			AddLogLine(true,_T("Couldn't remove antiLeech.dll.old from appdir after importing. Please remove it manually from %s!"),appdir);
+	}
+	else if(PathFileExists(newdll_legacy))
+	{
+		AddLogLine(false,_T("found new version of antiLeech.dll in appdir, attempting import"));
+		//new version exists in appdir, try to unload the old and load the new one
+		if(dlpInstance!=NULL)
+		{
+			::FreeLibrary(dlpInstance);
+			dlpInstance=NULL;
+		}
+		if(PathFileExists(currentdll))
+		{
+			if(PathFileExists(olddll))
+			{
+				if(_tremove(olddll)!=0)
+					waserror=true;
+			}
+			if(waserror==false)
+				if(_trename(currentdll,olddll)!=0)
+					waserror=true;
+		}
+		if(waserror==false)
+		{
+			if(CopyFile(newdll_legacy,currentdll,TRUE)==0)
+				waserror=true;
+		}
+		if(waserror)
+			AddLogLine(false,_T("error during copying the antiLeech.dll's, try to load the old one"));
+		else
+		{
+			if(_tremove(newdll_legacy)!=0)
+				AddLogLine(true,_T("Couldn't remove newly imported antiLeech.dll.new from appdir after importing. Please remove it manually from %s!"),appdir);
+			if(PathFileExists(currentdll_legacy) && _tremove(currentdll_legacy)!=0)
+				AddLogLine(true,_T("Couldn't remove antiLeech.dll from appdir after importing. Please remove it manually from %s!"),appdir);
+			if(PathFileExists(olddll_legacy) && _tremove(olddll_legacy)!=0)
+				AddLogLine(true,_T("Couldn't remove antiLeech.dll.old from appdir after importing. Please remove it manually from %s!"),appdir);
+		}
+	}
+
+	if(PathFileExists(currentdll_legacy) && !PathFileExists(currentdll))
+	{
+		AddLogLine(false,_T("found antiLeech.dll in appdir but not in configdir, attempting import"));
+		//found dll in appdir but not in configdir, trying to import
+		if(dlpInstance!=NULL)
+		{
+			::FreeLibrary(dlpInstance);
+			dlpInstance=NULL;
+			AddLogLine(false,_T("dlpInstance was available when importing antileech.dll from appdir (%s) into configdir (%s), shouldn't happen"),appdir,configdir);
+		}
+		if(waserror==false)
+		{
+			if(CopyFile(currentdll_legacy,currentdll,TRUE)==0)
+				waserror=true;
+		}
+		if(waserror)
+			AddLogLine(false,_T("error during copying the antiLeech.dll's, try copying it from appdir to configdir, manually"));
+		else
+		{
+			if(_tremove(currentdll_legacy)!=0)
+				AddLogLine(true,_T("Couldn't remove newly imported antiLeech.dll from appdir after importing. Please remove it manually from %s!"),appdir);
+			if(PathFileExists(olddll_legacy) && _tremove(olddll_legacy)!=0)
+				AddLogLine(true,_T("Couldn't remove antiLeech.dll.old from appdir after importing. Please remove it manually from %s!"),appdir);
+		}
 	}
 
 	if(dlpInstance==NULL)
@@ -127,6 +215,15 @@ void CDLP::Reload()
 			{
 				dlpavailable=true;
 				AddLogLine(false,_T("Dynamic Anti-Leecher Protection v %u loaded"), GetDLPVersion());
+				// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+				CString strBuffer=NULL;
+				strBuffer.Format(_T("v%u"),GetDLPVersion());
+				if(theApp.emuledlg &&
+				   theApp.emuledlg->preferenceswnd &&
+				   theApp.emuledlg->preferenceswnd->m_wndScar &&
+				   theApp.emuledlg->preferenceswnd->m_wndScar.m_AntiLeechVersion)
+					theApp.emuledlg->preferenceswnd->m_wndScar.m_AntiLeechVersion.SetWindowText(strBuffer);
+				// <== Advanced Updates [MorphXT/Stulle] - Stulle
 			}
 			else
 			{
@@ -147,3 +244,92 @@ void CDLP::Reload()
 		dlpavailable=true;
 	}
 }
+
+//X-Ray :: Fincan Hash Detection :: Start
+bool CDLP::CheckForFincanHash(CString strHash)
+{
+	return !m_FincanHashList.IsEmpty() && (m_FincanHashList.Find(strHash) != NULL);
+}
+
+void CDLP::LoadFincanHashes(CString strURL, bool forced)
+{
+	if(!forced && !m_FincanHashList.IsEmpty())
+		return;
+
+	m_FincanHashList.RemoveAll();
+
+	if(strURL.IsEmpty()) 
+		strURL = L"http://www.e-sipa.de/fincan/emfriends.met";
+
+	if(strURL.Find(L"://") == -1){ // not a valid URL
+		AddLogLine(true, L"%s: %s", GetResString(IDS_INVALIDURL), strURL);
+		return;
+	}
+
+	CString strTempFilename;
+	strTempFilename.Format(L"%stemp-%d-FincanHashes.met", appdir, ::GetTickCount());
+
+	CHttpDownloadDlg dlgDownload;
+	dlgDownload.m_strTitle = L"Downloading Fincan emfirends.met";
+	dlgDownload.m_sURLToDownload = strURL;
+	dlgDownload.m_sFileToDownloadInto = strTempFilename;
+
+	if (dlgDownload.DoModal() != IDOK){
+		AddDebugLogLine(false, L"Failed to load Fincan emfriends.met!");
+		return;
+	}
+
+	CSafeBufferedFile file;
+	CFileException fexp;
+	if (!file.Open(strTempFilename, CFile::modeRead | CFile::osSequentialScan | CFile::typeBinary | CFile::shareDenyWrite, &fexp)){
+		if (fexp.m_cause != CFileException::fileNotFound){
+			CString strError(GetResString(IDS_ERR_READEMFRIENDS));
+			TCHAR szError[MAX_CFEXP_ERRORMSG];
+			if (fexp.GetErrorMessage(szError, _countof(szError)))
+				strError.AppendFormat(L" - %s", szError);
+			AddDebugLogLine(false, L"%s", strError);
+		}
+		_tremove(strTempFilename);
+		return;
+	}
+
+	try {
+		uint8 header = file.ReadUInt8();
+		if (header != MET_HEADER){
+			file.Close();
+			_tremove(strTempFilename);
+			return;
+		}
+
+		UINT nRecordsNumber = file.ReadUInt32();
+		for (UINT i = 0; i < nRecordsNumber; ++i){
+			CFriend* Record = new CFriend();
+			Record->LoadFromFile(&file);
+			if(Record->HasUserhash()){
+				const CString strHash = md4str(Record->m_abyUserhash);
+				if(!m_FincanHashList.Find(strHash))
+					m_FincanHashList.AddTail(strHash);
+			}
+			delete Record;
+		}
+		file.Close();
+		_tremove(strTempFilename);
+	}
+	
+	catch(CFileException* error){
+		if (error->m_cause == CFileException::endOfFile)
+			AddDebugLogLine(false, GetResString(IDS_ERR_EMFRIENDSINVALID));
+		else {
+			TCHAR buffer[MAX_CFEXP_ERRORMSG];
+			error->GetErrorMessage(buffer, _countof(buffer));
+			AddDebugLogLine(false, GetResString(IDS_ERR_READEMFRIENDS), buffer);
+		}
+		error->Delete();
+		_tremove(strTempFilename);
+		return;
+	}
+
+	if(!m_FincanHashList.IsEmpty())
+		AddDebugLogLine(false, L"Loaded %u Fincan Userhashes!", m_FincanHashList.GetCount());
+}
+//X-Ray :: Fincan Hash Detection :: End

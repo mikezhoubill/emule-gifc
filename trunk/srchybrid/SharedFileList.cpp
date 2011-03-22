@@ -360,13 +360,14 @@ int CAddFileThread::Run()
 	// locking that hashing thread is needed because we may create a couple of those threads at startup when rehashing
 	// potentially corrupted downloading part files. if all those hash threads would run concurrently, the io-system would be
 	// under very heavy load and slowly progressing
+
 	//Xman
 	// SLUGFILLER: SafeHash remove - locking code removed, unnecessary
 	/*
 	CSingleLock sLock1(&theApp.hashing_mut); // only one filehash at a time
 	sLock1.Lock();
 	*/
-
+	//Xman End
 	//MORPH START - Added by SiRoB, Import Parts [SR13] - added by zz_fly
 	if (m_partfile && m_partfile->GetFileOp() == PFOP_SR13_IMPORTPARTS){
 		SR13_ImportParts();
@@ -432,6 +433,7 @@ int CAddFileThread::Run()
 	/*
 	sLock1.Unlock();
 	*/
+	//Xman End
 	CoUninitialize();
 
 	return 0;
@@ -460,12 +462,12 @@ CSharedFileList::CSharedFileList(CServerConnect* in_server)
 	m_avg_virtual_sources = 0;
 	m_avg_client_on_uploadqueue = 0;
 	//Xman end
-	//Xman
+	// SLUGFILLER: SafeHash remove - delay load shared files
 	/*
 	LoadSingleSharedFilesList();
 	FindSharedFiles();
 	*/
-	// SLUGFILLER: SafeHash remove - delay load shared files
+	// SLUGFILLER End
 }
 
 CSharedFileList::~CSharedFileList(){
@@ -779,14 +781,8 @@ void CSharedFileList::RepublishFile(CKnownFile* pFile)
 
 bool CSharedFileList::AddFile(CKnownFile* pFile)
 {
-	//Xman
-	// SLUGFILLER: SafeHash - use GetED2KPartCount
-	/*
-	ASSERT( pFile->GetHashCount() == pFile->GetED2KPartHashCount() );
-	*/
-	ASSERT( pFile->GetHashCount() == pFile->GetED2KPartCount() );
-	//Xman end
-	ASSERT( !pFile->IsKindOf(RUNTIME_CLASS(CPartFile)) || !STATIC_DOWNCAST(CPartFile, pFile)->hashsetneeded );
+	ASSERT( pFile->GetFileIdentifier().HasExpectedMD4HashCount() );
+	ASSERT( !pFile->IsKindOf(RUNTIME_CLASS(CPartFile)) || !STATIC_DOWNCAST(CPartFile, pFile)->m_bMD4HashsetNeeded );
 	ASSERT( !pFile->IsShellLinked() || ShouldBeShared(pFile->GetSharedDirectory(), _T(""), false) );
 	CCKey key(pFile->GetFileHash());
 	CKnownFile* pFileInMap;
@@ -838,6 +834,10 @@ bool CSharedFileList::AddFile(CKnownFile* pFile)
 		m_keywords->AddKeywords(pFile);
 
 	pFile->SetLastSeen();
+
+	theApp.knownfiles->m_nRequestedTotal += pFile->statistic.GetAllTimeRequests();
+	theApp.knownfiles->m_nAcceptedTotal += pFile->statistic.GetAllTimeAccepts();
+	theApp.knownfiles->m_nTransferredTotal += pFile->statistic.GetAllTimeTransferred();
 
 	return true;
 }
@@ -892,7 +892,12 @@ bool CSharedFileList::RemoveFile(CKnownFile* pFile, bool bDeleted)
 	output->RemoveFile(pFile, bDeleted);
 	m_keywords->RemoveKeywords(pFile);
 	if (bResult)
+	{
 		m_UnsharedFiles_map.SetAt(CSKey(pFile->GetFileHash()), true);
+		theApp.knownfiles->m_nRequestedTotal -= pFile->statistic.GetAllTimeRequests();
+		theApp.knownfiles->m_nAcceptedTotal -= pFile->statistic.GetAllTimeAccepts();
+		theApp.knownfiles->m_nTransferredTotal -= pFile->statistic.GetAllTimeTransferred();
+	}
 	return bResult;
 }
 
@@ -969,7 +974,14 @@ void CSharedFileList::SendListToServer(){
 		m_Files_map.GetNextAssoc(pos, bufKey, cur_file);
 		added=false;
 		//insertsort into sortedList
+		// ==> Don't publish incomplete small files [WiZaRd] - Stulle
+		/*
 		if(!cur_file->GetPublishedED2K() && (!cur_file->IsLargeFile() || (pCurServer != NULL && pCurServer->SupportsLargeFilesTCP())))
+		*/
+		if(cur_file->GetFileSize() <= PARTSIZE && cur_file->IsPartFile())
+			added=true;
+		if(!added && !cur_file->GetPublishedED2K() && (!cur_file->IsLargeFile() || (pCurServer != NULL && pCurServer->SupportsLargeFilesTCP())))
+		// <== Don't publish incomplete small files [WiZaRd] - Stulle
 		{
 			for (pos2 = sortedList.GetHeadPosition();pos2 != 0 && !added;sortedList.GetNext(pos2))
 			{
@@ -1338,6 +1350,20 @@ CKnownFile* CSharedFileList::GetFileByID(const uchar* hash) const
 			return found_file;
 	}
 	return NULL;
+}
+
+CKnownFile* CSharedFileList::GetFileByIdentifier(const CFileIdentifierBase& rFileIdent, bool bStrict) const
+{
+	CKnownFile* pResult;
+	if (m_Files_map.Lookup(CCKey(rFileIdent.GetMD4Hash()), pResult))
+	{
+		if (bStrict)
+			return pResult->GetFileIdentifier().CompareStrict(rFileIdent) ? pResult : NULL;
+		else
+			return pResult->GetFileIdentifier().CompareRelaxed(rFileIdent) ? pResult : NULL;
+	}
+	else
+		return NULL;
 }
 
 
@@ -2127,6 +2153,34 @@ CString CSharedFileList::GetDirNameByPseudo(const CString& strPseudoName) const
 	return strResult;
 }
 
+bool CSharedFileList::GetPopularityRank(const CKnownFile* pFile, uint32& rnOutSession, uint32& rnOutTotal) const
+{
+	rnOutSession = 0;
+	rnOutTotal = 0;
+	if (GetFileByIdentifier(pFile->GetFileIdentifierC()) == NULL)
+	{
+		ASSERT( false );
+		return false;
+	}
+	// cycle all files, each file which has more request than the given files lowers the rank
+	CKnownFile* cur_file;
+	CCKey bufKey;
+	for (POSITION pos = m_Files_map.GetStartPosition(); pos != 0; )
+	{
+		m_Files_map.GetNextAssoc(pos,bufKey,cur_file);
+		if (cur_file == pFile)
+			continue;
+		if (cur_file->statistic.GetAllTimeRequests() > pFile->statistic.GetAllTimeRequests())
+			rnOutTotal++;
+		if (cur_file->statistic.GetRequests() > pFile->statistic.GetRequests())
+			rnOutSession++;
+	}
+	// we start at rank #1, not 0
+	rnOutSession++;
+	rnOutTotal++;
+	return true;
+}
+
 //Xman advanced upload-priority
 void CSharedFileList::CalculateUploadPriority(bool force)
 {
@@ -2246,6 +2300,7 @@ void CSharedFileList::CalculateUploadPriority_Standard()
 	}
 }
 //Xman end
+
 // ==> PowerShare [ZZ/MorphXT] - Stulle
 void CSharedFileList::UpdatePartsInfo()
 {

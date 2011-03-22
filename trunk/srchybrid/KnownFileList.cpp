@@ -27,16 +27,15 @@
 #include "UpDownClient.h"
 #include "DownloadQueue.h"
 #include "emuledlg.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "Log.h"
 #include "packets.h"
 #include "MD5Sum.h"
+#include "SharedFilesWnd.h"
+#include "SharedFilesCtrl.h"
 //Xman x4.1.1 
 //Xman [MoNKi: -Downloaded History-]
-#include "SharedFilesWnd.h"
 #include "PartFile.h" //to be able to remove it from transferwindow if necessary
-
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -63,6 +62,9 @@ CKnownFileList::CKnownFileList()
 	accepted = 0;
 	requested = 0;
 	transferred = 0;
+	m_nRequestedTotal = 0;
+	m_nAcceptedTotal = 0;
+	m_nTransferredTotal = 0;
 	m_dwCancelledFilesSeed = 0;
 	m_nLastSaved = ::GetTickCount();
 	Init();
@@ -132,12 +134,8 @@ bool CKnownFileList::LoadKnownFiles()
 			pRecord = new CKnownFile();
 			if (!pRecord->LoadFromFile(&file)){
 				TRACE(_T("*** Failed to load entry %u (name=%s  hash=%s  size=%I64u  parthashs=%u expected parthashs=%u) from known.met\n"), i, 
-					//Xman // SLUGFILLER: SafeHash - removed unnececery hash counter
-					/*
-					pRecord->GetFileName(), md4str(pRecord->GetFileHash()), pRecord->GetFileSize(), pRecord->GetHashCount(), pRecord->GetED2KPartHashCount());
-					*/
-					pRecord->GetFileName(), md4str(pRecord->GetFileHash()), pRecord->GetFileSize(), pRecord->GetHashCount(), pRecord->GetED2KPartCount());
-					//Xman end
+					pRecord->GetFileName(), md4str(pRecord->GetFileHash()), pRecord->GetFileSize()
+					, pRecord->GetFileIdentifier().GetAvailableMD4PartHashCount(), pRecord->GetFileIdentifier().GetTheoreticalMD4PartHashCount());
 				delete pRecord;
 				pRecord = NULL;
 				continue;
@@ -443,23 +441,12 @@ bool CKnownFileList::SafeAddKFile(CKnownFile* toadd)
 		// shared file list -> crash.
 
 		m_Files_map.RemoveKey(CCKey(pFileInMap->GetFileHash()));
-		m_mapKnownFilesByAICH.RemoveKey(pFileInMap->GetAICHHashset()->GetMasterHash());
+		m_mapKnownFilesByAICH.RemoveKey(pFileInMap->GetFileIdentifier().GetAICHHash());
 		//This can happen in a couple situations..
 		//File was renamed outside of eMule.. 
 		//A user decided to redownload a file he has downloaded and unshared..
-		//RemovingKeyWords I believe is not thread safe if I'm looking at this right.
-		//Not sure of a good solution yet..
 		if (theApp.sharedfiles)
 		{
-#if 0
-			// This may crash the client because of dangling ptr in shared files ctrl.
-			// This may happen if a file is re-shared which is also currently downloaded.
-			// After the file was downloaded (again) there is a dangl. ptr in shared files 
-			// ctrl.
-			// Actually that's also wrong in some cases: Keywords are not always removed
-			// because the wrong ptr is used to search for in keyword publish list.
-			theApp.sharedfiles->RemoveKeywords(pFileInMap);
-#else
 			// This solves the problem with dangl. ptr in shared files ctrl,
 			// but creates a new bug. It may lead to unshared files! Even 
 			// worse it may lead to files which are 'shared' in GUI but 
@@ -472,7 +459,6 @@ bool CKnownFileList::SafeAddKFile(CKnownFile* toadd)
 			// available file was not in shared file list).
 			if (theApp.sharedfiles->IsFilePtrInList(pFileInMap))
 				bRemovedDuplicateSharedFile = theApp.sharedfiles->RemoveFile(pFileInMap);
-#endif
 			ASSERT( !theApp.sharedfiles->IsFilePtrInList(pFileInMap) );
 		}
 		//Double check to make sure this is the same file as it's possible that a two files have the same hash.
@@ -490,8 +476,11 @@ bool CKnownFileList::SafeAddKFile(CKnownFile* toadd)
 
 		// Quick fix: If we downloaded already downloaded files again and if those files all had the same file names
 		// and were renamed during file completion, we have a pending ptr in transfer window.
-		if (theApp.emuledlg && theApp.emuledlg->transferwnd && theApp.emuledlg->transferwnd->downloadlistctrl.m_hWnd)
-			theApp.emuledlg->transferwnd->downloadlistctrl.RemoveFile((CPartFile*)pFileInMap);
+		if (theApp.emuledlg && theApp.emuledlg->transferwnd && theApp.emuledlg->transferwnd->GetDownloadList()->m_hWnd)
+			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile((CPartFile*)pFileInMap);
+		// Make sure the file is not used in out sharedfilesctrl anymore
+		if (theApp.emuledlg && theApp.emuledlg->sharedfileswnd && theApp.emuledlg->sharedfileswnd->sharedfilesctrl.m_hWnd)
+			theApp.emuledlg->sharedfileswnd->sharedfilesctrl.RemoveFile(pFileInMap, true);
 
 		//Xman [MoNKi: -Downloaded History-]
 		theApp.emuledlg->sharedfileswnd->historylistctrl.RemoveFileFromView(pFileInMap);
@@ -503,8 +492,8 @@ bool CKnownFileList::SafeAddKFile(CKnownFile* toadd)
 	if (bRemovedDuplicateSharedFile) {
 		theApp.sharedfiles->SafeAddKFile(toadd);
 	}
-	if (toadd->GetAICHHashset()->HasValidMasterHash())
-		m_mapKnownFilesByAICH.SetAt(toadd->GetAICHHashset()->GetMasterHash(), toadd);
+	if (toadd->GetFileIdentifier().HasAICHHash())
+		m_mapKnownFilesByAICH.SetAt(toadd->GetFileIdentifier().GetAICHHash(), toadd);
 	return true;
 }
 
@@ -818,12 +807,11 @@ void CKnownFileList::ClearHistory(){
 			m_Files_map.RemoveKey(key);
 			//also remove it from transferwindow:
 			if (cur_file->IsKindOf(RUNTIME_CLASS(CPartFile)))
-				theApp.emuledlg->transferwnd->downloadlistctrl.ClearCompleted(static_cast<CPartFile*>(cur_file));
+				theApp.emuledlg->transferwnd->GetDownloadList()->ClearCompleted(static_cast<CPartFile*>(cur_file));
 			delete cur_file;
 		}
 	}	
 }
-
 //Xman end
 
 // ==> Threaded Known Files Saving [Stulle] - Stulle

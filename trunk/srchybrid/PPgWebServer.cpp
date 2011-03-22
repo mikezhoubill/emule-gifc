@@ -98,11 +98,11 @@ BEGIN_MESSAGE_MAP(CPPgWebServer, CPropertyPage)
 	ON_BN_CLICKED(IDC_SVC_REPLACESERVICE , OnBnReplaceStart)	
 	ON_CBN_SELCHANGE(IDC_SERVICE_OPT_BOX, OnCbnSelChangeOptLvl)
 	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
-	// ==> Adjustable NT Service Strings - Stulle
+	// ==> Adjustable NT Service Strings [Stulle] - Stulle
 	ON_EN_CHANGE(IDC_SERVICE_NAME, OnDataChange)
 	ON_EN_CHANGE(IDC_SERVICE_DISP_NAME, OnDataChange)
 	ON_EN_CHANGE(IDC_SERVICE_DESCR, OnDataChange)
-	// <== Adjustable NT Service Strings - Stulle
+	// <== Adjustable NT Service Strings [Stulle] - Stulle
 END_MESSAGE_MAP()
 
 CPPgWebServer::CPPgWebServer()
@@ -233,11 +233,11 @@ void CPPgWebServer::LoadSettings(void)
 	}
 	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
-	// ==> Adjustable NT Service Strings - Stulle
+	// ==> Adjustable NT Service Strings [Stulle] - Stulle
 	GetDlgItem(IDC_SERVICE_NAME)->SetWindowText(thePrefs.GetServiceName());
 	GetDlgItem(IDC_SERVICE_DISP_NAME)->SetWindowText(thePrefs.GetServiceDispName());
 	GetDlgItem(IDC_SERVICE_DESCR)->SetWindowText(thePrefs.GetServiceDescr());
-	// <== Adjustable NT Service Strings - Stulle
+	// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 	OnEnChangeMMEnabled();
 
@@ -333,7 +333,7 @@ BOOL CPPgWebServer::OnApply()
 		// Startup with system, store in service.
 		NTServiceGet(b_installed,i_startupmode,	rights);
 
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		CString strServiceName, strServiceDispName, strServiceDescr;
 		GetDlgItem(IDC_SERVICE_NAME)->GetWindowText(strServiceName);
 		GetDlgItem(IDC_SERVICE_DISP_NAME)->GetWindowText(strServiceDispName);
@@ -407,7 +407,7 @@ BOOL CPPgWebServer::OnApply()
 				}
 			}
 		}
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 		if (b_installed==1 && 
 				(i_startupmode ==0 && (IsDlgButtonChecked(IDC_SVC_STARTWITHSYSTEM)==BST_CHECKED))||
@@ -549,7 +549,7 @@ void CPPgWebServer::OnEnChangeWSEnabled()
 	GetDlgItem(IDC_WSTIMEOUT)->EnableWindow(bIsWIEnabled);
 	GetDlgItem(IDC_WSUPNP)->EnableWindow(thePrefs.IsUPnPEnabled() && bIsWIEnabled);
 	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
-
+	
 	//GetDlgItem(IDC_WSRELOADTMPL)->EnableWindow(bIsWIEnabled);
 	SetTmplButtonState();
 
@@ -1320,7 +1320,7 @@ int  CPPgWebServer::FillStatus(){
 
 void CPPgWebServer::OnBnClickedInstall()
 {
-	OnApply(); // Adjustable NT Service Strings - Stulle
+	OnApply(); // Adjustable NT Service Strings [Stulle] - Stulle
 	if (CmdInstallService((IsDlgButtonChecked(IDC_SVC_STARTWITHSYSTEM))==BST_CHECKED )==0)
 	{
 		FillStatus();

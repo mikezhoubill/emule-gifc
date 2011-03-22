@@ -93,9 +93,9 @@ Basic Obfuscated Handshake Protocol Client <-> Server:
 /*
 #include <crypto51/osrng.h>
 */
-#pragma warning(disable:4702) // unreachable code
+#pragma warning(disable:4189) // local variable is initialized but not referenced
 #include <cryptopp/osrng.h>
-#pragma warning(default:4702) // unreachable code
+#pragma warning(default:4189) // local variable is initialized but not referenced
 //Xman end
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4516) // access-declarations are deprecated; member using-declarations provide a better alternative

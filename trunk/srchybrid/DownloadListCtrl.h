@@ -123,6 +123,15 @@ public:
 	void	UpdateCurrentCategoryView();
 	void	UpdateCurrentCategoryView(CPartFile* thisfile);
 	CImageList *CreateDragImage(int iItem, LPPOINT lpPoint);
+	// ==> XP Style Menu [Xanatos] - Stulle
+	/*
+	void	FillCatsMenu(CMenu& rCatsMenu, int iFilesInCats = (-1));
+	*/
+	void	FillCatsMenu(CTitleMenu& rCatsMenu, int iFilesInCats = (-1));
+	// <== XP Style Menu [Xanatos] - Stulle
+	CTitleMenu* GetPrioMenu();
+	float	GetFinishedSize();
+	bool	ReportAvailableCommands(CList<int>& liAvailableCommands);
 
 	//Xman Xtreme Downloadmanager
 	void    StopSingleClient (CUpDownClient* single);	
@@ -135,10 +144,11 @@ protected:
 	CImageList  m_ImageList;
 	CTitleMenu	m_PrioMenu;
 	CTitleMenu	m_FileMenu;
+	CTitleMenu	m_PreviewMenu;
 	// ==> XP Style Menu [Xanatos] - Stulle
 	/*
 	CMenu		m_SourcesMenu;
-	CMenu		m_DropMenu;//Xman Xtreme Downloadmanager
+	CMenu		m_DropMenu; //Xman Xtreme Downloadmanager
 	*/
 	CTitleMenu		m_SourcesMenu;
 	CTitleMenu		m_DropMenu;
@@ -158,6 +168,8 @@ protected:
 	// <== Design Settings [eWombat/Stulle] - Stulle
 	CImageList  m_overlayimages; // Mod Icons - Stulle
 	CToolTipCtrlX* m_tooltip;
+	uint32		m_dwLastAvailableCommandsCheck;
+	bool		m_availableCommandsDirty;
 
 	void ShowFileDialog(UINT uInvokePage);
 	void ShowClientDialog(CUpDownClient* pClient);

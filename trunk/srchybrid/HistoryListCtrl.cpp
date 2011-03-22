@@ -43,7 +43,8 @@
 #include "SharedFilesWnd.h"
 #include "HighColorTab.hpp"
 #include "PartFile.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
+#include "AbstractFile.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -274,6 +275,8 @@ void CHistoryListCtrl::Reload(void)
 
 	DeleteAllItems();
 
+	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(false, true);
+
 	//Xman 4.8
 	//don't know exactly what happend, but a few users (with old known.met) had a crash
 	if(theApp.knownfiles->GetKnownFiles().IsEmpty()==false)
@@ -317,7 +320,12 @@ void CHistoryListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	if (!lpDrawItemStruct->itemData)
 		return;
 
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
 	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	*/
+	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	BOOL bCtrlFocused;
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
 	CRect cur_rec(lpDrawItemStruct->rcItem);
@@ -612,7 +620,7 @@ void CHistoryListCtrl::CreateMenues()
 	/*
 	m_HistoryOpsMenu.AddMenuTitle(NULL, true);
 	*/
-	m_HistoryOpsMenu.AddMenuTitle(NULL, true, false);
+	m_HistoryOpsMenu.AddMenuTitle(GetResString(IDS_HISTORY), true, false);
 	// <== XP Style Menu [Xanatos] - Stulle
 	m_HistoryOpsMenu.AppendMenu(MF_STRING,MP_CLEARHISTORY,GetResString(IDS_DOWNHISTORY_CLEAR), _T("CLEARCOMPLETE"));
 
@@ -672,7 +680,7 @@ void CHistoryListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	/*
 	WebMenu.AddMenuTitle(NULL, true);
 	*/
-	WebMenu.AddMenuTitle(NULL, true, false);
+	WebMenu.AddMenuTitle(GetResString(IDS_WEBSERVICES), true, false);
 	// <== XP Style Menu [Xanatos] - Stulle
 	int iWebMenuEntries = theWebServices.GetFileMenuEntries(&WebMenu);
 	UINT flag = (iWebMenuEntries == 0 || iSelectedItems != 1) ? MF_GRAYED : MF_ENABLED;
@@ -723,7 +731,6 @@ BOOL CHistoryListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		return TRUE;
 	}
 
-
 	CTypedPtrList<CPtrList, CKnownFile*> selectedList;
 	POSITION pos = GetFirstSelectedItemPosition();
 	while (pos != NULL){
@@ -741,7 +748,7 @@ BOOL CHistoryListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		switch (wParam){
 			case Irc_SetSendLink:
 			{
-				theApp.emuledlg->ircwnd->SetSendFileString(CreateED2kLink(file));
+				theApp.emuledlg->ircwnd->SetSendFileString(file->GetED2kLink());
 				break;
 			}
 			case MP_SHOWED2KLINK:
@@ -766,7 +773,7 @@ BOOL CHistoryListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				while (!selectedList.IsEmpty()){
 					if (!str.IsEmpty())
 						str += _T("\r\n");
-					str += CreateED2kLink(selectedList.GetHead());
+					str += selectedList.GetHead()->GetED2kLink();
 					selectedList.RemoveHead();
 				}
 				theApp.CopyTextToClipboard(str);
@@ -842,7 +849,7 @@ void CHistoryListCtrl::RemoveFile(CKnownFile *toRemove) {
 		return;
 
 	if (toRemove->IsKindOf(RUNTIME_CLASS(CPartFile)))
-		theApp.emuledlg->transferwnd->downloadlistctrl.ClearCompleted(static_cast<CPartFile*>(toRemove));
+		theApp.emuledlg->transferwnd->GetDownloadList()->ClearCompleted(static_cast<CPartFile*>(toRemove));
 
 	if(theApp.knownfiles->RemoveKnownFile(toRemove)){
 		LVFINDINFO info;
@@ -900,9 +907,10 @@ void CHistoryListCtrl::UpdateFile(const CKnownFile* file)
 	{
 		Update(iItem);
 		if (GetItemState(iItem, LVIS_SELECTED))
-			theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+			theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails(false,true);
 	}
 }
+
 int CHistoryListCtrl::FindFile(const CKnownFile* pFile)
 {
 	LVFINDINFO find;
@@ -919,6 +927,7 @@ void CHistoryListCtrl::ShowFileDialog(CTypedPtrList<CPtrList, CKnownFile*>& aFil
 		dialog.DoModal();
 	}
 }
+
 void CHistoryListCtrl::OnLvnGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	if (theApp.emuledlg->IsRunning()) {

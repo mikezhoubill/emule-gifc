@@ -353,7 +353,7 @@ BOOL CStatisticsDlg::OnInitDialog()
 	if(rcStat.top > rcStat.bottom)
 		rcStat.top = rcStat.bottom;
 	m_Statistics.MoveWindow(rcStat);
-
+	//Xman end
 	DoResize_V(PosStatVnewX - PosStatVinitX);
 	// Xman statistic fix 
 	/*
@@ -813,12 +813,12 @@ void CStatisticsDlg::RepaintMeters()
 	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(3), MINUTE);
 	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(4), SESSION);
 	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(12), OVERALL);
-	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(10), ADAPTER);
+	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(13), ADAPTER);
 	m_DownloadOMeter.SetBarsPlot(thePrefs.GetFillGraphs(), CURRENT);
 	m_DownloadOMeter.SetBarsPlot(thePrefs.GetFillGraphs() && !thePrefs.GetNAFCFullControl(), OVERALL);
 	m_DownloadOMeter.SetBarsPlot(thePrefs.GetFillGraphs() && thePrefs.GetNAFCFullControl(), ADAPTER);
 	// ==> Source Graph - Stulle
-	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(15) ,5) ;
+	m_DownloadOMeter.SetPlotColor(thePrefs.GetStatsColor(14) ,5) ;
 	// <== Source Graph - Stulle
 
 	m_UploadOMeter.SetBackgroundColor(thePrefs.GetStatsColor(0)) ;
@@ -827,7 +827,7 @@ void CStatisticsDlg::RepaintMeters()
 	m_UploadOMeter.SetPlotColor(thePrefs.GetStatsColor(6), MINUTE);
 	m_UploadOMeter.SetPlotColor(thePrefs.GetStatsColor(7), SESSION);
 	m_UploadOMeter.SetPlotColor(thePrefs.GetStatsColor(12), OVERALL);
-	m_UploadOMeter.SetPlotColor(thePrefs.GetStatsColor(10), ADAPTER);
+	m_UploadOMeter.SetPlotColor(thePrefs.GetStatsColor(13), ADAPTER);
 	m_UploadOMeter.SetBarsPlot(thePrefs.GetFillGraphs(), CURRENT);
 	m_UploadOMeter.SetBarsPlot(thePrefs.GetFillGraphs() && !thePrefs.GetNAFCFullControl(), OVERALL);
 	m_UploadOMeter.SetBarsPlot(thePrefs.GetFillGraphs() && thePrefs.GetNAFCFullControl(), ADAPTER);
@@ -847,8 +847,8 @@ void CStatisticsDlg::RepaintMeters()
 	Buffer.Format(_T(" (%u %s)"),thePrefs.GetStatsAverageMinutes(),GetResString(IDS_MINS));
 	m_DownloadOMeter.SetLegendLabel(GetResString(IDS_AVG)+Buffer,MINUTE);
 	m_DownloadOMeter.SetLegendLabel(GetResString(IDS_ST_SESSION),SESSION);
-	m_DownloadOMeter.SetLegendLabel(_T("eMule control + data"),OVERALL);
-	m_DownloadOMeter.SetLegendLabel(_T("Network Adapter"),ADAPTER);
+	m_DownloadOMeter.SetLegendLabel(GetResString(IDS_EMULE_CTRL_DATA),OVERALL);
+	m_DownloadOMeter.SetLegendLabel(GetResString(IDS_NETWORK_ADAPTER),ADAPTER);
 	// ==> Source Graph - Stulle
 	if (thePrefs.GetSrcGraph())
 	{
@@ -858,7 +858,7 @@ void CStatisticsDlg::RepaintMeters()
 	else
 	{
 		Buffer.Format(_T(" (%s)"),GetResString(IDS_DISABLED));
-		m_DownloadOMeter.SetLegendLabel(GetResString(IDS_SP_SRCGRAPH)+Buffer,3);
+		m_DownloadOMeter.SetLegendLabel(GetResString(IDS_SP_SRCGRAPH)+Buffer,5);
 	}
 	// <== Source Graph - Stulle
 
@@ -868,8 +868,8 @@ void CStatisticsDlg::RepaintMeters()
 	Buffer.Format(_T(" (%u %s)"),thePrefs.GetStatsAverageMinutes(),GetResString(IDS_MINS));
 	m_UploadOMeter.SetLegendLabel(GetResString(IDS_AVG)+Buffer,MINUTE);
 	m_UploadOMeter.SetLegendLabel(GetResString(IDS_ST_SESSION),SESSION);
-	m_UploadOMeter.SetLegendLabel(_T("eMule control + data"),OVERALL);
-	m_UploadOMeter.SetLegendLabel(_T("Network Adapter"),ADAPTER);
+	m_UploadOMeter.SetLegendLabel(GetResString(IDS_EMULE_CTRL_DATA),OVERALL);
+	m_UploadOMeter.SetLegendLabel(GetResString(IDS_NETWORK_ADAPTER),ADAPTER);
 	
 
 	m_Statistics.SetYUnits(GetResString(IDS_FSTAT_CONNECTION)); //Connections
@@ -1019,7 +1019,6 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 	stattree.SetRedraw(false);
 	CString	cbuffer;
 	// Set Tree Values
-
 
 	//Xman
 	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
@@ -1367,7 +1366,7 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 					cbuffer.Format(_T("%s: %s, %s: %s (%.1f%%)"), GetResString(IDS_UDPREASKS), CastItoIShort(theApp.downloadqueue->GetUDPFileReasks()), GetResString(IDS_UFAILED), CastItoIShort(theApp.downloadqueue->GetFailedUDPFileReasks()), theApp.downloadqueue->GetUDPFileReasks() ? (theApp.downloadqueue->GetFailedUDPFileReasks() * 100.0 / theApp.downloadqueue->GetUDPFileReasks()) : 0.0 );
 					stattree.SetItemText( down_sources[i] , cbuffer );
 					i++;
-					
+
 					//Xman x4 Xtreme Mod: count failed tcp-connections:
 					cbuffer.Format(_T("%s: %s, %s: %s (%.1f%%)"), _T("TCP-connections"), CastItoIShort(theApp.downloadqueue->GetTCPFileReasks()), _T("failed"), CastItoIShort(theApp.downloadqueue->GetFailedTCPFileReasks()), theApp.downloadqueue->GetTCPFileReasks() ? (theApp.downloadqueue->GetFailedTCPFileReasks() * 100.0 / theApp.downloadqueue->GetTCPFileReasks()) : 0.0 );
 					stattree.SetItemText( down_sources[i] , cbuffer );
@@ -1424,7 +1423,7 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
                         cbuffer += details;
 					}
 					// Maella end
-					
+
 					stattree.SetItemText( down_ssessions[0] , cbuffer ); // Set Succ Sessions
 					// Set Failed Download Sessions (Avoid Division)
 					if (percentSessions != 0 && statBadSessions > 0) 
@@ -1455,7 +1454,7 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 									   CUpDownClient::GetDownStopCount(true, CUpDownClient::DSR_EXCEPTION));
                         cbuffer += details;
 					}
-					// Maella end					
+					// Maella end
 					stattree.SetItemText( down_ssessions[1] , cbuffer );
 					// Set Average Download Time
 					cbuffer.Format(_T("%s: %s"), GetResString(IDS_STATS_AVGDLTIME), CastSecondsToLngHM(thePrefs.GetDownS_AvgTime()));
@@ -2821,7 +2820,6 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 										   CastItoIShort((uint64)((theStats.GetUpDataOverheadKadPackets() + 
 																  thePrefs.GetUpOverheadKadPackets()
 																 ) * avgModifier[mx])));
-
 										   //Xman end
 							stattree.SetItemText(time_aap_up_oh[mx][i], cbuffer);
 							i++;
@@ -3606,7 +3604,7 @@ void CStatisticsDlg::ShowStatistics(bool forceUpdate)
 		
 		cbuffer.Format(GetResString(IDS_STATS_FILTEREDCLIENTS), theStats.filteredclients);
 		stattree.SetItemText(cligen[2], cbuffer);
-	
+
 		//Xman Anti-Leecher
 		cbuffer.Format(_T("Leecher-Hits: %u"), theStats.leecherclients);
 		stattree.SetItemText(cligen[6], cbuffer);
@@ -4346,7 +4344,7 @@ void CStatisticsDlg::OnStnDblclickStatsscope()
 
 LRESULT CStatisticsDlg::OnOscopePositionMsg(WPARAM /*wParam*/, LPARAM lParam)
 {
-	//zz_fly, moved to COScopeCtrl::OnMouseMove(), thanks dolphin87 
+	//zz_fly, moved to COScopeCtrl::OnMouseMove(), thanks DolphinX
 	/*
 	lParam/=thePrefs.GetZoomFactor(); //Xman Maella Statistik-Zoom
 	*/
@@ -4389,17 +4387,21 @@ HBRUSH CStatisticsDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 */
-	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }

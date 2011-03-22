@@ -94,7 +94,8 @@ public:
 	CTag(LPCSTR pszName, const CString& rstrVal);
 	CTag(uint8 uName, const CString& rstrVal);
 	CTag(uint8 uName, const BYTE* pucHash);
-	CTag(uint8 uName, uint32 nSize, const BYTE* pucData);
+	CTag(uint8 uName, uint32 nSize, const BYTE* pucData); // data gets copied
+	CTag(uint8 uName, BYTE* pucAttachData, uint32 nSize); // data gets attached (and deleted lateron)
 	CTag(const CTag& rTag);
 	CTag(CFileDataIO* data, bool bOptUTF8);
 	~CTag();

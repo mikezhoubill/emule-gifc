@@ -29,7 +29,7 @@
 class CDLP
 {
 public:
-	CDLP(CString appdir_in);
+	CDLP(CString appdir_in, CString configdir_in);
 	~CDLP();
 	bool IsDLPavailable()		{return dlpavailable;}
 	void Reload();
@@ -64,10 +64,16 @@ public:
 	//typedef void (WINAPI*TESTFUNC)();
 	//TESTFUNC testfunc;
 
-	
+	//X-Ray :: Fincan Hash Detection :: Start	
+	bool	CheckForFincanHash(CString strHash);
+	void	LoadFincanHashes(CString strURL, bool forced = true);
+	//X-Ray :: Fincan Hash Detection :: End
 
 private:
 	HINSTANCE dlpInstance;
 	bool	dlpavailable;
 	CString appdir;
+	CString configdir;
+
+	CStringList m_FincanHashList; //X-Ray :: Fincan Hash Detection
 };

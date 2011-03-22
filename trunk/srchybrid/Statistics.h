@@ -22,6 +22,11 @@
 #define AVG_TOTAL 2
 #define AVG_TIME 1
 
+enum TBPSTATES {
+	STATE_DOWNLOADING = 0x01,
+	STATE_ERROROUS    = 0x10
+};
+
 class CStatistics
 {
 public:
@@ -197,7 +202,10 @@ public:
 	static uint32	time_thisUpload;
 	static uint32	timeServerDuration;
 	static uint32	time_thisServerDuration;
-	
+	static DWORD	m_dwOverallStatus;
+	static float	m_fGlobalDone;
+	static float	m_fGlobalSize;
+
 	static uint64	sessionReceivedBytes;
 	static uint64	sessionSentBytes;
     static uint64	sessionSentBytesToFriend;
@@ -218,7 +226,7 @@ private:
 		uint32	datalen;
 		DWORD	timestamp;
 	};
-	std::list<TransferredData> uprateHistory; 
+	std::list<TransferredData> uprateHistory;
 	std::list<TransferredData> downrateHistory;
 
 	static uint32	m_nDownDatarateOverhead;

@@ -118,36 +118,22 @@ CString CMuleStatusBarCtrl::GetPaneToolTipText(EStatusBarPane iPane) const
 	// ==> Enforce Ratio [Stulle] - Stulle
 	case SBarUpDown:
 		{
-			uint8 uLimitState = theApp.downloadqueue->GetLimitState();
-			if(uLimitState < 2)
-				strText.Format(GetResString(IDS_RATIO_ACTIVATION)+_T(": %s"),GetResString(IDS_NO));
-			else if (uLimitState >= 2)
-			{
-				CString strTemp = NULL;
-				switch(uLimitState)
-				{
-					case 2:
-						strTemp = GetResString(IDS_RATIO_REASON2);
-						break;
-					case 3:
-						strTemp = GetResString(IDS_RATIO_REASON3);
-						break;
-					case 4:
-						strTemp = GetResString(IDS_RATIO_REASON4);
-						break;
-					case 5:
-						strTemp = GetResString(IDS_RATIO_REASON5);
-						break;
-					default:
-						break;
-				}
+			if(!theApp.downloadqueue) // just in case!
+				break;
+			uint16 uLimitState = theApp.downloadqueue->GetLimitState();
+			strText.Format(GetResString(IDS_DL_SES_RATIO)+_T(": %s"),(uLimitState>=DLR_SESLIM)?GetResString(IDS_YES):GetResString(IDS_NO));
+			if(uLimitState<DLR_SOURCE && !(uLimitState&DLR_13RATIO || uLimitState&DLR_NAFC))
+				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_DL_LIMIT_DEF)+_T(": %s (%s)"),GetResString(IDS_YES),(thePrefs.GetMaxDownload()==0xFFFF)?GetResString(IDS_PW_UNLIMITED):CastItoXBytes(thePrefs.GetMaxDownload(),true,true,1));
+			else
+				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_DL_LIMIT_DEF)+_T(": %s"),GetResString(IDS_NO));
+			strText.AppendFormat(_T("\n\x2022 ")+GetResString(IDS_DL_UNL_NOUL)+_T(": %s"),(uLimitState&DLR_NOUL)?GetResString(IDS_YES):GetResString(IDS_NO));
+			strText.AppendFormat(_T("\n\x2022 ")+GetResString(IDS_DL_UNL_13RATIO)+_T(": %s"),(uLimitState&DLR_13RATIO)?GetResString(IDS_YES):GetResString(IDS_NO));
+			strText.AppendFormat(_T("\n\x2022 ")+GetResString(IDS_DL_NAFC_LIMIT)+_T(": %s"),(uLimitState&DLR_NAFC)?GetResString(IDS_YES):GetResString(IDS_NO));
+			strText.AppendFormat(_T("\n\x2022 ")+GetResString(IDS_DL_RATIO_SRC)+_T(": %s"),(uLimitState&DLR_SESLIM)?GetResString(IDS_YES):GetResString(IDS_NO));
+			strText.AppendFormat(_T("\n\x2022 ")+GetResString(IDS_DL_RATIO_ENF)+_T(": %s"),(uLimitState&DLR_ENFLIM)?GetResString(IDS_YES):GetResString(IDS_NO));
 
-				strText.Format(GetResString(IDS_RATIO_ACTIVATION)+_T(": %s"),GetResString(IDS_YES));
-				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_RATIO_REASON)+_T(": %s"),strTemp);
-			}
-
-			if(uLimitState > 0)
-				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_RATIO_LIMIT)+_T(":%i"),(thePrefs.GetEnforceRatio())?thePrefs.GetRatioValue():3);
+			if(uLimitState >= DLR_SOURCE || uLimitState&DLR_NAFC)
+				strText.AppendFormat(_T("\n\r\x2022 ")+GetResString(IDS_DL_RATIO_LIMIT)+_T(":%i"),theApp.downloadqueue->GetLimitRatio());
 			break;
 		}
 	// <== Enforce Ratio [Stulle] - Stulle

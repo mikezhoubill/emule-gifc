@@ -51,7 +51,6 @@ public:
 	void Process();
 	// Maelle end
 
-
 	void	UpdateConnectionsGraph();
 	void	DoTreeMenu();
 	void	CreateMyTree();
@@ -200,7 +199,6 @@ private:
 	// ==> Design Settings [eWombat/Stulle] - Max
 protected:
 	CBrush m_brMyBrush;
-	HBRUSH hbr;	
 	COLORREF crStatsColor;
 public:
 	void OnBackcolor(); 

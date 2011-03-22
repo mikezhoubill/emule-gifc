@@ -135,7 +135,7 @@ void CFileDetailDialogInfo::RefreshData()
 
 	if (m_paFiles->GetSize() == 1)
 	{
-		const CPartFile* file = STATIC_DOWNCAST(CPartFile, (*m_paFiles)[0]);
+		CPartFile* file = STATIC_DOWNCAST(CPartFile, (*m_paFiles)[0]);
 
 		// if file is completed, we output the 'file path' and not the 'part.met file path'
 		if (file->GetStatus(true) == PS_COMPLETE)
@@ -220,12 +220,12 @@ void CFileDetailDialogInfo::RefreshData()
 		SetDlgItemText(IDC_LASTRECEIVED, str);
 
 		// AICH Hash
-		switch (file->GetAICHHashset()->GetStatus()) {
+		switch (file->GetAICHRecoveryHashSet()->GetStatus()) {
 			case AICH_TRUSTED:
 			case AICH_VERIFIED:
 			case AICH_HASHSETCOMPLETE:
-				if (file->GetAICHHashset()->HasValidMasterHash()) {
-					SetDlgItemText(IDC_FD_AICHHASH, file->GetAICHHashset()->GetMasterHash().GetString());
+				if (file->GetAICHRecoveryHashSet()->HasValidMasterHash()) {
+					SetDlgItemText(IDC_FD_AICHHASH, file->GetAICHRecoveryHashSet()->GetMasterHash().GetString());
 					break;
 				}
 			default:
@@ -297,7 +297,8 @@ void CFileDetailDialogInfo::RefreshData()
 	uint32 uRecoveredParts = 0;
 	uint64 uCompression = 0;
 	uint64 uCompleted = 0;
-	int iHashsetAvailable = 0;
+	int iMD4HashsetAvailable = 0;
+	int iAICHHashsetAvailable = 0;
 	uint32 uDataRate = 0;
 	UINT uSources = 0;
 	UINT uValidSources = 0;
@@ -306,7 +307,7 @@ void CFileDetailDialogInfo::RefreshData()
 	double dAvgDlSpeed = 0; // Average download speed - Stulle
 	for (int i = 0; i < m_paFiles->GetSize(); i++)
 	{
-		const CPartFile* file = STATIC_DOWNCAST(CPartFile, (*m_paFiles)[i]);
+		CPartFile* file = STATIC_DOWNCAST(CPartFile, (*m_paFiles)[i]);
 
 		uFileSize += (uint64)file->GetFileSize();
 		uRealFileSize += (uint64)file->GetRealFileSize();
@@ -321,12 +322,8 @@ void CFileDetailDialogInfo::RefreshData()
 		uDataRate += file->GetDownloadDatarate10();
 		//Xman end
 		uCompleted += (uint64)file->GetCompletedSize();
-		//Xman // SLUGFILLER: SafeHash - use GetED2KPartCount
-		/*
-		iHashsetAvailable += (file->GetHashCount() == file->GetED2KPartHashCount()) ? 1 : 0;
-		*/
-		iHashsetAvailable += (file->GetHashCount() == file->GetED2KPartCount()) ? 1 : 0;
-		//Xman end
+		iMD4HashsetAvailable += (file->GetFileIdentifier().HasExpectedMD4HashCount()) ? 1 : 0;
+		iAICHHashsetAvailable += (file->GetFileIdentifier().HasExpectedAICHHashCount()) ? 1 : 0;
 
 		// ==> Average download speed - Stulle
 		if(file->GetDlActiveTime() > 0)
@@ -345,12 +342,26 @@ void CFileDetailDialogInfo::RefreshData()
 	str.Format(_T("%s  (%s %s);  %s %s"), CastItoXBytes(uFileSize, false, false), GetFormatedUInt64(uFileSize), GetResString(IDS_BYTES), GetResString(IDS_ONDISK), CastItoXBytes(uRealFileSize, false, false));
 	SetDlgItemText(IDC_FSIZE, str);
 
-	if (iHashsetAvailable == 0)
-		SetDlgItemText(IDC_HASHSET, GetResString(IDS_NO));
-	else if (iHashsetAvailable == m_paFiles->GetSize())
-		SetDlgItemText(IDC_HASHSET, GetResString(IDS_YES));
+	if (m_paFiles->GetSize() == 1)
+	{
+		if (iAICHHashsetAvailable == 0 && iMD4HashsetAvailable == 0)
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_NO));
+		else if (iAICHHashsetAvailable == 1 && iMD4HashsetAvailable == 1)
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_YES) + _T(" (eD2K + AICH)"));
+		else if (iAICHHashsetAvailable == 1)
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_YES) + _T(" (AICH)"));
+		else if (iMD4HashsetAvailable == 1)
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_YES) + _T(" (eD2K)"));
+	}
 	else
-		SetDlgItemText(IDC_HASHSET, _T(""));
+	{
+		if (iAICHHashsetAvailable == 0 && iMD4HashsetAvailable == 0)
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_NO));
+		else if (iMD4HashsetAvailable == m_paFiles->GetSize() && iAICHHashsetAvailable == m_paFiles->GetSize())
+			SetDlgItemText(IDC_HASHSET, GetResString(IDS_YES) +  + _T(" (eD2K + AICH)"));
+		else
+			SetDlgItemText(IDC_HASHSET, _T(""));
+	}
 
 	str.Format(GetResString(IDS_SOURCESINFO), uSources, uValidSources, uNNPSources, uA4AFSources);
 	SetDlgItemText(IDC_SOURCECOUNT, str);
@@ -411,7 +422,7 @@ void CFileDetailDialogInfo::Localize()
 	GetDlgItem(IDC_FD_CORR)->SetWindowText(GetResString(IDS_FD_CORR)+_T(':'));
 	GetDlgItem(IDC_FD_RECOV)->SetWindowText(GetResString(IDS_FD_RECOV)+_T(':'));
 	GetDlgItem(IDC_FD_COMPR)->SetWindowText(GetResString(IDS_FD_COMPR)+_T(':'));
-	GetDlgItem(IDC_FD_XAICH)->SetWindowText(GetResString(IDS_IACHHASH)+_T(':'));
+	GetDlgItem(IDC_FD_XAICH)->SetWindowText(GetResString(IDS_AICHHASH)+_T(':'));
 	SetDlgItemText(IDC_REMAINING_TEXT, GetResString(IDS_DL_REMAINS)+_T(':'));
 	SetDlgItemText(IDC_FD_X10, GetResString(IDS_TYPE)+_T(':') );
 }

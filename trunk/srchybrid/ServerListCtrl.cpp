@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CServerListCtrl, CMuleListCtrl)
 	/*
 	ON_NOTIFY_REFLECT(NM_CUSTOMDRAW, OnNmCustomDraw)
 	*/
+	ON_NOTIFY_REFLECT(LVN_GETDISPINFO, OnLvnGetDispInfo)
 	//Xman end
 	ON_NOTIFY_REFLECT(NM_DBLCLK, OnNmDblClk)
 	ON_WM_CONTEXTMENU()
@@ -64,7 +65,7 @@ CServerListCtrl::CServerListCtrl()
 	SetGeneralPurposeFind(true);
 	*/
 	SetGeneralPurposeFind(true, false);
-	//Xman end
+	//Xman End
 	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	/*
 	m_tooltip = new CToolTipCtrlX;
@@ -262,13 +263,14 @@ void CServerListCtrl::RemoveAllDeadServers()
 		const CServer* cur_server = theApp.serverlist->list.GetNext(pos);
 		if (cur_server->GetFailedCount() >= thePrefs.GetDeadServerRetries())
 		{
-				//Xman
-				// Mighty Knife: Static server handling
-				// Static servers can be prevented from being removed from the list.
-				if ((!cur_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers())) {
-					RemoveServer(cur_server);
-					pos = theApp.serverlist->list.GetHeadPosition();
-				} // [end] Mighty Knife
+			//Xman
+			// Mighty Knife: Static server handling
+			// Static servers can be prevented from being removed from the list.
+			if ((!cur_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers())) {
+				RemoveServer(cur_server);
+				pos = theApp.serverlist->list.GetHeadPosition();
+			}
+			// [end] Mighty Knife
 		}
 	}
 	ShowWindow(SW_SHOW);
@@ -442,6 +444,7 @@ void CServerListCtrl::RefreshServer(const CServer* server)
 }
 
 //EastShare Start - added by AndCycle, IP to Country
+/* Xman not needed
 void CServerListCtrl::RefreshAllServer(){
 
 	for (POSITION pos = theApp.serverlist->list.GetHeadPosition(); pos != NULL; theApp.serverlist->list.GetNext(pos))
@@ -449,6 +452,7 @@ void CServerListCtrl::RefreshAllServer(){
 		RefreshServer(theApp.serverlist->list.GetAt(pos));
 	}
 }
+*/
 //EastShare End - added by AndCycle, IP to Country
 
 void CServerListCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
@@ -570,7 +574,7 @@ BOOL CServerListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		DeleteSelectedServers();
 		return TRUE;
 	}
-	
+
 	case MP_COPYSELECTED:
 	case MP_GETED2KLINK:
 	case Irc_SetSendLink: {
@@ -651,11 +655,11 @@ BOOL CServerListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 	case MP_PRIOLOW:
 		SetSelectedServersPriority(SRV_PR_LOW);
 		return TRUE;
-	
+
 	case MP_PRIONORMAL:
 		SetSelectedServersPriority(SRV_PR_NORMAL);
 		return TRUE;
-	
+
 	case MP_PRIOHIGH:
 		SetSelectedServersPriority(SRV_PR_HIGH);
 		return TRUE;
@@ -898,7 +902,6 @@ int CServerListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 	int dwNextSort;
 	if (iResult == 0 && (dwNextSort = theApp.emuledlg->serverwnd->serverlistctrl.GetNextSortOrder(lParamSort)) != -1)
 		iResult = SortProc(lParam1, lParam2, dwNextSort);
-
 	*/
 	//Xman end
 
@@ -1009,15 +1012,7 @@ void CServerListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 //Xman no need for this because //EastShare - added by AndCycle, IP to Country
 /*
 void CServerListCtrl::OnNmCustomDraw(NMHDR *pNMHDR, LRESULT *plResult)
-*/
-void CServerListCtrl::OnNmCustomDraw(NMHDR* /*pNMHDR*/, LRESULT* /*plResult*/)
 {
-	
-	return; 
-//Xman end
-
-	//Xman no need for this because //EastShare - added by AndCycle, IP to Country
-	/*
 	LPNMLVCUSTOMDRAW pnmlvcd = (LPNMLVCUSTOMDRAW)pNMHDR;
 
 	if (pnmlvcd->nmcd.dwDrawStage == CDDS_PREPAINT)
@@ -1033,18 +1028,19 @@ void CServerListCtrl::OnNmCustomDraw(NMHDR* /*pNMHDR*/, LRESULT* /*plResult*/)
 		// the server which we are connected to always has a valid numerical IP member assigned,
 		// therefor we do not need to call CServer::IsEqual which would be expensive
 		//if (pConnectedServer && pConnectedServer->IsEqual(pServer))
-		if (pConnectedServer && pConnectedServer->GetIP() == pServer->GetIP() && pConnectedServer->GetPort() == pServer->GetPort())
+		if (pServer && pConnectedServer && pConnectedServer->GetIP() == pServer->GetIP() && pConnectedServer->GetPort() == pServer->GetPort())
 			pnmlvcd->clrText = RGB(32,32,255);
-		else if (pServer->GetFailedCount() >= thePrefs.GetDeadServerRetries())
+		else if (pServer && pServer->GetFailedCount() >= thePrefs.GetDeadServerRetries())
 			pnmlvcd->clrText = RGB(192,192,192);
-		else if (pServer->GetFailedCount() >= 2)
+		else if (pServer && pServer->GetFailedCount() >= 2)
 			pnmlvcd->clrText = RGB(128,128,128);
 	}
 
 	*plResult = CDRF_DODEFAULT;
-	*/
-	//Xman end
+	
 }
+*/
+//Xman end
 
 //Commander - Added: CountryFlag - Start IP to Country
 void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
@@ -1054,34 +1050,23 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	if (!lpDrawItemStruct->itemData)
 		return;
 
-	//MORPH START - Added by SiRoB, Don't draw hidden Rect
-	RECT clientRect;
-	GetClientRect(&clientRect);
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
+	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	*/
+	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	BOOL bCtrlFocused;
+	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
+
 	CRect cur_rec(lpDrawItemStruct->rcItem);
-	if (cur_rec.top >= clientRect.bottom || cur_rec.bottom <= clientRect.top)
-		return;
-	//MORPH END   - Added by SiRoB, Don't draw hidden Rect
-	
-	CDC* odc = CDC::FromHandle(lpDrawItemStruct->hDC);
-	BOOL bCtrlFocused = ((GetFocus() == this ) || (GetStyle() & LVS_SHOWSELALWAYS));
+	CRect rcClient;
+	GetClientRect(&rcClient);
+
 	const CServer* server = (CServer*)lpDrawItemStruct->itemData;
-	const CServer* cur_srv;
 	// ==> Design Settings [eWombat/Stulle] - Stulle
 	/*
-	if( (lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED )
-		)
-	{
-		if(bCtrlFocused)
-			odc->SetBkColor(m_crHighlight);
-		else
-			odc->SetBkColor(m_crNoHighlight);
-	}
-	else
-		odc->SetBkColor(GetBkColor());
-	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
-	CFont* pOldFont = dc.SelectObject(GetFont());
-	//RECT cur_rec = lpDrawItemStruct->rcItem; //MORPH - Moved by SiRoB, Don't draw hidden Rect
-	COLORREF crOldTextColor = dc.SetTextColor(m_crWindowText);
+	const CServer* cur_srv;
 
 	//Xman our server in blubold
 	//+
@@ -1090,6 +1075,7 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	CFont fontCustom;
 	if(theApp.serverconnect->IsConnected()
 		&& (cur_srv = theApp.serverconnect->GetCurrentServer()) != NULL
+		&& server != NULL
 		&& cur_srv->GetPort() == server->GetPort()
 		//&& cur_srv->GetConnPort() == server->GetConnPort()//Morph - added by AndCycle, aux Ports, by lugdunummaster
 		&& _tcsicmp(cur_srv->GetAddress(), server->GetAddress()) == 0)
@@ -1100,36 +1086,35 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 		fontCustom.CreateFontIndirect(&lfFont);
 
 		dc.SelectObject(&fontCustom);
-		dc->SetTextColor(RGB(0,0,192));
+		dc.SetTextColor(RGB(0,0,192));
 	}
 	else //TK4 Mod grey out Filtered servers or Dead servers
-		if(server->GetFailedCount() >= thePrefs.GetDeadServerRetries() || theApp.ipfilter->IsFiltered(server->GetIP()))
+		if(server && server->GetFailedCount() >= thePrefs.GetDeadServerRetries() || theApp.ipfilter->IsFiltered(server->GetIP()))
 		{
-			GetFont()->GetLogFont(&lfFont);
-			fontCustom.CreateFontIndirect(&lfFont);
-			dc.SelectObject(&fontCustom);
-			dc->SetTextColor(RGB(192,192,192));
-		} else if(server->GetFailedCount() >= 2)
+			//GetFont()->GetLogFont(&lfFont);
+			//fontCustom.CreateFontIndirect(&lfFont);
+			//dc.SelectObject(&fontCustom);
+			dc.SetTextColor(RGB(192,192,192));
+		} else if(server && server->GetFailedCount() >= 2)
 		{ //unreliable servers
-			GetFont()->GetLogFont(&lfFont);
-			fontCustom.CreateFontIndirect(&lfFont);
-			dc.SelectObject(&fontCustom);
-			dc->SetTextColor(RGB(128,128,128));
+			//GetFont()->GetLogFont(&lfFont);
+			//fontCustom.CreateFontIndirect(&lfFont);
+			//dc.SelectObject(&fontCustom);
+			dc.SetTextColor(RGB(128,128,128));
 		}
-		//Xman end
+	//Xman end
 	*/
-	cur_srv = theApp.serverconnect->GetCurrentServer();
-
+	// moved InitItemMemDC code here to be able to color connected server
+	const CServer* cur_srv = theApp.serverconnect->IsConnected() ? theApp.serverconnect->GetCurrentServer() : NULL;
+	bCtrlFocused = ((GetFocus() == this) || (GetStyle() & LVS_SHOWSELALWAYS));
 	int iClientStyle = style_se_default;
 	if(thePrefs.GetStyleOnOff(server_styles, style_se_connected)!=0
-		&& theApp.serverconnect->IsConnected()
 		&& cur_srv != NULL
 		&& cur_srv->GetPort() == server->GetPort()
 		&& _tcsicmp(cur_srv->GetAddress(), server->GetAddress()) == 0)
 		iClientStyle = style_se_connected;
 	else if(thePrefs.GetStyleOnOff(server_styles, style_se_static)!=0
-		&& cur_srv != NULL
-		&& cur_srv->IsStaticMember())
+		&& server->IsStaticMember())
 		iClientStyle = style_se_static;
 	else if(thePrefs.GetStyleOnOff(server_styles, style_se_filtered)!=0
 		&& theApp.ipfilter->IsFiltered(server->GetIP()))
@@ -1147,232 +1132,222 @@ void CServerListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	if (style.nBackColor != CLR_DEFAULT)
 		crTempColor = style.nBackColor;
 
-	if( (lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED )
-		)
+	if( lpDrawItemStruct->itemState & ODS_SELECTED )
 	{
 		if(bCtrlFocused)
-			odc->SetBkColor(m_crHighlight);
+			dc->FillBackground(__super::m_crHighlight);
 		else
-			odc->SetBkColor(m_crNoHighlight);
+			dc->FillBackground(__super::m_crNoHighlight);
 	}
 	else
-		odc->SetBkColor(crTempColor);
+	{
+		if (crTempColor == CLR_NONE)
+		{
+			__super::DefWindowProc(WM_ERASEBKGND, (WPARAM)(HDC)dc, 0);
+			dc->SetBkMode(TRANSPARENT);
+		}
+		else
+		{
+			dc->FillBackground(crTempColor);
+		}
+	}
 	crTempColor = m_crWindowText;
 	if(style.nFontColor != CLR_DEFAULT)
 		crTempColor = style.nFontColor;
 
-	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
-	CFont* pOldFont = dc.SelectObject(theApp.GetFontByStyle(style.nFlags,thePrefs.UseNarrowFont()));
-	COLORREF crOldTextColor = dc.SetTextColor((lpDrawItemStruct->itemState & ODS_SELECTED) ? m_crHighlightText : crTempColor);
+	CFont* pOldFont = dc->SelectObject(theApp.GetFontByStyle(style.nFlags,false));
+	COLORREF crOldTextColor = dc->SetTextColor((lpDrawItemStruct->itemState & ODS_SELECTED) ? m_crHighlightText : crTempColor);
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
-		int iOldBkMode;
-		if (m_crWindowTextBk == CLR_NONE){
-			DefWindowProc(WM_ERASEBKGND, (WPARAM)(HDC)dc, 0);
-			iOldBkMode = dc.SetBkMode(TRANSPARENT);
-		}
-		else
-			iOldBkMode = OPAQUE;
+	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
+	int iCount = pHeaderCtrl->GetItemCount();
+	cur_rec.right = cur_rec.left - sm_iLabelOffset;
+	cur_rec.left += sm_iIconOffset;
 
-		CString Sbuffer;
-		CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
-		int iCount = pHeaderCtrl->GetItemCount();
-		cur_rec.right = cur_rec.left - 8;
-		cur_rec.left += 4;
-
-		for(int iCurrent = 0; iCurrent < iCount; iCurrent++){
-			int iColumn = pHeaderCtrl->OrderToIndex(iCurrent);
-			if( !IsColumnHidden(iColumn) ){
-				cur_rec.right += GetColumnWidth(iColumn);
-				switch(iColumn){
-
-				case 0:
-				{
-					uint8 image;
-					image = 0;
-
-					//POINT point = {cur_rec.left, cur_rec.top+1};
-					Sbuffer = server->GetListName();
-
-					//Draw Country Flag
-
-					POINT point2= {cur_rec.left,cur_rec.top+1};
-					if(theApp.ip2country->ShowCountryFlag() ){
-						theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, server->GetCountryFlagIndex(), point2, CSize(18,16), CPoint(0,0), ILD_NORMAL);
-					}
-					else
-						imagelist.DrawIndirect(dc, 0, point2, CSize(16,16), CPoint(0,0), ILD_NORMAL);
-
-					cur_rec.left +=20;
-					dc->DrawText(Sbuffer,Sbuffer.GetLength(),&cur_rec,MLC_DT_TEXT);
-					cur_rec.left -=20;
-					cur_rec.top +=2;//Grafic Bug Fix By Aenarion[ITA] leuk_he
-
-					break;
-				}
-				case 1:
-				{
-					Sbuffer.Format(_T("%s : %i"), server->GetAddress(), server->GetPort());
-					break;
-				}
-				case 2:
-				{
-					Sbuffer = server->GetDescription();
-					break;
-				}
-				case 3:
-				{
-					if(server->GetPing())
-						Sbuffer.Format(_T("%i"), server->GetPing());
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 4:
-				{
-					if(server->GetUsers())
-						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetUsers()));
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 5:
-				{
-					if(server->GetMaxUsers())
-						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetMaxUsers()));
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 6:
-				{
-					if(server->GetFiles())
-						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetFiles()));
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 7:
-				{
-					switch(server->GetPreference()){
-						case SRV_PR_LOW:
-							Sbuffer = GetResString(IDS_PRIOLOW);
-							break;
-						case SRV_PR_NORMAL:
-							Sbuffer = GetResString(IDS_PRIONORMAL);
-							break;
-						case SRV_PR_HIGH:
-							Sbuffer = GetResString(IDS_PRIOHIGH);
-							break;
-						default:
-							Sbuffer = GetResString(IDS_PRIONOPREF);
-					}
-					break;
-				}
-				case 8:
-				{
-					Sbuffer.Format(_T("%i"), server->GetFailedCount());
-					break;
-				}
-				case 9:
-				{
-					if (server->IsStaticMember())
-						Sbuffer = GetResString(IDS_YES); 
-					else
-						Sbuffer = GetResString(IDS_NO);
-					break;
-				}
-				case 10:
-				{
-					if(server->GetSoftFiles())
-						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetSoftFiles()));
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 11:
-				{
-					if(server->GetHardFiles())
-						Sbuffer.Format(_T("%s"), CastItoIShort(server->GetHardFiles()));
-					else
-						Sbuffer = "";
-					break;
-				}
-				case 12:
-				{
-					Sbuffer = server->GetVersion();
-					if (thePrefs.GetDebugServerUDPLevel() > 0){
-						if (server->GetUDPFlags() != 0){
-							if (!Sbuffer.IsEmpty())
-								Sbuffer += _T("; ");
-							Sbuffer.AppendFormat(_T("ExtUDP=%x"), server->GetUDPFlags());
-						}
-					}
-					if (thePrefs.GetDebugServerTCPLevel() > 0){
-						if (server->GetTCPFlags() != 0){
-							if (!Sbuffer.IsEmpty())
-								Sbuffer += _T("; ");
-							Sbuffer.AppendFormat(_T("ExtTCP=%x"), server->GetTCPFlags());
-						}
-					}
-					break;
-				}
-				//Lowid Column
-				case 13:
-				{
-					if (server->GetLowIDUsers()){
-						CString tempStr2;
-						tempStr2.Format(_T("%s"), CastItoIShort(server->GetLowIDUsers()));
-						Sbuffer = tempStr2;
-					}
-					else{
-						Sbuffer = _T("");
-					}
-					break;
-				}
-				case 14:
-				{
-					// Obfuscation
-					if (server->SupportsObfuscationTCP() && server->GetObfuscationPortTCP() != 0)
-						Sbuffer = GetResString(IDS_YES);
-					else
-						Sbuffer = GetResString(IDS_NO);
-					break;
-				}
-
-
-				}//End of Switch
-
-				if(iColumn != 0 && iColumn != 15)
-					dc->DrawText(Sbuffer,Sbuffer.GetLength(),&cur_rec, DT_LEFT);
-				cur_rec.left += GetColumnWidth(iColumn);
-			}
-		}
-		//draw rectangle around selected item(s)
-		if ((lpDrawItemStruct->itemAction | ODA_SELECT) && (lpDrawItemStruct->itemState & ODS_SELECTED))
+	for (int iCurrent = 0; iCurrent < iCount; iCurrent++)
+	{
+		int iColumn = pHeaderCtrl->OrderToIndex(iCurrent);
+		if (!IsColumnHidden(iColumn))
 		{
-			RECT outline_rec = lpDrawItemStruct->rcItem;
-			outline_rec.top--;
-			outline_rec.bottom++;
-			dc->FrameRect(&outline_rec, &CBrush(GetBkColor()));
-			outline_rec.top++;
-			outline_rec.bottom--;
-			outline_rec.left++;
-			outline_rec.right--;
-			if(bCtrlFocused)
-				dc->FrameRect(&outline_rec, &CBrush(m_crFocusLine));
-			else
-				dc->FrameRect(&outline_rec, &CBrush(m_crNoFocusLine));
-		}
+			UINT uDrawTextAlignment;
+			int iColumnWidth = GetColumnWidth(iColumn, uDrawTextAlignment);
+			cur_rec.right += iColumnWidth;
+			if (cur_rec.left < cur_rec.right && HaveIntersection(rcClient, cur_rec))
+			{
+				TCHAR szItem[1024];
+				GetItemDisplayText(server, iColumn, szItem, _countof(szItem));
+				switch (iColumn)
+				{
+					case 0:
+					{
+						int iIconPosY = (cur_rec.Height() > 16) ? ((cur_rec.Height() - 16) / 2) : 1;
+						POINT point = { cur_rec.left, cur_rec.top + iIconPosY };
+						int iIconSize = 16;
+						//Draw Country Flag
+						if(theApp.ip2country->ShowCountryFlag() ){
+							//theApp.ip2country->GetFlagImageList()->DrawIndirect(dc, server->GetCountryFlagIndex(), point, CSize(18,16), CPoint(0,0), ILD_NORMAL);
+							theApp.ip2country->GetFlagImageList()->DrawIndirect(&theApp.ip2country->GetFlagImageDrawParams(dc,server->GetCountryFlagIndex(),point));
+							iIconSize = 18;
+						}
+						else
+							imagelist.Draw(dc, 0, point, ILD_NORMAL);
 
-		if (m_crWindowTextBk == CLR_NONE)
-			dc.SetBkMode(iOldBkMode);
-		dc.SelectObject(pOldFont);
-		dc.SetTextColor(crOldTextColor);
-		// ==> Design Settings [eWombat/Stulle] - Stulle
-		/*
-		fontCustom.DeleteObject();
-		*/
-		// <== Design Settings [eWombat/Stulle] - Stulle
+						cur_rec.left +=iIconSize + sm_iLabelOffset;
+						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
+						cur_rec.left -=iIconSize;
+						cur_rec.right -= sm_iSubItemInset;
+						break;
+					}
+					default:
+						dc.DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
+						break;
+				}
+			}
+			cur_rec.left += iColumnWidth;
+		}
+	}
+	DrawFocusRect(dc, lpDrawItemStruct->rcItem, lpDrawItemStruct->itemState & ODS_FOCUS, bCtrlFocused, lpDrawItemStruct->itemState & ODS_SELECTED);
+	// ==> Design Settings [eWombat/Stulle] - Stulle
+	/*
+	fontCustom.DeleteObject(); //Xman
+	*/
+	dc->SetTextColor(crOldTextColor);
+	dc->SelectObject(pOldFont);
+	// <== Design Settings [eWombat/Stulle] - Stulle
+}
+
+void CServerListCtrl::GetItemDisplayText(const CServer* server, int iSubItem, LPTSTR pszText, int cchTextMax) const
+{
+	if (pszText == NULL || cchTextMax <= 0) {
+		ASSERT(0);
+		return;
+	}
+	pszText[0] = _T('\0');
+	switch(iSubItem){
+		case 0:
+			_tcsncpy(pszText, server->GetListName(), cchTextMax);
+			break;
+		case 1:
+			//DolphinX :: support dynamic ip servers :: Start
+			if(server->HasDynIP()){
+				if(server->GetIP())
+					_sntprintf(pszText, cchTextMax, _T("%s(%s) : %i"), server->GetFullIP(), server->GetDynIP(), server->GetPort());
+				else
+					_sntprintf(pszText, cchTextMax, _T("%s : %i"),  server->GetDynIP(), server->GetPort());
+			}
+			else
+				_sntprintf(pszText, cchTextMax, _T("%s : %i"),  server->GetAddress(), server->GetPort());
+			//DolphinX :: support dynamic ip servers :: End
+			break;
+		case 2:
+			_tcsncpy(pszText, server->GetDescription(), cchTextMax);
+			break;
+		case 3:
+			if(server->GetPing())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetPing());
+			break;
+		case 4:
+			if(server->GetUsers())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetUsers());
+			break;
+		case 5:
+			if(server->GetMaxUsers())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetMaxUsers());
+			break;
+		case 6:
+			if(server->GetFiles())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetFiles());
+			break;
+		case 7:
+		{
+			CString Sbuffer;
+			switch(server->GetPreference()){
+				case SRV_PR_LOW:
+					Sbuffer = GetResString(IDS_PRIOLOW);
+					break;
+				case SRV_PR_NORMAL:
+					Sbuffer = GetResString(IDS_PRIONORMAL);
+					break;
+				case SRV_PR_HIGH:
+					Sbuffer = GetResString(IDS_PRIOHIGH);
+					break;
+				default:
+					Sbuffer = GetResString(IDS_PRIONOPREF);
+			}
+			_tcsncpy(pszText, Sbuffer, cchTextMax);
+			break;
+		}
+		case 8:
+			_sntprintf(pszText, cchTextMax, _T("%i"), server->GetFailedCount());
+			break;
+		case 9:
+			_tcsncpy(pszText, GetResString( (server->IsStaticMember()) ? IDS_YES : IDS_NO ), cchTextMax);
+			break;
+		case 10:
+			if(server->GetSoftFiles())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetSoftFiles());
+			break;
+		case 11:
+			if(server->GetHardFiles())
+				_sntprintf(pszText, cchTextMax, _T("%i"), server->GetHardFiles());
+			break;
+		case 12:
+		{
+#if defined(_DEBUG) || defined(USE_DEBUG_DEVICE)
+			CString Sbuffer = server->GetVersion();
+			if (thePrefs.GetDebugServerUDPLevel() > 0){
+				if (server->GetUDPFlags() != 0){
+					if (!Sbuffer.IsEmpty())
+						Sbuffer += _T("; ");
+					Sbuffer.AppendFormat(_T("ExtUDP=%x"), server->GetUDPFlags());
+				}
+			}
+			if (thePrefs.GetDebugServerTCPLevel() > 0){
+				if (server->GetTCPFlags() != 0){
+					if (!Sbuffer.IsEmpty())
+						Sbuffer += _T("; ");
+					Sbuffer.AppendFormat(_T("ExtTCP=%x"), server->GetTCPFlags());
+				}
+			}
+			_tcsncpy(pszText, Sbuffer, cchTextMax);
+#else
+			_tcsncpy(pszText, server->GetVersion(), cchTextMax);
+#endif
+			break;
+		}
+		//Lowid Column
+		case 13:
+			if (server->GetLowIDUsers())
+				_tcsncpy(pszText, CastItoIShort(server->GetLowIDUsers()), cchTextMax);
+			break;
+		case 14:
+			_tcsncpy(pszText, GetResString( (server->SupportsObfuscationTCP() && server->GetObfuscationPortTCP() != 0) ? IDS_YES : IDS_NO ), cchTextMax);
+			break;
+	}
+	pszText[cchTextMax - 1] = _T('\0');
+}
+
+void CServerListCtrl::OnLvnGetDispInfo(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	if (theApp.emuledlg->IsRunning()) {
+		// Although we have an owner drawn listview control we store the text for the primary item in the listview, to be
+		// capable of quick searching those items via the keyboard. Because our listview items may change their contents,
+		// we do this via a text callback function. The listview control will send us the LVN_DISPINFO notification if
+		// it needs to know the contents of the primary item.
+		//
+		// But, the listview control sends this notification all the time, even if we do not search for an item. At least
+		// this notification is only sent for the visible items and not for all items in the list. Though, because this
+		// function is invoked *very* often, do *NOT* put any time consuming code in here.
+		//
+		// Vista: That callback is used to get the strings for the label tips for the sub(!) items.
+		//
+		NMLVDISPINFO *pDispInfo = reinterpret_cast<NMLVDISPINFO*>(pNMHDR);
+		if (pDispInfo->item.mask & LVIF_TEXT) {
+			const CServer* pServer = reinterpret_cast<CServer*>(pDispInfo->item.lParam);
+			if (pServer != NULL)
+				GetItemDisplayText(pServer, pDispInfo->item.iSubItem, pDispInfo->item.pszText, pDispInfo->item.cchTextMax);
+		}
+	}
+	*pResult = 0;
 }
 //Commander - Added: CountryFlag - End

@@ -33,9 +33,7 @@
 /*
 #include <crypto51/integer.h>
 */
-#pragma warning(disable:4702) // unreachable code
 #include <cryptopp/integer.h> //Xman
-#pragma warning(default:4702) // unreachable code
 //Xman end
 #pragma warning(default:4100) // unreferenced formal parameter
 #pragma warning(default:4244) // conversion from 'type1' to 'type2', possible loss of data

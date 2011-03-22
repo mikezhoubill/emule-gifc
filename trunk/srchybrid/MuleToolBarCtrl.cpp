@@ -26,7 +26,7 @@
 #include "MenuCmds.h"
 #include "MuleStatusbarCtrl.h"
 #include "ServerWnd.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "SharedFilesWnd.h"
 #include "ChatWnd.h"
 #include "IrcWnd.h"

@@ -91,7 +91,7 @@ private:
 	CPtrList m_lstOpenSockets;	// list of currently opened sockets
 	*/
 	CTypedPtrList<CPtrList, CServerSocket*>	m_lstOpenSockets;
-	//Xman end
+	// Maella -Code Improvement-
 	UINT	m_idRetryTimer;
 	uint32	m_nLocalIP;
 	CMap<ULONG, ULONG, CServerSocket*, CServerSocket*> connectionattemps;

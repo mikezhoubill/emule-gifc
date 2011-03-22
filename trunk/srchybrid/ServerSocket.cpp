@@ -389,7 +389,14 @@ bool CServerSocket::ProcessPacket(const BYTE* packet, uint32 size, uint8 opcode)
 				else if(thePrefs.GetSmartIdCheck() == true){
 					// Low ID => Check and increment attempts counter
 					uint8 attempts = thePrefs.GetSmartIdState();
-					if(attempts < 3){							
+					if(attempts < 3){
+						//zz_fly :: not needed, rebind upnp on ipchange :: start
+						//Official UPNP
+						/*
+						if (!thePrefs.m_bUseACATUPnPCurrent && (attempts == 1))
+							theApp.emuledlg->RefreshUPnP(false); // refresh the UPnP mappings once
+						*/
+						//zz_fly :: end
 						SetConnectionState(CS_ERROR);
 						thePrefs.SetSmartIdState(++attempts);
 						AddLogLine(true, _T("LowID -- Trying Again (attempts %i)"), attempts);

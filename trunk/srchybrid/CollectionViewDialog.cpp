@@ -22,7 +22,7 @@
 #include "Collection.h"
 #include "CollectionFile.h"
 #include "DownloadQueue.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "CatDialog.h"
 #include "SearchDlg.h"
 #include "Partfile.h"
@@ -198,7 +198,7 @@ void CCollectionViewDialog::DownloadSelected(void)
 			//Xman [MoNKi: -Check already downloaded files-]
 			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pCollectionFile->GetFileHash(), pCollectionFile->GetFileName()) )
 			{
-				theApp.downloadqueue->AddSearchToDownload(::CreateED2kLink(pCollectionFile, true), thePrefs.AddNewFilesPaused(), iNewIndex);
+				theApp.downloadqueue->AddSearchToDownload(pCollectionFile->GetED2kLink(), thePrefs.AddNewFilesPaused(), iNewIndex);
 			}
 			//Xman end
 	}

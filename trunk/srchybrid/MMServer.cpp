@@ -769,7 +769,12 @@ void CMMServer::WriteFileInfo(CPartFile* selFile, CMMPacket* packet){
 	packet->WriteInt64( selFile->GetFileSize() );
 	packet->WriteInt64( selFile->GetTransferred() );
 	packet->WriteInt64( selFile->GetCompletedSize() );
-	packet->WriteShort((uint16)(selFile->GetDownloadDatarate()/100)); //Xman // Maella -Accurate measure of bandwidth
+	//Xman // Maella -Accurate measure of bandwidth
+	/*
+	packet->WriteShort((uint16)(selFile->GetDatarate()/100));
+	*/
+	packet->WriteShort((uint16)(selFile->GetDownloadDatarate()/100));
+	//Xman End
 	packet->WriteShort((uint16)(selFile->GetSourceCount()));
 	packet->WriteShort((uint16)(selFile->GetTransferringSrcCount()));
 	if (selFile->IsAutoDownPriority()){

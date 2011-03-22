@@ -79,6 +79,9 @@
 #define MP_VIEW1_ONQUEUE		10258
 #define MP_VIEW1_DOWNLOADING	10259
 #define MP_VIEW1_CLIENTS		10260
+#define MP_PAUSEONPREVIEW		10261
+#define MP_VIEW_KADCONTACTS		10262
+#define MP_VIEW_KADLOOKUP		10263
 // >> add by Ken
 #define MP_HM_GIFC				10270 // auto download GIFC tools menu item
 #define MP_HM_GIFC1				10271 // search/download GIFC tools menu item
@@ -149,6 +152,11 @@
 #define	MP_SHOW_FILESIZE_MBYTE	10358
 #define MP_MARKASSPAM			10359
 #define MP_UNSHAREFILE			10360
+#define MP_NEWCAT				10361
+#define MP_TOGGLEDTOOLBAR		10362
+#define MP_AUTOKADLOOKUPGRAPH	10363
+#define MP_UPDATE				10364
+
 
 // quick-speed changer
 #define MP_QS_U10				10501

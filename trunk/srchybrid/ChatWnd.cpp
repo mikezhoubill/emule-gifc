@@ -202,7 +202,6 @@ void CChatWnd::ShowFriendMsgDetails(CFriend* pFriend)
 			GetDlgItem(IDC_FRIENDS_SUBIDO_EDIT)->SetWindowText(_T("-"));
 		}
 		//Xman end
-
 	}
 	else
 	{
@@ -571,7 +570,7 @@ BOOL CChatWnd::OnCommand(WPARAM wParam, LPARAM lParam)
 				CString sLink;
 				CED2KFriendLink myLink(CPreferences::GetUserNick(), CPreferences::GetUserHash());
 				myLink.GetLink(sLink);
-				sLink = _T("<a href=\"") + sLink + _T("\">") + StripInvalidFilenameChars(CPreferences::GetUserNick(), true) + _T("</a>");
+				sLink = _T("<a href=\"") + sLink + _T("\">") + StripInvalidFilenameChars(CPreferences::GetUserNick()) + _T("</a>");
 				theApp.CopyTextToClipboard(sLink);
 			}
 			break;
@@ -641,17 +640,21 @@ HBRUSH CChatWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 */
-	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }
@@ -669,6 +672,7 @@ void CChatWnd::OnBackcolor()
 		m_brMyBrush.CreateSolidBrush(clrChatColor);
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+	chatselector.m_clrBack = clrChatColor;
 }
 // <== Design Settings [eWombat/Stulle] - Max
 

@@ -71,6 +71,30 @@ struct TransferredData {
 };
 //Xman end
 
+//Xman
+// BEGIN SiRoB: ReadBlockFromFileThread
+class CUpDownClient;
+class CReadBlockFromFileThread : public CWinThread
+{
+	DECLARE_DYNCREATE(CReadBlockFromFileThread)
+protected:
+	CReadBlockFromFileThread()	{}
+public:
+	virtual	BOOL	InitInstance() {return true;}
+	virtual int		Run();
+	void			SetReadBlockFromFile(LPCTSTR filepath, uint64 startOffset, uint32 togo, CUpDownClient* client, CSyncObject* lockhandle);
+	void			StopReadBlock();
+private:
+	uint64			StartOffset;
+	uint32			togo;
+	CUpDownClient*	m_client;
+	CString			m_clientname; //Fafner: avoid possible crash - 080421
+	CString			fullname;
+	CSyncObject*	m_lockhandle;
+	CEvent			pauseEvent;
+	volatile bool	doRun;
+};
+// END SiRoB: ReadBlockFromFileThread
 
 #pragma pack(1)
 struct Requested_File_Struct{
@@ -103,12 +127,10 @@ public:
 	CUpDownClient(CPartFile* in_reqfile, uint16 in_port, uint32 in_userid, uint32 in_serverup, uint16 in_serverport, bool ed2kID = false);
 	virtual ~CUpDownClient();
 
-
 	// Maella -Upload Stop Reason-
 	enum UpStopReason {USR_NONE, USR_SOCKET, USR_COMPLETEDRANSFER, USR_CANCELLED, USR_DIFFERENT_FILE, USR_BLOCKING, USR_EXCEPTION };
 	// Maella -Download Stop Reason-
 	enum DownStopReason {DSR_NONE, DSR_PAUSED, DSR_NONEEDEDPARTS, DSR_CORRUPTEDBLOCK, DSR_TIMEOUT, DSR_SOCKET, DSR_OUTOFPART, DSR_EXCEPTION};
-
 
 	void			StartDownload();
 	virtual void	CheckDownloadTimeout();
@@ -162,12 +184,7 @@ public:
 	void			SetUserHash(const uchar* pUserHash);
 	bool			HasValidHash() const
 						{
-							//Xman Bugfix by ilmira
-							/*
-							return ((const int*)m_achUserHash[0]) != 0 || ((const int*)m_achUserHash[1]) != 0 || ((const int*)m_achUserHash[2]) != 0 || ((const int*)m_achUserHash[3]) != 0;
-							*/
-							return ((const int*)m_achUserHash)[0] != 0 || ((const int*)m_achUserHash)[1] != 0 || ((const int*)m_achUserHash)[2] != 0 || ((const int*)m_achUserHash)[3] != 0;
-							//Xman end
+							return ((const uint32*)m_achUserHash)[0] != 0 || ((const uint32*)m_achUserHash)[1] != 0 || ((const uint32*)m_achUserHash)[2] != 0 || ((const uint32*)m_achUserHash)[3] != 0;
 						}
 	int				GetHashType() const;
 	const uchar*	GetBuddyID() const								{ return (uchar*)m_achBuddyID; }
@@ -188,6 +205,7 @@ public:
 	bool			SupportExtMultiPacket() const					{ return m_fExtMultiPacket; }
 	bool			SupportPeerCache() const						{ return m_fPeerCache; }
 	bool			SupportsLargeFiles() const						{ return m_fSupportsLargeFiles; }
+	bool			SupportsFileIdentifiers() const					{ return m_fSupportsFileIdent; }
 	bool			IsEmuleClient() const							{ return m_byEmuleVersion!=0; }
 	uint8			GetSourceExchange1Version() const				{ return m_bySourceExchange1Ver; }
 	bool			SupportsSourceExchange2() const					{ return m_fSupportsSourceEx2; }
@@ -234,7 +252,7 @@ public:
 	void			SetSentCancelTransfer(bool bVal)				{ m_fSentCancelTransfer = bVal; }
 	void			ProcessPublicIPAnswer(const BYTE* pbyData, UINT uSize);
 	void			SendPublicIPRequest();
-	uint8			GetKadVersion()									{ return m_byKadVersion; }
+	uint8			GetKadVersion()	const							{ return m_byKadVersion; }
 	bool			SendBuddyPingPong()								{ return m_dwLastBuddyPingPongTime < ::GetTickCount(); }
 	bool			AllowIncomeingBuddyPingPong()					{ return m_dwLastBuddyPingPongTime < (::GetTickCount()-(3*60*1000)); }
 	void			SetLastBuddyPingPongTime()						{ m_dwLastBuddyPingPongTime = (::GetTickCount()+(10*60*1000)); }
@@ -303,10 +321,15 @@ public:
 	//Xman end
 	UINT			GetScore(bool sysvalue, bool isdownloading = false, bool onlybasevalue = false) const;
 	void			AddReqBlock(Requested_Block_Struct* reqblock);
+	//Xman for SiRoB: ReadBlockFromFileThread
+	/*
+	void			CreateNextBlockPackage(bool bBigBuffer = false);
+	*/
 	void			CreateNextBlockPackage();
+	//Xman end
 	uint32			GetUpStartTimeDelay() const						{ return ::GetTickCount() - m_dwUploadTime; }
 	void 			SetUpStartTime()								{ m_dwUploadTime = ::GetTickCount(); }
-	void			SendHashsetPacket(const uchar* fileid);
+	void			SendHashsetPacket(const uchar* pData, uint32 nSize, bool bFileIdentifiers);
 	const uchar*	GetUploadFileID() const							{ return requpfileid; }
 	void			SetUploadFileID(CKnownFile* newreqfile);
 	UINT			SendBlockData();
@@ -400,7 +423,7 @@ public:
 	void			SendStartupLoadReq();
 	void			ProcessFileInfo(CSafeMemFile* data, CPartFile* file);
 	void			ProcessFileStatus(bool bUdpPacket, CSafeMemFile* data, CPartFile* file);
-	void			ProcessHashSet(const uchar* data, UINT size);
+	void			ProcessHashSet(const uchar* data, UINT size, bool bFileIdentifiers);
 	void			ProcessAcceptUpload();
 	bool			AddRequestForAnotherFile(CPartFile* file);
 	void			CreateBlockRequests(int iMaxBlocks);
@@ -505,7 +528,7 @@ public:
 	bool			IsAICHReqPending() const						{ return m_fAICHRequested; }
 	void			ProcessAICHAnswer(const uchar* packet, UINT size);
 	void			ProcessAICHRequest(const uchar* packet, UINT size);
-	void			ProcessAICHFileHash(CSafeMemFile* data, CPartFile* file);
+	void			ProcessAICHFileHash(CSafeMemFile* data, CPartFile* file, const CAICHHash* pAICHHash);
 
 	EUtf8Str		GetUnicodeSupport() const;
 
@@ -545,7 +568,7 @@ public:
 	uint16			m_lastPartAsked;
 	bool			m_bAddNextConnect;
 
-    //Xman not used
+	//Xman not used
 	/*
     void			SetSlotNumber(UINT newValue)					{ m_slotNumber = newValue; }
     UINT			GetSlotNumber() const							{ return m_slotNumber; }
@@ -735,9 +758,8 @@ public:
 	//zz_fly :: Drop stalled downloads :: netfinity :: end
 
 	// BEGIN SiRoB: ReadBlockFromFileThread
-	void	SetReadBlockFromFileBuffer(byte* pdata) {filedata = pdata;};
+	void	SetReadBlockFromFileBuffer(byte* pdata) {m_abyfiledata = pdata;};
 	// END SiRoB: ReadBlockFromFileThread
-
 
 // Maella -Unnecessary Protocol Overload-
 protected:
@@ -780,7 +802,9 @@ private:
 	UINT oldQR; //Xman diffQR
 
 	// BEGIN SiRoB: ReadBlockFromFileThread
-	byte* filedata;
+	byte* m_abyfiledata;
+	uint32 m_utogo;
+	CReadBlockFromFileThread* m_readblockthread;
 	// END SiRoB: ReadBlockFromFileThread
 
 
@@ -845,6 +869,7 @@ private:
 
 //Xman end
 //--------------------------------------------------------------------------------------
+
 protected:
 	int		m_iHttpSendState;
 	uint32	m_uPeerCacheDownloadPushId;
@@ -868,6 +893,7 @@ protected:
 	void	CreateStandartPackets(byte* data, UINT togo, Requested_Block_Struct* currentblock, bool bFromPF = true);
 	void	CreatePackedPackets(byte* data, UINT togo, Requested_Block_Struct* currentblock, bool bFromPF = true);
 	void	SendFirewallCheckUDPRequest();
+	void	SendHashSetRequest();
 
 	uint32	m_nConnectIP;		// holds the supposed IP or (after we had a connection) the real IP
 	uint32	m_dwUserIP;			// holds 0 (real IP not yet available) or the real IP (after we had a connection)
@@ -1015,13 +1041,13 @@ protected: // File Settings [sivka/Stulle] - Stulle
 	bool		m_bReaskPending;
 	bool		m_bUDPPending;
 	bool		m_bTransferredDownMini;
+	bool		m_bHasMatchingAICHHash;
 
 	// Download from URL
 	CStringA	m_strUrlPath;
 	uint64		m_uReqStart;
 	uint64		m_uReqEnd;
 	uint64		m_nUrlStartPos;
-
 
 	//Xman not used
 	/*
@@ -1056,7 +1082,7 @@ protected: // File Settings [sivka/Stulle] - Stulle
     uint32      m_random_update_wait;
 
 	// using bitfield for less important flags, to save some bytes
-	UINT m_fHashsetRequesting : 1, // we have sent a hashset request to this client in the current connection
+	UINT m_fHashsetRequestingMD4 : 1, // we have sent a hashset request to this client in the current connection
 		 m_fSharedDirectories : 1, // client supports OP_ASKSHAREDIRS opcodes
 		 m_fSentCancelTransfer: 1, // we have sent an OP_CANCELTRANSFER in the current connection
 		 m_fNoViewSharedFiles : 1, // client has disabled the 'View Shared Files' feature, if this flag is not set, we just know that we don't know for sure if it is enabled
@@ -1075,13 +1101,14 @@ protected: // File Settings [sivka/Stulle] - Stulle
 		 m_fSentOutOfPartReqs : 1,
 		 m_fSupportsLargeFiles: 1,
 		 m_fExtMultiPacket	  : 1,
-		m_fRequestsCryptLayer: 1,
-		m_fSupportsCryptLayer: 1,
-		m_fRequiresCryptLayer: 1,
+		 m_fRequestsCryptLayer: 1,
+	     m_fSupportsCryptLayer: 1,
+		 m_fRequiresCryptLayer: 1,
 		 m_fSupportsSourceEx2 : 1,
 		 m_fSupportsCaptcha	  : 1,
-		 m_fDirectUDPCallback : 1;	// 1 bits left
-
+		 m_fDirectUDPCallback : 1,	
+		 m_fSupportsFileIdent : 1; // 0 bits left
+	UINT m_fHashsetRequestingAICH : 1; // 31 bits left
 	CTypedPtrList<CPtrList, Pending_Block_Struct*>	 m_PendingBlocks_list;
 	CTypedPtrList<CPtrList, Requested_Block_Struct*> m_DownloadBlocks_list;
 
@@ -1164,23 +1191,3 @@ public:
 	// <== Spread Credits Slot [Stulle] - Stulle
 };
 //#pragma pack()
-
-//Xman
-// BEGIN SiRoB: ReadBlockFromFileThread
-class CReadBlockFromFileThread : public CWinThread
-{
-	DECLARE_DYNCREATE(CReadBlockFromFileThread)
-protected:
-	CReadBlockFromFileThread()	{}
-public:
-	virtual	BOOL	InitInstance() {return true;}
-	virtual int		Run();
-	void			SetReadBlockFromFile(CKnownFile* pfile, uint64 startOffset, uint32 togo, CUpDownClient* client);
-private:
-	uint64			StartOffset;
-	uint32			togo;
-	CUpDownClient*	m_client;
-	CKnownFile*		srcfile;
-	CSyncObject*	lockFile;
-};
-// END SiRoB: ReadBlockFromFileThread

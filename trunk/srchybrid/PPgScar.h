@@ -148,6 +148,7 @@ protected:
 	bool m_bSmallFileDLPush;
 	int m_iResumeFileInNewCat;
 	bool m_bUseAutoCat;
+	bool m_bAddRemovedInc;
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	// ==> PowerShare [ZZ/MorphXT] - Stulle
@@ -159,6 +160,11 @@ protected:
 	bool m_bSpreadCreditsSlot;
 	int m_iSpreadCreditsSlotCounter;
 	// <== Spread Credits Slot [Stulle] - Stulle
+	// ==> Release Bonus [sivka] - Stulle
+	int m_iReleaseBonus;
+	int m_iReleaseBonusDays;
+	// <== Release Bonus [sivka] - Stulle
+	bool m_bReleaseScoreAssurance; // Release Score Assurance [Stulle] - Stulle
 	bool m_bSpreadBars; // Spread bars [Slugfiller/MorphXT] - Stulle
 	// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
 	int m_iHideOS;
@@ -166,12 +172,6 @@ protected:
 	int m_iShareOnlyTheNeed;
 	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
 	int m_iFairPlay; // Fair Play [AndCycle/Stulle] - Stulle
-
-	// ==> Release Bonus [sivka] - Stulle
-	int m_iReleaseBonus;
-	int m_iReleaseBonusDays;
-	// <== Release Bonus [sivka] - Stulle
-	bool m_bReleaseScoreAssurance; // Release Score Assurance [Stulle] - Stulle
 
 	// ==> Global Source Limit [Max/Stulle] - Stulle
 	bool m_bGlobalHL;
@@ -369,6 +369,7 @@ protected:
 	HTREEITEM m_htiSmallFileDLPush;
 	HTREEITEM m_htiResumeFileInNewCat;
 	HTREEITEM m_htiUseAutoCat;
+	HTREEITEM m_htiAddRemovedInc;
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	HTREEITEM m_htiSharedPrefs; // Shared Files Management [Stulle] - Stulle
@@ -386,14 +387,6 @@ protected:
 	HTREEITEM m_htiSpreadCreditsSlot;
 	HTREEITEM m_htiSpreadCreditsSlotCounter;
 	// <== Spread Credits Slot [Stulle] - Stulle,
-	HTREEITEM m_htiSpreadBars; // Spread bars [Slugfiller/MorphXT] - Stulle
-	// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
-	HTREEITEM m_htiHideOS;
-	HTREEITEM m_htiSelectiveShare;
-	HTREEITEM m_htiShareOnlyTheNeed;
-	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
-	HTREEITEM m_htiFairPlay; // Fair Play [AndCycle/Stulle] - Stulle
-
 	// ==> Release Bonus [sivka] - Stulle
 	HTREEITEM m_htiReleaseBonusGroup;
 	HTREEITEM m_htiReleaseBonus0;
@@ -402,6 +395,13 @@ protected:
 	HTREEITEM m_htiReleaseBonusDaysEdit;
 	// <== Release Bonus [sivka] - Stulle
 	HTREEITEM m_htiReleaseScoreAssurance; // Release Score Assurance [Stulle] - Stulle
+	HTREEITEM m_htiSpreadBars; // Spread bars [Slugfiller/MorphXT] - Stulle
+	// ==> HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+	HTREEITEM m_htiHideOS;
+	HTREEITEM m_htiSelectiveShare;
+	HTREEITEM m_htiShareOnlyTheNeed;
+	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
+	HTREEITEM m_htiFairPlay; // Fair Play [AndCycle/Stulle] - Stulle
 
 	HTREEITEM m_htiMisc;
 	// ==> Global Source Limit [Max/Stulle] - Stulle
@@ -515,7 +515,9 @@ private:
 	CButton		m_AntiLeechWeek;
 	CButton		m_AntiLeechURLStatic;
 	CEdit		m_AntiLeechURL;
+public:
 	CButton		m_AntiLeechVersion;
+private:
 	CButton		m_AntiLeechReset;
 	CButton		m_AntiLeechUpdate;
 	CButton		m_IpFilterBox;
@@ -603,27 +605,49 @@ public:
 protected:
 	bool bMiniMuleAutoClose;
 	int iMiniMuleTransparency;
-	bool bCheckComctl32 ;
-	bool bCheckShell32;
-	bool bIgnoreInstances;
-	CString sNotifierMailEncryptCertName;
+
 	CString  sMediaInfo_MediaInfoDllPath;
 	bool bMediaInfo_RIFF;
 	bool bMediaInfo_ID3LIB;
+#ifdef HAVE_QEDIT_H
 	bool m_bMediaInfo_MediaDet;
+#endif//HAVE_QEDIT_H
 	bool m_bMediaInfo_RM;
 #ifdef HAVE_WMSDK_H
 	bool m_bMediaInfo_WM;
 #endif//HAVE_WMSDK_H
-	int iMaxLogBuff;
-	int m_iMaxChatHistory;
-	int m_iPreviewSmallBlocks;
+
 	bool m_bRestoreLastMainWndDlg;
 	bool m_bRestoreLastLogPane;
-	bool m_bPreviewCopiedArchives;
 	int m_iStraightWindowStyles;
-	int m_iLogFileFormat;
 	bool m_bRTLWindowsLayout;
+	int m_iMaxChatHistory;
+    int  m_umaxmsgsessions;
+	CString m_strDateTimeFormat;
+	CString m_strDateTimeFormat4Lists;
+	bool m_bShowVerticalHourMarkers;
+	bool m_bReBarToolbar;
+	bool m_bIconflashOnNewMessage;
+	bool m_bShowCopyEd2kLinkCmd;
+	bool m_bUpdateQueue;
+	bool m_bRepaint;
+	bool m_bExtraPreviewWithMenu;
+	bool m_bShowUpDownIconInTaskbar;
+	bool m_bForceSpeedsToKB;
+
+	int m_iLogFileFormat;
+	int iMaxLogBuff;
+	CString m_strDateTimeFormat4Log;
+	COLORREF m_crLogError;
+	COLORREF m_crLogWarning;
+	COLORREF m_crLogSuccess;
+
+	bool bCheckComctl32 ;
+	bool bCheckShell32;
+	bool bIgnoreInstances;
+	CString sNotifierMailEncryptCertName;
+	int m_iPreviewSmallBlocks;
+	bool m_bPreviewCopiedArchives;
 	bool m_bPreviewOnIconDblClk;
 	CString sInternetSecurityZone;
 	CString sTxtEditor;
@@ -632,25 +656,21 @@ protected:
     bool m_bHighresTimer;
 	bool m_bTrustEveryHash;
     int m_iInspectAllFileTypes;
-    int  m_umaxmsgsessions;
     bool m_bPreferRestrictedOverUser;
 	bool m_bUseUserSortedServerList;
     int m_iWebFileUploadSizeLimitMB;
     CString m_sAllowedIPs;
 	int m_iDebugSearchResultDetailLevel;
 	bool m_bAdjustNTFSDaylightFileTime;
-	CString m_strDateTimeFormat;
-	CString m_strDateTimeFormat4Log;
-	COLORREF m_crLogError;
-	COLORREF m_crLogWarning;
-	COLORREF m_crLogSuccess;
-	bool m_bShowVerticalHourMarkers;
-	bool m_bReBarToolbar;
-	bool m_bIconflashOnNewMessage;
-	bool m_bShowCopyEd2kLinkCmd;
 	bool m_dontcompressavi;
 	bool m_ICH;
 	DWORD m_dwBindAddr;
+	int m_iFileBufferTimeLimit;
+	bool m_bRearrangeKadSearchKeywords;
+	bool m_bBeeper;
+	bool m_bMsgOnlySec;
+	bool m_bDisablePeerCache;
+	bool m_bKeepUnavailableFixedSharedDirs;
 
 	CTreeOptionsCtrlEx m_ctrlAdvTreeOptions;
 	bool m_bInitializedAdvTreeOpts;
@@ -663,35 +683,47 @@ protected:
 	HTREEITEM m_hti_sMediaInfo_MediaInfoDllPath;
 	HTREEITEM m_hti_bMediaInfo_RIFF;
 	HTREEITEM m_hti_bMediaInfo_ID3LIB;
+#ifdef HAVE_QEDIT_H
 	HTREEITEM m_hti_MediaInfo_MediaDet;
+#endif//HAVE_QEDIT_H
 	HTREEITEM m_hti_MediaInfo_RM;
 #ifdef HAVE_WMSDK_H
 	HTREEITEM m_hti_MediaInfo_WM;
 #endif//HAVE_WMSDK_H
 
 	HTREEITEM m_hti_AdvDisplay;
-	HTREEITEM m_hti_m_iMaxChatHistory;
 	HTREEITEM m_hti_m_bRestoreLastMainWndDlg;
 	HTREEITEM m_hti_m_bRestoreLastLogPane;
 	HTREEITEM m_hti_m_iStraightWindowStyles;
 	HTREEITEM m_hti_m_bRTLWindowsLayout;
+	HTREEITEM m_hti_m_iMaxChatHistory;
 	HTREEITEM m_hti_maxmsgsessions;
+	HTREEITEM m_htidatetimeformat;
+	HTREEITEM m_htidatetimeformat4lists;
+	HTREEITEM m_htiShowVerticalHourMarkers;
+	HTREEITEM m_htiReBarToolbar;
+	HTREEITEM m_htiIconflashOnNewMessage;
+	HTREEITEM m_htiShowCopyEd2kLinkCmd;
+	HTREEITEM m_htiUpdateQueue;
+	HTREEITEM m_htiRepaint;
+	HTREEITEM m_htiExtraPreviewWithMenu;
+	HTREEITEM m_htiShowUpDownIconInTaskbar;
+	HTREEITEM m_htiForceSpeedsToKB;
 
 	HTREEITEM m_hti_Log;
+	HTREEITEM m_hti_m_iLogFileFormat;
 	HTREEITEM m_hti_iMaxLogBuff;
-	HTREEITEM m_htidatetimeformat;
 	HTREEITEM m_htidatetimeformat4log;
 	HTREEITEM m_htiLogError;
 	HTREEITEM m_htiLogWarning;
 	HTREEITEM m_htiLogSuccess;
 
-	HTREEITEM m_hti_bCheckComctl32 ;
+	HTREEITEM m_hti_bCheckComctl32;
 	HTREEITEM m_hti_bCheckShell32;
 	HTREEITEM m_hti_bIgnoreInstances;
 	HTREEITEM m_hti_sNotifierMailEncryptCertName;
 	HTREEITEM m_hti_m_iPreviewSmallBlocks;
 	HTREEITEM m_hti_m_bPreviewCopiedArchives;
-	HTREEITEM m_hti_m_iLogFileFormat;
 	HTREEITEM m_hti_m_bPreviewOnIconDblClk;
 	HTREEITEM m_hti_sInternetSecurityZone;
 	HTREEITEM m_hti_sTxtEditor;
@@ -706,13 +738,15 @@ protected:
 	HTREEITEM m_hti_UseUserSortedServerList;
 	HTREEITEM m_hti_DebugSearchResultDetailLevel;
 	HTREEITEM m_htiAdjustNTFSDaylightFileTime;
-	HTREEITEM m_htiShowVerticalHourMarkers;
-	HTREEITEM m_htiReBarToolbar;
-	HTREEITEM m_htiIconflashOnNewMessage;
-	HTREEITEM m_htiShowCopyEd2kLinkCmd;
 	HTREEITEM m_htidontcompressavi;
 	HTREEITEM m_htiICH;
 	HTREEITEM  m_htiBindAddr;
+	HTREEITEM m_htiFileBufferTimeLimit;
+	HTREEITEM m_htiRearrangeKadSearchKeywords;
+	HTREEITEM m_htiBeeper;
+	HTREEITEM m_htiMsgOnlySec;
+	HTREEITEM m_htiDisablePeerCache;
+	HTREEITEM m_htiKeepUnavailableFixedSharedDirs;
 	// <== Advanced Options [Official/MorphXT] - Stulle
 
 	// ==> Advanced Updates [MorphXT/Stulle] - Stulle

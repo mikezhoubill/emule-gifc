@@ -19,7 +19,7 @@
 #include "PPgFiles.h"
 #include "Inputbox.h"
 #include "OtherFunctions.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "emuledlg.h"
 #include "Preferences.h"
 #include "HelpIDs.h"
@@ -186,7 +186,7 @@ BOOL CPPgFiles::OnApply()
 		thePrefs.m_bpreviewprio = false;
 
     if (bOldPreviewPrio != thePrefs.m_bpreviewprio)
-		theApp.emuledlg->transferwnd->downloadlistctrl.CreateMenues();
+		theApp.emuledlg->transferwnd->GetDownloadList()->CreateMenues();
 
 	if (IsDlgButtonChecked(IDC_DAP))
 		thePrefs.m_bDAP = true;

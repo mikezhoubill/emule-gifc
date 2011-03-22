@@ -31,6 +31,11 @@
 #include "updownclient.h" //Xman Xtreme Upload
 #include "BandWidthControl.h" // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 #include "ListenSocket.h" //Xman 
+// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+#ifdef HAVE_VISTA_SDK
+#include "NetF.h"
+#endif
+// netfinity: end
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -142,11 +147,9 @@ CEMSocket::CEMSocket(void){
     m_actualPayloadSize = 0;
     m_actualPayloadSizeSent = 0;
 
-    m_bBusy = false; 
+    m_bBusy = false;
     m_hasSent = false;
-
-    //int val = 0;
-    //SetSockOpt(SO_SNDBUF, &val, sizeof(int));
+	m_bUsesBigSendBuffers = false;
 
 	//Xman
 	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
@@ -163,6 +166,9 @@ CEMSocket::CEMSocket(void){
 	avg_block_ratio=0;
 	sum_blockhistory=0;
 	//Xman end
+
+	// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+	m_dwMSS = 0;
 }
 
 CEMSocket::~CEMSocket(){
@@ -191,7 +197,6 @@ CEMSocket::~CEMSocket(){
 	}
 	client = NULL;
 	// Maella end
-
 }
 
 // deadlake PROXYSUPPORT
@@ -229,20 +234,20 @@ void CEMSocket::InitProxySupport()
 		m_pProxyLayer = new CAsyncProxySocketLayer;
 		switch (settings.type)
 		{
-		case PROXYTYPE_SOCKS4:
-		case PROXYTYPE_SOCKS4A:
-			m_pProxyLayer->SetProxy(settings.type, settings.name, settings.port);
-			break;
-		case PROXYTYPE_SOCKS5:
-		case PROXYTYPE_HTTP10:
-		case PROXYTYPE_HTTP11:
-			if (settings.EnablePassword)
-				m_pProxyLayer->SetProxy(settings.type, settings.name, settings.port, settings.user, settings.password);
-			else
+			case PROXYTYPE_SOCKS4:
+			case PROXYTYPE_SOCKS4A:
 				m_pProxyLayer->SetProxy(settings.type, settings.name, settings.port);
-			break;
-		default:
-			ASSERT(0);
+				break;
+			case PROXYTYPE_SOCKS5:
+			case PROXYTYPE_HTTP10:
+			case PROXYTYPE_HTTP11:
+				if (settings.EnablePassword)
+					m_pProxyLayer->SetProxy(settings.type, settings.name, settings.port, settings.user, settings.password);
+				else
+					m_pProxyLayer->SetProxy(settings.type, settings.name, settings.port);
+				break;
+			default:
+				ASSERT(0);
 		}
 		AddLayer(m_pProxyLayer);
 
@@ -380,7 +385,7 @@ void CEMSocket::OnReceive(int nErrorCode){
 
 	//Xman include ACK
 	theApp.pBandWidthControl->AddeMuleOutTCPOverall(0); //ACK
-	
+
 	//zz_fly
 	//netfinity: Special case when socket is closing but data still in buffer, need to empty buffer or deadlock forever
 	/*
@@ -403,7 +408,7 @@ void CEMSocket::ProcessReceiveData(int nErrorCode)
 	// the 2 meg size was taken from another place
 	static char GlobalReadBuffer[256*1024];
 
-//Xman end include ACK
+	//Xman end include ACK
     // CPU load improvement
 	//zz_fly
 	//netfinity: Special case when socket is closing but data still in buffer, need to empty buffer or deadlock forever
@@ -421,7 +426,13 @@ void CEMSocket::ProcessReceiveData(int nErrorCode)
 
 	// Remark: an overflow can not occur here
 	uint32 readMax = sizeof(GlobalReadBuffer) - pendingHeaderSize; 
+	//zz_fly
+	//netfinity: Special case when socket is closing but data still in buffer, need to empty buffer or deadlock forever
+	/*
 	if(downloadLimitEnable == true && readMax > downloadLimit) {
+	*/
+	if(downloadLimitEnable == true && readMax > downloadLimit && nErrorCode != WSAESHUTDOWN) {
+	//zz_fly end
 		readMax = downloadLimit;
 	}
 
@@ -592,14 +603,14 @@ void CEMSocket::ProcessReceiveData(int nErrorCode)
 		memcpy(&pendingPacket->pBuffer[pendingPacketSize], rptr, toCopy);
 		pendingPacketSize += toCopy;
 		rptr += toCopy;
-		
+
 		// Check if packet is complet
 		ASSERT(pendingPacket->size >= pendingPacketSize);
 		if(pendingPacket->size == pendingPacketSize){
-			#ifdef EMSOCKET_DEBUG
+#ifdef EMSOCKET_DEBUG
 			EMTrace("CEMSocket::PacketReceived on %d, opcode=%X, realSize=%d", 
 				    (SOCKET)this, pendingPacket->opcode, pendingPacket->GetRealPacketSize());
-			#endif
+#endif
 
 			// Process packet
 			bool bPacketResult = PacketReceived(pendingPacket);
@@ -803,7 +814,7 @@ void CEMSocket::OnSend(int nErrorCode){
 
     sendLocker.Lock();
 
-	m_bBusy = false; 
+	m_bBusy = false;
 
     // stopped sending here.
     //StoppedSendSoUpdateStats();
@@ -1888,6 +1899,31 @@ CString CEMSocket::GetFullErrorMessage(DWORD nErrorCode)
 	return strError;
 }
 
+// increases the send buffer to a bigger size
+bool CEMSocket::UseBigSendBuffer()
+{
+#define BIGSIZE 128 * 1024
+	if (m_bUsesBigSendBuffers)
+		return true;
+	m_bUsesBigSendBuffers = true;
+    int val = BIGSIZE;
+    int vallen = sizeof(int);
+	int oldval = 0;
+	GetSockOpt(SO_SNDBUF, &oldval, &vallen);
+	if (val > oldval)
+		SetSockOpt(SO_SNDBUF, &val, sizeof(int));
+	val = 0;
+	vallen = sizeof(int);
+	GetSockOpt(SO_SNDBUF, &val, &vallen);
+#if defined(_DEBUG) || defined(_BETA)
+	if (val == BIGSIZE)
+		theApp.QueueDebugLogLine(false, _T("Increased Sendbuffer for uploading socket from %uKB to %uKB"), oldval/1024, val/1024);
+	else
+		theApp.QueueDebugLogLine(false, _T("Failed to increase Sendbuffer for uploading socket, stays at %uKB"), oldval/1024);
+#endif
+	return val == BIGSIZE;
+}
+
 //Xman 4.8.2
 //Threadsafe Statechange
 void CEMSocket::SetConnectedState(const uint8 state)
@@ -1900,3 +1936,12 @@ void CEMSocket::SetConnectedState(const uint8 state)
 	sendLocker.Unlock();
 }
 //Xman end
+// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+void CEMSocket::SetMSSFromSocket(SOCKET socket){
+#ifdef HAVE_VISTA_SDK
+	m_dwMSS = theNetF.GetMSSFromSocket(socket);
+#else
+	m_dwMSS = 0;
+#endif
+}
+// netfinity: end

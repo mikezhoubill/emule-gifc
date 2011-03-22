@@ -45,7 +45,7 @@ class CServerWnd;
 class CSharedFilesWnd;
 class CStatisticsDlg;
 class CTaskbarNotifier;
-class CTransferWnd;
+class CTransferDlg;
 struct Status;
 //Xman Splashscreen
 /*
@@ -76,16 +76,34 @@ public:
 
 	enum { IDD = IDD_EMULE_DIALOG };
 
-	bool IsRunning();
+	static bool IsRunning();
 	void ShowConnectionState();
 	void ShowNotifier(LPCTSTR pszText, int iMsgType, LPCTSTR pszLink = NULL, bool bForceSoundOFF = false);
 	void SendNotificationMail(int iMsgType, LPCTSTR pszText);
 	void ShowUserCount();
 	void ShowMessageState(UINT iconnr);
 	void SetActiveDialog(CWnd* dlg);
+	CWnd* GetActiveDialog() const																{ return activewnd; }
 	void ShowTransferRate(bool forceAll=false);
     void ShowPing();
 	void Localize();
+
+#ifdef HAVE_WIN7_SDK_H
+	void UpdateStatusBarProgress();
+	void UpdateThumbBarButtons(bool initialAddToDlg=false);
+	void OnTBBPressed(UINT id);
+	void EnableTaskbarGoodies(bool enable);
+
+	enum TBBIDS {
+		TBB_FIRST,
+		TBB_CONNECT=TBB_FIRST,
+		TBB_DISCONNECT,
+		TBB_THROTTLE,
+		TBB_UNTHROTTLE,
+		TBB_PREFERENCES,
+		TBB_LAST = TBB_PREFERENCES
+	};
+#endif
 
 	// Logging
 	void AddLogText(UINT uFlags, LPCTSTR pszText);
@@ -140,7 +158,7 @@ public:
 	virtual void RestoreWindow();
 	virtual void HtmlHelp(DWORD_PTR dwData, UINT nCmd = 0x000F);
 
-	CTransferWnd*	transferwnd;
+	CTransferDlg*	transferwnd;
 	CServerWnd*		serverwnd;
 	CPreferencesDlg* preferenceswnd;
 	CSharedFilesWnd* sharedfileswnd;
@@ -196,6 +214,15 @@ protected:
 	// <== UPnP support [MoNKi] - leuk_he
 	bool			m_bKadSuspendDisconnect;
 	bool			m_bEd2kSuspendDisconnect;
+	bool			m_bInitedCOM;
+#ifdef HAVE_WIN7_SDK_H
+	CComPtr<ITaskbarList3>	m_pTaskbarList;
+	THUMBBUTTON		m_thbButtons[TBB_LAST+1];
+
+	TBPFLAG			m_currentTBP_state;
+	float			m_prevProgress;
+	HICON			m_ovlIcon;
+#endif
 
 	//Xman versions check
 	char			m_acMVCDNSBuffer[MAXGETHOSTSTRUCT];
@@ -269,6 +296,7 @@ protected:
 	CWnd* MapToolbarButtonToWindow(int iButtonID) const;
 	int GetNextWindowToolbarButton(int iButtonID, int iDirection = 1) const;
 	bool IsWindowToolbarButton(int iButtonID) const;
+	void SetTaskbarIconColor();
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
@@ -286,7 +314,7 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
-	afx_msg void OnBnClickedButton2();
+	afx_msg void OnBnClickedConnect();
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnBnClickedHotmenu();
 	afx_msg LRESULT OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu);
@@ -319,14 +347,16 @@ protected:
 	//Xman
 	// BEGIN SLUGFILLER: SafeHash
 	afx_msg LRESULT OnPartHashedOK(WPARAM wParam,LPARAM lParam);
+	afx_msg LRESULT OnPartHashedOKNoAICH(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedCorrupt(WPARAM wParam,LPARAM lParam);
+	afx_msg LRESULT OnPartHashedCorruptNoAICH(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedOKAICHRecover(WPARAM wParam,LPARAM lParam);
 	afx_msg LRESULT OnPartHashedCorruptAICHRecover(WPARAM wParam,LPARAM lParam);
 	// END SLUGFILLER: SafeHash
 	// BEGIN SiRoB: ReadBlockFromFileThread
 	afx_msg LRESULT OnReadBlockFromFileDone(WPARAM wParam,LPARAM lParam);
-	// BEGIN SiRoB: ReadBlockFromFileThread
-	// END SiRoB: Flush Thread
+	// END SiRoB: ReadBlockFromFileThread
+	// BEGIN SiRoB: Flush Thread
 	afx_msg LRESULT OnFlushDone(WPARAM wParam,LPARAM lParam);
 	// END SiRoB: Flush Thread
 	//MORPH START - Added by SiRoB, Import Parts - added by zz_fly
@@ -343,6 +373,10 @@ protected:
 	afx_msg LRESULT OnFrameGrabFinished(WPARAM wParam,LPARAM lParam);
 
 	afx_msg LRESULT OnAreYouEmule(WPARAM, LPARAM);
+
+#ifdef HAVE_WIN7_SDK_H
+	afx_msg LRESULT OnTaskbarBtnCreated (WPARAM, LPARAM);
+#endif
 
 	//Webinterface
 	afx_msg LRESULT OnWebGUIInteraction(WPARAM wParam, LPARAM lParam);
@@ -461,7 +495,9 @@ enum EEMuleAppMsgs
 	//Xman
 	// BEGIN SLUGFILLER: SafeHash - new handling
 	TM_PARTHASHEDOK,
+	TM_PARTHASHEDOKNOAICH,
 	TM_PARTHASHEDCORRUPT,
+	TM_PARTHASHEDCORRUPTNOAICH,
 	TM_PARTHASHEDOKAICHRECOVER,
 	TM_PARTHASHEDCORRUPTAICHRECOVER,
 	// END SLUGFILLER: SafeHash

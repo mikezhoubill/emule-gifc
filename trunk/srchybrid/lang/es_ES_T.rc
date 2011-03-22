@@ -499,7 +499,6 @@ BEGIN
     IDS_PW_USS              "Auto-actualizar lista de servidores al iniciar"
     IDS_PW_MISC             "Opciones varias"
     IDS_PW_TRAY             "Minimizar al área de notificación"
-    IDS_PW_BEEP             "Sonido en errores"
     IDS_PW_PROMPT           "Preguntar al salir"
     IDS_PW_SPLASH           "Mostrar pantalla de inicio"
     IDS_PW_DBLCLICK         "Pinchar dos veces sobre una descarga para ver sus fuentes"
@@ -698,7 +697,6 @@ END
 STRINGTABLE 
 BEGIN
     IDS_DOWNLOADMOVIECHUNKS "Intentar descargar antes la primera y última parte"
-    IDS_UPDATEQUEUE         "No actualizar la lista de cola de espera en tiempo real"
     IDS_RECOVER_SINGLE      "1 archivo recuperado."
     IDS_RECOVER_MULTIPLE    "%u archivos recuperados."
     IDS_ATTEMPTING_RECOVERY "Intentando recuperar archivo"
@@ -1090,7 +1088,6 @@ BEGIN
     IDS_WEB_BADLOGINATTEMPT "Servidor Web: Intento erróneo de inicio de sesión"
     IDS_ERR_TOOLARGEFILE    "El tamaño del archivo es mayor que el soportado por el protocolo eDonkey (>=256GB)"
     IDS_MSGONLYFRIENDS      "Aceptar sólo de amigos"
-    IDS_MSGONLYSEC          "Aceptar sólo de clientes válidos"
     IDS_DAY_MO_SA           "Lun-Sab"
     IDS_LIMITSOURCES        "Límite de fuentes"
     IDS_LIMITCONS5SEC       "Límite conexiones/5seg"
@@ -1139,7 +1136,6 @@ BEGIN
     IDS_DL_RESUMENEXT       "Reanudar siguiente archivo pausado"
     IDS_STARTPRIO           "Prioridad para esta categoría"
     IDS_PREF_STARTNEXTFILECAT "Prefer. misma categoría"
-    IDS_REPAINTGRAPHS       "No redibujar gráficos de estadísticas al cambiar de tamaño"
     IDS_SOFTFILES           "Límite de archivo bajo"
 END
 
@@ -1558,7 +1554,6 @@ BEGIN
     IDS_FO_PREF_FAILED      "¡Error al configurar el cortafuegos interno de WinXP para los puertos seleccionados!"
     IDS_FO_PREF_STARTUP     "Abrir/cerrar puertos en el cortafuegos de WinXP cuando se inicia/cierra eMule"
     IDS_LOG_LEVEL           "Nivel de registro"
-    IDS_DISABLEPEERACHE     "Desactivar descarga desde PeerCache"
     IDS_SOURCESWAPBLOCKED   "Intercambio bloqueado"
     IDS_A4AF_CHECK_THIS_NOW "Comprobar esta fuente ahora (debug)"
     IDS_NEWMSG              "Nuevo Mensaje de '%s' (IP:%s)"
@@ -1650,7 +1645,7 @@ BEGIN
     IDS_LD_COPYCLIPBOARD    "Copiar al Portapapeles"
     IDS_LD_HOSTNAME         "Usar hostname (dirección de Red), desde Preferencias, en vez de la IP cuando se crea un enlace de fuente"
     IDS_SAVEACFAILED        "¡Error al guardar conjunto de hashes AICH!"
-    IDS_IACHHASH            "Hash AICH"
+    IDS_AICHHASH            "Hash AICH"
     IDS_BYTESPERSEC         "B/s"//!
     IDS_KBYTESPERSEC        "kB/s"
     IDS_MBYTESPERSEC        "MB/s"//!
@@ -1970,6 +1965,33 @@ BEGIN
     IDS_RESOLVELINKS        "Compartir archivos a partir de sus accesos directos"
 END
 
+
+STRINGTABLE 
+BEGIN
+    IDS_DOWNLOADCOMMANDS    "Descargar comandos"
+    IDS_CLOSETOOLBAR        "Cerrar barra de herramientas"
+    IDS_SHOWTOOLBAR         "Mostrar barra de herramientas"
+    IDS_SEARCH_BADOPERATORCOMBINATION 
+                            "¡Al buscar en Kad no se puede combinar la primera palabra clave con un operador OR!\n\nPor ejemplo, no se puede buscar ""PalabraClave1 OR PalabraClave2"". Prueba con ""PalabraClave1 AND (PalabraClave2 OR PalabraClave3)"" o haz búsquedas por separado."
+    IDS_DISCOVEREDBY        "Descubierto por"
+    IDS_NODES               "Nodo(s)"
+    IDS_ROUTINGTABLE        "Tabla de enrutamiento"
+    IDS_PROTOCOLVERSION     "Versión del protocolo"
+    IDS_FOUNDNODESUSEFUL    "Encontrar nodos (útil)"
+    IDS_NORESPONSE          "Sin respuesta"
+    IDS_NOTASKED            "No se ha preguntado"
+    IDS_LOOKUPGRAPH         "Detalles de la búsqueda"
+    IDS_AUTOKADLOOKUPGRAPH  "Mostrar automáticamente búsquedas activas"
+    IDS_PAUSEONPREVIEW      "Pausar si se puede previsualizar"
+    IDS_PREVIEWWITH         "Previsualizar con"
+    IDS_CLOSEEMULE          "Cerrar eMule"
+    IDS_DONOTASKAGAIN       "No preguntar de nuevo"
+    IDS_POPULARITY          "Popularidad"
+    IDS_SHOWWIN7TASKBARGOODIES "Activar efectos de la barra de tareas de Windows 7"
+    IDS_LANMODE             "Modo LAN"
+    IDS_OPENPREFINI         "Abrir preferences.ini"
+END
+
 STRINGTABLE 
 BEGIN
     IDS_DROPNONEEDEDSRCS    "Eliminar NNS"
@@ -2107,15 +2129,16 @@ BEGIN
     IDS_SHOWADDITIONALGRAPH "Mostrar líneas de gráfico adicionales"
     IDS_CHECK4UPDATEMOD     "Comprobar si hay una nueva Xtreme versión"
     IDS_ANTILEECHEREMCRYPT_CHECK "Detectar emcrypt"
+    IDS_UPLOADMANAGEMENT_FRAME "Administración de subida"
+    IDS_UPLOADSLOTSPEED_LABEL "Velocidad de subida por slot"
     IDS_USENARROWFONT       "Caracteres estrechos en ventana de tráfico"
     IDS_SHOWBLOCKINGRATIO   "Mostrar ratio de conexiones bloquedas"
     IDS_FUNNYNICK           "Activar nicks graciosos"
     IDS_AUTOUPDATEIPFILTER  "Auto-actualizar IPFilter.dat"
     IDS_DROPBLOCKINGSOCKETS "eliminar conexiones muy bloqueadas"
     IDS_LOGPARTMISMATCH     "Logear solicitados con tamaños incorrectos"
-    IDS_CN_UPNPNAT          "Activar soporte UPnP "
-    IDS_CHUNKCHOOSER        "Método de selección de parte"
-    IDS_UPLOADINSTABLE      "Advertencia: La configuración de subida parece ser demasiado elevada. Por favor, revise la configuración! \n Mire el gráfico de subida, la línea blanca o amarilla (con NAFC) debería ser plana \n Este mensaje se genera una única vez"
+    IDS_CHUNKCHOOSER  "Método de selección de cada parte"
+    IDS_UPLOADINSTABLE "Aviso: Tu configuración de subida es excesiva. Por favor, ¡revísala! \n Fíjate en el gráfico de subida, la línea blanca o amarilla (con NAFC) debería ser plana \n Este mensaje aparece sólo una vez"
 END
 
 STRINGTABLE 
@@ -2165,14 +2188,21 @@ BEGIN
     IDS_OBFUSCATION_PADDING_LENGTH  "Octetos Ofuscados [10-254]"
     IDS_GETFRIENDED2KLINK   "Copiar link de amigo en el portapapeles"
     IDS_GETHTMLFRIENDED2KLINK "Copiar link de amigo en el portapapeles (HTML)"
+    IDS_DOWNLOADEMFRIENDSMET "Descargar emfriends.met"
+    IDS_EMFRIENDSMETURL     "Por favor introduzca la URL de emfriends.met:"
     IDS_ERR_FAILEDDOWNLOADEMFRIENDS "No se pudo descargar la lista de amigos de %s"
     IDS_GETMYFRIENDED2KLINK "Copiar link de mi amigo en el portapapeles"
     IDS_GETMYHTMLFRIENDED2KLINK "Copiar link de mi amigo en el portapapeles (HTML)"
     IDS_FRIENDLINKMENUTITLE "Links de amigos"
-    IDS_DOWNLOADEMFRIENDSMET "Descargar emfriends.met"
-    IDS_EMFRIENDSMETURL     "Por favor introduzca la URL de emfriends.met:"
     IDS_USER_ALREADY_FRIEND "Usuario ""%s"" ya esta en tu lista de amigos"
     IDS_PROGRESSHASHDONE    "Hash finalizado: %s"
+    IDS_RETRIEVEMTUFROMSOCKET "Intentar recibir el MTU del sistema"
+    IDS_ENABLEKNOWN2BUFFER  "Activar el búfer AICHHashset (reduce el uso del disco al hacer hash de muchos archivos)"
+    IDS_ANTILEECHERFINCAN_CHECK 
+                            "Detectar el hash de comunidad Fincan (¡Uso intensivo de CPU!)"
+    IDS_ENABLEKNOWN2SPLIT   "Separar Known2_64.met, deja los AICHHashsets no compartidos en un único archivo"
+    IDS_EMULE_CTRL_DATA     "eMule control + datos"
+    IDS_NETWORK_ADAPTER     "Adaptador de Red"
 END
 
 STRINGTABLE
@@ -2292,7 +2322,7 @@ BEGIN
     IDS_BACKUP_AUTOBACKUP2  "Doble copia"
     IDS_ABORT               "¿Cancelar?"
     IDS_CONTINUE            "&Continar"
-    IDS_DONOTASKAGAIN       "No volver a preguntarme"
+//    IDS_DONOTASKAGAIN       "No volver a preguntarme"
     IDS_DONOTSHOWAGAIN      "No volver a mostrarlo"
     IDS_DONOTTELLAGAIN      "No volver a decirmelo"
     IDS_HELP                "&Ayuda"
@@ -2414,7 +2444,9 @@ BEGIN
     IDS_DL_MODE_DEFAULT     "Modo Resumir por defecto"
     IDS_DL_NONE             "Ninguno"
     IDS_SEARCH_INVALIDMINMAX "Unidades inválidas para Min/Max tamaño del archivo especificado"
-// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+    IDS_KEEPCATINCSHARED    "En caso de eliminar una categoría el directorio compartido sera puesto a compartir?"
+    IDS_KEEPCATINCSHARED_TITLE "Categoría Eliminada"
+    IDS_ADD_REMOVED_INC     "Pregunta si el directorio compartido de una categoría eliminada es puesto a compartir."
     IDS_SHARED_PREFS        "Gestión de los Archivos Compartidos" // Shared Files Management [Stulle] - Stulle
 // ==> Spread bars [Slugfiller/MorphXT] - Stulle
     IDS_SPREAD_BARS         "Activar las Barras de Difusión"
@@ -2510,13 +2542,14 @@ BEGIN
     IDS_RATIO_GROUP             "SU:DE Ratio"
     IDS_ENFORCE_RATIO           "Imponer siemrpe ratio"
     IDS_RATIO_VALUE             "Máx ratio 1"
-	IDS_RATIO_REASON            "Razón"
-    IDS_RATIO_REASON2           "Máximo Límite Global para ser justos"
-    IDS_RATIO_REASON3           "Cantidad basada en el ratio 1:3 si la subida < 11"
-    IDS_RATIO_REASON4           "NAFC límite de descarga dinámico"
-    IDS_RATIO_REASON5           "Imponer ratio"
-	IDS_RATIO_ACTIVATION        "Límite de descarga activado"
-    IDS_RATIO_LIMIT             "SU:DE Ratio será limitado al máx. 1"
+    IDS_DL_SES_RATIO            "Limite de ratio en sesion basado en el limite activo"
+    IDS_DL_LIMIT_DEF            "Limite de descarga configurado activo"
+    IDS_DL_UNL_NOUL             "Descarga sin restricción (no es posible la subida)"
+    IDS_DL_UNL_13RATIO          "Descarga ilimitada por ratio < 1:3"
+    IDS_DL_NAFC_LIMIT           "Descarga limitada por NAFC"
+    IDS_DL_RATIO_SRC            "Límite máximo global no aceptado"
+    IDS_DL_RATIO_ENF            "Ratio forzado"
+    IDS_DL_RATIO_LIMIT          "El ratio actual UL:DL es max. 1"
 // <== Enforce Ratio [Stulle] - Stulle
 // ==> Tabbed Preferences [TPT] - Stulle
     IDS_SCARANGEL               "ScarAngel"
@@ -2662,6 +2695,18 @@ BEGIN
     IDS_MEDIAINFO_MEDIADET  "Usar el Detector Multimedia (MediaDet) para adquirir la información de los archivos multimedia"
     IDS_MEDIAINFO_RM        "Usar mediainfo.dll para identificar los archivos Real Media"
     IDS_MEDIAINFO_WM        "Usar mediainfo.dll para identificar los archivos Windows Media"
+    IDS_X_DATETIMEFORMAT4LIST "Formato Fecha-Hora para las listas"
+    IDS_UPDATEQUEUE         "No actualizar la lista de cola de espera en tiempo real"
+    IDS_REPAINTGRAPHS       "No redibujar gráficos de estadísticas al cambiar de tamaño"
+    IDS_EXTRAPREVIEWWITHMENU "Pantalla de vista previa con menú en el menú raíz"
+    IDS_SHOWUPDOWNICONINTASKBAR "Usar superposición para indicar subida/bajada en la barra de tareas"
+    IDS_FORCESPEEDSTOKB     "Mostrar todos los valores de velocidad en KB/s"
+    IDS_X_FILE_BUFFER_TIME_LIMIT "Límite de Tiempo del Buffer de Archivo (en segundos)"
+    IDS_X_REARRANGEKADSEARCH "Reordenar palabras clave a buscar en KAD"
+    IDS_PW_BEEP             "Sonido en errores"
+    IDS_MSGONLYSEC          "Aceptar sólo de clientes válidos"
+    IDS_DISABLEPEERACHE     "Desactivar descarga desde PeerCache"
+    IDS_KEEPUNAVAILABLEFIXEDSHAREDDIRS "Mantener directorios disponible en unidades fijas"
     // <== Advanced Options [Official/MorphXT] - Stulle
     // ==> Advanced Updates [MorphXT/Stulle] - Stulle
     IDS_UPDATEANTILEECHERONSTART "Actualizar antiLeech.dll al inicio"

@@ -111,6 +111,5 @@ public:
 	void OnBackcolor();
 protected:
 	CBrush m_brMyBrush;
-	HBRUSH hbr;
 	// <== Design Settings [eWombat/Stulle] - Max
 };

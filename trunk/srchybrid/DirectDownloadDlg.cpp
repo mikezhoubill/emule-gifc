@@ -211,6 +211,7 @@ void CDirectDownloadDlg::UpdateCatTabs() {
 
 	m_cattabs.SetCurSel(oldsel);
 }
+
 // ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 void CDirectDownloadDlg::OnNMClickCats(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 {

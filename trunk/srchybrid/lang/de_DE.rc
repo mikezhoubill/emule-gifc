@@ -497,7 +497,6 @@ BEGIN
     IDS_PW_USS              "Serverliste beim Programmstart aktualisieren"
     IDS_PW_MISC             "Verschiedene Optionen"
     IDS_PW_TRAY             "Zum Systemicon minimieren"
-    IDS_PW_BEEP             "Piepton bei Fehler"
     IDS_PW_PROMPT           "Sicherheitsabfrage bei Programmbeendigung"
 END
 
@@ -725,7 +724,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_UPDATEQUEUE         "Warteschlangenliste nicht in Echtzeit aktualisieren"
     IDS_RECOVER_SINGLE      "1 Datei restauriert."
     IDS_RECOVER_MULTIPLE    "%u Dateien restauriert."
     IDS_ATTEMPTING_RECOVERY "Versuche Archiv-Restaurierung..."
@@ -1080,7 +1078,6 @@ STRINGTABLE
 BEGIN
     IDS_ERR_TOOLARGEFILE    "Datei ist größer als vom Edonkey Protokoll unterstützt (>=256GB)"
     IDS_MSGONLYFRIENDS      "Nur von Freunden akzeptieren"
-    IDS_MSGONLYSEC          "Nur von gültigen Clients akzeptieren"
     IDS_DAY_MO_SA           "Mo-Sa"
     IDS_LIMITSOURCES        "Max. Quellen"
     IDS_LIMITCONS5SEC       "Max. neue Verb./5sek"
@@ -1130,7 +1127,6 @@ BEGIN
     IDS_DL_RESUMENEXT       "Nächste pausierte Datei fortsetzen"
     IDS_STARTPRIO           "Priorität dieser Kategorie"
     IDS_PREF_STARTNEXTFILECAT "Gleiche Kategorie bevorzugen"
-    IDS_REPAINTGRAPHS       "Statistikgraphen bei Fensteränderung nicht neu berechnen"
     IDS_SOFTFILES           "Dateilimit (weich)"
     IDS_HARDFILES           "Dateilimit (hart)"
     IDS_FILTER              "Filter" //!
@@ -1549,7 +1545,6 @@ END
 STRINGTABLE 
 BEGIN
     IDS_LOG_LEVEL           "Log Level"
-    IDS_DISABLEPEERACHE     "Download von PeerCache deaktivieren"
     IDS_NEWMSG              "Neue Nachricht von '%s' (IP:%s)"
     IDS_PREF_STARTNEXTFILECATONLY "Nur aus gleicher Kategorie"
     IDS_LOG_ULDL_EVENTS     "Logge Upload/Download Ereignisse"
@@ -1641,7 +1636,7 @@ BEGIN
     IDS_LD_COPYCLIPBOARD    "In Zwischenablage kopieren"
     IDS_LD_HOSTNAME         "Benutze Hostnamen (aus den Einstellungen) anstatt der IP, wenn eD2K-Links mit Quelle erstellt werden"
     IDS_SAVEACFAILED        "AICH Hashset konnte nicht gespeichert werden!"
-    IDS_IACHHASH            "AICH Hash" //!
+    IDS_AICHHASH            "AICH Hash" //!
     IDS_BYTESPERSEC         "B/s"			//!
     IDS_KBYTESPERSEC        "KB/s"		//!
     IDS_MBYTESPERSEC        "MB/s"		//!
@@ -1943,6 +1938,32 @@ END
 
 STRINGTABLE 
 BEGIN
+    IDS_DOWNLOADCOMMANDS    "Downloadbefehle"
+    IDS_CLOSETOOLBAR        "Schließe Toolbar"
+    IDS_SHOWTOOLBAR         "Zeige Toolbar"
+    IDS_SEARCH_BADOPERATORCOMBINATION 
+                            "Du darfst bei Suchanfragen an KAD nicht im ersten Schlüsselwort einen ODER-Operator (OR) nutzen!\n\nZum Beispiel ""Keyword1 OR Keyword2"" ist nicht möglich. Nutze stattdessen ""Keyword1 AND (Keyword2 OR Keyword3)"" oder führe mehrere Suchen durch."
+    IDS_DISCOVEREDBY        "Entdeckt von"
+    IDS_NODES               "Knoten"
+    IDS_ROUTINGTABLE        "Routingtabelle"
+    IDS_PROTOCOLVERSION     "Protokollversion"
+    IDS_FOUNDNODESUSEFUL    "gefundene Knoten (nützliche)"
+    IDS_NORESPONSE          "keine Antwort"
+    IDS_NOTASKED            "nicht angefragt"
+    IDS_LOOKUPGRAPH         "Suchdetails"
+    IDS_AUTOKADLOOKUPGRAPH  "automatisch aktive Suchen anzeigen"
+    IDS_PAUSEONPREVIEW      "Pausiere wenn Vorschau möglich"
+    IDS_PREVIEWWITH         "Vorschau mit"
+    IDS_CLOSEEMULE          "eMule beenden"
+    IDS_DONOTASKAGAIN       "nicht erneut nachfragen"
+    IDS_POPULARITY          "Popularitätsrang"
+    IDS_SHOWWIN7TASKBARGOODIES "Aktiviere Windows7 Taskbareffekte"
+    IDS_LANMODE             "LAN Modus"
+    IDS_OPENPREFINI         "Öffne preferences.ini"
+END
+
+STRINGTABLE 
+BEGIN
     IDS_DROPNONEEDEDSRCS    "Entferne NNS"
     IDS_DROPQUEUEFULLSRCS   "Entferne FullQ"
     IDS_DROPQUEUETOOMANY    "Entferne Too Many"
@@ -2078,6 +2099,7 @@ BEGIN
     IDS_SHOWADDITIONALGRAPH "Zeige zusätzliche Graphlinien"
     IDS_CHECK4UPDATEMOD     "Auf neuere Xtreme-Version prüfen"
     IDS_ANTILEECHEREMCRYPT_CHECK "Erkenne emcrypt"
+    IDS_UPLOADMANAGEMENT_FRAME "Upload Verwaltung"
     IDS_UPLOADSLOTSPEED_LABEL "Upload Slot Geschwindigkeit"
     IDS_USENARROWFONT       "Benutze enge Schrift im Transfer-Fenster"
     IDS_SHOWBLOCKINGRATIO   "Zeige Socket Blockier-Verhältnis"
@@ -2085,7 +2107,6 @@ BEGIN
     IDS_AUTOUPDATEIPFILTER  "Auto-update IPFilter.dat"
     IDS_DROPBLOCKINGSOCKETS "Entferne zu häufig blockierende Sockets"
     IDS_LOGPARTMISMATCH     "Logge Größendifferenz der angeforderten Dateien"
-    IDS_CN_UPNPNAT          "Aktiviere UPnP support"
     IDS_CHUNKCHOOSER        "Download Chunk Auswahlmethode"
     IDS_UPLOADINSTABLE      "Warnung: Dein Uploadlimit scheint zu hoch gewählt zu sein. Bitte überprüfe Deine Uploadeinstellungen! \n Schaue auf Deinen Uploadgraphen, die weiße oder gelbe (mit NAFC) Linie sollte möglichst gerade sein \n Diese Nachricht wird nur einmal generiert."
 END
@@ -2148,10 +2169,17 @@ BEGIN
     IDS_GETMYFRIENDED2KLINK "Kopiere Freund-Link in Zwischenablage"
     IDS_GETMYHTMLFRIENDED2KLINK "Kopiere Freund-Link in Zwischenablage (HTML)"
     IDS_FRIENDLINKMENUTITLE "Freund-Links"
-	IDS_DOWNLOADEMFRIENDSMET "Lade emfriends.met herunter"
+    IDS_DOWNLOADEMFRIENDSMET "emfriends.met herunterladen"
     IDS_EMFRIENDSMETURL     "Bitte gib die URL der emfriends.met ein:"
 	IDS_USER_ALREADY_FRIEND "Nutzer ""%s"" ist bereits in der Freunde-Liste"
 	IDS_PROGRESSHASHDONE	"Überprüfung erledigt: %s"
+    IDS_RETRIEVEMTUFROMSOCKET "Versuche MTU von System zu ermitteln"
+    IDS_ENABLEKNOWN2BUFFER  "AICHHashset Puffer aktivieren (reduziert Festplattenzugriff beim hashen vieler Dateien)"
+    IDS_ANTILEECHERFINCAN_CHECK 
+                            "Erkenne Fincan Community Hash (CPU intensiv!)"
+    IDS_ENABLEKNOWN2SPLIT   "Known2_64.met aufteilen, hält nicht freigegebene AICHHashsets in einer einzelnen Datei"
+    IDS_EMULE_CTRL_DATA     "eMule Overhead + Daten"
+    IDS_NETWORK_ADAPTER     "Netzwerkadapter"
 END
 
 STRINGTABLE 
@@ -2271,7 +2299,7 @@ BEGIN
     IDS_BACKUP_AUTOBACKUP2  "Doppel-Backup"
     IDS_ABORT               "Abbruch?"
     IDS_CONTINUE            "&Weiter"
-    IDS_DONOTASKAGAIN       "Nicht noch mal frage"
+//    IDS_DONOTASKAGAIN       "Nicht noch mal frage"
     IDS_DONOTSHOWAGAIN      "Nicht noch mal anzeigen"
     IDS_DONOTTELLAGAIN      "Nicht noch mal melden"
     IDS_HELP                "&Hilfe"
@@ -2395,6 +2423,9 @@ BEGIN
     IDS_CAT_STARTFILESONADD "Starte # Dateien,  wenn sie zu einer neuen Kategorie hinzugefügt werden"
     IDS_DL_MODE_DEFAULT     "Standard Fortsetzungsmodus"
     IDS_DL_NONE             "Keinen"
+    IDS_KEEPCATINCSHARED    "Sollte Ziel-Ordner für fertige Dateien der entfernten Kategorie als\nfreigegebenes Verzeichnis hinzugefügt werden?"
+    IDS_KEEPCATINCSHARED_TITLE "Kategorie entfernt"
+    IDS_ADD_REMOVED_INC     "Frage ob Ziel-Ordner für fertige Dateien entfernter Kategorien als freigegebenes Verzeichnis hinzugefügt werden sollten."
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Freigegebene Dateien Verwaltung" // Shared Files Management [Stulle] - Stulle
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2492,13 +2523,14 @@ BEGIN
     IDS_RATIO_GROUP             "UL:DL Verhältnis"
     IDS_ENFORCE_RATIO           "Erzwinge Verhältnis immer"
     IDS_RATIO_VALUE             "Max Verhältnis 1"
-    IDS_RATIO_REASON            "Erzwinge"
-    IDS_RATIO_REASON2           "Globales Quellenlimit für fairness"
-    IDS_RATIO_REASON3           "Erzwinge 1:3 Verhältnis, wenn Upload < 11"
-    IDS_RATIO_REASON4           "NAFC dynamisches Downloadlimit"
-    IDS_RATIO_REASON5           "Erzwinge Verhältnis"
-    IDS_RATIO_ACTIVATION        "Downloadlimit aktiviert"
-    IDS_RATIO_LIMIT             "UL:DL Verhältnis wird limitiert max auf: 1"
+    IDS_DL_SES_RATIO            "Sitzungsverhältnis basiertes limit aktiviert"
+    IDS_DL_LIMIT_DEF            "Eingestelltes Downloadlimit aktiv"
+    IDS_DL_UNL_NOUL             "Download unbeschränkt (kein Upload möglich)"
+    IDS_DL_UNL_13RATIO          "Download unbeschränkt da Verhältnis < 1:3"
+    IDS_DL_NAFC_LIMIT           "Download beschränkt durch NAFC"
+    IDS_DL_RATIO_SRC            "Globales Max Quellenlimit nicht akzeptiert"
+    IDS_DL_RATIO_ENF            "Erzwungenes Verhältnis"
+    IDS_DL_RATIO_LIMIT          "Aktuelles UL:DL Verhältnis ist max. 1"
     // <== Enforce Ratio [Stulle] - Stulle
     // ==> Tabbed Preferences [TPT] - Stulle
     IDS_SCARANGEL               "ScarAngel"
@@ -2642,6 +2674,21 @@ BEGIN
     IDS_X_SHOWVERTICALHOURMARKERS "Stats- Zeige vertikale Stundenmarker"
     IDS_X_REBARTOOLBAR      "* ReBar Toolbar"
     IDS_BINDADDR            "Binde emule an Adapter"
+    IDS_MEDIAINFO_MEDIADET  "Nutze Media Detector (MediaDet) um Informationen über Mediendateien zu erhalten"
+    IDS_MEDIAINFO_RM        "Nutze mediainfo.dll um Real Media Dateien zu erkennen"
+    IDS_MEDIAINFO_WM        "Nutze mediainfo.dll um Windows Media Dateien zu erkennen"
+    IDS_X_DATETIMEFORMAT4LIST "Datum&Zeit Format fürs Listen"
+    IDS_UPDATEQUEUE         "Warteschlangenliste nicht in Echtzeit aktualisieren"
+    IDS_REPAINTGRAPHS       "Statistikgraphen bei Fensteränderung nicht neu berechnen"
+    IDS_EXTRAPREVIEWWITHMENU "Zeige Vorschau mit Menü im Basis Kontextmenü"
+    IDS_SHOWUPDOWNICONINTASKBAR "Nutze overlay um up/down in der Taskbar anzuzeigen"
+    IDS_FORCESPEEDSTOKB     "Zeige alle Geschwindigkeiten in KB/s"
+    IDS_X_FILE_BUFFER_TIME_LIMIT "Dateipuffer Zeitbegrenzung (in Sek)"
+    IDS_X_REARRANGEKADSEARCH "Ordne KAD Suchbegriffe neu an"
+    IDS_PW_BEEP             "Piepton bei Fehler"
+    IDS_MSGONLYSEC          "Nur von gültigen Clients akzeptieren"
+    IDS_DISABLEPEERACHE     "Download von PeerCache deaktivieren"
+    IDS_KEEPUNAVAILABLEFIXEDSHAREDDIRS "Behalte nicht verfügbare Verzeichnisse auf festen Laufwerken"
     // <== Advanced Options [Official/MorphXT] - Stulle
     // ==> Advanced Updates [MorphXT/Stulle] - Stulle
     IDS_UPDATEANTILEECHERONSTART "Aktualisiere antiLeech.dll beim Start"
@@ -2669,9 +2716,6 @@ BEGIN
     IDS_AUTODLPFAILED       "Kontrollieren der DLP fehlgeschlagen."
     IDS_ANTILEECH_DWNFILE   "Download der DLP Datei"
     IDS_AUTOIPFILTERFAILED  "Konnte IPFilter Version nicht überprüfen."
-    IDS_MEDIAINFO_MEDIADET  "Nutze Media Detector (MediaDet) um Informationen über Mediendateien zu erhalten"
-    IDS_MEDIAINFO_RM        "Nutze mediainfo.dll um Real Media Dateien zu erkennen"
-    IDS_MEDIAINFO_WM        "Nutze mediainfo.dll um Windows Media Dateien zu erkennen"
     // <== Advanced Updates [MorphXT/Stulle] - Stulle
     // ==> Links for Server list and nodes file [Stulle] - Stulle
     IDS_NODESFILEBUTTON     "Nodes Datei"

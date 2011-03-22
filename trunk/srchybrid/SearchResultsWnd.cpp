@@ -52,7 +52,7 @@
 #include "DropDownButton.h"
 #include "ButtonsTabCtrl.h"
 #include "KnownFileList.h" //Xman [MoNKi: -Check already downloaded files-]
-#include "TransferWnd.h" // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+#include "TransferDlg.h" // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -197,6 +197,13 @@ void CSearchResultsWnd::OnInitialUpdate()
 		GetDlgItem(IDC_STATIC_DLTOof)->SetFont(&theApp.m_fontSymbol);
 		GetDlgItem(IDC_STATIC_DLTOof)->SetWindowText(GetExStyle() & WS_EX_LAYOUTRTL ? _T("3") : _T("4")); // show a right-arrow
 	}
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+	m_ctlOpenParamsWnd.ModifyStyle(0,BS_OWNERDRAW,0);
+	m_Download.ModifyStyle(0,BS_OWNERDRAW,0);
+	m_ClearAll.ModifyStyle(0,BS_OWNERDRAW,0);
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 }
 
 void CSearchResultsWnd::DoDataExchange(CDataExchange* pDX)
@@ -208,6 +215,12 @@ void CSearchResultsWnd::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CATTAB2, *m_cattabs);
 	DDX_Control(pDX, IDC_FILTER, m_ctlFilter);
 	DDX_Control(pDX, IDC_OPEN_PARAMS_WND, m_ctlOpenParamsWnd);
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+	DDX_Control(pDX, IDC_SDOWNLOAD, m_Download);
+	DDX_Control(pDX, IDC_CLEARALL, m_ClearAll);
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	DDX_Control(pDX, IDC_SEARCHLST_ICO, *m_btnSearchListMenu);
 }
 
@@ -972,6 +985,23 @@ void ParsedSearchExpression(const CSearchExpr* pexpr)
 	//  12
 	if (iOpAnd + iOpOr + iOpNot > 10)
 		yyerror(GetResString(IDS_SEARCH_TOOCOMPLEX));
+	
+	// FIXME: When searching on Kad the keyword may not be included into the OR operator in anyway (or into the not part of NAND)
+	// Currently we do not check this properly for all cases but only for the most common ones and more important we
+	// do not try to rearrange keywords, which could make a search valid
+	if (!s_strCurKadKeywordA.IsEmpty() && iOpOr > 0)
+	{
+		if (iOpAnd + iOpNot > 0)
+		{
+			if (pexpr->m_aExpr.GetCount() > 2)
+			{
+				if (pexpr->m_aExpr[0].m_str == SEARCHOPTOK_OR && pexpr->m_aExpr[1].m_str == s_strCurKadKeywordA)
+					yyerror(GetResString(IDS_SEARCH_BADOPERATORCOMBINATION));
+			}
+		}
+		else // if we habe only OR its not going to work out for sure
+			yyerror(GetResString(IDS_SEARCH_BADOPERATORCOMBINATION));
+	}
 
 	s_SearchExpr.m_aExpr.RemoveAll();
 	// optimize search expression, if no OR nor NOT specified
@@ -991,6 +1021,7 @@ void ParsedSearchExpression(const CSearchExpr* pexpr)
 				{
 					if (pexpr->m_aExpr[i].m_str != s_strCurKadKeywordA 
 						&& pexpr->m_aExpr[i].m_str.FindOneOf(g_aszInvKadKeywordCharsA) == (-1)
+						&& pexpr->m_aExpr[i].m_str.Find('"') != 0 // no quoted expressions as keyword
 						&& pexpr->m_aExpr[i].m_str.GetLength() >= 3
 						&& s_strCurKadKeywordA.GetLength() < pexpr->m_aExpr[i].m_str.GetLength())
 					{
@@ -1418,7 +1449,7 @@ bool CSearchResultsWnd::StartNewSearch(SSearchParams* pParams)
 			//	Kademlia::CKademlia::Start();
 			return false;
 		}
-
+		
 		try
 		{
 			if (!DoNewKadSearch(pParams)) {
@@ -1537,6 +1568,15 @@ bool CSearchResultsWnd::DoNewKadSearch(SSearchParams* pParams)
 
 	int iPos = 0;
 	pParams->strKeyword = pParams->strExpression.Tokenize(_T(" "), iPos);
+	if (!pParams->strKeyword.IsEmpty() && pParams->strKeyword.GetAt(0) == _T('\"'))
+	{
+		// remove leading and possibly trailing quotes, if they terminate properly (otherwise the keyword is later handled as invalid)
+		// (quotes are still kept in search expr and matched against the result, so everything is fine)
+		if (pParams->strKeyword.GetLength() > 1 && pParams->strKeyword.Right(1).Compare(_T("\"")) == 0)
+			pParams->strKeyword = pParams->strKeyword.Mid(1, pParams->strKeyword.GetLength() - 2);
+		else if (pParams->strExpression.Find(_T('\"'), 1) > pParams->strKeyword.GetLength())
+			pParams->strKeyword = pParams->strKeyword.Mid(1, pParams->strKeyword.GetLength() - 1);
+	}
 	pParams->strKeyword.Trim();
 
 	CSafeMemFile data(100);
@@ -2114,19 +2154,23 @@ HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 */
-HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* /*pWnd*/, UINT nCtlColor)
+HBRUSH CSearchResultsWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	HBRUSH hbr = theApp.emuledlg->GetWndClr();
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }
@@ -2166,10 +2210,30 @@ void CSearchResultsWnd::OnBackcolor()
 
 	m_brMyBrush.DeleteObject();
 
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER<1600
 	if(crTempColor != CLR_DEFAULT)
 		m_brMyBrush.CreateSolidBrush(crTempColor);
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+#else
+	if(crTempColor != CLR_DEFAULT)
+	{
+		m_brMyBrush.CreateSolidBrush(crTempColor);
+		m_ctlOpenParamsWnd.SetBackgroundColor(crTempColor);
+		m_Download.SetBackgroundColor(crTempColor);
+		m_ClearAll.SetBackgroundColor(crTempColor);
+	}
+	else
+	{
+		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+		m_ctlOpenParamsWnd.SetBackgroundColor(COLORREF(-1));
+		m_Download.SetBackgroundColor(COLORREF(-1));
+		m_ClearAll.SetBackgroundColor(COLORREF(-1));
+	}
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	searchselect.m_clrBack = crTempColor;
 }
 
 void CSearchResultsWnd::OnSize(UINT nType, int cx, int cy)

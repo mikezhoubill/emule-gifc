@@ -43,7 +43,7 @@
 				AdditionalDependencies="version.lib winmm.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib Iphlpapi.lib mpr.lib WMSDK\lib9\WMVCORE.lib"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				IgnoreDefaultLibraryNames=""
+				IgnoreDefaultLibraryNames="msvcrtd.lib"
 				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -117,7 +117,7 @@
 				AdditionalOptions="/safeseh"
 				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib WMSDK\lib9\WMVCORE.lib"
 				LinkIncremental="1"
-				IgnoreDefaultLibraryNames="kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;shell32.lib;comdlg32.lib;version.lib;mpr.lib;rasapi32.lib;winmm.lib;winspool.lib;vfw32.lib;secur32.lib;oleacc.lib;oledlg.lib;sensapi.lib"
+				IgnoreDefaultLibraryNames="kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;shell32.lib;comdlg32.lib;version.lib;mpr.lib;rasapi32.lib;winmm.lib;winspool.lib;vfw32.lib;secur32.lib;oleacc.lib;oledlg.lib;sensapi.lib;msvcrt.lib"
 				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -197,7 +197,7 @@ echo Enabling Dynamic Base support...
 				AdditionalOptions="/safeseh"
 				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib ws2_32.lib gdiplus.lib ADSIId.lib Mpr.lib crypt32.lib WMSDK\lib9\WMVCORE.lib"
 				LinkIncremental="1"
-				IgnoreDefaultLibraryNames="kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;shell32.lib;comdlg32.lib;version.lib;mpr.lib;rasapi32.lib;winmm.lib;winspool.lib;vfw32.lib;secur32.lib;oleacc.lib;oledlg.lib;sensapi.lib"
+				IgnoreDefaultLibraryNames="kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;shell32.lib;comdlg32.lib;version.lib;mpr.lib;rasapi32.lib;winmm.lib;winspool.lib;vfw32.lib;secur32.lib;oleacc.lib;oledlg.lib;sensapi.lib;msvcrt.lib"
 				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -316,6 +316,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="EncryptedStreamSocket.cpp">
+			</File>
+			<File
+				RelativePath="FileIdentifier.cpp">
 			</File>
 			<File
 				RelativePath="FirewallOpener.cpp">
@@ -721,6 +724,9 @@ del $(IntDir)\emule.obj
 					RelativePath="kademlia\utils\LittleEndian.cpp">
 				</File>
 				<File
+					RelativePath="kademlia\utils\LookupHistory.cpp">
+				</File>
+				<File
 					RelativePath="kademlia\utils\MiscUtils.cpp">
 				</File>
 				<File
@@ -847,6 +853,9 @@ del $(IntDir)\emule.obj
 				RelativePath="Exceptions.h">
 			</File>
 			<File
+				RelativePath="FileIdentifier.h">
+			</File>
+			<File
 				RelativePath="FirewallOpener.h">
 			</File>
 			<File
@@ -928,9 +937,6 @@ del $(IntDir)\emule.obj
 				RelativePath="PartFileConvert.h">
 			</File>
 			<File
-				RelativePath="PeerCacheClient.h">
-			</File>
-			<File
 				RelativePath="PeerCacheFinder.h">
 			</File>
 			<File
@@ -968,9 +974,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="SearchFile.h">
-			</File>
-			<File
-				RelativePath="SearchFrm.h">
 			</File>
 			<File
 				RelativePath="SearchList.h">
@@ -1112,6 +1115,9 @@ del $(IntDir)\emule.obj
 				</File>
 				<File
 					RelativePath="kademlia\utils\LittleEndian.h">
+				</File>
+				<File
+					RelativePath="kademlia\routing\LookupHistory.h">
 				</File>
 				<File
 					RelativePath="kademlia\routing\Maps.h">
@@ -1279,6 +1285,9 @@ del $(IntDir)\emule.obj
 				RelativePath="FileDetailDialogName.cpp">
 			</File>
 			<File
+				RelativePath="FileDetailDlgStatistics.cpp">
+			</File>
+			<File
 				RelativePath="FileInfoDialog.cpp">
 			</File>
 			<File
@@ -1313,6 +1322,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="KademliaWnd.cpp">
+			</File>
+			<File
+				RelativePath="KadLookupGraph.cpp">
 			</File>
 			<File
 				RelativePath=".\KeyHelper.cpp">
@@ -1486,7 +1498,13 @@ del $(IntDir)\emule.obj
 				RelativePath="ToolBarCtrlX.cpp">
 			</File>
 			<File
+				RelativePath="ToolbarWnd.cpp">
+			</File>
+			<File
 				RelativePath="ToolTipCtrlX.cpp">
+			</File>
+			<File
+				RelativePath="TransferDlg.cpp">
 			</File>
 			<File
 				RelativePath="TransferWnd.cpp">
@@ -1522,7 +1540,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Wizard.cpp">
 			</File>
 			<File
-				RelativePath=".\XMessageBox.cpp">
+				RelativePath="XMessageBox.cpp">
 			</File>
 			<Filter
 				Name="Lists"
@@ -1721,6 +1739,9 @@ del $(IntDir)\emule.obj
 				RelativePath="FileDetailDialogName.h">
 			</File>
 			<File
+				RelativePath="FileDetailDlgStatistics.h">
+			</File>
+			<File
 				RelativePath="FileInfoDialog.h">
 			</File>
 			<File
@@ -1758,6 +1779,9 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="KademliaWnd.h">
+			</File>
+			<File
+				RelativePath="KadLookupGraph.h">
 			</File>
 			<File
 				RelativePath=".\KeyHelper.h">
@@ -1949,7 +1973,13 @@ del $(IntDir)\emule.obj
 				RelativePath="ToolBarCtrlX.h">
 			</File>
 			<File
+				RelativePath="ToolbarWnd.h">
+			</File>
+			<File
 				RelativePath="ToolTipCtrlX.h">
+			</File>
+			<File
+				RelativePath="TransferDlg.h">
 			</File>
 			<File
 				RelativePath="TransferWnd.h">
@@ -1988,7 +2018,7 @@ del $(IntDir)\emule.obj
 				RelativePath="Wizard.h">
 			</File>
 			<File
-				RelativePath=".\XMessageBox.h">
+				RelativePath="XMessageBox.h">
 			</File>
 			<Filter
 				Name="Lists"
@@ -2211,9 +2241,6 @@ del $(IntDir)\emule.obj
 				RelativePath="res\ClientsOnQueue.ico">
 			</File>
 			<File
-				RelativePath="res\Close.ico">
-			</File>
-			<File
 				RelativePath=".\res\CloseTab.ico">
 			</File>
 			<File
@@ -2224,9 +2251,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\colour.ico">
-			</File>
-			<File
-				RelativePath="res\Comments.ico">
 			</File>
 			<File
 				RelativePath="res\ConnectDo.ico">
@@ -2334,9 +2358,6 @@ del $(IntDir)\emule.obj
 				RelativePath=".\res\Cut.ico">
 			</File>
 			<File
-				RelativePath="res\CycleView.ico">
-			</File>
-			<File
 				RelativePath="res\Delete.ico">
 			</File>
 			<File
@@ -2394,9 +2415,6 @@ del $(IntDir)\emule.obj
 				RelativePath="res\emule.rc2">
 			</File>
 			<File
-				RelativePath="res\emuleColl.ico">
-			</File>
-			<File
 				RelativePath="res\emuleCollAdd.ico">
 			</File>
 			<File
@@ -2425,9 +2443,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\ExportAll.ico">
-			</File>
-			<File
-				RelativePath="res\ExportSelected.ico">
 			</File>
 			<File
 				RelativePath="res\FileComments.ico">
@@ -2511,9 +2526,6 @@ del $(IntDir)\emule.obj
 				RelativePath="res\FileTypeDocument.ico">
 			</File>
 			<File
-				RelativePath="res\FileTypeEmuleCollection.ico">
-			</File>
-			<File
 				RelativePath="res\FileTypePicture.ico">
 			</File>
 			<File
@@ -2521,9 +2533,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\FileTypeVideo.ico">
-			</File>
-			<File
-				RelativePath="res\FolderOpen.gif">
 			</File>
 			<File
 				RelativePath="res\FolderOpen.ico">
@@ -2572,9 +2581,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Help.ico">
-			</File>
-			<File
-				RelativePath=".\res\iconmax.ico">
 			</File>
 			<File
 				RelativePath=".\res\iconstulle.ico">
@@ -2764,9 +2770,6 @@ del $(IntDir)\emule.obj
 				RelativePath="res\Preferences.ico">
 			</File>
 			<File
-				RelativePath=".\res\Prefs_Webcache.ico">
-			</File>
-			<File
 				RelativePath="res\Preview.ico">
 			</File>
 			<File
@@ -2786,9 +2789,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Proxy.ico">
-			</File>
-			<File
-				RelativePath="res\queue.ico">
 			</File>
 			<File
 				RelativePath=".\res\quickstart.ico">
@@ -3097,15 +3097,6 @@ del $(IntDir)\emule.obj
 				RelativePath="res\UserMessage.ico">
 			</File>
 			<File
-				RelativePath="res\ViewDownload.ico">
-			</File>
-			<File
-				RelativePath="res\ViewUpDown.ico">
-			</File>
-			<File
-				RelativePath="res\ViewUpload.ico">
-			</File>
-			<File
 				RelativePath="res\Web.ico">
 			</File>
 			<File
@@ -3113,9 +3104,6 @@ del $(IntDir)\emule.obj
 			</File>
 			<File
 				RelativePath="res\Wizard.ico">
-			</File>
-			<File
-				RelativePath="res\Wizzard.ico">
 			</File>
 			<File
 				RelativePath=".\res\Xray.ico">

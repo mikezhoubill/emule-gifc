@@ -64,12 +64,12 @@ UINT  RegisterServicePoint( LPVOID /* Param */ )
 	int retcode;
 	SERVICE_TABLE_ENTRY dispatchTable[] =
 	{
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		{ TEXT(SZSERVICENAME), (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		*/
 		{ (!thePrefs.GetServiceName().IsEmpty())?const_cast<LPWSTR>((LPCWSTR)thePrefs.GetServiceName()):TEXT(SZSERVICENAME), (LPSERVICE_MAIN_FUNCTION)ServiceMain},
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 		{ NULL, NULL }
 	};
 	RunningAsServiceStat=1;
@@ -104,12 +104,12 @@ void CALLBACK ServiceMain( DWORD ,  LPTSTR* )
 	int  success;
 	RunningAsServiceStat=1;
 	// First we must call the Registration function
-	// ==> Adjustable NT Service Strings - Stulle
+	// ==> Adjustable NT Service Strings [Stulle] - Stulle
 	/*
 	sshStatusHandle= RegisterServiceCtrlHandler(_T(SZSERVICENAME),
 	*/
 	sshStatusHandle= RegisterServiceCtrlHandler((!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():_T(SZSERVICENAME),
-	// <== Adjustable NT Service Strings - Stulle
+	// <== Adjustable NT Service Strings [Stulle] - Stulle
 						(LPHANDLER_FUNCTION) service_ctrl);
 	if (!sshStatusHandle)
 	{
@@ -300,7 +300,7 @@ int CmdInstallService(bool b_autostart)
 	if ( schSCManager )
 	{
 		CString DisplayName;
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		DisplayName.Format(_T(SZSERVICEDISPLAYNAME),MOD_VERSION);
 		schService = CreateService(
@@ -314,7 +314,7 @@ int CmdInstallService(bool b_autostart)
 		schService = CreateService(
 			schSCManager,               // SCManager database
 			(!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME),        // name of service
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 			DisplayName,				// name to display
 			SERVICE_ALL_ACCESS,         // desired access
 			SERVICE_WIN32_OWN_PROCESS /* | SERVICE_INTERACTIVE_PROCESS */ ,  // service type can be emulesecure also ....
@@ -330,11 +330,11 @@ int CmdInstallService(bool b_autostart)
 		if ( schService )
 		{
 			SERVICE_DESCRIPTION sdBuf;
-			// ==> Adjustable NT Service Strings - Stulle
+			// ==> Adjustable NT Service Strings [Stulle] - Stulle
 			if(!thePrefs.GetServiceDescr().IsEmpty()) 
 				sdBuf.lpDescription = const_cast<LPWSTR>((LPCWSTR)thePrefs.GetServiceDescr());
 			else
-			// <== Adjustable NT Service Strings - Stulle
+			// <== Adjustable NT Service Strings [Stulle] - Stulle
 				sdBuf.lpDescription = SZSERVICEDESCR;
 			(void)!ChangeServiceConfig2( // I don't care if it works :P
 				schService,                 // handle to service
@@ -376,12 +376,12 @@ int CmdRemoveService() //  Stops and removes the service
 
 	if ( schSCManager )
 	{
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		schService = OpenService(schSCManager, TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
 		*/
 		schService = OpenService(schSCManager, (!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 		if (schService)
 		{
@@ -483,12 +483,12 @@ int	NTServiceGet(int  &b_installed,	int	&i_startupmode,	int	&i_enoughrights)
 		);
 	if ( schSCManager )
 	{   
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		schService = OpenService(schSCManager, TEXT(SZSERVICENAME),	GENERIC_READ);
 		*/
 		schService = OpenService(schSCManager, (!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME),	GENERIC_READ);
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 		if (schService ) {
 			lpssServiceConfig= (QUERY_SERVICE_CONFIG *)buffer;
 			if	(QueryServiceConfig(schService,	lpssServiceConfig,sizeof(buffer),&dummy) ){
@@ -557,12 +557,12 @@ int NTServiceSetStartupMode(int i_startupmode){
 		);
 	if ( schSCManager )
 	{   
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		schService = OpenService(schSCManager, TEXT(SZSERVICENAME),GENERIC_WRITE|GENERIC_READ);
 		*/
 		schService = OpenService(schSCManager, (!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME),GENERIC_WRITE|GENERIC_READ);
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 		if (schService ) {
 			if (ChangeServiceConfig( 
 				schService,        // handle of service 
@@ -596,7 +596,7 @@ int NTServiceSetStartupMode(int i_startupmode){
 	return 0; 
 }
 
-// ==> Adjustable NT Service Strings - Stulle
+// ==> Adjustable NT Service Strings [Stulle] - Stulle
 int NTServiceChangeDisplayStrings(CString strDisplayName, CString strServiceDescr)
 {
 	SC_HANDLE	schService;
@@ -680,7 +680,7 @@ int NTServiceChangeDisplayStrings(CString strDisplayName, CString strServiceDesc
 	}
 	return iResult; 
 }
-// <== Adjustable NT Service Strings - Stulle
+// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 /* for interactive windows, see ttp://support.microsoft.com/kb/164166 */
 
@@ -764,12 +764,12 @@ bool  InterfaceToService()
 			);
 		if ( schSCManager )
 		{
-			// ==> Adjustable NT Service Strings - Stulle
+			// ==> Adjustable NT Service Strings [Stulle] - Stulle
 			/*
 			schService = OpenService(schSCManager, TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
 			*/
 			schService = OpenService(schSCManager, (!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
-			// <== Adjustable NT Service Strings - Stulle
+			// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 			if (schService)
 			{
@@ -809,12 +809,12 @@ int NtServiceStart()
 			);
 	if ( schSCManager )
 	{
-		// ==> Adjustable NT Service Strings - Stulle
+		// ==> Adjustable NT Service Strings [Stulle] - Stulle
 		/*
 		schService = OpenService(schSCManager, TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
 		*/
 		schService = OpenService(schSCManager, (!thePrefs.GetServiceName().IsEmpty())?thePrefs.GetServiceName():TEXT(SZSERVICENAME), SERVICE_ALL_ACCESS);
-		// <== Adjustable NT Service Strings - Stulle
+		// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 		if (schService)
 		{

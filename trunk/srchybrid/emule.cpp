@@ -422,7 +422,7 @@ CemuleApp::CemuleApp(LPCTSTR lpszAppName)
 	ipdlgisopen=false;
 
 	//Xman queued disc-access for read/flushing-threads
-	m_uRunningNonBlockedDiscAccessThreads=0;
+	//m_uRunningNonBlockedDiscAccessThreads=0;
 	//Xman end
 
 // MOD Note: Do not change this part - Merkur
@@ -491,7 +491,12 @@ CemuleApp theApp(_T("eMule"));
 
 
 // Workaround for bugged 'AfxSocketTerm' (needed at least for MFC 7.0, 7.1, 8.0, 9.0)
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+/*
 #if _MFC_VER==0x0700 || _MFC_VER==0x0710 || _MFC_VER==0x0800 || _MFC_VER==0x0900
+*/
+#if _MFC_VER==0x0700 || _MFC_VER==0x0710 || _MFC_VER==0x0800 || _MFC_VER==0x0900 || _MFC_VER==0x0A00
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 void __cdecl __AfxSocketTerm()
 {
 #if defined(_AFXDLL) && (_MFC_VER==0x0700 || _MFC_VER==0x0710)
@@ -701,7 +706,12 @@ BOOL CemuleApp::InitInstance()
 		}
 	}
 	//>>> eWombat [WINSOCK2]
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+/*
 #if _MFC_VER==0x0700 || _MFC_VER==0x0710 || _MFC_VER==0x0800 || _MFC_VER==0x0900
+*/
+#if _MFC_VER==0x0700 || _MFC_VER==0x0710 || _MFC_VER==0x0800 || _MFC_VER==0x0900 || _MFC_VER==0x0A00
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	atexit(__AfxSocketTerm);
 #else
 #error "You are using an MFC version which may require a special version of the above function!"
@@ -869,7 +879,17 @@ BOOL CemuleApp::InitInstance()
 	// UPnP Port forwarding
 	// ==> UPnP support [MoNKi] - leuk_he
 	/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	//UPnP chooser
+	m_pUPnPFinder = NULL;
+	m_pUPnPNat = NULL;
+	if (thePrefs.m_bUseACATUPnPCurrent)
+		m_pUPnPNat = new MyUPnP();
+	else
+		m_pUPnPFinder = new CUPnPImplWrapper(); //Official UPNP
+#else
 	m_pUPnPFinder = new CUPnPImplWrapper();
+#endif //zz_fly :: dual upnp
 	*/
 	if((m_UPnP_IGDControlPoint != NULL && thePrefs.IsUPnPEnabled()) || thePrefs.GetUpnpDetect()>0){  //leuk_he add startupwizard auto detect
       m_UPnP_IGDControlPoint->Init(thePrefs.GetUPnPLimitToFirstConnection());
@@ -916,7 +936,7 @@ BOOL CemuleApp::InitInstance()
 	// ZZ:UploadSpeedSense <--
 
 	UpdateSplash(_T("Loading DLP ...")); //Xman new slpash-screen arrangement
-	dlp = new CDLP(thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR)); //Xman DLP
+	dlp = new CDLP(thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR),thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)); //Xman DLP
 	UpdateSplash(_T("Loading IP to Country ...")); //Xman new slpash-screen arrangement
 	ip2country = new CIP2Country(); //EastShare - added by AndCycle, IP to Country
 	UpdateSplash(_T("Loading lists ...")); //Xman new slpash-screen arrangement
@@ -1088,6 +1108,16 @@ bool CemuleApp::ProcessCommandline()
 	
 	HWND maininst = NULL;
 	bool bAlreadyRunning = false;
+
+	//this codepart is to determine special cases when we do add a link to our eMule
+	//because in this case it would be nonsense to start another instance!
+	if(bIgnoreRunningInstances)
+	{       
+		if (cmdInfo.m_nShellCommand == CCommandLineInfo::FileOpen
+			&& (cmdInfo.m_strFileName.Find(_T("://")) > 0
+			|| CCollection::HasCollectionExtention(cmdInfo.m_strFileName)) )
+			bIgnoreRunningInstances = false;
+	}
 	if (!bIgnoreRunningInstances){
 		bAlreadyRunning = (::GetLastError() == ERROR_ALREADY_EXISTS ||::GetLastError() == ERROR_ACCESS_DENIED);
     	if (bAlreadyRunning) EnumWindows(SearchEmuleWindow, (LPARAM)&maininst);
@@ -1181,7 +1211,6 @@ BOOL CALLBACK CemuleApp::SearchEmuleWindow(HWND hWnd, LPARAM lParam){
 	return TRUE; 
 } 
 
-
 //Xman
 // Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 /*
@@ -1215,23 +1244,6 @@ void CemuleApp::SetTimeOnTransfer() {
 	theStats.transferStarttime=GetTickCount();
 }
 
-CString CemuleApp::CreateED2kSourceLink(const CAbstractFile* f)
-{
-	if (!IsConnected() || IsFirewalled()){
-		LogWarning(LOG_STATUSBAR, GetResString(IDS_SOURCELINKFAILED));
-		return _T("");
-	}
-	uint32 dwID = GetID();
-
-	CString strLink;
-	strLink.Format(_T("ed2k://|file|%s|%I64u|%s|/|sources,%i.%i.%i.%i:%i|/"),
-		EncodeUrlUtf8(StripInvalidFilenameChars(f->GetFileName(), false)),
-		f->GetFileSize(),
-		EncodeBase16(f->GetFileHash(),16),
-		(uint8)dwID,(uint8)(dwID>>8),(uint8)(dwID>>16),(uint8)(dwID>>24), thePrefs.GetPort() );
-	return strLink;
-}
-
 CString CemuleApp::CreateKadSourceLink(const CAbstractFile* f)
 {
 	CString strLink;
@@ -1240,7 +1252,7 @@ CString CemuleApp::CreateKadSourceLink(const CAbstractFile* f)
 		CString KadID;
 		Kademlia::CKademlia::GetPrefs()->GetKadID().Xor(Kademlia::CUInt128(true)).ToHexString(&KadID);
 		strLink.Format(_T("ed2k://|file|%s|%I64u|%s|/|kadsources,%s:%s|/"),
-			EncodeUrlUtf8(StripInvalidFilenameChars(f->GetFileName(), false)),
+			EncodeUrlUtf8(StripInvalidFilenameChars(f->GetFileName())),
 			f->GetFileSize(),
 			EncodeBase16(f->GetFileHash(),16),
 			md4str(thePrefs.GetUserHash()), KadID);
@@ -1637,9 +1649,9 @@ int CemuleApp::GetFileTypeSystemImageIdx(LPCTSTR pszFilePath, int iLength /* = -
 	return (int)vData;
 }
 
-bool CemuleApp::IsConnected()
+bool CemuleApp::IsConnected(bool bIgnoreEd2k, bool bIgnoreKad)
 {
-	return (theApp.serverconnect->IsConnected() || Kademlia::CKademlia::IsConnected());
+	return ( (theApp.serverconnect->IsConnected() && !bIgnoreEd2k) || (Kademlia::CKademlia::IsConnected() && !bIgnoreKad));
 }
 
 bool CemuleApp::IsPortchangeAllowed() {
@@ -2667,6 +2679,7 @@ void CemuleApp::ResetStandByIdleTimer()
 	if (IsConnected() || (uploadqueue != NULL && uploadqueue->GetUploadQueueLength() > 0)
 		|| (downloadqueue != NULL && downloadqueue->GetDatarate() > 0))
 	*/
+	// Retrieve the current datarates
 	uint32 eMuleIn;
 	uint32 notUsed;
 	theApp.pBandWidthControl->GetDatarates(thePrefs.GetDatarateSamples(),
@@ -2753,6 +2766,7 @@ void CemuleApp::ShowSplash(bool start)
 		AfxMessageBox(GetResString(IDS_BETANAG), MB_ICONINFORMATION | MB_OK, 0);
 #endif
 }
+
 void CemuleApp::DestroySplash()
 {
 	if (m_pSplashWnd != NULL)
@@ -2764,6 +2778,7 @@ void CemuleApp::DestroySplash()
 	}
 	spashscreenfinished=true;
 }
+
 void CemuleApp::UpdateSplash(LPCTSTR Text){
 	if(m_pSplashWnd)
 		m_pSplashWnd->SetText2(Text);
@@ -2771,6 +2786,7 @@ void CemuleApp::UpdateSplash(LPCTSTR Text){
 //Xman end
 
 //Xman queued disc-access for read/flushing-threads
+/*
 #define allowed_Threads 1
 //threading-info: synchronized with main-thread which is the only caller
 void CemuleApp::AddNewDiscAccessThread(CWinThread* threadtoadd)
@@ -2789,7 +2805,7 @@ void CemuleApp::AddNewDiscAccessThread(CWinThread* threadtoadd)
 	threadqueuelock.Lock();
 
 
-	if(m_uRunningNonBlockedDiscAccessThreads<=allowed_Threads-1 /*|| thePrefs.dontusediscaccessqueue==true*/) 
+	if(m_uRunningNonBlockedDiscAccessThreads<=allowed_Threads-1 /*|| thePrefs.dontusediscaccessqueue==true*//*) 
 	{
 		m_uRunningNonBlockedDiscAccessThreads++;
 		threadtoadd->ResumeThread();
@@ -2805,7 +2821,7 @@ void CemuleApp::AddNewDiscAccessThread(CWinThread* threadtoadd)
 void CemuleApp::ResumeNextDiscAccessThread()
 {
 	threadqueuelock.Lock();
-	if(threadqueue.IsEmpty()==false && (m_uRunningNonBlockedDiscAccessThreads<=allowed_Threads /*|| thePrefs.dontusediscaccessqueue==true*/))
+	if(threadqueue.IsEmpty()==false && (m_uRunningNonBlockedDiscAccessThreads<=allowed_Threads /*|| thePrefs.dontusediscaccessqueue==true*//*))
 	{
 		CWinThread* threadtorun=threadqueue.RemoveHead();
 		threadtorun->ResumeThread();
@@ -2832,6 +2848,46 @@ void CemuleApp::ForeAllDiscAccessThreadsToFinish()
 
 	threadqueuelock.Unlock();
 }
+*/
+//Xman end
+
+// ==> UPnP support [MoNKi] - leuk_he
+/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+//ACAT UPnP
+BOOL CemuleApp::AddUPnPNatPort(MyUPnP::UPNPNAT_MAPPING *mapping, bool tryRandom){
+	if(!thePrefs.m_bUseACATUPnPCurrent)
+		return false;
+
+	CString args;
+	if(m_pUPnPNat->AddNATPortMapping(mapping, tryRandom) == MyUPnP::UNAT_OK ){
+		if(theApp.emuledlg->IsRunning()){
+			AddLogLine(false, _T("Added UPnP NAT Support: (%s) NAT ROUTER/FIREWALL:%i -> %s:%i"),
+				mapping->description, mapping->externalPort, m_pUPnPNat->GetLocalIPStr(), mapping->internalPort);
+		}
+		return true;
+	}
+	else{
+		if(theApp.emuledlg->IsRunning()){
+			AddLogLine(false, _T("Error adding UPnP NAT Support: (%s) NAT ROUTER/FIREWALL:%i -> %s:%i (%s)"),
+				mapping->description, mapping->externalPort, m_pUPnPNat->GetLocalIPStr(), mapping->internalPort, m_pUPnPNat->GetLastError());
+		}
+		return false;
+	}
+}
+
+BOOL CemuleApp::RemoveUPnPNatPort(MyUPnP::UPNPNAT_MAPPING *mapping){
+	if(!thePrefs.m_bUseACATUPnPCurrent)
+		return false;
+
+	if(m_pUPnPNat->RemoveNATPortMapping(*mapping) == MyUPnP::UNAT_OK )
+		return true;
+	else
+		return false;
+}
+#endif //zz_fly :: dual upnp
+*/
+// <== UPnP support [MoNKi] - leuk_he
 
 // Commander - Added: FriendLinks [emulEspaa] - Start - added by zz_fly
 bool CemuleApp::IsEd2kFriendLinkInClipboard()
@@ -3268,7 +3324,8 @@ UINT CemuleApp::CheckDirectoryForChangesThread(LPVOID /*pParam*/)
 
 							m_directoryWatcherReloadEvent->ResetEvent();
 //							theApp.sharedfiles->Reload();
-							theApp.emuledlg->sharedfileswnd->Reload(true);
+//							theApp.emuledlg->sharedfileswnd->Reload(true);
+							theApp.emuledlg->sharedfileswnd->SendMessage(WM_COMMAND, IDC_RELOADSHAREDFILES); // fix by Wiz
 							lastReloadTime = ::GetTickCount();
 						}
 					}

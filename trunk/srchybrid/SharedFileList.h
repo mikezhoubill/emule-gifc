@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
 #include "MapKey.h"
+#include "FileIdentifier.h"
 
 class CKnownFileList;
 class CServerConnect;
@@ -75,6 +76,7 @@ public:
 	void	CopySharedFileMap(CMap<CCKey,const CCKey&,CKnownFile*,CKnownFile*> &Files_Map);	
 	
 	CKnownFile* GetFileByID(const uchar* filehash) const;
+	CKnownFile* GetFileByIdentifier(const CFileIdentifierBase& rFileIdent, bool bStrict = false) const;
 	CKnownFile*	GetFileByIndex(int index);
 	bool	IsFilePtrInList(const CKnownFile* file) const; // slow
 	bool	IsUnsharedFile(const uchar* auFileHash) const;
@@ -90,6 +92,8 @@ public:
 
 	void	HashFailed(UnknownFile_Struct* hashed);		// SLUGFILLER: SafeHash
 	void	FileHashingFinished(CKnownFile* file);
+
+	bool	GetPopularityRank(const CKnownFile* pFile, uint32& rnOutSession, uint32& rnOutTotal) const;
 
 	//Xman advanced upload-priority
 	void CalculateUploadPriority(bool force=false);

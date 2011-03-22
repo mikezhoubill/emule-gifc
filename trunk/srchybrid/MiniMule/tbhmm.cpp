@@ -15,7 +15,7 @@
 #include "otherfunctions.h"
 #include "Version.h"
 #include "Statistics.h"
-#include "TransferWnd.h" // added - Stulle
+#include "TransferDlg.h" // added - Stulle
 #include "Log.h"
 #include "kademlia/kademlia/kademlia.h"
 #include "kademlia/kademlia/prefs.h"
@@ -282,7 +282,7 @@ void CTBHMM::MMUpdate()
 		else {
 			buffer.Format(_T("%s"), GetResString(IDS_DL_TRANSFCOMPL));
 			buffer += (_T(": "));
-			buffer2.Format(_T("%i"), theApp.emuledlg->transferwnd->downloadlistctrl.GetCompleteDownloads(0, iTotal));
+			buffer2.Format(_T("%i"), theApp.emuledlg->transferwnd->GetDownloadList()->GetCompleteDownloads(0, iTotal));
 		}
 		GetDlgItem(IDC_MM_COMPLCOUNT)->SetWindowText(buffer + buffer2);
 		// <== added - Stulle

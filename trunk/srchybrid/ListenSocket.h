@@ -67,9 +67,10 @@ public:
 	*/
 	//Xman improved socket closing
 	void	CloseSocket();
-
+	//Xman end
 	uint32	GetTimeOutTimer()	const	{return timeout_timer;} //zz_fly :: Drop stalled downloads :: netfinity
 
+	void		 OnReceive(int nErrorCode);
 protected:
 	virtual ~CClientReqSocket();
 	virtual void Close() { CAsyncSocketEx::Close(); }
@@ -78,7 +79,7 @@ protected:
 	virtual void OnConnect(int nErrorCode);
 	void		 OnClose(int nErrorCode);
 	void		 OnSend(int nErrorCode);
-	void		 OnReceive(int nErrorCode);
+
 	void		 OnError(int nErrorCode);
 
 	virtual bool PacketReceived(Packet* packet);
@@ -129,6 +130,15 @@ public:
 	void	ReStartListening();
 	void	Debug_ClientDeleted(CUpDownClient* deleted);
 	bool	Rebind();
+
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	bool	RebindUPnP(); //ACAT UPnP :: Rebind UPnP on IP-change
+#endif //zz_fly :: dual upnp
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
+
 	bool	SendPortTestReply(char result,bool disconnect=false);
 
 	void	UpdateConnectionsStatus();

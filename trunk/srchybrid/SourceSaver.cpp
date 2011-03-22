@@ -4,6 +4,7 @@
 #include "emule.h"
 #include "Log.h"
 #include "updownclient.h"
+#include "urlclient.h" //DolphinX :: Save URL Source
 #include "preferences.h"
 #include "downloadqueue.h"
 #include "log.h"
@@ -35,6 +36,8 @@ CSourceSaver::CSourceData::CSourceData(CUpDownClient* client, const CString& exp
 	expiration90mins(expiration90mins),
     expiration3days(expiration3days)
 {
+	if(client->IsKindOf(RUNTIME_CLASS(CUrlClient))) //DolphinX :: Save URL Source
+		URL = client->GetUserName();
 }
 
 bool CSourceSaver::Process() // return false if sources not saved
@@ -47,13 +50,13 @@ bool CSourceSaver::Process() // return false if sources not saved
 		//Xman 6.0.1 skip loading if obfuscation only
 		if(!thePrefs.IsClientCryptLayerRequired())
 		{
-		// Load sources from the file
-		CString slsfilepath;
-		slsfilepath.Format(_T("%s\\%s.txtsrc"), m_pFile->GetTempPath(), m_pFile->GetPartMetFileName());
-		LoadSourcesFromFile(slsfilepath);
-
-		// Try to add the sources
-		AddSourcesToDownload();
+			// Load sources from the file
+			CString slsfilepath;
+			slsfilepath.Format(_T("%s\\%s.txtsrc"), m_pFile->GetTempPath(), m_pFile->GetPartMetFileName());
+			LoadSourcesFromFile(slsfilepath);
+	
+			// Try to add the sources
+			AddSourcesToDownload();
 		}
 	}
 	// Save the list every n minutes (default 10 minutes)
@@ -101,20 +104,36 @@ void CSourceSaver::LoadSourcesFromFile(const CString& slsfile)
 		if (pos == -1)
 			continue;
 		CStringA strIP(strLine.Left(pos));
-		strLine = strLine.Mid(pos+1);
-		uint32 dwID = inet_addr(strIP);
-		if (dwID == INADDR_NONE) 
-			continue;
+		//DolphinX :: Save URL Source :: Start
+		uint32 dwID = 0;
+		uint16 wPort = 0;
+		if(strIP.CompareNoCase("http")){
+		//DolphinX :: Save URL Source :: End
+			strLine = strLine.Mid(pos+1);
+			dwID = inet_addr(strIP);
+			if (dwID == INADDR_NONE) 
+				continue;
 
-		// Load Port
-		pos = strLine.Find(',');
-		if (pos == -1)
-			continue;
-		CString strPort = strLine.Left(pos);
-		strLine = strLine.Mid(pos+1);
-		uint16 wPort = (uint16)_tstoi(strPort);
-		if (!wPort)
-			continue;
+			// Load Port
+			pos = strLine.Find(',');
+			if (pos == -1)
+				continue;
+			CString strPort = strLine.Left(pos);
+			strLine = strLine.Mid(pos+1);
+			wPort = (uint16)_tstoi(strPort);
+			if (!wPort)
+				continue;
+		//DolphinX :: Save URL Source :: Start
+			strIP.Empty();
+		}
+		else{
+			pos = strLine.Find(' ');
+			if (pos == -1)
+				continue;
+			strIP = strLine.Left(pos);
+			strLine = strLine.Mid(pos+1);
+		}
+		//DolphinX :: Save URL Source :: End
 
 		// Load expiration time (short version => usualy for 3 days)
 		pos = strLine.Find(';');
@@ -137,7 +156,12 @@ void CSourceSaver::LoadSourcesFromFile(const CString& slsfile)
             expiration90mins.Empty(); // Erase
 
 		// Add source to list
-		m_sourceList.AddTail(CSourceData(dwID, wPort, expiration90mins, expiration3days));
+		//DolphinX :: Save URL Source :: Start
+		if(strIP.IsEmpty())
+			m_sourceList.AddTail(CSourceData(dwID, wPort, expiration90mins, expiration3days));
+		else
+			m_sourceList.AddTail(CSourceData(strIP, expiration90mins, expiration3days));
+		//DolphinX :: Save URL Source :: End
 	}
     f.Close();
 }
@@ -155,9 +179,25 @@ void CSourceSaver::AddSourcesToDownload(){
 	    const CSourceData& cur_src = m_sourceList.GetNext(pos);
         if(count < 10 || IsExpired(cur_src.expiration90mins) == false){
             count++;
-		    CUpDownClient* newclient = new CUpDownClient(m_pFile, cur_src.sourcePort, cur_src.sourceID, 0, 0, false);
- 		    newclient->SetSourceFrom(SF_SLS);
-			theApp.downloadqueue->CheckAndAddSource(m_pFile, newclient);
+			if(cur_src.URL.IsEmpty()){ //DolphinX :: Save URL Source
+				CUpDownClient* newclient = new CUpDownClient(m_pFile, cur_src.sourcePort, cur_src.sourceID, 0, 0, false);
+ 				newclient->SetSourceFrom(SF_SLS);
+				theApp.downloadqueue->CheckAndAddSource(m_pFile, newclient);
+			//DolphinX :: Save URL Source :: Start
+			}
+			else{
+				CUrlClient* newclient = new CUrlClient();
+				if (!newclient->SetUrl(cur_src.URL, 0))
+				{
+					LogError(LOG_STATUSBAR, _T("Failed to process URL source \"%s\""), cur_src.URL);
+					delete newclient;
+					continue; //return;
+				}
+				newclient->SetRequestFile(m_pFile);
+				newclient->SetSourceFrom(SF_SLS);
+				theApp.downloadqueue->CheckAndAddSource(m_pFile, newclient);
+			}
+			//DolphinX :: Save URL Source :: End
         }
 	}
 
@@ -253,14 +293,23 @@ void CSourceSaver::SaveSources(const CString& slsfile)
         //POSITION cur_pos = pos;
 		const CSourceData& cur_src = m_sourceList.GetNext(pos);
         //if(cur_src.partsavailable > 0){
-            if(counter < 10){
+			//DolphinX :: Save URL Source :: Start
+			if(!cur_src.URL.IsEmpty()){
+				strLine.Format(_T("%s %s;%s;\r\n"), 
+				cur_src.URL,
+				(counter < 10) ? cur_src.expiration3days : _T("000101"),
+				cur_src.expiration90mins);
+			}
+			else
+			//DolphinX :: Save URL Source :: End
+			if(counter < 10){
 		        strLine.Format(_T("%i.%i.%i.%i:%i,%s;%s;\r\n"), 
 					        (uint8)cur_src.sourceID, (uint8)(cur_src.sourceID>>8), (uint8)(cur_src.sourceID>>16), (uint8)(cur_src.sourceID>>24),
 					        cur_src.sourcePort, 
                             cur_src.expiration3days,
 					        cur_src.expiration90mins);
             }
-            else {
+			else {
 		        strLine.Format(_T("%i.%i.%i.%i:%i,%s;%s;\r\n"), 
 					        (uint8)cur_src.sourceID, (uint8)(cur_src.sourceID>>8), (uint8)(cur_src.sourceID>>16), (uint8)(cur_src.sourceID>>24),
 					        cur_src.sourcePort, 

@@ -250,7 +250,6 @@ BOOL CPPgDirectories::OnApply()
 
 	thePrefs.m_strIncomingDir = strIncomingDir;
 	MakeFoldername(thePrefs.m_strIncomingDir);
-	thePrefs.GetCategory(0)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
 
 	thePrefs.shareddir_list.RemoveAll();
 	m_ShareSelector.GetSharedDirectories(&thePrefs.shareddir_list);
@@ -270,11 +269,9 @@ BOOL CPPgDirectories::OnApply()
 	*/
 	// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 
-	if (testtempdirchanged)
-		AfxMessageBox(GetResString(IDS_SETTINGCHANGED_RESTART));
-	
 	// on changing incoming dir, update incoming dirs of category of the same path
 	if (testincdirchanged.CompareNoCase(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0) {
+		thePrefs.GetCategory(0)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
 		CString oldpath;
 		bool dontaskagain=false;
 		for (int cat=1; cat<=thePrefs.GetCatCount()-1;cat++){
@@ -289,7 +286,12 @@ BOOL CPPgDirectories::OnApply()
 				thePrefs.GetCategory(cat)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR) + oldpath.Mid(testincdirchanged.GetLength());
 			}
 		}
+		thePrefs.SaveCats();
 	}
+
+
+	if (testtempdirchanged)
+		AfxMessageBox(GetResString(IDS_SETTINGCHANGED_RESTART));
 
 	theApp.emuledlg->sharedfileswnd->Reload();
 	
