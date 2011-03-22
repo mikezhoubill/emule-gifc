@@ -23,6 +23,11 @@
 #include "EditDelayed.h"
 #include "ComboBoxEx2.h"
 #include "ListCtrlEditable.h"
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+#include "ButtonVE.h"
+#endif
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 
 class CCustomAutoComplete;
 class Packet;
@@ -112,7 +117,15 @@ protected:
 	CProgressCtrl searchprogress;
 	CHeaderCtrl m_ctlSearchListHeader;
 	CEditDelayed m_ctlFilter;
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER<1600
 	CButton		m_ctlOpenParamsWnd;
+#else
+	CButtonVE	m_ctlOpenParamsWnd;
+	CButtonVE	m_Download;
+	CButtonVE	m_ClearAll;
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	bool		canceld;
 	uint16		servercount;
 	bool		globsearch;

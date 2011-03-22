@@ -39,7 +39,6 @@ BEGIN_MESSAGE_MAP(CPPgMessages, CPropertyPage)
 	ON_EN_CHANGE(IDC_FILTER, OnSettingsChange)
 	ON_EN_CHANGE(IDC_COMMENTFILTER, OnSettingsChange)
 	ON_BN_CLICKED(IDC_MSGONLYFRIENDS , OnSettingsChange) 
-	ON_BN_CLICKED(IDC_MSGONLYSEC, OnSettingsChange)
 	ON_BN_CLICKED(IDC_ADVSPAMFILTER , OnSpamFilterChange)
 	ON_BN_CLICKED(IDC_INDICATERATINGS , OnSettingsChange)
 	ON_BN_CLICKED(IDC_MSHOWSMILEYS, OnSettingsChange)
@@ -70,11 +69,6 @@ void CPPgMessages::LoadSettings(void)
 		CheckDlgButton(IDC_MSGONLYFRIENDS,1);
 	else
 		CheckDlgButton(IDC_MSGONLYFRIENDS,0);
-
-	if (thePrefs.msgsecure)
-		CheckDlgButton(IDC_MSGONLYSEC,1);
-	else
-		CheckDlgButton(IDC_MSGONLYSEC,0);
 
 	if (thePrefs.m_bAdvancedSpamfilter)
 		CheckDlgButton(IDC_ADVSPAMFILTER,1);
@@ -117,7 +111,6 @@ BOOL CPPgMessages::OnApply()
 {
 
 	thePrefs.msgonlyfriends = IsDlgButtonChecked(IDC_MSGONLYFRIENDS)!=0;
-	thePrefs.msgsecure = IsDlgButtonChecked(IDC_MSGONLYSEC)!=0;
 	thePrefs.m_bAdvancedSpamfilter = IsDlgButtonChecked(IDC_ADVSPAMFILTER)!=0;
 	thePrefs.indicateratings = IsDlgButtonChecked(IDC_INDICATERATINGS)!=0;
 	thePrefs.m_bUseChatCaptchas = IsDlgButtonChecked(IDC_USECAPTCHAS) != 0;
@@ -166,13 +159,11 @@ void CPPgMessages::Localize(void)
 		GetDlgItem(IDC_MSG)->SetWindowText(GetResString(IDS_CW_MESSAGES));
 
 		GetDlgItem(IDC_MSGONLYFRIENDS)->SetWindowText(GetResString(IDS_MSGONLYFRIENDS));
-		GetDlgItem(IDC_MSGONLYSEC)->SetWindowText(GetResString(IDS_MSGONLYSEC));
 		GetDlgItem(IDC_USECAPTCHAS)->SetWindowText(GetResString(IDS_USECAPTCHAS));	
 
 		GetDlgItem(IDC_ADVSPAMFILTER)->SetWindowText(GetResString(IDS_ADVSPAMFILTER));
 
 		GetDlgItem(IDC_MSHOWSMILEYS)->SetWindowText(GetResString(IDS_SHOWSMILEYS));
-		
 	}
 }
 

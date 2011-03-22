@@ -39,7 +39,7 @@
 #include "Opcodes.h"
 #include "Sockets.h"
 #include "emuledlg.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "serverwnd.h"
 #include "Log.h"
 #include "packets.h"
@@ -81,59 +81,6 @@ CClientList::CClientList(){
 CClientList::~CClientList(){
 	RemoveAllTrackedClients();
 }
-
-//Xman
-// Slugfiller: modid
-void CClientList::GetModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
-	if (!clientMods)
-		return;
-	clientMods->RemoveAll();
-
-	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {		
-		CUpDownClient* cur_client =	list.GetNext(pos);
-
-		switch (cur_client->GetClientSoft()) {
-		case SO_EMULE   :
-		case SO_OLDEMULE:
-			break;
-		default:
-			continue;
-		}
-
-		CRBMap<CString, uint32> *versionMods;
-
-		if (!clientMods->Lookup(cur_client->GetVersion(), versionMods)){
-			versionMods = new CRBMap<CString, uint32>;
-			versionMods->RemoveAll();
-			clientMods->SetAt(cur_client->GetVersion(), versionMods);
-		}
-
-		uint32 count;
-
-		if (!versionMods->Lookup(cur_client->GetClientModVer(), count))
-			count = 1;
-		else
-			count++;
-
-		versionMods->SetAt(cur_client->GetClientModVer(), count);
-	}
-}
-
-void CClientList::ReleaseModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
-	if (!clientMods)
-		return;
-	POSITION pos = clientMods->GetHeadPosition();
-	while(pos != NULL)
-	{
-		uint32 version;
-		CRBMap<CString, uint32> *versionMods;
-		clientMods->GetNextAssoc(pos, version, versionMods);
-		delete versionMods;
-	}
-	clientMods->RemoveAll();
-}
-// Slugfiller: modid
-//Xman end
 
 void CClientList::GetStatistics(uint32 &ruTotalClients, int stats[NUM_CLIENTLIST_STATS], 
 								CMap<uint32, uint32, uint32, uint32>& clientVersionEDonkey, 
@@ -328,7 +275,7 @@ void CClientList::AddClient(CUpDownClient* toadd, bool bSkipDupTest)
 		if(list.Find(toadd))
 			return;
 	}
-	theApp.emuledlg->transferwnd->clientlistctrl.AddClient(toadd);
+	theApp.emuledlg->transferwnd->GetClientList()->AddClient(toadd);
 	list.AddTail(toadd);
 }
 
@@ -352,7 +299,7 @@ void CClientList::RemoveClient(CUpDownClient* toremove, LPCTSTR pszReason){
 		}
 		// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 		theApp.downloadqueue->RemoveSource(toremove);
-		theApp.emuledlg->transferwnd->clientlistctrl.RemoveClient(toremove);
+		theApp.emuledlg->transferwnd->GetClientList()->RemoveClient(toremove);
 		list.RemoveAt(pos);
 	}
 	RemoveFromKadList(toremove);
@@ -724,15 +671,27 @@ void CClientList::Process()
 	//If connected, remove them from the list and send a message back to Kad so we can send a ACK.
 	//If we don't connect, we need to remove the client..
 	//The sockets timeout should delete this object.
+	//MORPH START - Removed by Stulle, Optimize Process Kad client list [WiZaRd]
+	/*
 	POSITION pos1, pos2;
+	*/
+	//MORPH END   - Removed by Stulle, Optimize Process Kad client list [WiZaRd]
 
 	// buddy is just a flag that is used to make sure we are still connected or connecting to a buddy.
 	buddyState buddy = Disconnected;
 
+	//MORPH START - Changed by Stulle, Optimize Process Kad client list [WiZaRd]
+	/*
 	for (pos1 = m_KadList.GetHeadPosition(); (pos2 = pos1) != NULL; )
 	{
 		m_KadList.GetNext(pos1);
 		CUpDownClient* cur_client =	m_KadList.GetAt(pos2);
+	*/
+	for (POSITION pos = m_KadList.GetHeadPosition(); pos != NULL; )
+	{
+		POSITION posLast = pos;
+		CUpDownClient* cur_client =     m_KadList.GetNext(pos);
+	//MORPH END   - Changed by Stulle, Optimize Process Kad client list [WiZaRd]
 		if( !Kademlia::CKademlia::IsRunning() )
 		{
 			//Clear out this list if we stop running Kad.
@@ -841,7 +800,22 @@ void CClientList::Process()
 				break;
 
 			default:
+				//MORPH START - Changed by Stulle, Optimize Process Kad client list [WiZaRd]
+				/*
 				RemoveFromKadList(cur_client);
+				*/
+				//removed function overhead
+				if(cur_client == m_pBuddy)
+				{
+					//MORPH START - Added by Stulle, Fix for setting buddy state on removing buddy [WiZaRd]
+					buddy = Disconnected;
+					m_nBuddyStatus = Disconnected;
+					//MORPH END   - Added by Stulle, Fix for setting buddy state on removing buddy [WiZaRd]
+					m_pBuddy = NULL;
+					theApp.emuledlg->serverwnd->UpdateMyInfo();
+				}
+				m_KadList.RemoveAt(posLast);
+				//MORPH END   - Changed by Stulle, Optimize Process Kad client list [WiZaRd]
 		}
 	}
 	
@@ -1078,6 +1052,9 @@ void CClientList::RemoveFromKadList(CUpDownClient* torem){
 	{
 		if(torem == m_pBuddy)
 		{
+			//MORPH START - Added by Stulle, Fix for setting buddy state on removing buddy [WiZaRd]
+			m_nBuddyStatus = Disconnected;
+			//MORPH END   - Added by Stulle, Fix for setting buddy state on removing buddy [WiZaRd]
 			m_pBuddy = NULL;
 			theApp.emuledlg->serverwnd->UpdateMyInfo();
 		}
@@ -1127,8 +1104,6 @@ bool CClientList::DoRequestFirewallCheckUDP(const Kademlia::CContact& contact){
 	ASSERT( !pNewClient->SupportsDirectUDPCallback() );
 	return true;
 }*/
-
-
 
 // Maella -Extended clean-up II- //rework by Xman
 //Note: this feature is important for Xtreme Downloadmanager
@@ -1206,57 +1181,6 @@ void CClientList::CleanUp(CPartFile* pDeletedFile){
 	}	
 }
 // Maella end
-
-#ifdef PRINT_STATISTIC
-void CClientList::PrintStatistic()
-{
-	AddLogLine(false,_T("Clients in Clientlist: %u"), list.GetSize());
-	AddLogLine(false, _T("Clients in Bannedlist: %u"), m_bannedList.GetSize());
-	AddLogLine(false, _T("Tracked Clients: %u"), m_trackedClientsList.GetSize());
-	AddLogLine(false, _T("Clients in Kadlist: %u"), m_KadList.GetSize());
-
-	AddLogLine(false, _T("sum of listelements of all known clients:"));
-	uint32 PartStatusMapCount=0;
-	uint32 upHistoryCount=0;
-	uint32 downHistoryCount=0;
-	uint32 DontSwapListCount=0;
-	uint32 BlockRequestedCount=0;
-	uint32 DoneBlocksCount=0;
-	uint32 RequestedFilesCount=0;
-	uint32 PendingBlockCount=0;
-	uint32 DownloadBlockCount=0;
-	uint32 NoNeededListCount=0;
-	uint32 OtherRequestListCount=0;
-	for(POSITION pos = list.GetHeadPosition(); pos != NULL;){		
-		CUpDownClient* cur_client =	list.GetNext(pos);
-		PartStatusMapCount += cur_client->GetPartStatusMapCount();
-		upHistoryCount += cur_client->GetupHistoryCount();
-		downHistoryCount += cur_client->GetdownHistoryCount();
-		DontSwapListCount += cur_client->GetDontSwapListCount();
-		BlockRequestedCount += cur_client->GetBlockRequestedCount();
-		DoneBlocksCount += cur_client->GetDoneBlocksCount();
-		RequestedFilesCount += cur_client->GetRequestedFilesCount();
-		PendingBlockCount += cur_client->GetPendingBlockCount();
-		DownloadBlockCount += cur_client->GetDownloadBlockCount();
-		NoNeededListCount += cur_client->GetNoNeededListCount();
-		OtherRequestListCount += cur_client->GetOtherRequestListCount();
-	}	
-	AddLogLine(false, _T("PartStatusMapCount: %u"), PartStatusMapCount);
-	AddLogLine(false, _T("upHistoryCount: %u"), upHistoryCount);
-	AddLogLine(false, _T("downHistoryCount %u"), downHistoryCount);
-	AddLogLine(false, _T("DontSwapListCount: %u"), DontSwapListCount);
-	AddLogLine(false, _T("BlockRequestedCount: %u"), BlockRequestedCount);
-	AddLogLine(false, _T("DoneBlocksCount: %u"), DoneBlocksCount);
-	AddLogLine(false, _T("RequestedFilesCount: %u"), RequestedFilesCount);
-	AddLogLine(false, _T("PendingBlockCount: %u"), PendingBlockCount);
-	AddLogLine(false, _T("DownloadBlockCount: %u"), DownloadBlockCount);
-	AddLogLine(false, _T("NoNeededListCount: %u"), NoNeededListCount);
-	AddLogLine(false, _T("OtherRequestListCount: %u"), OtherRequestListCount);
-	AddLogLine(false, _T("------------------------------------------------"));
-}
-#endif
-//Xman end
-
 
 CDeletedClient::CDeletedClient(const CUpDownClient* pClient)
 {
@@ -1375,6 +1299,110 @@ bool CClientList::AllowCalbackRequest(uint32 dwIP) const
 	}
 	return true;
 }
+
+//Xman
+#ifdef PRINT_STATISTIC
+void CClientList::PrintStatistic()
+{
+	AddLogLine(false,_T("Clients in Clientlist: %u"), list.GetSize());
+	AddLogLine(false, _T("Clients in Bannedlist: %u"), m_bannedList.GetSize());
+	AddLogLine(false, _T("Tracked Clients: %u"), m_trackedClientsList.GetSize());
+	AddLogLine(false, _T("Clients in Kadlist: %u"), m_KadList.GetSize());
+
+	AddLogLine(false, _T("sum of listelements of all known clients:"));
+	uint32 PartStatusMapCount=0;
+	uint32 upHistoryCount=0;
+	uint32 downHistoryCount=0;
+	uint32 DontSwapListCount=0;
+	uint32 BlockRequestedCount=0;
+	uint32 DoneBlocksCount=0;
+	uint32 RequestedFilesCount=0;
+	uint32 PendingBlockCount=0;
+	uint32 DownloadBlockCount=0;
+	uint32 NoNeededListCount=0;
+	uint32 OtherRequestListCount=0;
+	for(POSITION pos = list.GetHeadPosition(); pos != NULL;){		
+		CUpDownClient* cur_client =	list.GetNext(pos);
+		PartStatusMapCount += cur_client->GetPartStatusMapCount();
+		upHistoryCount += cur_client->GetupHistoryCount();
+		downHistoryCount += cur_client->GetdownHistoryCount();
+		DontSwapListCount += cur_client->GetDontSwapListCount();
+		BlockRequestedCount += cur_client->GetBlockRequestedCount();
+		DoneBlocksCount += cur_client->GetDoneBlocksCount();
+		RequestedFilesCount += cur_client->GetRequestedFilesCount();
+		PendingBlockCount += cur_client->GetPendingBlockCount();
+		DownloadBlockCount += cur_client->GetDownloadBlockCount();
+		NoNeededListCount += cur_client->GetNoNeededListCount();
+		OtherRequestListCount += cur_client->GetOtherRequestListCount();
+	}	
+	AddLogLine(false, _T("PartStatusMapCount: %u"), PartStatusMapCount);
+	AddLogLine(false, _T("upHistoryCount: %u"), upHistoryCount);
+	AddLogLine(false, _T("downHistoryCount %u"), downHistoryCount);
+	AddLogLine(false, _T("DontSwapListCount: %u"), DontSwapListCount);
+	AddLogLine(false, _T("BlockRequestedCount: %u"), BlockRequestedCount);
+	AddLogLine(false, _T("DoneBlocksCount: %u"), DoneBlocksCount);
+	AddLogLine(false, _T("RequestedFilesCount: %u"), RequestedFilesCount);
+	AddLogLine(false, _T("PendingBlockCount: %u"), PendingBlockCount);
+	AddLogLine(false, _T("DownloadBlockCount: %u"), DownloadBlockCount);
+	AddLogLine(false, _T("NoNeededListCount: %u"), NoNeededListCount);
+	AddLogLine(false, _T("OtherRequestListCount: %u"), OtherRequestListCount);
+	AddLogLine(false, _T("------------------------------------------------"));
+}
+#endif
+//Xman end
+
+//Xman
+// Slugfiller: modid
+void CClientList::GetModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
+	if (!clientMods)
+		return;
+	clientMods->RemoveAll();
+
+	for (POSITION pos = list.GetHeadPosition(); pos != NULL;) {		
+		CUpDownClient* cur_client =	list.GetNext(pos);
+
+		switch (cur_client->GetClientSoft()) {
+		case SO_EMULE   :
+		case SO_OLDEMULE:
+			break;
+		default:
+			continue;
+		}
+
+		CRBMap<CString, uint32> *versionMods;
+
+		if (!clientMods->Lookup(cur_client->GetVersion(), versionMods)){
+			versionMods = new CRBMap<CString, uint32>;
+			versionMods->RemoveAll();
+			clientMods->SetAt(cur_client->GetVersion(), versionMods);
+		}
+
+		uint32 count;
+
+		if (!versionMods->Lookup(cur_client->GetClientModVer(), count))
+			count = 1;
+		else
+			count++;
+
+		versionMods->SetAt(cur_client->GetClientModVer(), count);
+	}
+}
+
+void CClientList::ReleaseModStatistics(CRBMap<uint32, CRBMap<CString, uint32>* > *clientMods){
+	if (!clientMods)
+		return;
+	POSITION pos = clientMods->GetHeadPosition();
+	while(pos != NULL)
+	{
+		uint32 version;
+		CRBMap<CString, uint32> *versionMods;
+		clientMods->GetNextAssoc(pos, version, versionMods);
+		delete versionMods;
+	}
+	clientMods->RemoveAll();
+}
+// Slugfiller: modid
+//Xman end
 
 //Xman -Reask sources after IP change- v4 
 void CClientList::TrigReaskForDownload(bool immediate){

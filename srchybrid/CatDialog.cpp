@@ -25,9 +25,10 @@
 #include "otherfunctions.h"
 #include "SharedFileList.h"
 #include "emuledlg.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "CatDialog.h"
 #include "UserMsgs.h"
+#include "SharedFilesWnd.h" // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 #include "Log.h" // Stulle
 
 #ifdef _DEBUG
@@ -88,6 +89,7 @@ BOOL CCatDialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	InitWindowStyles(this);
+	SetIcon(theApp.LoadIcon(_T("CATEGORY"),16,16),FALSE); // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	Localize();
 	m_ctlColor.SetDefaultColor(GetSysColor(COLOR_BTNTEXT));
 	UpdateData();
@@ -288,7 +290,12 @@ void CCatDialog::OnBnClickedOk()
 
 	if (m_myCat->strIncomingPath.CompareNoCase(oldpath)!=0)
 	{ // Automatic shared files updater [MoNKi] - Stulle
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+		/*
 		theApp.sharedfiles->Reload();
+		*/
+		theApp.emuledlg->sharedfileswnd->Reload();
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	// ==> Automatic shared files updater [MoNKi] - Stulle
 		if(thePrefs.GetDirectoryWatcher())
 			theApp.ResetDirectoryWatcher();
@@ -344,7 +351,7 @@ void CCatDialog::OnBnClickedOk()
 	m_myCat->bResumeFileOnlyInSameCat = IsDlgButtonChecked(IDC_CHECK_RESUMEFILEONLYINSAMECAT)?true:false;	//MORPH - Added by SiRoB, Resume file only in the same category
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
-	theApp.emuledlg->transferwnd->downloadlistctrl.Invalidate();
+	theApp.emuledlg->transferwnd->GetDownloadList()->Invalidate();
 
 	OnOK();
 }

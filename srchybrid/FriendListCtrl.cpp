@@ -302,8 +302,7 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				} //Xman
 			}
 			break;
-
-			// - show requested files (sivka/Xman)
+		// - show requested files (sivka/Xman)
 		case MP_LIST_REQUESTED_FILES:
 			{ 
 				if (cur_friend && cur_friend->GetLinkedClient())
@@ -312,7 +311,7 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				}
 				break;
 			}
-			//Xman end
+		//Xman end
 		// MORPH START - Added by Commander, Friendlinks [emulEspaa] - added by zz_fly
 		case MP_PASTE:
 		{
@@ -339,7 +338,7 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 						AddLogLine(true, msg);
 					}
 				}
-				if(pLink) delete pLink; //zz_fly :: memleak :: thanks dolphin87
+				if(pLink) delete pLink; //zz_fly :: memleak :: thanks DolphinX
 			}
 			catch(CString strError){
 				AfxMessageBox(strError);
@@ -372,7 +371,7 @@ BOOL CFriendListCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				CString sLink;
 				CED2KFriendLink friendLink(cur_friend->m_strName, cur_friend->m_abyUserhash);
 				friendLink.GetLink(sLink);
-				sLink = _T("<a href=\"") + sLink + _T("\">") + StripInvalidFilenameChars(cur_friend->m_strName, true) + _T("</a>");
+				sLink = _T("<a href=\"") + sLink + _T("\">") + StripInvalidFilenameChars(cur_friend->m_strName) + _T("</a>");
 				if ( !sCompleteLink.IsEmpty() )
 					sCompleteLink.Append(_T("\r\n"));
 				sCompleteLink.Append(sLink);

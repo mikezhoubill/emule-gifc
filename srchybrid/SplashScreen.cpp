@@ -1,5 +1,5 @@
 //this file is part of eMule
-//Copyright (C)2002-2008 Merkur ( strEmail.Format("%s@%s", "devteam", "emule-project.net") / http://www.emule-project.net )
+//Copyright (C)2002-2010 Merkur ( strEmail.Format("%s@%s", "devteam", "emule-project.net") / http://www.emule-project.net )
 //
 //This program is free software; you can redistribute it and/or
 //modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ void CSplashScreen::OnPaint()
 			_tcscpy(lf.lfFaceName, _T("Arial"));
 			font.CreateFontIndirect(&lf);
 			pOldFont = dc.SelectObject(&font);
-			dc.DrawText(_T("Copyright (C) 2002-2009 Merkur"), &rc, DT_CENTER | DT_NOPREFIX);
+			dc.DrawText(_T("Copyright (C) 2002-2010 Merkur"), &rc, DT_CENTER | DT_NOPREFIX);
 			if (pOldFont)
 				dc.SelectObject(pOldFont);
 			font.DeleteObject();

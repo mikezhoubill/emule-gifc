@@ -59,7 +59,7 @@ Example
                     x       _X_          x 	        0000000000000110
 
 
-Version 2 of AICH also supports 32bit identifiers to support large files, check CAICHHashSet::CreatePartRecoveryData
+Version 2 of AICH also supports 32bit identifiers to support large files, check CAICHRecoveryHashSet::CreatePartRecoveryData
 
 
 */
@@ -70,6 +70,7 @@ Version 2 of AICH also supports 32bit identifiers to support large files, check 
 #define KNOWN2_MET_FILENAME			_T("known2_64.met")
 #define OLD_KNOWN2_MET_FILENAME		_T("known2.met")
 #define KNOWN2_MET_VERSION			0x02
+#define KNOWN2_UNSHARED_MET_FILENAME _T("known2_unshared.met") //zz_fly :: known2 split
 
 enum EAICHStatus {
 	AICH_ERROR = 0,
@@ -134,19 +135,33 @@ public:
 class CAICHHashTree
 {
 	friend class CAICHHashTree;
-	friend class CAICHHashSet;
+	friend class CAICHRecoveryHashSet;
 public:
 	CAICHHashTree(uint64 nDataSize, bool bLeftBranch, uint64 nBaseSize);
 	~CAICHHashTree();
+	//zz_fly :: known2 buffer // helper method of CList
+	CAICHHashTree()									{;}
+	CAICHHashTree(const CAICHHashTree& k1)					{ *this = k1; }
+	CAICHHashTree&	operator=(const CAICHHashTree& k1);
+	friend bool operator==(const CAICHHashTree& k1,const CAICHHashTree& k2)	{ return (k1.m_Hash == k2.m_Hash);}
+	friend bool operator!=(const CAICHHashTree& k1,const CAICHHashTree& k2)	{ return !(k1 == k2); }
+	//zz_fly :: end
 	void			SetBlockHash(uint64 nSize, uint64 nStartPos, CAICHHashAlgo* pHashAlg);
 	bool			ReCalculateHash(CAICHHashAlgo* hashalg, bool bDontReplace );
 	bool			VerifyHashTree(CAICHHashAlgo* hashalg, bool bDeleteBadTrees);
 	CAICHHashTree*	FindHash(uint64 nStartPos, uint64 nSize)					{uint8 buffer = 0; return FindHash(nStartPos, nSize, &buffer);}
+	const CAICHHashTree* FindExistingHash(uint64 nStartPos, uint64 nSize) const		{uint8 buffer = 0; return FindExistingHash(nStartPos, nSize, &buffer);}
 	uint64			GetBaseSize() const;		
 	void			SetBaseSize(uint64 uValue);
+	//zz_fly :: known2 buffer
+	void			ClearSubTree();  //a safe way to clear subtrees
+	void			MarkBuffered();  //marked the subtrees as buffered
+	void			MarkUnBuffered();  //marked the subtrees as unbuffered
+	//zz_fly :: end
 
 protected:
 	CAICHHashTree*	FindHash(uint64 nStartPos, uint64 nSize, uint8* nLevel);
+	const CAICHHashTree* FindExistingHash(uint64 nStartPos, uint64 nSize, uint8* nLevel) const;
 	bool			CreatePartRecoveryData(uint64 nStartPos, uint64 nSize, CFileDataIO* fileDataOut, uint32 wHashIdent, bool b32BitIdent);
 	void			WriteHash(CFileDataIO* fileDataOut, uint32 wHashIdent, bool b32BitIdent) const;
 	bool			WriteLowestLevelHashs(CFileDataIO* fileDataOut, uint32 wHashIdent, bool bNoIdent, bool b32BitIdent) const;
@@ -167,6 +182,7 @@ private:
 	// BaseSize: to save ressources we use a bool to store the basesize as currently only two values are used
 	// keep the original number based calculations and checks in the code through, so it can easily be adjusted in case we want to use hashsets with different basesizes
 	bool			m_bBaseSize;		// blocksize on which the lowest hash is based on
+	bool			m_bIsBuffered; //zz_fly :: known2 buffer //is this tree in buffer
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -174,7 +190,7 @@ private:
 class CAICHUntrustedHash {
 public:
 	CAICHUntrustedHash&	operator=(const CAICHUntrustedHash& k1)		{ m_adwIpsSigning.Copy(k1.m_adwIpsSigning); m_Hash = k1.m_Hash ; return *this; }
-	bool	AddSigningIP(uint32 dwIP);	
+	bool	AddSigningIP(uint32 dwIP, bool bTestOnly);
 
 	CAICHHash				m_Hash;
 	CArray<uint32, uint32>	m_adwIpsSigning;
@@ -192,12 +208,12 @@ public:
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////
-///CAICHHashSet
-class CAICHHashSet
+///CAICHRecoveryHashSet
+class CAICHRecoveryHashSet
 {
 public:
-	CAICHHashSet(CKnownFile*	pOwner);
-	~CAICHHashSet(void);
+	CAICHRecoveryHashSet(CKnownFile* pOwner, EMFileSize nSize = (uint64)0);
+	~CAICHRecoveryHashSet(void);
 	bool			CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fileDataOut, bool bDbgDontLoad = false);
 	bool			ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileDataIn);
 	bool			ReCalculateHash(bool bDontReplace = false);
@@ -209,28 +225,41 @@ public:
 	void			SetOwner(CKnownFile* val)					{m_pOwner = val;}
 	
 	void			FreeHashSet();
-	void			ReduceToPartHashs();
 	void			SetFileSize(EMFileSize nSize);
 	
-	CAICHHash&		GetMasterHash()						{return m_pHashTree.m_Hash;} 
+	const CAICHHash& GetMasterHash() const						{return m_pHashTree.m_Hash;} 
 	void			SetMasterHash(const CAICHHash& Hash, EAICHStatus eNewStatus);
 	bool			HasValidMasterHash()				{return m_pHashTree.m_bHashValid;}
+	bool			GetPartHashs(CArray<CAICHHash>& rResult) const;
+	const CAICHHashTree*	FindPartHash(uint16 nPart);
 
 	bool			SaveHashSet();
-	bool			LoadHashSet(); // only call directly when debugging
+	bool			LoadHashSet(); // Loading from known2.met
 
-	CAICHHashAlgo*	GetNewHashAlgo();
+	static CAICHHashAlgo*	GetNewHashAlgo();
 	static void		ClientAICHRequestFailed(CUpDownClient* pClient);
 	static void		RemoveClientAICHRequest(const CUpDownClient* pClient);
 	static bool		IsClientRequestPending(const CPartFile* pForFile, uint16 nPart);
 	static CAICHRequestedData GetAICHReqDetails(const  CUpDownClient* pClient);
+	static void		AddStoredAICHHash(CAICHHash Hash);
 	void			DbgTest();
 
 	CAICHHashTree	m_pHashTree;
 	static CList<CAICHRequestedData>	m_liRequestedData;
 	static CMutex						m_mutKnown2File;
+	//zz_fly :: known2 buffer
+	//do not update known2.met until we have buffered enough hashsets. reduce the diskio during hashing.
+	static bool		SaveHashSetToFile(bool forced); //this method also called in uploadtimer.
+	static CMutex						m_mutSaveHashSet; //make sure there is only one saving process in progress.
+	//zz_fly :: end
 private:
+	static CList<CAICHHash>				m_liAICHHashsStored; // contains all AICH hahses stored in known2*.met
 	CKnownFile*		m_pOwner;
 	EAICHStatus		m_eStatus;
 	CArray<CAICHUntrustedHash> m_aUntrustedHashs;
+	//zz_fly :: known2 buffer
+	static CList<CAICHHashTree>	m_liBufferedHashTree; //the hashsets we have buffered
+	static uint32	m_nLastSaved; //last time we saved the hashsets
+	static uint64	m_uBufferedSize; //buffered hashsets size
+	//zz_fly :: end
 };

@@ -24,7 +24,7 @@
 #include "MenuCmds.h"
 #include "partfile.h"
 #include "emuledlg.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "SharedFileList.h"
 #include "SharedFilesWnd.h"
 
@@ -276,7 +276,26 @@ void CSharedDirsTreeCtrl::InitalizeStandardItems(){
 	m_pRootDirectoryItem->liSubDirectories.AddTail(pDir);
 
 	m_pRootUnsharedDirectries = new CDirectoryItem(_T(""), TVI_ROOT, SDI_FILESYSTEMPARENT);
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER<1600
 	m_pRootUnsharedDirectries->m_htItem = InsertItem(TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN, GetResString(IDS_ALLDIRECTORIES), 4, 4, 0, 0, (LPARAM)m_pRootUnsharedDirectries, TVI_ROOT, TVI_LAST);
+#else
+	CString strLabel = GetResString(IDS_ALLDIRECTORIES);
+	TVINSERTSTRUCT tvs = {0};
+	tvs.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN;
+	tvs.item.pszText = strLabel.GetBuffer();
+	tvs.item.iImage = 4;
+	tvs.item.iImage = 4;
+	tvs.item.state = 0;
+	tvs.item.state = 0;
+	tvs.item.lParam = (LPARAM)m_pRootUnsharedDirectries;
+	tvs.item.cChildren = I_CHILDRENCALLBACK;
+	tvs.hParent = TVI_ROOT;
+	tvs.hInsertAfter = TVI_LAST;
+	m_pRootUnsharedDirectries->m_htItem = InsertItem(&tvs);
+	strLabel.ReleaseBuffer();
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 
 	//Xman [MoNKi: -Downloaded History-]
 	pHistory = new CDirectoryItem(_T(""), TVI_ROOT, SDI_DIRECTORY);
@@ -723,7 +742,7 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					if (file->IsKindOf(RUNTIME_CLASS(CKnownFile))){
 						if (!str.IsEmpty())
 							str += _T("\r\n");
-						str += CreateED2kLink((CKnownFile*)file);
+						str += ((CKnownFile*)file)->GetED2kLink();
 					}
 				}
 				theApp.CopyTextToClipboard(str);
@@ -750,7 +769,7 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 							theApp.sharedfiles->RemoveFile((CKnownFile*)myfile, true);
 						bRemovedItems = true;
 						if (myfile->IsKindOf(RUNTIME_CLASS(CPartFile)))
-							theApp.emuledlg->transferwnd->downloadlistctrl.ClearCompleted(static_cast<CPartFile*>(myfile));
+							theApp.emuledlg->transferwnd->GetDownloadList()->ClearCompleted(static_cast<CPartFile*>(myfile));
 					}
 					else{
 						CString strError;
@@ -764,7 +783,7 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					// Depending on <no-idea> this does not always cause a
 					// LVN_ITEMACTIVATE message sent. So, explicitly redraw
 					// the item.
-					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 					theApp.emuledlg->sharedfileswnd->OnSingleFileShareStatusChanged(); // might have been a single shared file
 				}
 				break; 
@@ -789,8 +808,10 @@ BOOL CSharedDirsTreeCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					POSITION pos = selectedList.GetHeadPosition();
 					while (pos != NULL)
 					{
-						if (!selectedList.GetAt(pos)->IsKindOf(RUNTIME_CLASS(CKnownFile)))
+						if (!selectedList.GetAt(pos)->IsKindOf(RUNTIME_CLASS(CKnownFile))){
+							selectedList.GetNext(pos); //bug fix
 							continue;
+						}
 						CKnownFile* file = (CKnownFile*)selectedList.GetNext(pos);
 						switch (wParam) {
 							case MP_PRIOVERYLOW:

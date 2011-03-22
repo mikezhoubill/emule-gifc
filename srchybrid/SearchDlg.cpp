@@ -250,6 +250,11 @@ bool CSearchDlg::DoNewEd2kSearch(SSearchParams* pParams)
 	return m_pwndResults->DoNewEd2kSearch(pParams);
 }
 
+void CSearchDlg::ProcessEd2kSearchLinkRequest(CString strSearchTerm)
+{
+	m_pwndParams->ProcessEd2kSearchLinkRequest(strSearchTerm);
+}
+
 void CSearchDlg::DeleteAllSearches()
 {
 	m_pwndResults->DeleteAllSearches();
@@ -341,6 +346,7 @@ BOOL CSearchDlg::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	theApp.ShowHelp(eMule_FAQ_GUI_Search);
 	return TRUE;
 }
+
 // ==> Design Settings [eWombat/Stulle] - Max
 void CSearchDlg::OnBackcolor() 
 {

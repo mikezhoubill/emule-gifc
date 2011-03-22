@@ -49,7 +49,7 @@ public:
 	bool	m_bSortAscending;
 	uint32	m_nScrollPosition;
 	CArray<int, int>	m_aSelectedItems;
-	CList<int, int>	m_liSortHistory;	// SLUGFILLER: multiSort
+	CList<int, int> m_liSortHistory; // SLUGFILLER: multiSort
 };
 
 class CSearchListCtrl : public CMuleListCtrl, public CListCtrlItemWalk

@@ -1,5 +1,10 @@
 //////////////////////////////////////////////////
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+/*
 // CMemDC - memory DC
+*/
+// CMemoryDC - memory DC
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 //
 // Author: Keith Rule
 // Email:  keithr@europa.com
@@ -24,7 +29,12 @@
 // flicker free drawing.
 #pragma once
 
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+/*
 class CMemDC : public CDC
+*/
+class CMemoryDC : public CDC
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 {
 private:
 	CBitmap		m_bitmap;		// Offscreen bitmap
@@ -36,7 +46,12 @@ private:
 	bool		m_bFlushed;
 
 public:
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
 	CMemDC(CDC *pDC, LPCRECT pRect = NULL, COLORREF crBackground = CLR_DEFAULT)
+	*/
+	CMemoryDC(CDC *pDC, LPCRECT pRect = NULL, COLORREF crBackground = CLR_DEFAULT)
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 		: CDC()
 	{
 		ASSERT( pDC != NULL );
@@ -80,7 +95,12 @@ public:
 		FillBackground(crBackground);
 	}
 
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
 	~CMemDC()
+	*/
+	~CMemoryDC()
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	{
 		Flush();
 		if (m_oldFont)
@@ -121,13 +141,23 @@ public:
 	}
 
 	// Allow usage as a pointer
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
 	CMemDC* operator->()
+	*/
+	CMemoryDC* operator->()
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	{
 		return this;
 	}
 
 	// Allow usage as a pointer
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	/*
 	operator CMemDC*()
+	*/
+	operator CMemoryDC*()
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	{
 		return this;
 	}

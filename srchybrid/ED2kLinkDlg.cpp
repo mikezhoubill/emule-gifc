@@ -19,7 +19,6 @@
 #include "ED2kLinkDlg.h"
 #include "KnownFile.h"
 #include "partfile.h"
-#include "OtherFunctions.h"
 #include "preferences.h"
 #include "shahashset.h"
 #include "UserMsgs.h"
@@ -36,7 +35,6 @@ IMPLEMENT_DYNAMIC(CED2kLinkDlg, CResizablePage)
 BEGIN_MESSAGE_MAP(CED2kLinkDlg, CResizablePage) 
 	ON_BN_CLICKED(IDC_LD_CLIPBOARDBUT, OnBnClickedClipboard)
 	ON_BN_CLICKED(IDC_LD_SOURCECHE, OnSettingsChange)
-	ON_BN_CLICKED(IDC_LD_EMULEHASHCHE, OnSettingsChange)
 	ON_BN_CLICKED(IDC_LD_HTMLCHE, OnSettingsChange)
 	ON_BN_CLICKED(IDC_LD_HOSTNAMECHE, OnSettingsChange)
 	ON_BN_CLICKED(IDC_LD_HASHSETCHE, OnSettingsChange)
@@ -51,6 +49,7 @@ CED2kLinkDlg::CED2kLinkDlg()
 	m_strCaption = GetResString(IDS_SW_LINK);
 	m_psp.pszTitle = m_strCaption;
 	m_psp.dwFlags |= PSP_USETITLE;
+	m_bReducedDlg = false;
 } 
 
 CED2kLinkDlg::~CED2kLinkDlg() 
@@ -68,31 +67,54 @@ BOOL CED2kLinkDlg::OnInitDialog()
 	CResizablePage::OnInitDialog(); 
 	InitWindowStyles(this);
 
+
+
+	if (!m_bReducedDlg)
+	{
+		AddAnchor(IDC_LD_BASICGROUP,BOTTOM_LEFT,BOTTOM_RIGHT);
+		AddAnchor(IDC_LD_SOURCECHE,BOTTOM_LEFT,BOTTOM_LEFT);
+		AddAnchor(IDC_LD_ADVANCEDGROUP,BOTTOM_LEFT,BOTTOM_RIGHT);
+		AddAnchor(IDC_LD_HTMLCHE,BOTTOM_LEFT,BOTTOM_LEFT);
+		AddAnchor(IDC_LD_HASHSETCHE,BOTTOM_LEFT,BOTTOM_LEFT);
+		AddAnchor(IDC_LD_HOSTNAMECHE,BOTTOM_LEFT,BOTTOM_LEFT);
+
+		// enabled/disable checkbox depending on situation
+		if (theApp.IsConnected() && !theApp.IsFirewalled())
+			GetDlgItem(IDC_LD_SOURCECHE)->EnableWindow(TRUE);
+		else{
+			GetDlgItem(IDC_LD_SOURCECHE)->EnableWindow(FALSE);
+			((CButton*)GetDlgItem(IDC_LD_SOURCECHE))->SetCheck(BST_UNCHECKED);
+		}
+		if (theApp.IsConnected() && !theApp.IsFirewalled() && !thePrefs.GetYourHostname().IsEmpty() && thePrefs.GetYourHostname().Find(_T('.')) != -1)
+			GetDlgItem(IDC_LD_HOSTNAMECHE)->EnableWindow(TRUE);
+		else{
+			GetDlgItem(IDC_LD_HOSTNAMECHE)->EnableWindow(FALSE);
+			((CButton*)GetDlgItem(IDC_LD_HOSTNAMECHE))->SetCheck(BST_UNCHECKED);
+		}
+	}
+	else
+	{
+		CRect rcDefault, rcNew;
+		GetDlgItem(IDC_LD_LINKGROUP)->GetWindowRect(rcDefault);
+		GetDlgItem(IDC_LD_ADVANCEDGROUP)->GetWindowRect(rcNew);
+		int nDeltaY = rcNew.bottom - rcDefault.bottom;
+		GetDlgItem(IDC_LD_LINKGROUP)->SetWindowPos(NULL, 0, 0, rcDefault.Width(), rcDefault.Height() + nDeltaY, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
+		GetDlgItem(IDC_LD_LINKEDI)->GetWindowRect(rcDefault);
+		GetDlgItem(IDC_LD_LINKEDI)->SetWindowPos(NULL, 0, 0, rcDefault.Width(), rcDefault.Height() + nDeltaY, SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
+		GetDlgItem(IDC_LD_CLIPBOARDBUT)->GetWindowRect(rcDefault);
+		ScreenToClient(rcDefault);
+		GetDlgItem(IDC_LD_CLIPBOARDBUT)->SetWindowPos(NULL, rcDefault.left, rcDefault.top + nDeltaY, 0, 0, SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOZORDER | SWP_NOACTIVATE);
+		
+		GetDlgItem(IDC_LD_BASICGROUP)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_LD_SOURCECHE)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_LD_ADVANCEDGROUP)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_LD_HTMLCHE)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_LD_HASHSETCHE)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_LD_HOSTNAMECHE)->ShowWindow(SW_HIDE);
+	}
 	AddAnchor(IDC_LD_LINKGROUP,TOP_LEFT,BOTTOM_RIGHT);
 	AddAnchor(IDC_LD_LINKEDI,TOP_LEFT,BOTTOM_RIGHT);
 	AddAnchor(IDC_LD_CLIPBOARDBUT,BOTTOM_RIGHT);
-	AddAnchor(IDC_LD_BASICGROUP,BOTTOM_LEFT,BOTTOM_RIGHT);
-	AddAnchor(IDC_LD_SOURCECHE,BOTTOM_LEFT,BOTTOM_LEFT);
-	AddAnchor(IDC_LD_EMULEHASHCHE,BOTTOM_LEFT,BOTTOM_LEFT);
-	AddAnchor(IDC_LD_ADVANCEDGROUP,BOTTOM_LEFT,BOTTOM_RIGHT);
-	AddAnchor(IDC_LD_HTMLCHE,BOTTOM_LEFT,BOTTOM_LEFT);
-	AddAnchor(IDC_LD_HASHSETCHE,BOTTOM_LEFT,BOTTOM_LEFT);
-	AddAnchor(IDC_LD_HOSTNAMECHE,BOTTOM_LEFT,BOTTOM_LEFT);
-
-	// enabled/disable checkbox depending on situation
-	if (theApp.IsConnected() && !theApp.IsFirewalled())
-		GetDlgItem(IDC_LD_SOURCECHE)->EnableWindow(TRUE);
-	else{
-		GetDlgItem(IDC_LD_SOURCECHE)->EnableWindow(FALSE);
-		((CButton*)GetDlgItem(IDC_LD_SOURCECHE))->SetCheck(BST_UNCHECKED);
-	}
-	if (theApp.IsConnected() && !theApp.IsFirewalled() && !thePrefs.GetYourHostname().IsEmpty() && thePrefs.GetYourHostname().Find(_T('.')) != -1)
-		GetDlgItem(IDC_LD_HOSTNAMECHE)->EnableWindow(TRUE);
-	else{
-		GetDlgItem(IDC_LD_HOSTNAMECHE)->EnableWindow(FALSE);
-		((CButton*)GetDlgItem(IDC_LD_HOSTNAMECHE))->SetCheck(BST_UNCHECKED);
-	}
-
 	Localize(); 
 
 	return TRUE; 
@@ -113,18 +135,12 @@ BOOL CED2kLinkDlg::OnSetActive()
 			if (!(*m_paFiles)[i]->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 				continue;
 			bShowHTML = TRUE;
-			const CKnownFile* file = STATIC_DOWNCAST(CKnownFile, (*m_paFiles)[i]);
-			//Xman // SLUGFILLER: SafeHash - use GetED2KPartCount
-			/*
-			if (file->GetHashCount() > 0 && file->GetHashCount() == file->GetED2KPartHashCount())
-			*/
-			if (file->GetHashCount() > 0 && file->GetHashCount() == file->GetED2KPartCount())
-			//Xman end
+			CKnownFile* file = STATIC_DOWNCAST(CKnownFile, (*m_paFiles)[i]);
+			if (file->GetFileIdentifier().GetAvailableMD4PartHashCount() > 0 && file->GetFileIdentifier().HasExpectedMD4HashCount())
 			{
 				bShowHashset = TRUE;
 			}
-			if (file->GetAICHHashset()->HasValidMasterHash() 
-				&& (file->GetAICHHashset()->GetStatus() == AICH_VERIFIED || file->GetAICHHashset()->GetStatus() == AICH_HASHSETCOMPLETE))
+			if (file->GetFileIdentifier().HasAICHHash())
 			{	
 				bShowAICH = TRUE;
 			}
@@ -134,12 +150,6 @@ BOOL CED2kLinkDlg::OnSetActive()
 		GetDlgItem(IDC_LD_HASHSETCHE)->EnableWindow(bShowHashset);
 		if (!bShowHashset)
 			((CButton*)GetDlgItem(IDC_LD_HASHSETCHE))->SetCheck(BST_UNCHECKED);
-
-		GetDlgItem(IDC_LD_EMULEHASHCHE)->EnableWindow(bShowAICH);
-		if (!bShowAICH)
-			((CButton*)GetDlgItem(IDC_LD_EMULEHASHCHE))->SetCheck(BST_UNCHECKED);
-		else
-			((CButton*)GetDlgItem(IDC_LD_EMULEHASHCHE))->SetCheck(BST_CHECKED);
 
 		GetDlgItem(IDC_LD_HTMLCHE)->EnableWindow(bShowHTML);
 
@@ -157,16 +167,18 @@ LRESULT CED2kLinkDlg::OnDataChanged(WPARAM, LPARAM)
 }
 
 void CED2kLinkDlg::Localize(void)
-{ 
-	GetDlgItem(IDC_LD_BASICGROUP)->SetWindowText(GetResString(IDS_LD_BASICOPT));
-	GetDlgItem(IDC_LD_SOURCECHE)->SetWindowText(GetResString(IDS_LD_ADDSOURCE)); 
-	GetDlgItem(IDC_LD_EMULEHASHCHE)->SetWindowText(GetResString(IDS_LD_EMULEHASH)); 
-	GetDlgItem(IDC_LD_ADVANCEDGROUP)->SetWindowText(GetResString(IDS_LD_ADVANCEDOPT)); 
-	GetDlgItem(IDC_LD_HTMLCHE)->SetWindowText(GetResString(IDS_LD_ADDHTML)); 
-	GetDlgItem(IDC_LD_HASHSETCHE)->SetWindowText(GetResString(IDS_LD_ADDHASHSET)); 
+{ 	
 	GetDlgItem(IDC_LD_LINKGROUP)->SetWindowText(GetResString(IDS_SW_LINK)); 
 	GetDlgItem(IDC_LD_CLIPBOARDBUT)->SetWindowText(GetResString(IDS_LD_COPYCLIPBOARD));
-	GetDlgItem(IDC_LD_HOSTNAMECHE)->SetWindowText(GetResString(IDS_LD_HOSTNAME)); 
+	if (!m_bReducedDlg)
+	{
+		GetDlgItem(IDC_LD_BASICGROUP)->SetWindowText(GetResString(IDS_LD_BASICOPT));
+		GetDlgItem(IDC_LD_SOURCECHE)->SetWindowText(GetResString(IDS_LD_ADDSOURCE)); 
+		GetDlgItem(IDC_LD_ADVANCEDGROUP)->SetWindowText(GetResString(IDS_LD_ADVANCEDOPT)); 
+		GetDlgItem(IDC_LD_HTMLCHE)->SetWindowText(GetResString(IDS_LD_ADDHTML)); 
+		GetDlgItem(IDC_LD_HASHSETCHE)->SetWindowText(GetResString(IDS_LD_ADDHASHSET)); 
+		GetDlgItem(IDC_LD_HOSTNAMECHE)->SetWindowText(GetResString(IDS_LD_HOSTNAME));
+	}
 }
 
 void CED2kLinkDlg::UpdateLink()
@@ -175,10 +187,9 @@ void CED2kLinkDlg::UpdateLink()
 	CString strBuffer;
 	const bool bHashset = ((CButton*)GetDlgItem(IDC_LD_HASHSETCHE))->GetCheck() == BST_CHECKED;
 	const bool bHTML = ((CButton*)GetDlgItem(IDC_LD_HTMLCHE))->GetCheck() == BST_CHECKED;
-	const bool bSource = ((CButton*)GetDlgItem(IDC_LD_SOURCECHE))->GetCheck() == BST_CHECKED && theApp.IsConnected() && !theApp.IsFirewalled();
+	const bool bSource = ((CButton*)GetDlgItem(IDC_LD_SOURCECHE))->GetCheck() == BST_CHECKED && theApp.IsConnected() && theApp.GetPublicIP() != 0 && !theApp.IsFirewalled();
 	const bool bHostname = ((CButton*)GetDlgItem(IDC_LD_HOSTNAMECHE))->GetCheck() == BST_CHECKED && theApp.IsConnected() && !theApp.IsFirewalled()
 		&& !thePrefs.GetYourHostname().IsEmpty() && thePrefs.GetYourHostname().Find(_T('.')) != -1;
-	const bool bEMHash = ((CButton*)GetDlgItem(IDC_LD_EMULEHASHCHE))->GetCheck() == BST_CHECKED;
 
 	for (int i = 0; i != m_paFiles->GetSize(); i++)
 	{
@@ -187,49 +198,9 @@ void CED2kLinkDlg::UpdateLink()
 
 		if (!strLinks.IsEmpty())
 			strLinks += _T("\r\n\r\n");
-
-		if (bHTML)
-			strLinks += _T("<a href=\"");
 	
-		const CKnownFile* file = STATIC_DOWNCAST(CKnownFile, (*m_paFiles)[i]);
-		strLinks += CreateED2kLink(file, false);
-		
-		//Xman // SLUGFILLER: SafeHash - use GetED2KPartCount
-		/*
-		if (bHashset && file->GetHashCount() > 0 && file->GetHashCount() == file->GetED2KPartHashCount()){
-		*/
-		if (bHashset && file->GetHashCount() > 0 && file->GetHashCount() == file->GetED2KPartCount()){
-		//Xman end
-			strLinks += _T("p=");
-			for (UINT j = 0; j < file->GetHashCount(); j++)
-			{
-				if (j > 0)
-					strLinks += _T(':');
-				strLinks += EncodeBase16(file->GetPartHash(j), 16);
-			}
-			strLinks += _T('|');
-		}
-
-		if (bEMHash && file->GetAICHHashset()->HasValidMasterHash() && 
-			(file->GetAICHHashset()->GetStatus() == AICH_VERIFIED || file->GetAICHHashset()->GetStatus() == AICH_HASHSETCOMPLETE))
-		{
-			strBuffer.Format(_T("h=%s|"), file->GetAICHHashset()->GetMasterHash().GetString() );
-			strLinks += strBuffer;			
-		}
-
-		strLinks += _T('/');
-		if (bHostname){
-			strBuffer.Format(_T("|sources,%s:%i|/"), thePrefs.GetYourHostname(), thePrefs.GetPort() );
-			strLinks += strBuffer;
-		}
-		else if(bSource){
-			uint32 dwID = theApp.GetID();
-			strBuffer.Format(_T("|sources,%i.%i.%i.%i:%i|/"),(uint8)dwID,(uint8)(dwID>>8),(uint8)(dwID>>16),(uint8)(dwID>>24), thePrefs.GetPort() );
-			strLinks += strBuffer;
-		}
-
-		if (bHTML)
-			strLinks += _T("\">") + StripInvalidFilenameChars(file->GetFileName(), true) + _T("</a>");
+		CKnownFile* file = STATIC_DOWNCAST(CKnownFile, (*m_paFiles)[i]);
+		strLinks += file->GetED2kLink(bHashset, bHTML, bHostname, bSource, theApp.GetPublicIP());
 	}
 	m_ctrlLinkEdit.SetWindowText(strLinks);
 

@@ -17,6 +17,7 @@
 #pragma once
 #include <list>
 #include "opcodes.h"
+#include "FileIdentifier.h"
 
 /*
 										CPartFile
@@ -61,9 +62,13 @@ public:
 	// returns the file type which is used to be shown in the GUI
 	CString GetFileTypeDisplayStr() const;
 
-	const uchar* GetFileHash() const { return m_abyFileHash; }
-	void SetFileHash(const uchar* pucFileHash);
+	CFileIdentifier& GetFileIdentifier()				{ return m_FileIdentifier; }
+	const CFileIdentifier& GetFileIdentifierC() const	{ return m_FileIdentifier; }
+	const uchar* GetFileHash() const					{ return m_FileIdentifier.GetMD4Hash(); }
+	void SetFileHash(const uchar* pucFileHash)			{ m_FileIdentifier.SetMD4Hash(pucFileHash); }
 	bool HasNullHash() const;
+	CString GetED2kLink(bool bHashset = false, bool bHTML = false, bool bHostname = false, bool bSource = false, uint32 dwSourceIP = 0) const;
+
 
 	EMFileSize		GetFileSize() const					{ return m_nFileSize; }
 	virtual void	SetFileSize(EMFileSize nFileSize)	{ m_nFileSize = nFileSize; }
@@ -129,10 +134,10 @@ public:
 #endif
 
 protected:
-	CString m_strFileName;
-	uchar	m_abyFileHash[16];
-	EMFileSize	m_nFileSize;
-	CString m_strComment;
+	CFileIdentifier m_FileIdentifier;
+	CString			m_strFileName;
+	EMFileSize		m_nFileSize;
+	CString			m_strComment;
 	UINT	m_uRating;
 	bool	m_bCommentLoaded;
 	UINT	m_uUserRating;
@@ -147,5 +152,4 @@ protected:
 	//Xman Code Improvement for HasCollectionExtention
 	bool m_bhasCollectionExtention;
 	//Xman end
-
 };

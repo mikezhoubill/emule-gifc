@@ -154,6 +154,22 @@ bool CUDPSocket::Create()
 			return false;
 		}
 		// ==> UPnP support [MoNKi] - leuk_he
+		/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+		//ACAT UPnP
+		if(thePrefs.m_bUseACATUPnPCurrent && thePrefs.GetUPnPNat()){
+			CString client;
+			UINT port;
+			MyUPnP::UPNPNAT_MAPPING mapping;
+
+			GetSockName(client, port);
+			mapping.internalPort = mapping.externalPort = (WORD)port;
+			mapping.protocol = MyUPnP::UNAT_UDP;
+			mapping.description = "Server UDP Port";
+			theApp.AddUPnPNatPort(&mapping, thePrefs.GetUPnPNatTryRandom());
+		}
+#endif //zz_fly :: dual upnp
+		*/
 		// Don't add UPnP port mapping if is a random port and we don't want
 		// to clear mappings on close
 		if(theApp.m_UPnP_IGDControlPoint->IsUpnpAcceptsPorts() &&

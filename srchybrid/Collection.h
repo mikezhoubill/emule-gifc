@@ -28,11 +28,13 @@
 #include <crypto51/files.h>
 #include <crypto51/sha.h>
 */
+#pragma warning(disable:4189) // local variable is initialized but not referenced
 #include <cryptopp/rsa.h>
 #include <cryptopp/base64.h>
 #include <cryptopp/osrng.h>
 #include <cryptopp/files.h>
 #include <cryptopp/sha.h>
+#pragma warning(default:4189) // local variable is initialized but not referenced
 //Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter

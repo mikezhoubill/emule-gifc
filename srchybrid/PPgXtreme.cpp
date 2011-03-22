@@ -42,6 +42,7 @@ BEGIN_MESSAGE_MAP(CPPgXtreme, CPropertyPage)
 	ON_BN_CLICKED(IDC_RETRYCONNECTIONATTEMPTS, OnSettingsChange)	//Xman 
 	ON_EN_CHANGE(IDC_MTU_EDIT, OnSettingsChange)
 	ON_BN_CLICKED(IDC_USEDOUBLESENDSIZE, OnSettingsChange)
+	ON_BN_CLICKED(IDC_RETRIEVEMTUFROMSOCKET, OnSettingsChange) // netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
 	ON_BN_CLICKED(IDC_MULTIQUEUE, OnSettingsChange) // Maella -One-queue-per-file- (idea bloodymad)
 	ON_BN_CLICKED(IDC_OPENMORESLOTS, OnOpenMoreSlots)
 	ON_WM_HSCROLL()
@@ -135,10 +136,9 @@ void CPPgXtreme::LoadSettings(void)
 
 		CheckDlgButton(IDC_RETRYCONNECTIONATTEMPTS, thePrefs.retryconnectionattempts); //Xman 
 
-		//zz_fly :: support 24k send buffer :: start
 		GetDlgItem(IDC_SENDBUFFER3)->ShowWindow(SW_SHOW);
 		GetDlgItem(IDC_SENDBUFFER4)->ShowWindow(SW_HIDE);
-		//zz_fly :: support 24k send buffer :: end
+
 		switch(thePrefs.GetSendbuffersize())
 		{
 		case 6000:
@@ -192,7 +192,13 @@ void CPPgXtreme::LoadSettings(void)
 		GetDlgItem(IDC_MTU_EDIT)->SetWindowText(buffer);
 
 		CheckDlgButton(IDC_USEDOUBLESENDSIZE, thePrefs.usedoublesendsize);
-
+		// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+		CheckDlgButton(IDC_RETRIEVEMTUFROMSOCKET, thePrefs.retrieveMTUFromSocket);
+		if(thePrefs.GetWindowsVersion() >= _WINVER_VISTA_)
+			GetDlgItem(IDC_RETRIEVEMTUFROMSOCKET)->EnableWindow(true);
+		else
+			GetDlgItem(IDC_RETRIEVEMTUFROMSOCKET)->EnableWindow(false);
+		// netfinity: end
 		buffer.Format(GetResString(IDS_AVG_DATARATE_TIME),thePrefs.GetDatarateSamples());
 		GetDlgItem(IDC_AVG_DATARATE_TIME)->SetWindowText(buffer);
 
@@ -300,6 +306,8 @@ BOOL CPPgXtreme::OnApply()
 	}
 	
 	thePrefs.usedoublesendsize=IsDlgButtonChecked(IDC_USEDOUBLESENDSIZE)!=0;
+	// netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
+	thePrefs.retrieveMTUFromSocket = IsDlgButtonChecked(IDC_RETRIEVEMTUFROMSOCKET)!=0;
 
 	LoadSettings();
 	SetModified(FALSE);
@@ -359,6 +367,7 @@ void CPPgXtreme::Localize(void)
 		GetDlgItem(IDC_MULTIQUEUE)->SetWindowText(GetResString(IDS_MULTIQUEUE));
 
 		GetDlgItem(IDC_USEDOUBLESENDSIZE)->SetWindowText(GetResString(IDS_USEDOUBLESENDSIZE));
+		GetDlgItem(IDC_RETRIEVEMTUFROMSOCKET)->SetWindowText(GetResString(IDS_RETRIEVEMTUFROMSOCKET)); // netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
 		GetDlgItem(IDC_STATIC_MTU)->SetWindowText(GetResString(IDS_PPG_MAELLA_MTU_STATIC));
 		GetDlgItem(IDC_OPENMORESLOTS)->SetWindowText(GetResString(IDS_OPENMORESLOTS));
 		GetDlgItem(IDC_NAFCFULLCONTROL)->SetWindowText(GetResString(IDS_PPG_MAELLA_NAFC_CHECK02));
@@ -414,5 +423,3 @@ void CPPgXtreme::OnOpenMoreSlots()
 
 	OnSettingsChange();
 }
-
-

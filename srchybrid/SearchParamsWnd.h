@@ -50,6 +50,7 @@ public:
 
 	SSearchParams* GetParameters();
 	void SetParameters(const SSearchParams* pParams);
+	void ProcessEd2kSearchLinkRequest(CString strSearchTerm);
 
 	virtual CSize CalcDynamicLayout(int, DWORD nMode);
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);

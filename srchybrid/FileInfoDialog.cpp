@@ -22,6 +22,7 @@
 #include "PartFile.h"
 #include "Preferences.h"
 #include "UserMsgs.h"
+#include "SplitterControl.h"
 #include "SharedFileList.h" //Xman [MoNKi: -Downloaded History-]
 
 // id3lib
@@ -123,10 +124,14 @@ public:
 		m_hLib = NULL;
 		m_ullVersion = 0;
 		// MediaInfoLib - v0.4.0.1
+		//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+		/*
 		m_pfnMediaInfo4_Open = NULL;
 		m_pfnMediaInfo4_Close = NULL;
 		m_pfnMediaInfo4_Get = NULL;
 		m_pfnMediaInfo4_Count_Get = NULL;
+		*/
+		//DolphinX :: Remove MediaInfo 0.4 Support :: End
 		// MediaInfoLib - v0.5 - v0.6.1
 		m_pfnMediaInfo5_Open = NULL;
 		// MediaInfoLib - v0.7+
@@ -188,6 +193,8 @@ public:
 			if (m_hLib != NULL)
 			{
 				ULONGLONG ullVersion = GetModuleVersion(m_hLib);
+				//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+				/*
 				if (ullVersion == 0) // MediaInfoLib - v0.4.0.1 does not have a Win32 version info resource record
 				{
 					char* (__stdcall *fpMediaInfo4_Info_Version)();
@@ -221,6 +228,9 @@ public:
 				// ---
 				// eMule currently handles v0.5.1.0, v0.6.0.0, v0.6.1.0
 				else if (ullVersion >= MAKEDLLVERULL(0, 5, 0, 0) && ullVersion < MAKEDLLVERULL(0, 7, 0, 0))
+				*/
+				if (ullVersion >= MAKEDLLVERULL(0, 5, 0, 0) && ullVersion < MAKEDLLVERULL(0, 7, 0, 0))
+				//DolphinX :: Remove MediaInfo 0.4 Support :: End
 				{
 					// Don't use 'MediaInfo_Info_Version' with version v0.5+. This function is exported,
 					// can be called, but does not return a valid version string..
@@ -274,9 +284,14 @@ public:
 
 	void* Open(LPCTSTR File)
 	{
+		//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+		/*
 		if (m_pfnMediaInfo4_Open)
 			return (*m_pfnMediaInfo4_Open)(CT2A(File));
 		else if (m_pfnMediaInfo5_Open)
+		*/
+		if (m_pfnMediaInfo5_Open)
+		//DolphinX :: Remove MediaInfo 0.4 Support :: End
 			return (*m_pfnMediaInfo5_Open)(File);
 		else if (m_pfnMediaInfo_New) {
 			void* Handle = (*m_pfnMediaInfo_New)();
@@ -291,17 +306,26 @@ public:
 	{
 		if (m_pfnMediaInfo_Delete)
 			(*m_pfnMediaInfo_Delete)(Handle);	// File is automaticly closed
+		//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+		/*
 		else if (m_pfnMediaInfo4_Close)
 			(*m_pfnMediaInfo4_Close)(Handle);
+		*/
+		//DolphinX :: Remove MediaInfo 0.4 Support :: End
 		else if (m_pfnMediaInfo_Close)
 			(*m_pfnMediaInfo_Close)(Handle);
 	}
 
 	CString Get(void* Handle, stream_t_C StreamKind, int StreamNumber, LPCTSTR Parameter, info_t_C KindOfInfo, info_t_C KindOfSearch)
 	{
+		//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+		/*
 		if (m_pfnMediaInfo4_Get)
 			return CString((*m_pfnMediaInfo4_Get)(Handle, StreamKind, StreamNumber, CT2A(Parameter), KindOfInfo, KindOfSearch));
 		else if (m_pfnMediaInfo_Get) {
+		*/
+		if (m_pfnMediaInfo_Get) {
+		//DolphinX :: Remove MediaInfo 0.4 Support :: End
 			CString strNewParameter(Parameter);
 			if (m_ullVersion >= MAKEDLLVERULL(0, 7, 1, 0)) {
 				// Convert old tags to new tags
@@ -329,9 +353,14 @@ public:
 
 	int Count_Get(void* Handle, stream_t_C StreamKind, int StreamNumber)
 	{
+		//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+		/*
 		if (m_pfnMediaInfo4_Get)
 			return (*m_pfnMediaInfo4_Count_Get)(Handle, StreamKind, StreamNumber);
 		else if (m_pfnMediaInfo_Count_Get)
+		*/
+		if (m_pfnMediaInfo_Count_Get)
+		//DolphinX :: Remove MediaInfo 0.4 Support :: End
 			return (*m_pfnMediaInfo_Count_Get)(Handle, StreamKind, StreamNumber);
 		return 0;
 	}
@@ -342,10 +371,14 @@ protected:
 	HINSTANCE m_hLib;
 
 	// MediaInfoLib - v0.4.0.1
+	//DolphinX :: Remove MediaInfo 0.4 Support :: Start
+	/*
 	void* (__stdcall *m_pfnMediaInfo4_Open)(char* File) throw(...);
 	void  (__stdcall *m_pfnMediaInfo4_Close)(void* Handle) throw(...);
 	char* (__stdcall *m_pfnMediaInfo4_Get)(void* Handle, stream_t_C StreamKind, int StreamNumber, char* Parameter, info_t_C KindOfInfo, info_t_C KindOfSearch) throw(...);
 	int   (__stdcall *m_pfnMediaInfo4_Count_Get)(void* Handle, stream_t_C StreamKind, int StreamNumber) throw(...);
+	*/
+	//DolphinX :: Remove MediaInfo 0.4 Support :: End
 
 	// MediaInfoLib - v0.5+
 	void*			(__stdcall *m_pfnMediaInfo5_Open)(const wchar_t* File) throw(...);
@@ -384,6 +417,7 @@ CFileInfoDialog::CFileInfoDialog()
 	m_strCaption = GetResString(IDS_CONTENT_INFO);
 	m_psp.pszTitle = m_strCaption;
 	m_psp.dwFlags |= PSP_USETITLE;
+	m_bReducedDlg = false;
 }
 
 CFileInfoDialog::~CFileInfoDialog()
@@ -397,9 +431,62 @@ BOOL CFileInfoDialog::OnInitDialog()
 	CResizablePage::OnInitDialog();
 	InitWindowStyles(this);
 
+	if (!m_bReducedDlg)
+	{
+		AddAnchor(IDC_FILESIZE, TOP_LEFT, TOP_RIGHT);
+		AddAnchor(IDC_FULL_FILE_INFO, TOP_LEFT, BOTTOM_RIGHT);
+
+		// ==> Drop Win95 support [MorphXT] - Stulle
+		/*
+		m_fi.LimitText(afxIsWin95() ? 0xFFFF : 0x7FFFFFFF);
+		*/
+		m_fi.LimitText(0x7FFFFFFF);
+		// <== Drop Win95 support [MorphXT] - Stulle
+		m_fi.SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
+		m_fi.SetAutoURLDetect();
+		m_fi.SetEventMask(m_fi.GetEventMask() | ENM_LINK);
+	}
+	else
+	{
+		GetDlgItem(IDC_FILESIZE)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_FULL_FILE_INFO)->ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_FD_XI1)->ShowWindow(SW_HIDE);
+	
+		CRect rc;
+		GetDlgItem(IDC_FILESIZE)->GetWindowRect(rc);
+		int nDelta = rc.Height();
+
+		CSplitterControl::ChangeHeight(GetDlgItem(IDC_GENERAL), -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_LENGTH), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FORMAT), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI3), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_VCODEC), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_VBITRATE), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_VWIDTH), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_VASPECT), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_VFPS), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI6), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI8), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI10), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI12), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_STATIC_LANGUAGE), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI4), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_ACODEC), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_ABITRATE), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_ACHANNEL), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_ASAMPLERATE), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_ALANGUAGE), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI5), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI9), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI7), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI14), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI13), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_FD_XI2), 0, -nDelta);
+		CSplitterControl::ChangePos(GetDlgItem(IDC_STATICFI), 0, -nDelta);
+	}
+
 	// General Group
 	AddAnchor(IDC_GENERAL, TOP_LEFT, TOP_RIGHT);
-	AddAnchor(IDC_FILESIZE, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_LENGTH, TOP_LEFT, TOP_RIGHT);
 	AddAnchor(IDC_FORMAT, TOP_LEFT, TOP_RIGHT);
 
@@ -426,17 +513,7 @@ BOOL CFileInfoDialog::OnInitDialog()
 	AddAnchor(IDC_ASAMPLERATE, TOP_CENTER, TOP_RIGHT);
 	AddAnchor(IDC_ALANGUAGE, TOP_CENTER, TOP_RIGHT);
 
-	AddAnchor(IDC_FULL_FILE_INFO, TOP_LEFT, BOTTOM_RIGHT);
 
-	// ==> Drop Win95 support [MorphXT] - Stulle
-	/*
-	m_fi.LimitText(afxIsWin95() ? 0xFFFF : 0x7FFFFFFF);
-	*/
-	m_fi.LimitText(0x7FFFFFFF);
-	// <== Drop Win95 support [MorphXT] - Stulle
-	m_fi.SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(3, 3));
-	m_fi.SetAutoURLDetect();
-	m_fi.SetEventMask(m_fi.GetEventMask() | ENM_LINK);
 
 	CResizablePage::UpdateData(FALSE);
 	Localize();
@@ -876,8 +953,11 @@ LRESULT CFileInfoDialog::OnMediaInfoResult(WPARAM, LPARAM lParam)
 			SetDlgItemText(IDC_ALANGUAGE, _T(""));
 	}
 
-	m_fi.SetRTFText(pThreadRes->strInfo);
-	m_fi.SetSel(0, 0);
+	if (!m_bReducedDlg)
+	{
+		m_fi.SetRTFText(pThreadRes->strInfo);
+		m_fi.SetSel(0, 0);
+	}
 
 	delete pThreadRes;
 	return 1;
@@ -2299,7 +2379,6 @@ void CFileInfoDialog::DoDataExchange(CDataExchange* pDX)
 void CFileInfoDialog::Localize()
 {
 	GetDlgItem(IDC_GENERAL)->SetWindowText(GetResString(IDS_FD_GENERAL));
-	GetDlgItem(IDC_FD_XI1)->SetWindowText(GetResString(IDS_FD_SIZE));
 	GetDlgItem(IDC_FD_XI2)->SetWindowText(GetResString(IDS_LENGTH)+_T(":"));
 	GetDlgItem(IDC_FD_XI3)->SetWindowText(GetResString(IDS_VIDEO));
 	GetDlgItem(IDC_FD_XI4)->SetWindowText(GetResString(IDS_AUDIO));
@@ -2313,11 +2392,16 @@ void CFileInfoDialog::Localize()
 	GetDlgItem(IDC_FD_XI12)->SetWindowText(GetResString(IDS_SAMPLERATE)+_T(":"));
 	GetDlgItem(IDC_STATICFI)->SetWindowText(GetResString(IDS_FILEFORMAT)+_T(":"));
 	GetDlgItem(IDC_FD_XI14)->SetWindowText(GetResString(IDS_ASPECTRATIO)+_T(":"));
-	GetDlgItem(IDC_STATIC_LANGUAGE)->SetWindowText(GetResString(IDS_PW_LANG)+_T(":"));	
+	GetDlgItem(IDC_STATIC_LANGUAGE)->SetWindowText(GetResString(IDS_PW_LANG)+_T(":"));
+	if (!m_bReducedDlg)
+		GetDlgItem(IDC_FD_XI1)->SetWindowText(GetResString(IDS_FD_SIZE));
+
 }
 
 void CFileInfoDialog::AddFileInfo(LPCTSTR pszFmt, ...)
 {
+	if (m_bReducedDlg)
+		return;
 	va_list pArgp;
 	va_start(pArgp, pszFmt);
 	CString strInfo;

@@ -29,7 +29,9 @@
 /*
 #include <crypto51/rsa.h>
 */
+#pragma warning(disable:4189) // local variable is initialized but not referenced
 #include <cryptopp/rsa.h>
+#pragma warning(default:4189) // local variable is initialized but not referenced
 //Xman end
 #pragma warning(default:4702) // unreachable code
 #pragma warning(default:4100) // unreferenced formal parameter
@@ -681,7 +683,13 @@ bool CPCValditeThread::Valdite(){
 				rsa.SetModulus(n);
 				Integer result = rsa.ApplyFunction(m);
 				uchar aucResult[SIGNATURELENGTH];
+				//MORPH START - Changed by Stulle, Use of cryptopp 5.6.0
+				/*
 				if(result.Encode(aucResult, SIGNATURELENGTH)){
+				*/
+				result.Encode(aucResult, SIGNATURELENGTH);
+				{
+				//MORPH END   - Changed by Stulle, Use of cryptopp 5.6.0
 					uchar aucHash1[16];
 					for (int i = 0; i != 16; i++)
 						aucHash1[i] = aucResult[(SIGNATURELENGTH-1)-i]; 

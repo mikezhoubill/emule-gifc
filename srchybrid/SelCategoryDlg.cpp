@@ -7,7 +7,7 @@
 #include "SelCategoryDlg.h"
 #include "OtherFunctions.h"
 #include "emuleDlg.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

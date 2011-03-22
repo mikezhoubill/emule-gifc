@@ -32,7 +32,7 @@
 #include "StatisticsDlg.h"
 #include "Opcodes.h"
 #include "QArray.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "UploadQueue.h"
 #include "UpDownClient.h"
 #include "UserMsgs.h"
@@ -746,7 +746,7 @@ void CWebServer::ProcessURL(ThreadData Data)
 			*/
 			else if (_ParseURL(Data.sURL, _T("w")) == _T("reboot") && IsSessionAdmin(Data,sSession,3) )
 			{
-				LPARAM lParam = 1;
+				LPARAM lParam = 2;
 				if (thePrefs.UseIonixWebsrv())
 				{
 					//long lSession = _tstol(sSession);
@@ -818,8 +818,8 @@ void CWebServer::ProcessURL(ThreadData Data)
 							
 							char szBuf[512];
 							int nLen = _snprintf(szBuf, _countof(szBuf), "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Description: \"%s\"\r\nContent-Disposition: attachment; filename=\"%s\";\r\nContent-Transfer-Encoding: binary\r\nContent-Length: %I64u\r\n\r\n", 
-								(LPCSTR) CT2CA(kf->GetFileName()),
-								(LPCSTR) CT2CA(kf->GetFileName()),
+								(LPCSTR)CT2CA(kf->GetFileName()),
+								(LPCSTR)CT2CA(kf->GetFileName()),
 								(uint64)filesize);
 							Data.pSocket->SendData(szBuf, nLen);
 
@@ -1346,6 +1346,16 @@ CString CWebServer::_GetHeader(ThreadData Data, long lSession)
 	Out.Replace(_T("[CurConnection]"), HTTPHeader);
 	//Xman end
 
+	// ==> Queue progress bar in Webserver (not in Light) [unknown/Stulle] - Stulle
+	/*QueueBar*/_stprintf(HTTPHeader, _T("%.1f"), (static_cast<double>(theApp.uploadqueue->GetWaitingUserCount()))/(thePrefs.GetQueueSize()+max(thePrefs.GetQueueSize()/4, 200))*100.0); 
+	/*QueueBar*/Out.Replace(_T("[QueueValue]"), HTTPHeader);
+	/*QueueBar*/_stprintf(HTTPHeader, _T("%.0f"), (static_cast<double>(theApp.uploadqueue->GetWaitingUserCount()))); 
+	/*QueueBar*/Out.Replace(_T("[CurQueue]"), HTTPHeader);
+	/*QueueBar*/_stprintf(HTTPHeader, _T("%.0f"), (static_cast<double>(thePrefs.GetQueueSize()+max(thePrefs.GetQueueSize()/4, 200)))); 
+	/*QueueBar*/Out.Replace(_T("[MaxQueue]"), HTTPHeader);
+	/*QueueBar*/Out.Replace(_T("[Queue]"),_GetPlainResString(IDS_ONQUEUE, true));
+	// <== Queue progress bar in Webserver (not in Light) [unknown/Stulle] - Stulle
+	
 	//Xman
 	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
 	float		dwMax;
@@ -2584,7 +2594,7 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 	CArray<DownloadFiles> FilesArray;
 	CArray<CPartFile*,CPartFile*> partlist;
 
-	theApp.emuledlg->transferwnd->downloadlistctrl.GetDisplayedFiles(&partlist);
+	theApp.emuledlg->transferwnd->GetDownloadList()->GetDisplayedFiles(&partlist);
 
 	// Populating array
 	for (int i=0;i<partlist.GetCount();i++) {
@@ -2718,12 +2728,12 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 			dFile.bIsPreview = pPartFile->IsReadyForPreview();
 			dFile.bIsGetFLC =  pPartFile->GetPreviewPrio();
 
-			if (theApp.serverconnect->IsConnected() && !theApp.serverconnect->IsLowID())
-			dFile.sED2kLink = theApp.CreateED2kSourceLink(pPartFile);
+			if (theApp.GetPublicIP() != 0 && !theApp.IsFirewalled())
+			dFile.sED2kLink = pPartFile->GetED2kLink(false, false, false, true, theApp.GetPublicIP());
 			else
-				dFile.sED2kLink = CreateED2kLink(pPartFile);
+				dFile.sED2kLink = pPartFile->GetED2kLink();
 			
-			dFile.sFileInfo = _SpecialChars(pPartFile->GetInfoSummary(),false);
+			dFile.sFileInfo = _SpecialChars(pPartFile->GetInfoSummary(true),false);
 
 			FilesArray.Add(dFile);
 		}
@@ -4041,10 +4051,10 @@ CString CWebServer::_GetSharedFilesList(ThreadData Data)
 
 		dFile.m_qwFileSize = cur_file->GetFileSize();
 		
-		if (theApp.serverconnect->IsConnected())
-			dFile.sED2kLink = theApp.CreateED2kSourceLink(cur_file);
+		if (theApp.GetPublicIP() != 0 && !theApp.IsFirewalled())
+			dFile.sED2kLink = cur_file->GetED2kLink(false, false, false, true, theApp.GetPublicIP());
 		else
-			dFile.sED2kLink = CreateED2kLink(cur_file);
+			dFile.sED2kLink = cur_file->GetED2kLink();
 
 		dFile.nFileTransferred = cur_file->statistic.GetTransferred();
 		dFile.nFileAllTimeTransferred = cur_file->statistic.GetAllTimeTransferred();
@@ -5281,6 +5291,13 @@ CString CWebServer::_GetDownloadGraph(ThreadData Data, CString filehash)
 		}
 		Out.AppendFormat(pThis->m_Templates.sProgressbarImgs, progresscolor[lastcolor], pThis->m_Templates.iProgressbarWidth-lastindex);
 	}
+	// ==> File Percentage in title of progress images in WebServer [unknown/Stulle] - Stulle
+	/**/if (pPartFile != NULL) {
+	/**/	TCHAR HTTPHeader[100] = _T("");
+	/**/	_stprintf(HTTPHeader, _T("%.1f%%"), (static_cast<double>(pPartFile->GetPercentCompleted())));   
+	/**/	Out.Replace(_T("[FilePercentage]"), HTTPHeader);
+	/**/}
+	// <== File Percentage in title of progress images in WebServer [unknown/Stulle] - Stulle
 	return Out;
 }
 

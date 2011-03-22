@@ -27,6 +27,7 @@
 #include "updownclient.h"
 #include "DownloadQueue.h"
 #include "partfile.h"
+#include "Log.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -41,8 +42,19 @@ static char THIS_FILE[] = __FILE__;
 #define MINUNIQUEIPS_TOTRUST		10	// how many unique IPs most have send us a hash to make it trustworthy
 #define	MINPERCENTAGE_TOTRUST		92  // how many percentage of clients most have sent the same hash to make it trustworthy
 
-CList<CAICHRequestedData> CAICHHashSet::m_liRequestedData;
-CMutex					  CAICHHashSet::m_mutKnown2File;
+CList<CAICHRequestedData> CAICHRecoveryHashSet::m_liRequestedData;
+CList<CAICHHash>		  CAICHRecoveryHashSet::m_liAICHHashsStored;
+CMutex					  CAICHRecoveryHashSet::m_mutKnown2File;
+
+//zz_fly :: known2 buffer
+#define MAX_BUFFER_HASHTREE 16 //max hashtrees in the bufer
+#define MAX_BUFFER_TIME 15 //max buffer time in minute
+#define MAX_BUFFER_SIZE ((uint64)3072 << 20) //3GB
+CList<CAICHHashTree>	CAICHRecoveryHashSet::m_liBufferedHashTree;
+uint32	CAICHRecoveryHashSet::m_nLastSaved = 0;
+uint64	CAICHRecoveryHashSet::m_uBufferedSize = 0;
+CMutex	CAICHRecoveryHashSet::m_mutSaveHashSet;
+//zz_fly :: end
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///CAICHHash
@@ -67,12 +79,61 @@ CAICHHashTree::CAICHHashTree(uint64 nDataSize, bool bLeftBranch, uint64 nBaseSiz
 	m_pLeftTree = NULL;
 	m_pRightTree = NULL;
 	m_bHashValid = false;
+	m_bIsBuffered = false; //zz_fly :: known2 buffer
 }
 
 CAICHHashTree::~CAICHHashTree(){
+	//zz_fly :: known2 buffer
+	/* clear sub tree in a safe way
 	delete m_pLeftTree;
 	delete m_pRightTree;
+	*/
+	ClearSubTree();
+	//zz_fly :: end
 }
+
+//zz_fly :: known2 buffer
+CAICHHashTree&	CAICHHashTree::operator=(const CAICHHashTree& k1){
+	m_nDataSize = k1.m_nDataSize;
+	SetBaseSize(k1.GetBaseSize());
+	m_bIsLeftBranch = k1.m_bIsLeftBranch;
+	m_pLeftTree = k1.m_pLeftTree;
+	m_pRightTree = k1.m_pRightTree;
+	m_bHashValid = k1.m_bHashValid;
+	m_Hash = k1.m_Hash;
+	m_bIsBuffered = k1.m_bIsBuffered;
+	return *this; 
+}
+
+void CAICHHashTree::ClearSubTree(){
+	//if this tree is buffered, the subtrees are buffered too, just return. 
+	if(m_bIsBuffered)
+		return;
+	//otherwise, clear all subtrees.
+	delete m_pLeftTree;
+	m_pLeftTree = NULL;
+	delete m_pRightTree;
+	m_pRightTree = NULL;
+}
+
+void CAICHHashTree::MarkBuffered(){
+	//mark the hashtree as buffered
+	m_bIsBuffered = true;
+	if(m_pLeftTree)
+		m_pLeftTree->MarkBuffered();
+	if(m_pRightTree)
+		m_pRightTree->MarkBuffered();
+}
+
+void CAICHHashTree::MarkUnBuffered(){
+	//mark the hashtree as unbuffered
+	m_bIsBuffered = false;
+	if(m_pLeftTree)
+		m_pLeftTree->MarkUnBuffered();
+	if(m_pRightTree)
+		m_pRightTree->MarkUnBuffered();
+}
+//zz_fly :: end
 
 void CAICHHashTree::SetBaseSize(uint64 uValue) {
 	// BaseSize: to save ressources we use a bool to store the basesize as currently only two values are used
@@ -142,6 +203,64 @@ CAICHHashTree* CAICHHashTree::FindHash(uint64 nStartPos, uint64 nSize, uint8* nL
 				ASSERT( m_pRightTree->m_nDataSize == nRight ); 
 			}
 			return m_pRightTree->FindHash(nStartPos, nSize, nLevel);
+		}
+	}
+}
+
+// recursive
+const CAICHHashTree* CAICHHashTree::FindExistingHash(uint64 nStartPos, uint64 nSize, uint8* nLevel) const
+{
+	(*nLevel)++;
+	if (*nLevel > 22){ // sanity
+		ASSERT( false );
+		return false;
+	}
+	if (nStartPos + nSize > m_nDataSize){ // sanity
+		ASSERT ( false );
+		return NULL;
+	}
+	if (nSize > m_nDataSize){ // sanity
+		ASSERT ( false );
+		return NULL;
+	}
+
+	if (nStartPos == 0 && nSize == m_nDataSize){
+		// this is the searched hash
+		return this;
+	}
+	else if (m_nDataSize <= GetBaseSize()){ // sanity
+		// this is already the last level, cant go deeper
+		ASSERT( false );
+		return NULL;
+	}
+	else{
+		uint64 nBlocks = m_nDataSize / GetBaseSize() + ((m_nDataSize % GetBaseSize() != 0 )? 1:0); 
+		uint64 nLeft = ( ((m_bIsLeftBranch) ? nBlocks+1:nBlocks) / 2)* GetBaseSize();
+		uint64 nRight = m_nDataSize - nLeft;
+		if (nStartPos < nLeft){
+			if (nStartPos + nSize > nLeft){ // sanity
+				ASSERT ( false );
+				return NULL;
+			}
+			if (m_pLeftTree == NULL)
+				return NULL;
+			else{
+				ASSERT( m_pLeftTree->m_nDataSize == nLeft );
+				return m_pLeftTree->FindHash(nStartPos, nSize, nLevel);
+			}
+		}
+		else{
+			nStartPos -= nLeft;
+			if (nStartPos + nSize > nRight){ // sanity
+				ASSERT ( false );
+				return NULL;
+			}
+			if (m_pRightTree == NULL)
+				return NULL;
+			else{
+				ASSERT( m_pRightTree->m_nDataSize == nRight );
+				return m_pRightTree->FindHash(nStartPos, nSize, nLevel);
+			}
 		}
 	}
 }
@@ -460,33 +579,79 @@ bool CAICHHashTree::ReduceToBaseSize(uint64 nBaseSize) {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 ///CAICHUntrustedHash
-bool CAICHUntrustedHash::AddSigningIP(uint32 dwIP){
+bool CAICHUntrustedHash::AddSigningIP(uint32 dwIP, bool bTestOnly){
 	dwIP &= 0x00F0FFFF; // we use only the 20 most significant bytes for unique IPs
 	for (int i=0; i < m_adwIpsSigning.GetCount(); i++){
 		if (m_adwIpsSigning[i] == dwIP)
 			return false;
 	}
-	m_adwIpsSigning.Add(dwIP);
+	if (!bTestOnly)
+		m_adwIpsSigning.Add(dwIP);
 	return true;
 }
 
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
-///CAICHHashSet
-CAICHHashSet::CAICHHashSet(CKnownFile* pOwner)
+///CAICHRecoveryHashSet
+CAICHRecoveryHashSet::CAICHRecoveryHashSet(CKnownFile* pOwner, EMFileSize nSize)
 	: m_pHashTree(0, true, PARTSIZE)
 {
 	m_eStatus = AICH_EMPTY;
 	m_pOwner = pOwner;
+	if (nSize != (uint64)0)
+		SetFileSize(nSize);
 }
 
-CAICHHashSet::~CAICHHashSet(void)
+CAICHRecoveryHashSet::~CAICHRecoveryHashSet(void)
 {
 	FreeHashSet();
 }
 
-bool CAICHHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fileDataOut, bool bDbgDontLoad){
+bool CAICHRecoveryHashSet::GetPartHashs(CArray<CAICHHash>& rResult) const
+{
+	ASSERT( m_pOwner );
+	ASSERT( rResult.IsEmpty() );
+	rResult.RemoveAll();
+	if (m_pOwner->IsPartFile() || m_eStatus != AICH_HASHSETCOMPLETE){
+		ASSERT( false );
+		return false;
+	}
+
+	uint32 uPartCount = (uint16)(((uint64)m_pOwner->GetFileSize() + (PARTSIZE - 1)) / PARTSIZE);
+	if (uPartCount <= 1)
+		return true; // No AICH Part Hashs
+	for (uint32 nPart = 0; nPart < uPartCount; nPart++)
+	{
+		uint64 nPartStartPos = (uint64)nPart*PARTSIZE;
+		uint32 nPartSize = (uint32)min(PARTSIZE, (uint64)m_pOwner->GetFileSize()-nPartStartPos);
+		const CAICHHashTree* pPartHashTree = m_pHashTree.FindExistingHash(nPartStartPos, nPartSize);
+		if (pPartHashTree != NULL && pPartHashTree->m_bHashValid)
+			rResult.Add(pPartHashTree->m_Hash);
+		else
+		{
+			rResult.RemoveAll();
+			ASSERT( false );
+			return false;
+		}
+	}
+	return true;
+}
+
+const CAICHHashTree* CAICHRecoveryHashSet::FindPartHash(uint16 nPart)
+{
+	ASSERT( m_pOwner );
+	ASSERT( m_pOwner->IsPartFile() );
+	if ( m_pOwner->GetFileSize() <= PARTSIZE )
+		return &m_pHashTree;
+	uint64 nPartStartPos = (uint64)nPart*PARTSIZE;
+	uint32 nPartSize = (uint32)(min(PARTSIZE, (uint64)m_pOwner->GetFileSize()-nPartStartPos));
+	const CAICHHashTree* phtResult = m_pHashTree.FindHash(nPartStartPos, nPartSize);
+	ASSERT( phtResult != NULL );
+	return phtResult;
+}
+
+bool CAICHRecoveryHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fileDataOut, bool bDbgDontLoad){
 	ASSERT( m_pOwner );
 	if (m_pOwner->IsPartFile() || m_eStatus != AICH_HASHSETCOMPLETE){
 		ASSERT( false );
@@ -538,7 +703,7 @@ bool CAICHHashSet::CreatePartRecoveryData(uint64 nPartStartPos, CFileDataIO* fil
 	return bResult;
 }
 
-bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileDataIn){
+bool CAICHRecoveryHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileDataIn){
 	if (/*TODO !m_pOwner->IsPartFile() ||*/ !(m_eStatus == AICH_VERIFIED || m_eStatus == AICH_TRUSTED) ){
 		ASSERT( false );
 		return false;
@@ -625,7 +790,7 @@ bool CAICHHashSet::ReadRecoveryData(uint64 nPartStartPos, CSafeMemFile* fileData
 
 // this function is only allowed to be called right after successfully calculating the hashset (!)
 // will delete the hashset, after saving to free the memory
-bool CAICHHashSet::SaveHashSet(){
+bool CAICHRecoveryHashSet::SaveHashSet(){
 	if (m_eStatus != AICH_HASHSETCOMPLETE){
 		ASSERT( false );
 		return false;
@@ -634,11 +799,51 @@ bool CAICHHashSet::SaveHashSet(){
 		ASSERT( false );
 		return false;
 	}
+	//zz_fly :: known2 buffer
+	//dup check first
+	if ((m_liAICHHashsStored.Find(m_pHashTree.m_Hash) != NULL) || (m_liBufferedHashTree.Find(m_pHashTree) != NULL)){
+		theApp.QueueDebugLogLine(false, _T("AICH Hashset to write should be already present in known2.met - %s"), m_pHashTree.m_Hash.GetString());
+		return true;
+	}
+	//get the lock, make sure there is no thread accessing m_liBufferedHashTree
+	CSingleLock lockSaveHashSet(&m_mutSaveHashSet, false);
+	if (!lockSaveHashSet.Lock(5000)){
+		return false;
+	}
+	//buffered the hashset
+	CAICHHashTree tmp = m_pHashTree;
+	m_uBufferedSize += tmp.m_nDataSize;
+	tmp.MarkBuffered();
+	m_liBufferedHashTree.AddTail(tmp);	
+	//remove the link to subtrees
+	m_pHashTree.m_pLeftTree = NULL;
+	m_pHashTree.m_pRightTree = NULL;
+	//write to file if needed
+	return CAICHRecoveryHashSet::SaveHashSetToFile(!thePrefs.m_bKnown2Buffer || theApp.m_app_state != APP_STATE_RUNNING); //DolphinX - [Bug Fix]
+}
 
+//get the lock of m_mutSaveHashSet before call this method. otherwise you may got synchronization problem
+bool CAICHRecoveryHashSet::SaveHashSetToFile(bool forced){
+	if(m_liBufferedHashTree.IsEmpty()){ //no buffer
+		m_nLastSaved = 0; //there is no buffer now, stop timer
+		return true;
+	}
+	if(m_nLastSaved){
+		if(::GetTickCount() - m_nLastSaved >= MIN2MS(MAX_BUFFER_TIME))
+			forced = true;
+	}
+	else
+		m_nLastSaved = ::GetTickCount(); //there is sth in buffer, restore timer
+
+	if(!forced && (m_uBufferedSize <= MAX_BUFFER_SIZE) && (m_liBufferedHashTree.GetCount() <= MAX_BUFFER_HASHTREE))
+		return true; //not needed to write to file, just return
+	//zz_fly :: end
 	CSingleLock lockKnown2Met(&m_mutKnown2File, false);
 	if (!lockKnown2Met.Lock(5000)){
 		return false;
 	}
+
+	m_nLastSaved = ::GetTickCount(); //zz_fly :: known2 buffer
 
 	CString fullpath = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR);
 	fullpath.Append(KNOWN2_MET_FILENAME);
@@ -662,10 +867,27 @@ bool CAICHHashSet::SaveHashSet(){
 		if (header != KNOWN2_MET_VERSION){
 			AfxThrowFileException(CFileException::endOfFile, 0, file.GetFileName());
 		}
+		//zz_fly :: known2 buffer
+		for(POSITION pos = m_liBufferedHashTree.GetHeadPosition(); pos!=NULL; ){
+			POSITION pos1 = pos;
+			CAICHHashTree pHashTree = m_liBufferedHashTree.GetNext(pos);
+		//dup check again, make sure we do not save dup hashtree in any case
+		/*
 		// first we check if the hashset we want to write is already stored
-		CAICHHash CurrentHash;
-		uint32 nExistingSize = (UINT)file.GetLength();
-		uint32 nHashCount;
+		if (m_liAICHHashsStored.Find(m_pHashTree.m_Hash) != NULL)
+		{
+			theApp.QueueDebugLogLine(false, _T("AICH Hashset to write should be already present in known2.met - %s"), m_pHashTree.m_Hash.GetString());
+			// this hashset if already available, no need to save it again
+			return true;
+		}
+		*/
+			if (m_liAICHHashsStored.Find(pHashTree.m_Hash) != NULL){
+				theApp.QueueDebugLogLine(false, _T("AICH Hashset to write should be already present in known2.met - %s"), pHashTree.m_Hash.GetString());
+			}
+			else {
+		//zz_fly :: end
+
+		/*CAICHHash CurrentHash;	
 		while (file.GetPosition() < nExistingSize){
 			CurrentHash.Read(&file);
 			if (m_pHashTree.m_Hash == CurrentHash){
@@ -678,10 +900,16 @@ bool CAICHHashSet::SaveHashSet(){
 			}
 			// skip the rest of this hashset
 			file.Seek(nHashCount*HASHSIZE, CFile::current);
-		}
+		}*/
+
 		// write hashset
+		uint32 nExistingSize = (UINT)file.GetLength();
+		file.SeekToEnd();
+
+		//zz_fly :: known2 buffer
+		/* replace m_pHashTree with pHashTree
 		m_pHashTree.m_Hash.Write(&file);
-		nHashCount = (uint32)((PARTSIZE/EMBLOCKSIZE + ((PARTSIZE % EMBLOCKSIZE != 0)? 1 : 0)) * (m_pHashTree.m_nDataSize/PARTSIZE));
+		uint32 nHashCount = (uint32)((PARTSIZE/EMBLOCKSIZE + ((PARTSIZE % EMBLOCKSIZE != 0)? 1 : 0)) * (m_pHashTree.m_nDataSize/PARTSIZE));
 		if (m_pHashTree.m_nDataSize % PARTSIZE != 0)
 			nHashCount += (uint32)((m_pHashTree.m_nDataSize % PARTSIZE)/EMBLOCKSIZE + (((m_pHashTree.m_nDataSize % PARTSIZE) % EMBLOCKSIZE != 0)? 1 : 0));
 		file.WriteUInt32(nHashCount);
@@ -697,7 +925,34 @@ bool CAICHHashSet::SaveHashSet(){
 			theApp.QueueDebugLogLine(true, _T("Failed to save HashSet: Calculated and real size of hashset differ!"));
 			return false;
 		}
+		CAICHRecoveryHashSet::AddStoredAICHHash(m_pHashTree.m_Hash);
+		*/
+				pHashTree.m_Hash.Write(&file);
+				uint32 nHashCount = (uint32)((PARTSIZE/EMBLOCKSIZE + ((PARTSIZE % EMBLOCKSIZE != 0)? 1 : 0)) * (pHashTree.m_nDataSize/PARTSIZE));
+				if (pHashTree.m_nDataSize % PARTSIZE != 0)
+					nHashCount += (uint32)((pHashTree.m_nDataSize % PARTSIZE)/EMBLOCKSIZE + (((pHashTree.m_nDataSize % PARTSIZE) % EMBLOCKSIZE != 0)? 1 : 0));
+				file.WriteUInt32(nHashCount);
+				if (!pHashTree.WriteLowestLevelHashs(&file, 0, true, true)){
+					file.SetLength(nExistingSize);
+					theApp.QueueDebugLogLine(true, _T("Failed to save HashSet: WriteLowestLevelHashs() failed!"));
+					return false;
+				}
+				if (file.GetLength() != nExistingSize + (nHashCount+1)*HASHSIZE + 4){
+					file.SetLength(nExistingSize);
+					theApp.QueueDebugLogLine(true, _T("Failed to save HashSet: Calculated and real size of hashset differ!"));
+					return false;
+				}
+				CAICHRecoveryHashSet::AddStoredAICHHash(pHashTree.m_Hash);
+		//zz_fly :: end
 		theApp.QueueDebugLogLine(false, _T("Successfully saved eMuleAC Hashset, %u Hashs + 1 Masterhash written"), nHashCount);
+		//zz_fly :: known2 buffer
+			} //end if
+			//the hashsets are written to file, free memory
+			pHashTree.MarkUnBuffered();
+			m_uBufferedSize -= pHashTree.m_nDataSize;
+			m_liBufferedHashTree.RemoveAt(pos1); //RemoveAt will call the deconstructor of HashTree
+		} //end for
+		//zz_fly :: end
 	    file.Flush();
 	    file.Close();
 	}
@@ -712,12 +967,16 @@ bool CAICHHashSet::SaveHashSet(){
 		error->Delete();
 		return false;
 	}
+	//zz_fly :: known2 buffer
+	/* free hashset when we saved them
 	FreeHashSet();
+	*/
+	//zz_fly :: end
 	return true;
 }
 
 
-bool CAICHHashSet::LoadHashSet(){
+bool CAICHRecoveryHashSet::LoadHashSet(){
 	if (m_eStatus != AICH_HASHSETCOMPLETE){
 		ASSERT( false );
 		return false;
@@ -726,6 +985,14 @@ bool CAICHHashSet::LoadHashSet(){
 		ASSERT( false );
 		return false;
 	}
+	//zz_fly :: known2 buffer
+	//load hashset from buffer first.
+	POSITION pos = m_liBufferedHashTree.Find(m_pHashTree);
+	if(pos){
+		m_pHashTree = m_liBufferedHashTree.GetAt(pos);
+		return true;
+	}
+	//zz_fly :: end
 	CString fullpath = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR);
 	fullpath.Append(KNOWN2_MET_FILENAME);
 	CSafeFile file;
@@ -786,7 +1053,10 @@ bool CAICHHashSet::LoadHashSet(){
 			// skip the rest of this hashset
 			file.Seek(nHashCount*HASHSIZE, CFile::current);
 		}
-		theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: HashSet not found!"));
+		if(!thePrefs.IsKnown2SplitEnabled()){ //zz_fly :: known2 split
+			theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: HashSet not found!"));
+			return false; //zz_fly :: known2 split
+		}
 	}
 	catch(CFileException* error){
 		if (error->m_cause == CFileException::endOfFile)
@@ -798,53 +1068,124 @@ bool CAICHHashSet::LoadHashSet(){
 		}
 		error->Delete();
 	}
+	//zz_fly :: known2 split :: start
+	//continue to load hashset from KNOWN2_UNSHARED_MET_FILENAME
+	CString fullpath_un = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR);
+	fullpath_un.Append(KNOWN2_UNSHARED_MET_FILENAME);
+	CSafeFile file_un;
+	if (!file_un.Open(fullpath_un,CFile::modeCreate|CFile::modeRead|CFile::modeNoTruncate|CFile::osSequentialScan|CFile::typeBinary|CFile::shareDenyNone, &fexp)){
+		if (fexp.m_cause != CFileException::fileNotFound){
+			CString strError(_T("Failed to load ") KNOWN2_UNSHARED_MET_FILENAME _T(" file"));
+			TCHAR szError[MAX_CFEXP_ERRORMSG];
+			if (fexp.GetErrorMessage(szError, ARRSIZE(szError))){
+				strError += _T(" - ");
+				strError += szError;
+			}
+			theApp.QueueLogLine(true, _T("%s"), strError);
+		}
+		return false;
+	}
+	try {
+		uint8 header = file_un.ReadUInt8();
+		if (header != KNOWN2_MET_VERSION){
+			AfxThrowFileException(CFileException::endOfFile, 0, file_un.GetFileName());
+		}
+		CAICHHash CurrentHash;
+		uint32 nExistingSize = (UINT)file_un.GetLength();
+		uint32 nHashCount;
+		while (file_un.GetPosition() < nExistingSize){
+			CurrentHash.Read(&file_un);
+			if (m_pHashTree.m_Hash == CurrentHash){
+				// found Hashset
+				uint32 nExpectedCount =	(uint32)((PARTSIZE/EMBLOCKSIZE + ((PARTSIZE % EMBLOCKSIZE != 0)? 1 : 0)) * (m_pHashTree.m_nDataSize/PARTSIZE));
+				if (m_pHashTree.m_nDataSize % PARTSIZE != 0)
+					nExpectedCount += (uint32)((m_pHashTree.m_nDataSize % PARTSIZE)/EMBLOCKSIZE + (((m_pHashTree.m_nDataSize % PARTSIZE) % EMBLOCKSIZE != 0)? 1 : 0));
+				nHashCount = file_un.ReadUInt32();
+				if (nHashCount != nExpectedCount){
+					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Available Hashs and expected hashcount differ!"));
+					return false;
+				}
+				if (!m_pHashTree.LoadLowestLevelHashs(&file_un)){
+					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: LoadLowestLevelHashs failed!"));
+					return false;
+				}
+				if (!ReCalculateHash(false)){
+					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Calculating loaded hashs failed!"));
+					return false;
+				}
+				if (CurrentHash != m_pHashTree.m_Hash){
+					theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: Calculated Masterhash differs from given Masterhash - hashset corrupt!"));
+					return false;
+				}
+				return true;
+			}
+			nHashCount = file_un.ReadUInt32();
+			if (file_un.GetPosition() + nHashCount*HASHSIZE > nExistingSize){
+				AfxThrowFileException(CFileException::endOfFile, 0, file_un.GetFileName());
+			}
+			// skip the rest of this hashset
+			file_un.Seek(nHashCount*HASHSIZE, CFile::current);
+		}
+		theApp.QueueDebugLogLine(true, _T("Failed to load HashSet: HashSet not found!"));
+	}
+	catch(CFileException* error){
+		if (error->m_cause == CFileException::endOfFile)
+			theApp.QueueLogLine(true, GetResString(IDS_ERR_MET_BAD), KNOWN2_UNSHARED_MET_FILENAME);
+		else{
+			TCHAR buffer[MAX_CFEXP_ERRORMSG];
+			error->GetErrorMessage(buffer, ARRSIZE(buffer));
+			theApp.QueueLogLine(true,GetResString(IDS_ERR_SERVERMET_UNKNOWN),buffer);
+		}
+		error->Delete();
+	}
+	//zz_fly :: known2 split :: end
 	return false;
 }
 
 // delete the hashset except the masterhash
-void CAICHHashSet::FreeHashSet(){
+void CAICHRecoveryHashSet::FreeHashSet(){
+	//zz_fly :: known2 buffer
+	//ClearSubTree() will not clear the subtree we have buffered
+	/*
 	delete m_pHashTree.m_pLeftTree;
 	m_pHashTree.m_pLeftTree = NULL;
 	delete m_pHashTree.m_pRightTree;
 	m_pHashTree.m_pRightTree = NULL;
+	*/
+	m_pHashTree.ClearSubTree();
+	//zz_fly :: end
 }
 
-// delete the hashset up to blockhashs to save ressources
-void CAICHHashSet::ReduceToPartHashs(){
-	VERIFY( m_pHashTree.ReduceToBaseSize(PARTSIZE) );
-	ASSERT( VerifyHashTree(false) );
-}
-
-void CAICHHashSet::SetMasterHash(const CAICHHash& Hash, EAICHStatus eNewStatus){
+void CAICHRecoveryHashSet::SetMasterHash(const CAICHHash& Hash, EAICHStatus eNewStatus){
 	m_pHashTree.m_Hash = Hash;
 	m_pHashTree.m_bHashValid = true;
 	SetStatus(eNewStatus);
 }
 
-CAICHHashAlgo*	CAICHHashSet::GetNewHashAlgo(){
+CAICHHashAlgo*	CAICHRecoveryHashSet::GetNewHashAlgo(){
 	return new CSHA();
 }
 
-bool CAICHHashSet::ReCalculateHash(bool bDontReplace){
+bool CAICHRecoveryHashSet::ReCalculateHash(bool bDontReplace){
 	CAICHHashAlgo* hashalg = GetNewHashAlgo();
 	bool bResult = m_pHashTree.ReCalculateHash(hashalg, bDontReplace);
 	delete hashalg;
 	return bResult;
 }
 
-bool CAICHHashSet::VerifyHashTree(bool bDeleteBadTrees){
+bool CAICHRecoveryHashSet::VerifyHashTree(bool bDeleteBadTrees){
 	CAICHHashAlgo* hashalg = GetNewHashAlgo();
 	bool bResult = m_pHashTree.VerifyHashTree(hashalg, bDeleteBadTrees);
 	delete hashalg;
 	return bResult;
 }
 
-void CAICHHashSet::SetFileSize(EMFileSize nSize){
+void CAICHRecoveryHashSet::SetFileSize(EMFileSize nSize){
 	m_pHashTree.m_nDataSize = nSize;
 	m_pHashTree.SetBaseSize((nSize <= (uint64)PARTSIZE) ? EMBLOCKSIZE : PARTSIZE);	
 }
 
-void CAICHHashSet::UntrustedHashReceived(const CAICHHash& Hash, uint32 dwFromIP){
+void CAICHRecoveryHashSet::UntrustedHashReceived(const CAICHHash& Hash, uint32 dwFromIP){
 	switch(GetStatus()){
 		case AICH_EMPTY:
 		case AICH_UNTRUSTED:
@@ -857,16 +1198,26 @@ void CAICHHashSet::UntrustedHashReceived(const CAICHHash& Hash, uint32 dwFromIP)
 	bool bAdded = false;
 	for (int i = 0; i < m_aUntrustedHashs.GetCount(); i++){
 		if (m_aUntrustedHashs[i].m_Hash == Hash){
-			bAdded = m_aUntrustedHashs[i].AddSigningIP(dwFromIP);
+			bAdded = m_aUntrustedHashs[i].AddSigningIP(dwFromIP, false);
 			bFound = true;
 			break;
 		}
 	}
-	if (!bFound){
+	if (!bFound)
+	{
+		for (int i = 0; i < m_aUntrustedHashs.GetCount(); i++)
+		{
+			if (!m_aUntrustedHashs[i].AddSigningIP(dwFromIP, true))
+			{
+				AddDebugLogLine(DLP_LOW, false, _T("Received different AICH hashs for file %s from IP/20 %s, ignored"), (m_pOwner != NULL) ? m_pOwner->GetFileName() : _T(""), dwFromIP); 
+				// nothing changed, so we can return early without any rechecks
+				return;
+			}
+		}
 		bAdded = true;
 		CAICHUntrustedHash uhToAdd;
 		uhToAdd.m_Hash = Hash;
-		uhToAdd.AddSigningIP(dwFromIP);
+		uhToAdd.AddSigningIP(dwFromIP, false);
 		m_aUntrustedHashs.Add(uhToAdd);
 	}
 
@@ -912,7 +1263,7 @@ void CAICHHashSet::UntrustedHashReceived(const CAICHHash& Hash, uint32 dwFromIP)
 	}
 }
 
-void CAICHHashSet::ClientAICHRequestFailed(CUpDownClient* pClient){
+void CAICHRecoveryHashSet::ClientAICHRequestFailed(CUpDownClient* pClient){
 	pClient->SetReqFileAICHHash(NULL);
 	CAICHRequestedData data = GetAICHReqDetails(pClient);
 	RemoveClientAICHRequest(pClient);
@@ -924,7 +1275,7 @@ void CAICHHashSet::ClientAICHRequestFailed(CUpDownClient* pClient){
 	}
 }
 
-void CAICHHashSet::RemoveClientAICHRequest(const CUpDownClient* pClient){
+void CAICHRecoveryHashSet::RemoveClientAICHRequest(const CUpDownClient* pClient){
 	for (POSITION pos = m_liRequestedData.GetHeadPosition();pos != 0; m_liRequestedData.GetNext(pos))
 	{
 		if (m_liRequestedData.GetAt(pos).m_pClient == pClient){
@@ -935,7 +1286,7 @@ void CAICHHashSet::RemoveClientAICHRequest(const CUpDownClient* pClient){
 	ASSERT( false );
 }
 
-bool CAICHHashSet::IsClientRequestPending(const CPartFile* pForFile, uint16 nPart){
+bool CAICHRecoveryHashSet::IsClientRequestPending(const CPartFile* pForFile, uint16 nPart){
 	for (POSITION pos = m_liRequestedData.GetHeadPosition();pos != 0; m_liRequestedData.GetNext(pos))
 	{
 		if (m_liRequestedData.GetAt(pos).m_pPartFile == pForFile && m_liRequestedData.GetAt(pos).m_nPart == nPart){
@@ -945,7 +1296,7 @@ bool CAICHHashSet::IsClientRequestPending(const CPartFile* pForFile, uint16 nPar
 	return false;
 }
 
-CAICHRequestedData CAICHHashSet::GetAICHReqDetails(const  CUpDownClient* pClient){
+CAICHRequestedData CAICHRecoveryHashSet::GetAICHReqDetails(const  CUpDownClient* pClient){
 	for (POSITION pos = m_liRequestedData.GetHeadPosition();pos != 0; m_liRequestedData.GetNext(pos))
 	{
 		if (m_liRequestedData.GetAt(pos).m_pClient == pClient){
@@ -957,14 +1308,26 @@ CAICHRequestedData CAICHHashSet::GetAICHReqDetails(const  CUpDownClient* pClient
 	return empty;
 }
 
-bool CAICHHashSet::IsPartDataAvailable(uint64 nPartStartPos){
+void CAICHRecoveryHashSet::AddStoredAICHHash(CAICHHash Hash)
+{
+#ifdef _DEBUG
+	if (m_liAICHHashsStored.Find(Hash) != NULL)
+	{
+		theApp.QueueDebugLogLine(false, _T("AICH hash storing is not unique - %s"), Hash.GetString());
+		//ASSERT( false );
+	}
+#endif
+	m_liAICHHashsStored.AddTail(Hash);
+}
+
+bool CAICHRecoveryHashSet::IsPartDataAvailable(uint64 nPartStartPos){
 	if (!(m_eStatus == AICH_VERIFIED || m_eStatus == AICH_TRUSTED || m_eStatus == AICH_HASHSETCOMPLETE) ){
 		ASSERT( false );
 		return false;
 	}
 	uint32 nPartSize = (uint32)(min(PARTSIZE, (uint64)m_pOwner->GetFileSize()-nPartStartPos));
 	for (uint64 nPartPos = 0; nPartPos < nPartSize; nPartPos += EMBLOCKSIZE){
-		CAICHHashTree* phtToCheck = m_pHashTree.FindHash(nPartStartPos+nPartPos, min(EMBLOCKSIZE, nPartSize-nPartPos));
+		const CAICHHashTree* phtToCheck = m_pHashTree.FindExistingHash(nPartStartPos+nPartPos, min(EMBLOCKSIZE, nPartSize-nPartPos));
 		if (phtToCheck == NULL || !phtToCheck->m_bHashValid){
 			return false;
 		}
@@ -972,7 +1335,7 @@ bool CAICHHashSet::IsPartDataAvailable(uint64 nPartStartPos){
 	return true;
 }
 
-void CAICHHashSet::DbgTest(){
+void CAICHRecoveryHashSet::DbgTest(){
 #ifdef _DEBUG
 	//define TESTSIZE 4294567295
 	uint8 maxLevel = 0;
@@ -993,7 +1356,7 @@ void CAICHHashSet::DbgTest(){
 #define TESTSIZE m_pHashTree.m_nDataSize
 	if (m_pHashTree.m_nDataSize <= EMBLOCKSIZE)
 		return;
-	CAICHHashSet TestHashSet(m_pOwner);
+	CAICHRecoveryHashSet TestHashSet(m_pOwner);
 	TestHashSet.SetFileSize(m_pOwner->GetFileSize());
 	TestHashSet.SetMasterHash(GetMasterHash(), AICH_VERIFIED);
 	CSafeMemFile file;

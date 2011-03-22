@@ -363,8 +363,6 @@ BOOL CConnectionWizardDlg::OnInitDialog()
 	SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, 0, FALSE);
 	SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, 0, FALSE);
 	*/
-
-
 	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
 	CString temp;
 	temp.Format(_T("%.1f"), (8.0f * thePrefs.GetMaxGraphDownloadRate())); // kBits/s
@@ -449,7 +447,7 @@ void CConnectionWizardDlg::OnNmClickProviders(NMHDR* /*pNMHDR*/, LRESULT* pResul
 		case 17: down=44000;	up=44000; break;
 		default: return;
 	}
-	
+
 	SetDlgItemInt(IDC_WIZ_TRUEDOWNLOAD_BOX, down, FALSE);
 	SetDlgItemInt(IDC_WIZ_TRUEUPLOAD_BOX, up, FALSE);
 	CheckRadioButton(IDC_KBITS, IDC_KBYTES, IDC_KBITS);

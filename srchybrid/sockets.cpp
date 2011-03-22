@@ -464,7 +464,6 @@ VOID CALLBACK CServerConnect::RetryConnectTimer(HWND /*hWnd*/, UINT /*nMsg*/, UI
 				AddLogLine(true, _T("Unknown exception in %s"), __FUNCTION__);
 		}
 		// Maella end
-
 }
 
 void CServerConnect::CheckForTimeout()

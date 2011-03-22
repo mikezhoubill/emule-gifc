@@ -365,12 +365,19 @@ public:
 	static	bool	beepOnError;
 	static	bool	confirmExit;
 
-	// ==> Source Graph - Stulle
+	//Xman Xtreme Upload: this graph isn't shown at xtreme
+	//Maella Bandwidth control
 	/*
 	static	DWORD	m_adwStatsColors[15];
 	*/
-	static	DWORD	m_adwStatsColors[16];
+	// ==> Source Graph - Stulle
+	/*
+	static	DWORD	m_adwStatsColors[14];
+	//Xman end
+	*/
+	static	DWORD	m_adwStatsColors[15];
 	// <== Source Graph - Stulle
+	static	bool	bHasCustomTaskIconColor;
 	static  bool	m_bIconflashOnNewMessage;
 
 	static	bool	splashscreen;
@@ -712,6 +719,12 @@ public:
 	static	bool	m_bAdjustNTFSDaylightFileTime;
 	static	bool	m_bRearrangeKadSearchKeywords;
 	static  bool    m_bAllocFull;
+	static	bool	m_bShowSharedFilesDetails;
+	static  bool	m_bShowWin7TaskbarGoodies;
+	static  bool	m_bShowUpDownIconInTaskbar;
+	static	bool	m_bForceSpeedsToKB;
+	static	bool	m_bAutoShowLookups;
+	static	bool	m_bExtraPreviewWithMenu;
 
 
 	// Web Server [kuchin]
@@ -762,6 +775,7 @@ public:
 	static	CSize	m_sizToolbarIconSize;
 
 	static	bool	m_bWinaTransToolbar;
+	static	bool	m_bShowDownloadToolbar;
 
 	//preview
 	static	bool	m_bPreviewEnabled;
@@ -788,6 +802,7 @@ public:
 	static	bool	m_bResolveSharedShellLinks;
 	static	CStringList shareddir_list;
 	static	CStringList addresses_list;
+	static	bool	m_bKeepUnavailableFixedSharedDirs;
 
 	static	int		m_iDbgHeap;
 	static	UINT	m_nWebMirrorAlertLevel;
@@ -837,6 +852,30 @@ public:
 	static bool		m_bIsWinServImplDisabled;
 	static bool		m_bIsMinilibImplDisabled;
 	static int		m_nLastWorkingImpl;
+
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	//UPnP chooser
+	static bool		m_bUseACATUPnPCurrent;
+	static bool		m_bUseACATUPnPNextStart;
+
+	//ACAT UPnP
+	static	bool m_bUPnPNat; // UPnP On/Off
+	static	bool m_bUPnPTryRandom; //UPnP use random ports
+	static	uint16 m_iUPnPTCPExternal; // TCP External Port
+	static	uint16 m_iUPnPUDPExternal; // UDP External Port
+	static	bool GetUPnPNat()    { return m_bUPnPNat; }
+	static	void SetUPnPNat(bool on)    { m_bUPnPNat = on; }
+	static	void SetUPnPTCPExternal(uint16 port) { m_iUPnPTCPExternal = port; }
+	static	void SetUPnPUDPExternal(uint16 port) { m_iUPnPUDPExternal = port; }
+	static	bool GetUPnPNatTryRandom() { return m_bUPnPTryRandom; }
+	static	void SetUPnPNatTryRandom(bool on) { m_bUPnPTryRandom = on; }
+#endif //zz_fly :: dual upnp
+
+	//zz_fly :: Rebind UPnP on IP-change
+	static  bool m_bUPnPRebindOnIPChange;
+	static  bool GetUPnPNatRebind() { return m_bUPnPRebindOnIPChange; }
+	static	void SetUPnPNatRebind(bool on) { m_bUPnPRebindOnIPChange = on; }
+	//zz_fy :: end
 	*/
 	// <== UPnP support [MoNKi] - leuk_he
 
@@ -846,6 +885,7 @@ public:
 	static BOOL		m_bIsRunningAeroGlass;
 	static bool		m_bPreventStandby;
 	static bool		m_bStoreSearches;
+
 
 	// ==> Advanced Options [Official/MorphXT] - Stulle
 	static bool bMiniMuleAutoClose;
@@ -857,7 +897,9 @@ public:
 	static CString sMediaInfo_MediaInfoDllPath ;
 	static bool bMediaInfo_RIFF ;
 	static bool bMediaInfo_ID3LIB; 
+#ifdef HAVE_QEDIT_H
 	static bool m_bMediaInfo_MediaDet;
+#endif//HAVE_QEDIT_H
 	static bool m_bMediaInfo_RM;
 #ifdef HAVE_WMSDK_H
 	static bool m_bMediaInfo_WM;
@@ -1006,6 +1048,7 @@ public:
 	static bool		m_bRespectMaxSources;
 	static bool		m_bUseAutoCat;
 	static uint8	dlMode;
+	static bool		m_bAddRemovedInc;
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	static bool		m_bSpreadbarSetStatus; // Spread bars [Slugfiller/MorphXT] - Stulle
@@ -1182,12 +1225,12 @@ public:
 	static int		m_iServiceStartupMode;
 	static int		m_iServiceOptLvl;
 	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
-	// ==> Adjustable NT Service Strings - Stulle
+	// ==> Adjustable NT Service Strings [Stulle] - Stulle
 	static CString	m_strServiceName;
 	static CString	m_strServiceDispName;
 	static CString	m_strServiceDescr;
 	static bool		m_bServiceStringsLoaded;
-	// <== Adjustable NT Service Strings - Stulle
+	// <== Adjustable NT Service Strings [Stulle] - Stulle
 
 	enum Table
 	{
@@ -1232,7 +1275,7 @@ public:
 
 	static	LPCTSTR GetTempDir(int id = 0)				{return (LPCTSTR)tempdir.GetAt((id < tempdir.GetCount()) ? id : 0);}
 	static	int		GetTempDirCount()					{return tempdir.GetCount();}
-	static	bool	CanFSHandleLargeFiles();
+	static	bool	CanFSHandleLargeFiles(int nForCat);
 	static	LPCTSTR GetConfigFile();
 	static	const CString& GetFileCommentsFilePath()	{return m_strFileCommentsFilePath;}
 	static	CString	GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreate = true);
@@ -1260,12 +1303,20 @@ public:
 
 	static	LPCSTR	GetBindAddrA()						{return m_pszBindAddrA; }
 	static	LPCWSTR	GetBindAddrW()						{return m_pszBindAddrW; }
+
 	// ==> UPnP support [MoNKi] - leuk_he
 	/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	//ACAT UPnP
+	static	uint16	GetPort();
+	static	uint16	GetUDPPort();
+#else //zz_fly :: dual upnp
 	static	uint16	GetPort()							{return port;}
 	static	uint16	GetUDPPort()						{return udpport;}
+#endif //zz_fly :: dual upnp
 	*/
 	// <== UPnP support [MoNKi] - leuk_he
+
 	static	uint16	GetServerUDPPort()					{return nServerUDPPort;}
 	static	uchar*	GetUserHash()						{return userhash;}
 	// ZZ:UploadSpeedSense -->
@@ -1363,6 +1414,11 @@ public:
 	static void SetAntiLeecherCommunity_Action(bool in) {m_antileechercommunity_action=in;}
 	static void SetAntiLeecherGhost_Action(bool in) {m_antileecherghost_action=in;}
 	static void SetAntiLeecherThief_Action(bool in) {m_antileecherthief_action=in;}
+	//X-Ray :: Fincan Hash Detection :: Start
+	static bool m_antileecherFincan;
+	static bool GetAntiLeecherFincan() {return m_antileecher && m_antileecherFincan;}
+	static CString m_antileecherFincanURL;
+	//X-Ray :: Fincan Hash Detection :: End
 	//Xman end
 
 	//Xman narrow font at transferwindow
@@ -1453,13 +1509,14 @@ public:
 
 	static uint16	MTU;                          // -MTU Configuration-
 	static bool		usedoublesendsize;
+	static bool		retrieveMTUFromSocket; // netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
 
 	static bool	NAFCFullControl;	          // -Network Adapter Feedback Control-
 	static uint32 forceNAFCadapter;	
 	static uint8	datarateSamples;              // -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 
 	static bool    enableMultiQueue;             // -One-queue-per-file- (idea bloodymad)
-	static bool    enableReleaseMultiQueue;
+	//static bool    enableReleaseMultiQueue;
 	// Maella end
 
 	// Maella [FAF] -Allow Bandwidth Settings in <1KB Incremements-
@@ -1501,8 +1558,8 @@ public:
 	// Maella -One-queue-per-file- (idea bloodymad)
 	static bool GetEnableMultiQueue()  { return enableMultiQueue; }
 	static void SetEnableMultiQueue(bool state) { enableMultiQueue = state; }
-	static bool GetEnableReleaseMultiQueue()  { return enableReleaseMultiQueue; }
-	static void SetEnableReleaseMultiQueue(bool state) { enableReleaseMultiQueue = state; }
+	//static bool GetEnableReleaseMultiQueue()  { return enableReleaseMultiQueue; }
+	//static void SetEnableReleaseMultiQueue(bool state) { enableReleaseMultiQueue = state; }
 	// Maella end
 
 	// Mighty Knife: Static server handling
@@ -1533,6 +1590,20 @@ public:
 	static bool		m_last_session_aborted_in_an_unnormal_way;
 	static bool		eMuleChrashedLastSession()		{ return m_last_session_aborted_in_an_unnormal_way;}
 
+	static bool		m_bShowCountryFlagInKad; //zz_fly :: show country flag in KAD
+	static bool		m_bKnown2Buffer; //zz_fly :: known2 buffer
+	//zz_fly :: known2 split :: start
+	static bool		m_bKnown2Split;
+	static bool		m_bKnown2Split_next;
+	static bool		IsKnown2SplitEnabled()	{return m_bKnown2Split && GetRememberAICH() && IsRememberingDownloadedFiles();} //this feature only available when user want to remember unused AichHashSet.
+	//zz_fly :: known2 split :: end
+	static uint64		m_uAutoPreviewLimit; //zz_fly :: do not auto preview big archive
+
+	//MORPH START - Added by WiZaRd, Fix broken HTTP downloads
+	static	CString	m_strBrokenURLs;
+	static	CString	GetBrokenURLs()						{return m_strBrokenURLs;}
+	static	void	SetBrokenURLs(const CString& str)	{m_strBrokenURLs = str;}
+	//MORPH END   - Added by WiZaRd, Fix broken HTTP downloads
 	//Xman end
 	//-----------------------------------------------------------------------------
 
@@ -1762,6 +1833,7 @@ public:
 
 	static	bool	IsErrorBeepEnabled()				{return beepOnError;}
 	static	bool	IsConfirmExitEnabled()				{return confirmExit;}
+	static	void	SetConfirmExit(bool bVal)			{confirmExit = bVal;} 
 	static	bool	UseSplashScreen()					{return splashscreen;}
 	static	bool	FilterLANIPs()						{return filterLANIPs;}
 	static	bool	GetAllowLocalHostIP()				{return m_bAllocLocalHostIP;}
@@ -1939,6 +2011,7 @@ public:
 	static	void	GetAllStatsColors(int iCount, LPDWORD pdwColors);
 	static	bool	SetAllStatsColors(int iCount, const DWORD* pdwColors);
 	static	void	ResetStatsColor(int index);
+	static	bool	HasCustomTaskIconColor()			{return bHasCustomTaskIconColor;}
 
 	static	void	SetMaxConsPerFive(UINT in)			{MaxConperFive=in;}
 	static	LPLOGFONT GetHyperTextLogFont()				{return &m_lfHyperText;}
@@ -1969,6 +2042,9 @@ public:
 	static	bool	GetSparsePartFiles();
 	static	void	SetSparsePartFiles(bool bEnable)	{m_bSparsePartFiles = bEnable;}
 	static	bool	GetResolveSharedShellLinks()		{return m_bResolveSharedShellLinks;}
+	static  bool	IsShowUpDownIconInTaskbar()			{return m_bShowUpDownIconInTaskbar;}
+	static  bool	IsWin7TaskbarGoodiesEnabled()				{return m_bShowWin7TaskbarGoodies;}
+	static  void    SetWin7TaskbarGoodiesEnabled(bool flag)	{m_bShowWin7TaskbarGoodies = flag;}
 
 	//Xman
 	/*
@@ -2111,6 +2187,12 @@ public:
 	static	bool	GetUseDwlPercentage()				{return m_bShowDwlPercentage;}
 	static	void	SetUseDwlPercentage(bool in)		{m_bShowDwlPercentage=in;}
 	static	bool	GetShowActiveDownloadsBold()		{return m_bShowActiveDownloadsBold;}
+	static	bool	GetShowSharedFilesDetails()			{return m_bShowSharedFilesDetails;}
+	static	void	SetShowSharedFilesDetails(bool bIn) {m_bShowSharedFilesDetails = bIn;}
+	static	bool	GetAutoShowLookups()				{return m_bAutoShowLookups;}
+	static	void	SetAutoShowLookups(bool bIn)		{m_bAutoShowLookups = bIn;}
+	static	bool	GetForceSpeedsToKB()				{return m_bForceSpeedsToKB;}
+	static	bool	GetExtraPreviewWithMenu()			{return m_bExtraPreviewWithMenu;}
 
 	//Toolbar
 	static	const CString& GetToolbarSettings()					{return m_sToolbarSettings;}
@@ -2125,6 +2207,8 @@ public:
 	static	void	SetToolbarIconSize(CSize siz)		{m_sizToolbarIconSize = siz;}
 
 	static	bool	IsTransToolbarEnabled()				{return m_bWinaTransToolbar;}
+	static	bool	IsDownloadToolbarEnabled()			{return m_bShowDownloadToolbar;}
+	static	void	SetDownloadToolbar(bool bShow)		{m_bShowDownloadToolbar = bShow;}
 
 	static	int		GetSearchMethod()					{return m_iSearchMethod;}
 	static	void	SetSearchMethod(int iMethod)		{m_iSearchMethod = iMethod;}
@@ -2234,6 +2318,7 @@ public:
 	static bool		IsServerCryptLayerTCPRequested()	{return IsClientCryptLayerRequested();}
 	static uint32	GetKadUDPKey()						{return m_dwKadUDPKey;}
 	static uint8	GetCryptTCPPaddingLength()			{return m_byCryptTCPPaddingLength;}
+	static void		SetCryptTCPPaddingLength(int in)	{m_byCryptTCPPaddingLength = (uint8)((in>=10 && in<=254) ? in : 128);} //zz_fly :: hardlimit on CryptTCPPaddingLength
 
 	// ==> UPnP support [MoNKi] - leuk_he
 	/*
@@ -2429,6 +2514,7 @@ public:
 	static	uint8	StartDLInEmptyCats()	{ return m_iStartDLInEmptyCats; } // 0 = disabled, otherwise num to resume
 	static	bool	UseAutoCat()			{ return m_bUseAutoCat; }
 	static	uint8	GetDlMode()				{ return dlMode;}
+	static	bool	UseAddRemoveInc()		{ return m_bAddRemovedInc; }
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	static	bool	GetSpreadbarSetStatus()	{return m_bSpreadbarSetStatus;} // Spread bars [Slugfiller/MorphXT] - Stulle

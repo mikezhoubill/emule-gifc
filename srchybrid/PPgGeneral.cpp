@@ -25,7 +25,7 @@
 #include "emuledlg.h"
 #include "StatisticsDlg.h"
 #include "ServerWnd.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "ChatWnd.h"
 #include "SharedFilesWnd.h"
 #include "KademliaWnd.h"
@@ -49,7 +49,6 @@ BEGIN_MESSAGE_MAP(CPPgGeneral, CPropertyPage)
 	ON_BN_CLICKED(IDC_STARTMIN, OnSettingsChange)
 	ON_BN_CLICKED(IDC_STARTWIN, OnSettingsChange)
 	ON_EN_CHANGE(IDC_NICK, OnSettingsChange)
-	ON_BN_CLICKED(IDC_BEEPER, OnSettingsChange)
 	ON_BN_CLICKED(IDC_EXIT, OnSettingsChange)
 	ON_BN_CLICKED(IDC_SPLASHON, OnSettingsChange)
 	ON_BN_CLICKED(IDC_BRINGTOFOREGROUND, OnSettingsChange)
@@ -102,11 +101,6 @@ void CPPgGeneral::LoadSettings(void)
 		CheckDlgButton(IDC_ONLINESIG,1);
 	else
 		CheckDlgButton(IDC_ONLINESIG,0);
-	
-	if(thePrefs.beepOnError)
-		CheckDlgButton(IDC_BEEPER,1);
-	else
-		CheckDlgButton(IDC_BEEPER,0);
 
 	if(thePrefs.confirmExit)
 		CheckDlgButton(IDC_EXIT,1);
@@ -294,7 +288,6 @@ BOOL CPPgGeneral::OnApply()
 		AddAutoStart();
 	else
 		RemAutoStart();
-	thePrefs.beepOnError = IsDlgButtonChecked(IDC_BEEPER)!=0;
 	thePrefs.confirmExit = IsDlgButtonChecked(IDC_EXIT)!=0;
 	thePrefs.splashscreen = IsDlgButtonChecked(IDC_SPLASHON)!=0;
 	thePrefs.bringtoforeground = IsDlgButtonChecked(IDC_BRINGTOFOREGROUND)!=0;
@@ -307,7 +300,6 @@ BOOL CPPgGeneral::OnApply()
 	thePrefs.m_bEnableMiniMule = IsDlgButtonChecked(IDC_MINIMULE) != 0;
 	thePrefs.m_bPreventStandby = IsDlgButtonChecked(IDC_PREVENTSTANDBY) != 0;
 
-	theApp.emuledlg->transferwnd->downloadlistctrl.SetStyle();
 	LoadSettings();
 
 	SetModified(FALSE);
@@ -339,7 +331,6 @@ void CPPgGeneral::Localize(void)
 		GetDlgItem(IDC_NICK_FRM)->SetWindowText(GetResString(IDS_QL_USERNAME));
 		GetDlgItem(IDC_LANG_FRM)->SetWindowText(GetResString(IDS_PW_LANG));
 		GetDlgItem(IDC_MISC_FRM)->SetWindowText(GetResString(IDS_PW_MISC));
-		GetDlgItem(IDC_BEEPER)->SetWindowText(GetResString(IDS_PW_BEEP));
 		GetDlgItem(IDC_EXIT)->SetWindowText(GetResString(IDS_PW_PROMPT));
 		GetDlgItem(IDC_SPLASHON)->SetWindowText(GetResString(IDS_PW_SPLASH));
 		GetDlgItem(IDC_BRINGTOFOREGROUND)->SetWindowText(GetResString(IDS_PW_FRONT));

@@ -15,6 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #pragma once
+class CKnownFile;
 
 #include "BarShader.h" // Spread bars [Slugfiller/MorphXT] - Stulle
 
@@ -32,8 +33,6 @@ struct Spread_Struct{
 
 class CStatisticFile
 {
-	friend class CKnownFile;
-	friend class CPartFile;
 public:
 	CStatisticFile()
 	{
@@ -51,7 +50,7 @@ public:
 		lastFullSpreadCount = 0;
 		// <== Spread bars [Slugfiller/MorphXT] - Stulle
 		m_uFileupdatetime = 0; //Xman Code Improvement -> don't update to often
-		
+
 		//Xman advanced upload-priority
 		m_unotcountedtransferred = 0;
 		m_tlastdataupdate = 0;
@@ -74,13 +73,15 @@ public:
 	// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
 	//Xman end
 
-
 	UINT	GetRequests() const				{return requested;}
 	UINT	GetAccepts() const				{return accepted;}
 	uint64	GetTransferred() const			{return transferred;}
 	UINT	GetAllTimeRequests() const		{return alltimerequested;}
 	UINT	GetAllTimeAccepts() const		{return alltimeaccepted;}
 	uint64	GetAllTimeTransferred() const	{return alltimetransferred;}
+	void	SetAllTimeRequests(uint32 nVal);
+	void	SetAllTimeAccepts(uint32 nVal);
+	void	SetAllTimeTransferred(uint64 nVal);
 
 	//Xman advanced upload-priority
 	uint64	GetCountedTransferred() const	{return alltimetransferred - m_unotcountedtransferred;}
@@ -89,15 +90,14 @@ public:
 	uint32 m_tlastdataupdate;
 	//Xman end
 
-	
 	CKnownFile* fileParent;
-
-private:
 	// ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
 	/*
 	CTypedPtrList<CPtrList, Spread_Struct*> spreadlist; //Xman PowerRelease
 	*/
 	// <== Removed Spreadbars (old version) [SlugFiller] - Stulle
+
+private:
 	uint32 requested;
 	uint32 accepted;
 	uint64 transferred;
@@ -107,7 +107,6 @@ private:
 	uint32 m_uFileupdatetime; //Xman Code Improvement -> don't update to often
 
 	// ==> Spread bars [Slugfiller/MorphXT] - Stulle
-	CRBMap<uint64, uint64> spreadlist;
 	static CBarShader s_SpreadBar;
 	bool	InChangedSpreadSortValue;
 	bool	InChangedFullSpreadCount;
@@ -119,6 +118,7 @@ private:
 	float	lastFullSpreadCount;
 
 public:
+	CRBMap<uint64, uint64> spreadlist;
 	~CStatisticFile()
 	{
 		m_bitmapSpreadBar.DeleteObject();

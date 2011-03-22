@@ -45,7 +45,7 @@ private:
 
 class CKnownFileList 
 {
-	friend class CSharedFilesWnd;
+	friend class CFileDetailDlgStatistics;
 	friend class CStatisticFile;
 public:
 	CKnownFileList();
@@ -72,6 +72,10 @@ public:
 	bool	ShouldPurgeAICHHashset(const CAICHHash& rAICHHash) const;
 	void	AICHHashChanged(const CAICHHash* pOldAICHHash, const CAICHHash& rNewAICHHash, CKnownFile* pFile);
 
+	uint32 	m_nRequestedTotal;
+	uint32 	m_nAcceptedTotal;
+	uint64 	m_nTransferredTotal;
+
 	//Xman [MoNKi: -Check already downloaded files-]
 	int CheckAlreadyDownloadedFile(const uchar* hash, CString filename=_T(""), CArray<CKnownFile*,CKnownFile*> *files = NULL);
 	// >> modified by Ken
@@ -85,7 +89,6 @@ public:
 	void ClearHistory();
 	bool	bReloadHistory; //Fafner: possible exception in history - 070626
 	//Xman end
-
 
 private:
 	bool	LoadKnownFiles();

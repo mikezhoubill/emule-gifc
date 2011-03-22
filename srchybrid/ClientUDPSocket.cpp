@@ -107,7 +107,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 			{
 				switch (pBuffer[0])
 				{
-				case OP_EMULEPROT:
+					case OP_EMULEPROT:
 					{
 						if (nPacketLen >= 2)
 							ProcessPacket(pBuffer+2, nPacketLen-2, pBuffer[1], sockAddr.sin_addr.S_un.S_addr, ntohs(sockAddr.sin_port));
@@ -115,7 +115,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 							throw CString(_T("eMule packet too short"));
 						break;
 					}
-				case OP_KADEMLIAPACKEDPROT:
+					case OP_KADEMLIAPACKEDPROT:
 					{
 						theStats.AddDownDataOverheadKad(nPacketLen);
 						if (nPacketLen >= 2)
@@ -161,7 +161,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 							throw CString(_T("Kad packet (compressed) too short"));
 						break;
 					}
-				case OP_KADEMLIAHEADER:
+					case OP_KADEMLIAHEADER:
 					{
 						theStats.AddDownDataOverheadKad(nPacketLen);
 						//zz_fly :: Anti-Leecher
@@ -185,7 +185,7 @@ void CClientUDPSocket::OnReceive(int nErrorCode)
 							throw CString(_T("Kad packet too short"));
 						break;
 					}
-				default:
+					default:
 					{
 						CString strError;
 						strError.Format(_T("Unknown protocol 0x%02x"), pBuffer[0]);
@@ -348,7 +348,6 @@ bool CClientUDPSocket::ProcessPacket(const BYTE* packet, UINT size, uint8 opcode
 				}
 				//Xman end
 
-
 				//Make sure we are still thinking about the same file
 				if (md4cmp(reqfilehash, sender->GetUploadFileID()) == 0)
 				{
@@ -431,54 +430,54 @@ bool CClientUDPSocket::ProcessPacket(const BYTE* packet, UINT size, uint8 opcode
 		}
 		case OP_QUEUEFULL:
 		{
-				theStats.AddDownDataOverheadFileRequest(size);
-				CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
-				if (thePrefs.GetDebugClientUDPLevel() > 0)
-					DebugRecv("OP_QueueFull", sender, NULL, ip);
-				if (sender && sender->UDPPacketPending()){
-					sender->SetRemoteQueueFull(true);
-					sender->UDPReaskACK(0);
-				}
-				else if (sender != NULL)
-					DebugLogError(_T("Received UDP Packet (OP_QUEUEFULL) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
-				break;
+			theStats.AddDownDataOverheadFileRequest(size);
+			CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
+			if (thePrefs.GetDebugClientUDPLevel() > 0)
+				DebugRecv("OP_QueueFull", sender, NULL, ip);
+			if (sender && sender->UDPPacketPending()){
+				sender->SetRemoteQueueFull(true);
+				sender->UDPReaskACK(0);
+			}
+			else if (sender != NULL)
+				DebugLogError(_T("Received UDP Packet (OP_QUEUEFULL) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
+			break;
 		}
 		case OP_REASKACK:
 		{
-				theStats.AddDownDataOverheadFileRequest(size);
-				CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
-				if (thePrefs.GetDebugClientUDPLevel() > 0)
-					DebugRecv("OP_ReaskAck", sender, NULL, ip);
-				if (sender && sender->UDPPacketPending()){
-					CSafeMemFile data_in(packet, size);
-					if ( sender->GetUDPVersion() > 3 )
-					{
-						sender->ProcessFileStatus(true, &data_in, sender->GetRequestFile());
-					}
-					uint16 nRank = data_in.ReadUInt16();
-					sender->SetRemoteQueueFull(false);
-					sender->UDPReaskACK(nRank);
-					sender->AddAskedCountDown();
+			theStats.AddDownDataOverheadFileRequest(size);
+			CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
+			if (thePrefs.GetDebugClientUDPLevel() > 0)
+				DebugRecv("OP_ReaskAck", sender, NULL, ip);
+			if (sender && sender->UDPPacketPending()){
+				CSafeMemFile data_in(packet, size);
+				if ( sender->GetUDPVersion() > 3 )
+				{
+					sender->ProcessFileStatus(true, &data_in, sender->GetRequestFile());
 				}
-				else if (sender != NULL)
-					DebugLogError(_T("Received UDP Packet (OP_REASKACK) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
-
-				break;
+				uint16 nRank = data_in.ReadUInt16();
+				sender->SetRemoteQueueFull(false);
+				sender->UDPReaskACK(nRank);
+				sender->AddAskedCountDown();
+			}
+			else if (sender != NULL)
+				DebugLogError(_T("Received UDP Packet (OP_REASKACK) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
+			
+			break;
 		}
 		case OP_FILENOTFOUND:
 		{
-				theStats.AddDownDataOverheadFileRequest(size);
-				CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
-				if (thePrefs.GetDebugClientUDPLevel() > 0)
-					DebugRecv("OP_FileNotFound", sender, NULL, ip);
-				if (sender && sender->UDPPacketPending()){
-					sender->UDPReaskFNF(); // may delete 'sender'!
-					sender = NULL;
-				}
-				else if (sender != NULL)
-					DebugLogError(_T("Received UDP Packet (OP_FILENOTFOUND) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
+			theStats.AddDownDataOverheadFileRequest(size);
+			CUpDownClient* sender = theApp.downloadqueue->GetDownloadClientByIP_UDP(ip, port, true);
+			if (thePrefs.GetDebugClientUDPLevel() > 0)
+				DebugRecv("OP_FileNotFound", sender, NULL, ip);
+			if (sender && sender->UDPPacketPending()){
+				sender->UDPReaskFNF(); // may delete 'sender'!
+				sender = NULL;
+			}
+			else if (sender != NULL)
+				DebugLogError(_T("Received UDP Packet (OP_FILENOTFOUND) which was not requested (pendingflag == false); Ignored packet - %s"), sender->DbgGetClientInfo());
 
-				break;
+			break;
 		}
 		case OP_PORTTEST:
 		{
@@ -678,6 +677,24 @@ bool CClientUDPSocket::Create()
 		}
 	}
 
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	//ACAT UPnP
+	if (thePrefs.m_bUseACATUPnPCurrent && ret && thePrefs.GetUDPPort()){
+		if (thePrefs.GetUPnPNat()){
+			MyUPnP::UPNPNAT_MAPPING mapping;
+
+			mapping.internalPort = mapping.externalPort = thePrefs.GetUDPPort();
+			mapping.protocol = MyUPnP::UNAT_UDP;
+			mapping.description = "UDP Port";
+			if (theApp.AddUPnPNatPort(&mapping, thePrefs.GetUPnPNatTryRandom()))
+				thePrefs.SetUPnPUDPExternal(mapping.externalPort);
+		}
+		else{
+			thePrefs.SetUPnPUDPExternal(thePrefs.GetUDPPort());
+		}
+	}
+#endif //zz_fly :: dual upnp
+
 	if (ret)
 		m_port = thePrefs.GetUDPPort();
 
@@ -748,7 +765,11 @@ bool CClientUDPSocket::Rebind()
 {
 	// ==> Random Ports [MoNKi] - Stulle
 	/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+	if (thePrefs.udpport == m_port)
+#else
 	if (thePrefs.GetUDPPort() == m_port)
+#endif 	//zz_fly :: dual upnp
 		return false;
 	*/
 	if (!thePrefs.GetUseRandomPorts() && thePrefs.GetUDPPort(false, true)==m_port)
@@ -762,5 +783,53 @@ bool CClientUDPSocket::Rebind()
 	// <== UPnP support [MoNKi] - leuk_he
 
 	Close();
+
+	// ==> UPnP support [MoNKi] - leuk_he
+	/*
+#ifdef DUAL_UPNP 	//zz_fly :: dual upnp
+	//ACAT UPnP
+	if(thePrefs.m_bUseACATUPnPCurrent && thePrefs.GetUPnPNat())
+	{
+		if(theApp.m_pUPnPNat->RemoveSpecifiedPort(thePrefs.m_iUPnPUDPExternal, MyUPnP::UNAT_UDP))
+			AddLogLine(false, _T("UPNP: removed UDP-port %u"), thePrefs.m_iUPnPUDPExternal);
+		else
+			AddLogLine(false, _T("UPNP: failed to remove UDP-port %u"), thePrefs.m_iUPnPUDPExternal);
+	}
+	thePrefs.m_iUPnPUDPExternal=0;
+#endif 	//zz_fly :: dual upnp
+	*/
+	// <== UPnP support [MoNKi] - leuk_he
+
 	return Create();
 }
+// ==> UPnP support [MoNKi] - leuk_he
+/*
+#ifdef DUAL_UPNP //zz_fly :: dual upnp
+//ACAT UPnP :: Rebind UPnP on IP-change
+bool CClientUDPSocket::RebindUPnP(){ 
+	if(!thePrefs.m_bUseACATUPnPCurrent)
+		return false;
+
+	if(theApp.m_pUPnPNat->RemoveSpecifiedPort(thePrefs.m_iUPnPUDPExternal, MyUPnP::UNAT_UDP))
+	{
+		AddLogLine(false, _T("UPNP: removed UDP-port %u"), thePrefs.m_iUPnPUDPExternal);
+		thePrefs.m_iUPnPUDPExternal=0;
+		MyUPnP::UPNPNAT_MAPPING mapping;
+		mapping.internalPort = mapping.externalPort = thePrefs.GetUDPPort();
+		mapping.protocol = MyUPnP::UNAT_UDP;
+		mapping.description = "UDP Port";
+		if (theApp.AddUPnPNatPort(&mapping, thePrefs.GetUPnPNatTryRandom()))
+		{
+			thePrefs.SetUPnPUDPExternal(mapping.externalPort);
+			return true;
+		}
+		else
+			thePrefs.SetUPnPUDPExternal(thePrefs.GetUDPPort());
+	}
+	else
+		AddLogLine(false, _T("UPNP: failed to remove UDP-port %u"), thePrefs.m_iUPnPUDPExternal);
+	return false;
+} 
+#endif 	//zz_fly :: dual upnp
+*/
+// <== UPnP support [MoNKi] - leuk_he

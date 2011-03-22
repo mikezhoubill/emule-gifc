@@ -40,6 +40,7 @@
 #include "ServerWnd.h"
 #include "Log.h"
 #include "ip2country.h" //MORPH - Added by SiRoB IP to Country
+#include "dlp.h" //X-Ray :: Fincan Hash Detection
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -166,6 +167,11 @@ bool CServerList::Init()
 		// <== Advanced Updates [MorphXT/Stulle] - Stulle
 	}
 	//Xman end
+
+	//X-Ray :: Fincan Hash Detection :: Start
+	if(thePrefs.GetAntiLeecherFincan())
+		theApp.dlp->LoadFincanHashes(thePrefs.m_antileecherFincanURL, true);
+	//X-Ray :: Fincan Hash Detection :: End	
 
 	// ==> Advanced Updates [MorphXT/Stulle] - Stulle
 	if(thePrefs.IsAutoUpdateAntiLeech())
@@ -351,7 +357,8 @@ void CServerList::ServerStats()
 			if ((!ping_server->IsStaticMember()) || (!thePrefs.GetDontRemoveStaticServers())) {
 				theApp.emuledlg->serverwnd->serverlistctrl.RemoveServer(ping_server);
 				return;
-			} //Xman end
+			}
+			//Xman end
 		}
 		srand(tNow);
 		ping_server->SetRealLastPingedTime(tNow); // this is not used to calcualte the next ping, but only to ensure a minimum delay for premature pings

@@ -42,14 +42,25 @@ protected:
 
 		CSourceData(CUpDownClient* client, const CString& expiration90mins, const CString& expiration3days);
 
-		bool Compare(const CSourceData& tocompare) const { return (sourceID == tocompare.sourceID) &&
-																  (sourcePort == tocompare.sourcePort); }
+		//DolphinX :: Save URL Source :: start
+		CSourceData(const CStringA& url, const CString& expiration90mins, const CString& expiration3days) : URL(url), 
+																											partsavailable(0),
+																											expiration90mins(expiration90mins),
+																											expiration3days(expiration3days) {}
+
+		bool Compare(const CSourceData& tocompare) const {
+			if(URL.IsEmpty())
+				return (sourceID == tocompare.sourceID) && (sourcePort == tocompare.sourcePort);
+			return !URL.CompareNoCase(tocompare.URL);
+		}
+		//DolphinX :: Save URL Source :: end
 
 		uint32	sourceID;
 		uint16	sourcePort;
 		uint32	partsavailable;
 		CString expiration90mins; // 1.5 hours
         CString expiration3days; // 3 days
+		CString URL; //DolphinX :: Save URL Source
 	};
 	typedef CList<CSourceData> SourceList;
 

@@ -39,7 +39,7 @@
 #include "Opcodes.h"
 #include "InputBox.h"
 #include "WebServices.h"
-#include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "ClientList.h"
 #include "UpDownClient.h"
 #include "Collection.h"
@@ -65,7 +65,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 bool NeedArchiveInfoPage(const CSimpleArray<CObject*>* paItems);
-void UpdateFileDetailsPages(CListViewWalkerPropertySheet *pSheet,
+void UpdateFileDetailsPages(CListViewPropertySheet *pSheet,
 							CResizablePage *pArchiveInfo, CResizablePage *pMediaInfo);
 
 
@@ -541,6 +541,8 @@ void CSharedFilesCtrl::Localize()
 	int iItems = GetItemCount();
 	for (int i = 0; i < iItems; i++)
 		Update(i);
+
+	ShowFilesCount();
 }
 
 void CSharedFilesCtrl::AddFile(const CShareableFile* file)
@@ -696,7 +698,7 @@ void CSharedFilesCtrl::UpdateFile(const CShareableFile* file, bool bUpdateFileSu
 		*/
 		if (bUpdateFileSummary && GetItemState(iItem, LVIS_SELECTED) && IsWindowVisible())
 		//Xman end
-			theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+			theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 	}
 }
 
@@ -710,8 +712,15 @@ int CSharedFilesCtrl::FindFile(const CShareableFile* pFile)
 
 void CSharedFilesCtrl::ReloadFileList()
 {
+	//Xman [MoNKi: -Downloaded History-]
+	if(theApp.emuledlg->sharedfileswnd->historylistctrl.IsWindowVisible())
+	{
+		theApp.emuledlg->sharedfileswnd->historylistctrl.Reload();
+		return;
+	}
+	//Xman end
 	DeleteAllItems();
-	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+	theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 	
 	CCKey bufKey;
 	CKnownFile* cur_file;
@@ -750,7 +759,7 @@ void CSharedFilesCtrl::ShowFilesCount()
 			str.Format(_T(" (%i)"), theApp.sharedfiles->GetCount());
 		theApp.emuledlg->sharedfileswnd->GetDlgItem(IDC_TRAFFIC_TEXT)->SetWindowText(GetResString(IDS_SF_FILES) + str);
 	}
-	//Xman end
+	//Xman End
 }
 
 void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
@@ -760,21 +769,52 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 	if (!lpDrawItemStruct->itemData)
 		return;
 
-	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
-	BOOL bCtrlFocused;
-	// ==> Design Settings [eWombat/Stulle] - Stulle
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	/*
+	CMemDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	*/
+	CMemoryDC dc(CDC::FromHandle(lpDrawItemStruct->hDC), &lpDrawItemStruct->rcItem);
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+	//zz_fly :: we init it ourself :: from DolphinX :: start
+	/*
+	BOOL bCtrlFocused;
 	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused);
 	*/
-	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused, style_b_sharedlist);
+	//zz_fly :: end
+	// ==> Design Settings [eWombat/Stulle] - Stulle
+	BOOL bCtrlFocused;
+	InitItemMemDC(dc, lpDrawItemStruct, bCtrlFocused, false, style_b_sharedlist);
 	// <== Design Settings [eWombat/Stulle] - Stulle
 	CRect cur_rec(lpDrawItemStruct->rcItem);
 	CRect rcClient;
 	GetClientRect(&rcClient);
+
 	/*const*/ CShareableFile* file = (CShareableFile*)lpDrawItemStruct->itemData;
 	CKnownFile* pKnownFile = NULL;
 	if (file->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 		pKnownFile = (CKnownFile*)file;
+
+	// ==> Design Settings [eWombat/Stulle] - Stulle
+	/*
+	//zz_fly :: we init it ourself :: from DolphinX :: start
+	BOOL bCtrlFocused = ((GetFocus() == this) || (GetStyle() & LVS_SHOWSELALWAYS));
+	dc.FillBackground((lpDrawItemStruct->itemState & ODS_SELECTED)?
+		((bCtrlFocused)?
+			m_crHighlight
+		:
+			m_crNoHighlight)
+	:
+		//Xman PowerRelease
+		((pKnownFile && pKnownFile->GetUpPriority()==PR_POWER)?
+			RGB(255,210,210)
+		:
+		//Xman end
+			m_crWindow));
+	dc.SetTextColor((lpDrawItemStruct->itemState & ODS_SELECTED) ? m_crHighlightText : m_crWindowText);
+	dc.SetFont(GetFont());
+	//zz_fly :: end
+	*/
+	// <== Design Settings [eWombat/Stulle] - Stulle
 
 	CHeaderCtrl *pHeaderCtrl = GetHeaderCtrl();
 	int iCount = pHeaderCtrl->GetItemCount();
@@ -793,17 +833,6 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 			{
 				TCHAR szItem[1024];
 				GetItemDisplayText(file, iColumn, szItem, _countof(szItem));
-				// ==> Design Settings [eWombat/Stulle] - Stulle
-				/*
-				//Xman PowerRelease
-				if(pKnownFile)
-				{
-					if(pKnownFile->GetUpPriority()==PR_POWER)
-						dc->SetTextColor((COLORREF)RGB(255,210,210));
-				}
-				//Xman end
-				*/
-				// <== Design Settings [eWombat/Stulle] - Stulle
 				switch (iColumn)
 				{
 					case 0: {
@@ -832,8 +861,8 @@ void CSharedFilesCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 								iNoStyleState = DFCS_INACTIVE;
 							}
 							*/
-							// SLUGFILLER: SafeHash remove - removed installation dir unsharing
-							
+							// SLUGFILLER: SafeHash remove - removed installation dir unsharing							
+
 							HTHEME hTheme = (g_xpStyle.IsThemeActive() && g_xpStyle.IsAppThemed()) ? g_xpStyle.OpenThemeData(NULL, L"BUTTON") : NULL;
 
 							CRect recCheckBox = cur_rec;
@@ -1461,7 +1490,7 @@ void CSharedFilesCtrl::OnContextMenu(CWnd* /*pWnd*/, CPoint point)
 	// <== XP Style Menu [Xanatos] - Stulle
 	m_PowershareMenu.CheckMenuRadioItem(MP_POWERSHARE_DEFAULT, MP_POWERSHARE_LIMITED, uPowershareMenuItem, 0);
 	m_PowershareMenu.EnableMenuItem((UINT_PTR)m_PowerShareLimitMenu.m_hMenu, iSelectedItems > 0 ? MF_ENABLED : MF_GRAYED);
-	if (iPowerShareLimit==0)
+	if (thePrefs.GetPowerShareLimit()==0)
 		buffer.Format(_T(" (%s)"),GetResString(IDS_DISABLED));
 	else
 		buffer.Format(_T(" (%u)"),thePrefs.GetPowerShareLimit());
@@ -1594,7 +1623,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		switch (wParam){
 			case Irc_SetSendLink:
 				if (pKnownFile != NULL)
-					theApp.emuledlg->ircwnd->SetSendFileString(CreateED2kLink(pKnownFile));
+					theApp.emuledlg->ircwnd->SetSendFileString(pKnownFile->GetED2kLink());
 				break;
 			case MP_GETED2KLINK:{
 				CString str;
@@ -1602,10 +1631,10 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				while (pos != NULL)
 				{
 					CShareableFile* file = selectedList.GetNext(pos);
-					if (file->IsKindOf(RUNTIME_CLASS(CKnownFile))){
+					if (file != NULL && file->IsKindOf(RUNTIME_CLASS(CKnownFile))){
 						if (!str.IsEmpty())
 							str += _T("\r\n");
-						str += CreateED2kLink((CKnownFile*)file);
+						str += ((CKnownFile*)file)->GetED2kLink();
 					}
 				}
 				theApp.CopyTextToClipboard(str);
@@ -1712,7 +1741,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 							RemoveFile(myfile, true);
 						bRemovedItems = true;
 						if (myfile->IsKindOf(RUNTIME_CLASS(CPartFile)))
-							theApp.emuledlg->transferwnd->downloadlistctrl.ClearCompleted(static_cast<CPartFile*>(myfile));
+							theApp.emuledlg->transferwnd->GetDownloadList()->ClearCompleted(static_cast<CPartFile*>(myfile));
 					}
 					else{
 						CString strError;
@@ -1726,7 +1755,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					// Depending on <no-idea> this does not always cause a
 					// LVN_ITEMACTIVATE message sent. So, explicitly redraw
 					// the item.
-					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 					theApp.emuledlg->sharedfileswnd->OnSingleFileShareStatusChanged(); // might have been a single shared file
 				}
 				break; 
@@ -1749,7 +1778,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				}
 				SetRedraw(TRUE);
 				if (bUnsharedItems) {
-					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+					theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 					theApp.emuledlg->sharedfileswnd->OnSingleFileShareStatusChanged();
 					if (GetFirstSelectedItemPosition() == NULL)
 						AutoSelectItem();
@@ -1833,7 +1862,10 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					while (pos != NULL)
 					{
 						if (!selectedList.GetAt(pos)->IsKindOf(RUNTIME_CLASS(CKnownFile)))
+						{
+							selectedList.GetNext(pos); //zz_fly :: bug fix :: DolphinX
 							continue;
+						}
 						CKnownFile* file = (CKnownFile*)selectedList.GetNext(pos);
 						switch (wParam) {
 							case MP_PRIOVERYLOW:
@@ -1860,7 +1892,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 								file->SetAutoUpPriority(false);
 								file->SetUpPriority(PR_VERYHIGH);
 								UpdateFile(file);
-								break;	
+								break;
 							//Xman PowerRelease
 							case MP_PRIOPOWER:
 								if(file->IsPartFile()) //only to be sure
@@ -1918,7 +1950,7 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 					if (!file->IsKindOf(RUNTIME_CLASS(CKnownFile)))
 						continue;
 					if  (newHideOS == ((CKnownFile*)file)->GetHideOS())
-						break;
+						continue;
 					((CKnownFile*)file)->SetHideOS(newHideOS);
 					UpdateFile(file);
 				}
@@ -2221,8 +2253,8 @@ BOOL CSharedFilesCtrl::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 								// in the string they would be misinterpreted as control sequences!
 									AddLogLine(false,_T("Successfully renamed '%s' to '%s'"), ((CKnownFile*)file)->GetFilePath(), newpath);
 									((CKnownFile*)file)->SetFileName(newname);
-									if (file->IsKindOf(RUNTIME_CLASS(CPartFile)))
-										((CPartFile*) file)->SetFullName(newpath);
+								if (file->IsKindOf(RUNTIME_CLASS(CPartFile)))
+									((CPartFile*) file)->SetFullName(newpath);
 							} else {
 								// Use the "Format"-Syntax of AddLogLine here instead of
 								// CString.Format+AddLogLine, because if "%"-characters are
@@ -2379,26 +2411,18 @@ int CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 			break;
 
 		case 2: //filetype
-		{
-			iResult = item1->GetFileTypeDisplayStr().Compare(item2->GetFileTypeDisplayStr()); //zz_fly :: bug fix
+			iResult = item1->GetFileTypeDisplayStr().Compare(item2->GetFileTypeDisplayStr());
 			// if the type is equal, subsort by extension
 			if (iResult == 0)
 			{
 				LPCTSTR pszExt1 = PathFindExtension(item1->GetFileName());
 				LPCTSTR pszExt2 = PathFindExtension(item2->GetFileName());
 				if ((pszExt1 == NULL) ^ (pszExt2 == NULL))
-					iResult = pszExt1 == NULL ? 1 : (-1); //zz_fly :: bug fix
+					iResult = pszExt1 == NULL ? 1 : (-1);
 				else
-					iResult = pszExt1 != NULL ? _tcsicmp(pszExt1, pszExt2) : 0; //zz_fly :: bug fix
+					iResult = pszExt1 != NULL ? _tcsicmp(pszExt1, pszExt2) : 0;
 			}
-			//zz_fly :: bug fix
-			/*
-			else
-				return iResult;
-			*/
 			break;
-			//zz_fly :: end
-		}
 
 		case 9: //folder
 			iResult = CompareLocaleStringNoCase(item1->GetPath(), item2->GetPath());
@@ -2608,7 +2632,7 @@ int CSharedFilesCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 	if (iResult == 0 && (dwNextSort = theApp.emuledlg->sharedfileswnd->sharedfilesctrl.GetNextSortOrder(lParamSort)) != -1)
 		iResult = SortProc(lParam1, lParam2, dwNextSort);
 	*/
-
+	// SLUGFILLER End
 	return iResult;
 }
 
@@ -3131,7 +3155,7 @@ void CSharedFilesCtrl::CheckBoxClicked(int iItem)
 		VERIFY( theApp.sharedfiles->ExcludeFile(pFile->GetFilePath()) );
 		// update GUI stuff
 		ShowFilesCount();
-		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 		theApp.emuledlg->sharedfileswnd->OnSingleFileShareStatusChanged();
 		// no need to update the list itself, will be handled in the RemoveFile function
 	}
@@ -3145,7 +3169,7 @@ void CSharedFilesCtrl::CheckBoxClicked(int iItem)
 		// SLUGFILLER: SafeHash remove - removed installation dir unsharing
 		VERIFY( theApp.sharedfiles->AddSingleSharedFile(pFile->GetFilePath()) );
 		ShowFilesCount();
-		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesSummary();
+		theApp.emuledlg->sharedfileswnd->ShowSelectedFilesDetails();
 		theApp.emuledlg->sharedfileswnd->OnSingleFileShareStatusChanged();
 		UpdateFile(pFile);
 	}

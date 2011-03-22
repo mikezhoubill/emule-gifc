@@ -244,12 +244,23 @@
 #define IDI_COUNTRY_FLAG_CS             341
 #define IDI_COUNTRY_FLAG_NOFLAG         342
 #define IDI_COUNTRY_FLAG_TP				343
+#define IDI_COUNTRY_FLAG_AQ				344
+#define IDI_COUNTRY_FLAG_AX				345
+#define IDI_COUNTRY_FLAG_BV				346
+#define IDI_COUNTRY_FLAG_GF				347
+#define IDI_COUNTRY_FLAG_ME				348
+#define IDI_COUNTRY_FLAG_MF				349
+#define IDI_COUNTRY_FLAG_RE				350
+#define IDI_COUNTRY_FLAG_RS				351
+#define IDI_COUNTRY_FLAG_YT				352
+#define IDI_COUNTRY_FLAG_AP				353
+#define IDI_COUNTRY_FLAG_EU				354
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        344
+#define _APS_NEXT_RESOURCE_VALUE        355
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101

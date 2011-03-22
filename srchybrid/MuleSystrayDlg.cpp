@@ -7,6 +7,7 @@
 #include "preferences.h"
 #include "opcodes.h"
 #include "otherfunctions.h"
+#include "Scheduler.h" // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -477,6 +478,7 @@ void CMuleSystrayDlg::OnChangeDowntxt()
 	//Xman end
 
 	thePrefs.SetMaxDownload((m_nDownSpeedTxt == 0) ? UNLIMITED : m_nDownSpeedTxt);
+	theApp.scheduler->SaveOriginals(); // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
 
 	UpdateData(FALSE);
 }
@@ -535,6 +537,7 @@ void CMuleSystrayDlg::OnChangeUptxt()
 	m_ctrlUpSpeedSld.SetPos(int(m_nUpSpeedTxt*10.0f));
 
 	thePrefs.SetMaxUpload(m_nUpSpeedTxt);
+	theApp.scheduler->SaveOriginals(); // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
 	//Xman end
 
 	UpdateData(FALSE);
@@ -592,6 +595,7 @@ void CMuleSystrayDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		thePrefs.SetMaxUpload(m_nUpSpeedTxt);
 		//Xman end
 	}
+	theApp.scheduler->SaveOriginals(); // Don't reset Connection Settings for Webserver/CML/MM [Stulle] - Stulle
 	
 	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
 }

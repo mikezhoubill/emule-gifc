@@ -55,7 +55,6 @@ protected:
 	*/
 	// <== Improved ICS-Firewall support [MoNKi] - Max
 	int m_iLogLevel;
-	bool m_bDisablePeerCache;
 	//Xman
 	/*
     bool m_bDynUpEnabled;
@@ -132,7 +131,6 @@ protected:
 	*/
 	// <== Improved ICS-Firewall support [MoNKi] - Max
 	HTREEITEM m_htiLogLevel;
-	HTREEITEM m_htiDisablePeerCache;
 	//Xman
 	/*
     HTREEITEM m_htiDynUp;
@@ -158,15 +156,32 @@ protected:
 	HTREEITEM m_htiExtractMetaDataNever;
 	HTREEITEM m_htiExtractMetaDataID3Lib;
 	HTREEITEM m_htiAutoArch;
-	HTREEITEM m_htiUPnP;
+
 	// ==> UPnP support [MoNKi] - leuk_he
 	/*
+	//UPnP chooser
+	HTREEITEM m_htiUseACATUPnPNextStart;
+	bool m_iUseACATUPnPNextStart;
+
+	//ACAT UPnP
+	HTREEITEM m_htiUPnPNat;
+	HTREEITEM m_htiUPnPTryRandom;
+	bool m_iUPnPNat;
+	bool m_iUPnPTryRandom;
+
+	HTREEITEM m_htiUPnP;
 	HTREEITEM m_htiIsUPnPEnabled; //zz_fly :: add UPnP option in Tweaks
 	HTREEITEM m_htiCloseUPnPPorts;
 	HTREEITEM m_htiSkipWANIPSetup;
 	HTREEITEM m_htiSkipWANPPPSetup;
+
+	//zz_fly :: Rebind UPnP on IP-change
+	HTREEITEM m_htiUPnPRebindOnIPChange;
+	bool m_iUPnPRebindOnIPChange;
+	//zz_fly :: end
 	*/
 	// <== UPnP support [MoNKi] - leuk_he
+
 	HTREEITEM m_htiShareeMule;
 	HTREEITEM m_htiShareeMuleMultiUser;
 	HTREEITEM m_htiShareeMulePublicUser;
@@ -175,6 +190,17 @@ protected:
 	HTREEITEM m_htiResolveShellLinks;
 
 	HTREEITEM m_htiCryptTCPPaddingLength; //Xman Added PaddingLength to Extended preferences
+
+	//zz_fly
+	//zz_fly :: known2 buffer
+	bool m_bKnown2Buffer; 
+	HTREEITEM m_htiKnown2Buffer;
+	//zz_fly :: end
+
+	//zz_fly :: known2 split
+	bool m_bKnown2Split; 
+	HTREEITEM m_htiKnown2Split;
+	//zz_fly :: end
 
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
@@ -188,4 +214,5 @@ protected:
 	afx_msg LRESULT OnTreeOptsCtrlNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnHelp();
 	afx_msg BOOL OnHelpInfo(HELPINFO* pHelpInfo);
+	afx_msg void OnBnClickedOpenprefini();
 };

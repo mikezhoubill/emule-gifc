@@ -1566,17 +1566,21 @@ HBRUSH CIrcWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 */
-	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }
@@ -1594,5 +1598,6 @@ void CIrcWnd::OnBackcolor()
 		m_brMyBrush.CreateSolidBrush(crTempColor);
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+	m_wndChanSel.m_clrBack = crTempColor;
 }
 // <== Design Settings [eWombat/Stulle] - Max

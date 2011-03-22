@@ -155,6 +155,7 @@ COScopeCtrl::COScopeCtrl(int NTrends)
 	m_nXGrids = 6;
 	m_nYGrids = 5;
 	m_nTrendPoints = -1;
+	m_nXPartial = 0;
 
 	m_bDoUpdate = true;
 	m_nRedrawTimer = 0;

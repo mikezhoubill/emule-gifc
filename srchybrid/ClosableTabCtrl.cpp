@@ -21,6 +21,11 @@
 #include "MenuCmds.h"
 #include "UserMsgs.h"
 #include "VisualStylesXP.h"
+// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+#include "Preferences.h"
+#endif
+// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -62,6 +67,7 @@ CClosableTabCtrl::CClosableTabCtrl()
 	m_bCloseable = true;
 	memset(&m_iiCloseButton, 0, sizeof m_iiCloseButton);
 	m_ptCtxMenu.SetPoint(-1, -1);
+	m_clrBack = CLR_DEFAULT; // Design Settings [eWombat/Stulle] - Max
 }
 
 CClosableTabCtrl::~CClosableTabCtrl()
@@ -550,5 +556,58 @@ HBRUSH CClosableTabCtrl::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 // Vista: Can not be used to workaround the problems with owner drawn tab control
 BOOL CClosableTabCtrl::OnEraseBkgnd(CDC* pDC)
 {
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER<1600
+	// ==> Design Settings [eWombat/Stulle] - Max
+	/*
 	return CTabCtrl::OnEraseBkgnd(pDC);
+#else
+	if(thePrefs.GetWindowsVersion() >= _WINVER_VISTA_)
+		return CTabCtrl::OnEraseBkgnd(pDC);
+
+	// Set brush to desired background color
+	CBrush backBrush(GetSysColor(COLOR_BTNFACE));
+	*/
+	// Set brush to desired background color
+	CBrush backBrush((m_clrBack != CLR_DEFAULT)?m_clrBack:GetSysColor(COLOR_BTNFACE));
+
+	// Save old brush
+	CBrush* pOldBrush = pDC->SelectObject(&backBrush);
+
+	CRect rect;
+	pDC->GetClipBox(&rect);     // Erase the area needed
+
+	pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+        PATCOPY);
+	pDC->SelectObject(pOldBrush);
+	return TRUE;
+#else
+	if(thePrefs.GetWindowsVersion() >= _WINVER_VISTA_ && m_clrBack == CLR_DEFAULT)
+		return CTabCtrl::OnEraseBkgnd(pDC);
+
+	// Set brush to desired background color
+	CBrush backBrush((m_clrBack != CLR_DEFAULT)?m_clrBack:GetSysColor(COLOR_BTNFACE));
+	// <== Design Settings [eWombat/Stulle] - Max
+
+	// Save old brush
+	CBrush* pOldBrush = pDC->SelectObject(&backBrush);
+
+	// So it seems this finally got broken on VS2010 for XP... so when we erase background now we just set it ourself now...
+	CRect rect;
+	pDC->GetClipBox(&rect);     // Erase the area needed
+
+	pDC->PatBlt(rect.left, rect.top, rect.Width(), rect.Height(),
+        PATCOPY);
+	pDC->SelectObject(pOldBrush);
+	return TRUE;
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+}
+
+BOOL CClosableTabCtrl::DeleteItem(int nItem)
+{
+	// if we remove a tab which would lead to scrolling back to other tabs, all those become hidden for... whatever reasons
+	// its easy enough wo work arround by scrolling to the first visible tab _before_ we delete the other one
+	SetCurSel(0);
+	return __super::DeleteItem(nItem);
 }

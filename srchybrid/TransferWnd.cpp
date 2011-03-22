@@ -18,6 +18,7 @@
 #include "emule.h"
 #include "SearchDlg.h"
 #include "TransferWnd.h"
+#include "TransferDlg.h"
 #include "OtherFunctions.h"
 #include "ClientList.h"
 #include "UploadQueue.h"
@@ -36,6 +37,7 @@
 #include "UploadBandwidthThrottler.h" //Xman Xtreme upload
 
 #include ".\MiniMule\SystemInfo.h" // CPU/MEM usage [$ick$/Stulle] - Max
+#include "XMessageBox.h" // Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -70,9 +72,9 @@ static char THIS_FILE[] = __FILE__;
 
 // CTransferWnd dialog
 
-IMPLEMENT_DYNAMIC(CTransferWnd, CDialog)
+IMPLEMENT_DYNCREATE(CTransferWnd, CResizableFormView)
 
-BEGIN_MESSAGE_MAP(CTransferWnd, CResizableDialog)
+BEGIN_MESSAGE_MAP(CTransferWnd, CResizableFormView)
 	ON_NOTIFY(LVN_BEGINDRAG, IDC_DOWNLOADLIST, OnLvnBeginDragDownloadList)
 	ON_NOTIFY(LVN_HOTTRACK, IDC_CLIENTLIST , OnHoverUploadList)
 	ON_NOTIFY(LVN_HOTTRACK, IDC_DOWNLOADLIST, OnHoverDownloadList)
@@ -91,14 +93,16 @@ BEGIN_MESSAGE_MAP(CTransferWnd, CResizableDialog)
 	ON_WM_MOUSEMOVE()
 	ON_WM_SETTINGCHANGE()
 	ON_WM_SYSCOLORCHANGE()
+	ON_WM_PAINT()
+	ON_WM_SYSCOMMAND()
 	// ==> XP Style Menu [Xanatos] - Stulle
 	ON_WM_MEASUREITEM()
 	ON_WM_MENUCHAR()
 	// <== XP Style Menu [Xanatos] - Stulle
 END_MESSAGE_MAP()
 
-CTransferWnd::CTransferWnd(CWnd* pParent /*=NULL*/)
-	: CResizableDialog(CTransferWnd::IDD, pParent)
+CTransferWnd::CTransferWnd(CWnd* /*pParent =NULL*/)
+	: CResizableFormView(CTransferWnd::IDD)
 {
 	m_uWnd2 = wnd2Uploading;
 	m_dwShowListIDC = 0;
@@ -109,6 +113,7 @@ CTransferWnd::CTransferWnd(CWnd* pParent /*=NULL*/)
 	m_btnWnd2 = new CDropDownButton;
 	m_tooltipCats = new CToolTipCtrlX;
 	m_pDragImage = NULL;
+	m_bLayoutInited = false;
 	m_dwTopListIDC = 0; // Advanced Transfer Window Layout [Stulle] - Stulle
 }
 
@@ -127,9 +132,9 @@ CTransferWnd::~CTransferWnd()
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 }
 
-BOOL CTransferWnd::OnInitDialog()
+void CTransferWnd::OnInitialUpdate()
 {
-	CResizableDialog::OnInitDialog();
+	CResizableFormView::OnInitialUpdate();
 	InitWindowStyles(this);
 
 	ResetTransToolbar(thePrefs.IsTransToolbarEnabled(), false);
@@ -149,8 +154,8 @@ BOOL CTransferWnd::OnInitDialog()
 	AddAnchor(IDC_DOWNLOADCLIENTS, CSize(0, thePrefs.GetSplitterbarPosition()), BOTTOM_RIGHT);
 	AddAnchor(IDC_QUEUECOUNT, BOTTOM_LEFT);
 	// ==> Client queue progress bar [Commander] - Stulle
-	AddAnchor(IDC_QUEUE, BOTTOM_LEFT, BOTTOM_CENTER);
-	AddAnchor(IDC_QUEUE2, BOTTOM_CENTER, BOTTOM_RIGHT);
+	AddAnchor(IDC_QUEUE, BOTTOM_LEFT, CSize(73,100));
+	AddAnchor(IDC_QUEUE2, CSize(73,100), BOTTOM_RIGHT);
 	// <== Client queue progress bar [Commander] - Stulle
 	AddAnchor(IDC_QUEUECOUNT_LABEL, BOTTOM_LEFT);
 	AddAnchor(IDC_QUEUE_REFRESH_BUTTON, BOTTOM_RIGHT);
@@ -166,63 +171,63 @@ BOOL CTransferWnd::OnInitDialog()
 	GetDlgItem(IDC_CPUCOUNT)->ShowWindow((bEnable ? SW_SHOW : SW_HIDE));
 	GetDlgItem(IDC_MEM)->ShowWindow((bEnable ? SW_SHOW : SW_HIDE));
 	GetDlgItem(IDC_MEMCOUNT)->ShowWindow((bEnable ? SW_SHOW : SW_HIDE));
-	QueueListResize(bEnable?15:0);
 	// <== CPU/MEM usage [$ick$/Stulle] - Max 
 
 	// ==> Advanced Transfer Window Layout [Stulle] - Stulle
-	//Fafner: init unsplitted and split later
-	//Fafner: always start with download list and switch later
-	//Fafner: by that trick we fix the 120 dpi fonts glitch
 	/*
 	switch (thePrefs.GetTransferWnd1()) {
 	*/
-	bool bStartSplitted = thePrefs.GetSplitWindow();
 	UINT uTransferWnd1 = thePrefs.GetTransferWnd1();
-	ShowList(IDC_DOWNLOADLIST);
+//	ShowList(IDC_DOWNLOADLIST);
+	if (thePrefs.GetSplitWindow())
+	{
+		m_dwShowListIDC = IDC_DOWNLOADLIST + IDC_UPLOADLIST;
+		switch (uTransferWnd1)
+		{
+			default:
+			case 1:
+				m_dwTopListIDC = IDC_DOWNLOADLIST;
+				break;
+			case 2:
+				m_dwTopListIDC = IDC_UPLOADLIST;
+				break;
+			case 3:
+				m_dwTopListIDC = IDC_QUEUELIST;
+				break;
+			case 4:
+				m_dwTopListIDC = IDC_DOWNLOADCLIENTS;
+				break;
+			case 5:
+				m_dwTopListIDC = IDC_CLIENTLIST;
+				break;
+		}
+	}
+	else
 	switch (uTransferWnd1) {
 	// <== Advanced Transfer Window Layout [Stulle] - Stulle
 		default:
 		// ==> Advanced Transfer Window Layout [Stulle] - Stulle
 		/*
 		case 0: {
-			// splitting functionality
-			CRect rc;
-			GetWindowRect(rc);
-			ScreenToClient(rc);
-			CRect rcBtn2;
-			m_btnWnd2->GetWindowRect(rcBtn2);
-			ScreenToClient(rcBtn2);
-			CRect rcSpl;
-			rcSpl.left = rcBtn2.right + 8;
-			rcSpl.right = rc.right;
-			rcSpl.top = rc.bottom - 100;
-			rcSpl.bottom = rcSpl.top + WND_SPLITTER_HEIGHT;
-			m_wndSplitter.Create(WS_CHILD | WS_VISIBLE, rcSpl, this, IDC_SPLITTER);
-			m_wndSplitter.SetDrawBorder(true);
-			ShowSplitWindow();
+			m_dwShowListIDC = IDC_DOWNLOADLIST + IDC_UPLOADLIST;
 			break;
 		}
 		*/
 		// <== Advanced Transfer Window Layout [Stulle] - Stulle
 		case 1:
-			// ==> Advanced Transfer Window Layout [Stulle] - Stulle
-			//Fafner: already started with
-			/*
-			ShowList(IDC_DOWNLOADLIST);
-			*/
-			// <== Advanced Transfer Window Layout [Stulle] - Stulle
+			m_dwShowListIDC = IDC_DOWNLOADLIST;
 			break;
 		case 2:
-			ShowList(IDC_UPLOADLIST);
+			m_dwShowListIDC = IDC_UPLOADLIST;
 			break;
 		case 3:
-			ShowList(IDC_QUEUELIST);
+			m_dwShowListIDC = IDC_QUEUELIST;
 			break;
 		case 4:
-			ShowList(IDC_DOWNLOADCLIENTS);
+			m_dwShowListIDC = IDC_DOWNLOADCLIENTS;
 			break;
 		case 5:
-			ShowList(IDC_CLIENTLIST);
+			m_dwShowListIDC = IDC_CLIENTLIST;
 			break;
 	}
 
@@ -280,6 +285,13 @@ BOOL CTransferWnd::OnInitDialog()
 	VerifyCatTabSize(true);
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     Localize();
+
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+	m_Refresh.ModifyStyle(0,BS_OWNERDRAW,0);
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+
 	// ==> Client queue progress bar [Commander] - Stulle
 	bold.CreateFont(10,0,0,1,FW_BOLD,0,0,0,0,3,2,1,34,_T("Small Fonts"));
 
@@ -296,32 +308,6 @@ BOOL CTransferWnd::OnInitDialog()
 		GetDlgItem(IDC_QUEUE2)->ShowWindow(SW_HIDE);
 	}
 	// <== Client queue progress bar [Commander] - Stulle
-
-	// ==> Advanced Transfer Window Layout [Stulle] - Stulle //Fafner: moved & modded
-	if (bStartSplitted) {
-		switch (thePrefs.GetTransferWnd1())
-		{
-			default:
-			case 1:
-				ShowSplitWindow(false,IDC_DOWNLOADLIST,true);
-				break;
-			case 2:
-				ShowSplitWindow(false,IDC_UPLOADLIST,true);
-				break;
-			case 3:
-				ShowSplitWindow(false,IDC_QUEUELIST,true);
-				break;
-			case 4:
-				ShowSplitWindow(false,IDC_DOWNLOADCLIENTS,true);
-				break;
-			case 5:
-				ShowSplitWindow(false,IDC_CLIENTLIST,true);
-				break;
-		}
-	}
-	// <== Advanced Transfer Window Layout [Stulle] - Stulle
-
-	return true;
 }
 
 void CTransferWnd::ShowQueueCount(uint32 number)
@@ -355,10 +341,15 @@ void CTransferWnd::ShowQueueCount(uint32 number)
 
 void CTransferWnd::DoDataExchange(CDataExchange* pDX)
 {
-	CResizableDialog::DoDataExchange(pDX);
+	CResizableFormView::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_DOWNLOAD_ICO, *m_btnWnd1);
 	DDX_Control(pDX, IDC_UPLOAD_ICO, *m_btnWnd2);
 	DDX_Control(pDX, IDC_DLTAB, m_dlTab);
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER>=1600
+	DDX_Control(pDX, IDC_QUEUE_REFRESH_BUTTON, m_Refresh);
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 	// ==> Client queue progress bar [Commander] - Stulle
 	DDX_Control(pDX, IDC_QUEUE, queueBar);
 	DDX_Control(pDX, IDC_QUEUE2, queueBar2);
@@ -498,24 +489,24 @@ void CTransferWnd::DoResize(int delta)
 		switch (m_uWnd2)
 		{
 			case wnd2Uploading:
-				pHeaderUpdate = uploadlistctrl.GetHeaderCtrl();
 				uploadlistctrl.Invalidate();
 				uploadlistctrl.UpdateWindow();
+				pHeaderUpdate = uploadlistctrl.GetHeaderCtrl();
 				break;
 			case wnd2OnQueue:
-				pHeaderUpdate = queuelistctrl.GetHeaderCtrl();
 				queuelistctrl.Invalidate();
 				queuelistctrl.UpdateWindow();
+				pHeaderUpdate = queuelistctrl.GetHeaderCtrl();
 				break;
 			case wnd2Clients:
-				pHeaderUpdate = clientlistctrl.GetHeaderCtrl();
 				clientlistctrl.Invalidate();
 				clientlistctrl.UpdateWindow();
+				pHeaderUpdate = clientlistctrl.GetHeaderCtrl();
 				break;
 			case wnd2Downloading:
-				pHeaderUpdate = downloadclientsctrl.GetHeaderCtrl();
 				downloadclientsctrl.Invalidate();
 				downloadclientsctrl.UpdateWindow();
+				pHeaderUpdate = downloadclientsctrl.GetHeaderCtrl();
 				break;
 			default:
 				ASSERT(0);
@@ -636,9 +627,9 @@ void CTransferWnd::UpdateSplitterRange()
 	// <== Advanced Transfer Window Layout [Stulle] - Stulle
 
 	// ==> CPU/MEM usage [$ick$/Stulle] - Max 
-    AddAnchor(IDC_MEMCOUNT,BOTTOM_LEFT,BOTTOM_RIGHT); // contador
+	AddAnchor(IDC_MEMCOUNT,BOTTOM_LEFT,BOTTOM_RIGHT); // contador
 	AddAnchor(IDC_MEM,BOTTOM_LEFT,BOTTOM_RIGHT); // texto
-    AddAnchor(IDC_CPUCOUNT,BOTTOM_LEFT,BOTTOM_RIGHT);  
+	AddAnchor(IDC_CPUCOUNT,BOTTOM_LEFT,BOTTOM_RIGHT);  
 	AddAnchor(IDC_CPU,BOTTOM_LEFT,BOTTOM_RIGHT); 
 	// <== CPU/MEM usage [$ick$/Stulle] - Max 
 
@@ -649,72 +640,14 @@ LRESULT CTransferWnd::DefWindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-		// arrange transferwindow layout
-		case WM_PAINT:
-			if (m_wndSplitter)
-			{
-				CRect rcWnd;
-				GetWindowRect(rcWnd);
-				if (rcWnd.Height() > 0)
-				{
-					CRect rcDown;
-					// ==> Advanced Transfer Window Layout [Stulle] - Stulle
-					/*
-					downloadlistctrl.GetWindowRect(rcDown);
-					*/
-					switch (m_dwTopListIDC)
-					{
-						case IDC_DOWNLOADLIST:
-							downloadlistctrl.GetWindowRect(rcDown);
-							break;
-						case IDC_UPLOADLIST:
-							uploadlistctrl.GetWindowRect(rcDown);
-							break;
-						case IDC_QUEUELIST:
-							queuelistctrl.GetWindowRect(rcDown);
-							break;
-						case IDC_DOWNLOADCLIENTS:
-							downloadclientsctrl.GetWindowRect(rcDown);
-							break;
-						case IDC_CLIENTLIST:
-							clientlistctrl.GetWindowRect(rcDown);
-							break;
-						default:
-							ASSERT(0);
-							break;
-					}
-					// <== Advanced Transfer Window Layout [Stulle] - Stulle
-					ScreenToClient(rcDown);
-
-					CRect rcBtn2;
-					m_btnWnd2->GetWindowRect(rcBtn2);
-					ScreenToClient(rcBtn2);
-
-					// splitter paint update
-					CRect rcSpl;
-					rcSpl.left = rcBtn2.right + 8;
-					rcSpl.right = rcDown.right;
-					rcSpl.top = rcDown.bottom + WND_SPLITTER_YOFF;
-					rcSpl.bottom = rcSpl.top + WND_SPLITTER_HEIGHT;
-					m_wndSplitter.MoveWindow(rcSpl, TRUE);
-					UpdateSplitterRange();
-				}
-			}
-
-			// Workaround to solve a glitch with WM_SETTINGCHANGE message
-			if (m_btnWnd1 && m_btnWnd1->m_hWnd && m_btnWnd1->GetBtnWidth(IDC_DOWNLOAD_ICO) != WND1_BUTTON_WIDTH)
-				m_btnWnd1->SetBtnWidth(IDC_DOWNLOAD_ICO, WND1_BUTTON_WIDTH);
-			if (m_btnWnd2 && m_btnWnd2->m_hWnd && m_btnWnd2->GetBtnWidth(IDC_UPLOAD_ICO) != WND2_BUTTON_WIDTH)
-				m_btnWnd2->SetBtnWidth(IDC_UPLOAD_ICO, WND2_BUTTON_WIDTH);
-			break;
-		
 		case WM_WINDOWPOSCHANGED:
 			if (m_wndSplitter)
 				m_wndSplitter.Invalidate();
+			
 			break;
 	}
 
-	return CResizableDialog::DefWindowProc(message, wParam, lParam);
+	return CResizableFormView::DefWindowProc(message, wParam, lParam);
 }
 
 void CTransferWnd::OnSplitterMoved(NMHDR* pNMHDR, LRESULT* /*pResult*/)
@@ -804,7 +737,7 @@ BOOL CTransferWnd::PreTranslateMessage(MSG* pMsg)
 		return TRUE;
 	}
 
-	return CResizableDialog::PreTranslateMessage(pMsg);
+	return CResizableFormView::PreTranslateMessage(pMsg);
 }
 
 int CTransferWnd::GetItemUnderMouse(CListCtrl* ctrl)
@@ -1219,6 +1152,7 @@ void CTransferWnd::ShowWnd2(EWnd2 uWnd2)
 	{
 		SetWnd2(uWnd2);
 		queuelistctrl.Show();
+		OnBnClickedQueueRefreshButton(); //Xman update this list
 		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_SHOW);
 		m_btnWnd2->CheckButton(MP_VIEW2_ONQUEUE);
 		SetWnd2Icon(w2iOnQueue);
@@ -1227,6 +1161,9 @@ void CTransferWnd::ShowWnd2(EWnd2 uWnd2)
 	{
 		SetWnd2(uWnd2);
 		clientlistctrl.Show();
+		//Xman SortingFix for Morph-Code-Improvement Don't Refresh item if not needed
+		clientlistctrl.UpdateAll();
+		//Xman end
 		GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow(SW_HIDE);
 		m_btnWnd2->CheckButton(MP_VIEW2_CLIENTS);
 		SetWnd2Icon(w2iClientsKnown);
@@ -1251,7 +1188,7 @@ void CTransferWnd::SetWnd2(EWnd2 uWnd2)
 
 void CTransferWnd::OnSysColorChange()
 {
-	CResizableDialog::OnSysColorChange();
+	CResizableFormView::OnSysColorChange();
 	SetAllIcons();
 	m_btnWnd1->Invalidate();
 	m_btnWnd2->Invalidate();
@@ -1259,7 +1196,7 @@ void CTransferWnd::OnSysColorChange()
 
 void CTransferWnd::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
-	CResizableDialog::OnSettingChange(uFlags, lpszSection);
+	CResizableFormView::OnSettingChange(uFlags, lpszSection);
 	// It does not work to reset the width of 1st button here.
 	//m_btnWnd1->SetBtnWidth(IDC_DOWNLOAD_ICO, WND1_BUTTON_WIDTH);
 	//m_btnWnd2->SetBtnWidth(IDC_UPLOAD_ICO, WND2_BUTTON_WIDTH);
@@ -1350,13 +1287,13 @@ void CTransferWnd::OnBnClickedQueueRefreshButton()
 	CUpDownClient* update = theApp.uploadqueue->GetNextClient(NULL);
 
 	while( update ){
-		theApp.emuledlg->transferwnd->queuelistctrl.RefreshClient( update);
+		queuelistctrl.RefreshClient( update);
 		update = theApp.uploadqueue->GetNextClient(update);
 	}
 	*/
 	if (queuelistctrl.GetItemCount()>1)
 	{
-		theApp.emuledlg->transferwnd->queuelistctrl.UpdateAll();
+		theApp.emuledlg->transferwnd->GetQueueList()->UpdateAll();
 	}
 	//Xman end
 }
@@ -1674,21 +1611,7 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 	{ 
 		case MP_CAT_ADD: {
 			m_nLastCatTT=-1;
-			int newindex=AddCategory(_T("?"),thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR),_T(""),_T(""),false);
-			CCatDialog dialog(newindex);
-			if (dialog.DoModal() == IDOK)
-			{
-				theApp.emuledlg->searchwnd->UpdateCatTabs();
-				m_dlTab.InsertItem(newindex,thePrefs.GetCategory(newindex)->strTitle);
-				m_dlTab.SetTabTextColor(newindex, thePrefs.GetCatColor(newindex) );
-				EditCatTabLabel(newindex);
-				thePrefs.SaveCats();
-				VerifyCatTabSize();
-				if (CompareDirectories(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), thePrefs.GetCatPath(newindex)))
-					theApp.emuledlg->sharedfileswnd->Reload();
-			}
-			else
-				thePrefs.RemoveCat(newindex);
+			AddCategoryInteractive();
 			break;
 		}
 		case MP_CAT_EDIT: {
@@ -1700,7 +1623,7 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 				EditCatTabLabel(rightclickindex, thePrefs.GetCategory(rightclickindex)->strTitle);
 				m_dlTab.SetTabTextColor(rightclickindex, thePrefs.GetCatColor(rightclickindex) );
 				theApp.emuledlg->searchwnd->UpdateCatTabs();
-				theApp.emuledlg->transferwnd->downloadlistctrl.UpdateCurrentCategoryView();
+				downloadlistctrl.UpdateCurrentCategoryView();
 				thePrefs.SaveCats();
 				if (CompareDirectories(oldincpath, thePrefs.GetCatPath(rightclickindex)))
 					theApp.emuledlg->sharedfileswnd->Reload();
@@ -1821,20 +1744,7 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 	{
 		case MP_CAT_ADD: {
 			m_nLastCatTT=-1;
-			int newindex=AddCategory(_T("?"),thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR),_T(""),_T(""),false);
-			CCatDialog dialog(newindex);
-			if (dialog.DoModal() == IDOK)
-			{
-				theApp.emuledlg->searchwnd->UpdateCatTabs();
-				m_dlTab.InsertItem(newindex,thePrefs.GetCategory(newindex)->strTitle);
-				EditCatTabLabel(newindex);
-				thePrefs.SaveCats();
-				VerifyCatTabSize();
-				if (CompareDirectories(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), thePrefs.GetCatPath(newindex)))
-					theApp.emuledlg->sharedfileswnd->Reload();
-			}
-			else
-				thePrefs.RemoveCat(newindex);
+			AddCategoryInteractive();
 			break;
 		}
 		case MP_CAT_SET0+17:
@@ -1849,10 +1759,14 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			EditCatTabLabel(rightclickindex,csName);
 		
 			theApp.emuledlg->searchwnd->UpdateCatTabs();
-			theApp.emuledlg->transferwnd->downloadlistctrl.UpdateCurrentCategoryView();
+			theApp.emuledlg->transferwnd->GetDownloadList()->UpdateCurrentCategoryView();
 			thePrefs.SaveCats();
+			// ==> handled in dialog already [Stulle] - Stulle
+			/*
 			if (CompareDirectories(oldincpath, thePrefs.GetCatPath(rightclickindex) ))
 				theApp.emuledlg->sharedfileswnd->Reload();
+			*/
+			// <== handled in dialog already [Stulle] - Stulle
 			break;
 		}
 		case MP_CAT_MERGE: {
@@ -1868,6 +1782,20 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			delete getCatDlg;
 
 			if (useCat == rightclickindex) break;
+			if( thePrefs.UseAddRemoveInc() &&
+				_tcsicmp(thePrefs.GetCatPath(useCat), thePrefs.GetCatPath(rightclickindex))!=0 &&
+				_tcsicmp(thePrefs.GetCatPath(rightclickindex), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR))!=0)
+			{
+				int nResult = XMessageBox(GetSafeHwnd(), GetResString(IDS_KEEPCATINCSHARED), GetResString(IDS_KEEPCATINCSHARED_TITLE), MB_YESNO | MB_DEFBUTTON2 | MB_DONOTASKAGAIN | MB_ICONQUESTION);
+				if ((nResult & MB_DONOTASKAGAIN) > 0)
+					thePrefs.m_bAddRemovedInc = false;
+				if ((nResult & 0xFF) == IDYES)
+				{
+					CDirectoryItem* newDir = new CDirectoryItem(thePrefs.GetCatPath(rightclickindex));
+					theApp.emuledlg->sharedfileswnd->m_ctlSharedDirTree.EditSharedDirectories(newDir, true, false);
+					delete newDir;
+				}
+			}
 			m_nLastCatTT=-1;
 
 			if (useCat > rightclickindex) useCat--;
@@ -1877,8 +1805,9 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			m_dlTab.DeleteItem(rightclickindex);
 			m_dlTab.SetCurSel(useCat);
 			downloadlistctrl.ChangeCategory(useCat);
-			theApp.emuledlg->transferwnd->downloadlistctrl.UpdateCurrentCategoryView();
+			downloadlistctrl.UpdateCurrentCategoryView();
 			thePrefs.SaveCats();
+			//MORPH NOTE - This is not really great because both categories might have shared the same incoming folder.
 			theApp.emuledlg->sharedfileswnd->Reload();
 			// ==> Automatic shared files updater [MoNKi] - Stulle
 			if(thePrefs.GetDirectoryWatcher())
@@ -1888,7 +1817,19 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 		}
 		case MP_CAT_REMOVE: {
 			m_nLastCatTT=-1;
-			bool toreload=( _tcsicmp(thePrefs.GetCatPath(rightclickindex),thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR))!=0);
+			bool toreload=( _tcsicmp(thePrefs.GetCatPath(rightclickindex), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR))!=0);
+			if(toreload && thePrefs.UseAddRemoveInc())
+			{
+				int nResult = XMessageBox(GetSafeHwnd(), GetResString(IDS_KEEPCATINCSHARED), GetResString(IDS_KEEPCATINCSHARED_TITLE), MB_YESNO | MB_DEFBUTTON2 | MB_DONOTASKAGAIN | MB_ICONQUESTION);
+				if ((nResult & MB_DONOTASKAGAIN) > 0)
+					thePrefs.m_bAddRemovedInc = false;
+				if ((nResult & 0xFF) == IDYES)
+				{
+					CDirectoryItem* newDir = new CDirectoryItem(thePrefs.GetCatPath(rightclickindex));
+					theApp.emuledlg->sharedfileswnd->m_ctlSharedDirTree.EditSharedDirectories(newDir, true, false);
+					delete newDir;
+				}
+			}
 			theApp.downloadqueue->ResetCatParts(rightclickindex);
 			thePrefs.RemoveCat(rightclickindex);
 			m_dlTab.DeleteItem(rightclickindex);
@@ -1897,6 +1838,8 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			thePrefs.SaveCats();
 			theApp.emuledlg->searchwnd->UpdateCatTabs();
 			VerifyCatTabSize();
+			//MORPH NOTE - this is not great because of shareSubdir we might have shared this folder already and a reload is unneeded
+			// but it's still better than falsely sharing files so we go through this trouble and reload... for now...
 			if (toreload)
 			{ // Automatic shared files updater [MoNKi] - Stulle
 				theApp.emuledlg->sharedfileswnd->Reload();
@@ -2127,20 +2070,14 @@ void CTransferWnd::UpdateCatTabTitles(bool force)
 		return;
 
 	for (int i = 0; i < m_dlTab.GetItemCount(); i++){
-		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
-		//EditCatTabLabel(i,/*(i==0)? GetCatTitle( thePrefs.GetCategory(0)->filter ):*/thePrefs.GetCategory(i)->strTitle);
-		EditCatTabLabel(i, thePrefs.GetCategory(i)->strTitle);
-		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+		EditCatTabLabel(i,/*(i==0)? GetCatTitle( thePrefs.GetCategory(0)->filter ):*/thePrefs.GetCategory(i)->strTitle);
 		m_dlTab.SetTabTextColor(i, thePrefs.GetCatColor(i) );
 	}
 }
 
 void CTransferWnd::EditCatTabLabel(int i)
 {
-	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
-	//EditCatTabLabel(i,/*(i==0)? GetCatTitle( thePrefs.GetAllcatType() ):*/thePrefs.GetCategory(i)->strTitle);
-	EditCatTabLabel(i,thePrefs.GetCategory(i)->strTitle);
-	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	EditCatTabLabel(i,/*(i==0)? GetCatTitle( thePrefs.GetAllcatType() ):*/thePrefs.GetCategory(i)->strTitle);
 }
 
 void CTransferWnd::EditCatTabLabel(int index,CString newlabel)
@@ -2188,7 +2125,7 @@ void CTransferWnd::EditCatTabLabel(int index,CString newlabel)
 			}
 		}
 		CString title=newlabel;
-		theApp.emuledlg->transferwnd->downloadlistctrl.GetCompleteDownloads(index, count);
+		downloadlistctrl.GetCompleteDownloads(index, count);
 		newlabel.Format(_T("%s %i/%i"),title,dwl,count);
 	}
 
@@ -2257,6 +2194,34 @@ int CTransferWnd::AddCategory(CString newtitle,CString newincoming,CString newco
 	VerifyCatTabSize();
 	
 	return index;
+}
+
+int CTransferWnd::AddCategoryInteractive()
+{
+	m_nLastCatTT=-1;
+	int newindex = AddCategory(_T("?"),thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR),_T(""),_T(""),false);
+	CCatDialog dialog(newindex);
+	if (dialog.DoModal() == IDOK)
+	{
+		theApp.emuledlg->searchwnd->UpdateCatTabs();
+		m_dlTab.InsertItem(newindex,thePrefs.GetCategory(newindex)->strTitle);
+		m_dlTab.SetTabTextColor(newindex, thePrefs.GetCatColor(newindex) );
+		EditCatTabLabel(newindex);
+		thePrefs.SaveCats();
+		VerifyCatTabSize();
+		// ==> handled in dialog already [Stulle] - Stulle
+		/*
+		if (CompareDirectories(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR), thePrefs.GetCatPath(newindex)))
+			theApp.emuledlg->sharedfileswnd->Reload();
+		*/
+		// <== handled in dialog already [Stulle] - Stulle
+		return newindex;
+	}
+	else
+	{
+		thePrefs.RemoveCat(newindex);
+		return 0;
+	}
 }
 
 int CTransferWnd::GetTabUnderMouse(CPoint* point)
@@ -2370,7 +2335,7 @@ CString CTransferWnd::GetTabStatistic(int tab)
 	}
 
 	int total;
-	int compl = theApp.emuledlg->transferwnd->downloadlistctrl.GetCompleteDownloads(tab, total);
+	int compl = downloadlistctrl.GetCompleteDownloads(tab, total);
 
     CString prio;
     switch (thePrefs.GetCategory(tab)->prio)
@@ -2659,7 +2624,7 @@ void CTransferWnd::ShowList(uint32 dwListIDC)
 	clientlistctrl.ShowWindow((m_dwShowListIDC == IDC_CLIENTLIST) ? SW_SHOW : SW_HIDE);
 	downloadlistctrl.ShowWindow((m_dwShowListIDC == IDC_DOWNLOADLIST) ? SW_SHOW : SW_HIDE);
 	m_dlTab.ShowWindow((m_dwShowListIDC == IDC_DOWNLOADLIST) ? SW_SHOW : SW_HIDE);
-
+	theApp.emuledlg->transferwnd->ShowToolbar(m_dwShowListIDC == IDC_DOWNLOADLIST);
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_dwShowListIDC == IDC_QUEUELIST) ? SW_SHOW : SW_HIDE);
 
 	switch (dwListIDC)
@@ -2879,11 +2844,14 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw, uint32 dwListIDC, bool bInitSpl
 	// ==> Advanced Transfer Window Layout [Stulle] - Stulle
 	/*
 	downloadlistctrl.ShowFilesCount();
+	m_btnWnd2->ShowWindow(SW_SHOW);
+	theApp.emuledlg->transferwnd->ShowToolbar(true);
 	*/
 	m_btnWnd1->PressButton(MP_VIEW1_SPLIT_WINDOW);
+	m_btnWnd2->ShowWindow(SW_SHOW);
+	theApp.emuledlg->transferwnd->ShowToolbar(m_dwTopListIDC == IDC_DOWNLOADLIST);
 	thePrefs.SetSplitWindow(true);
 	// <== Advanced Transfer Window Layout [Stulle] - Stulle
-	m_btnWnd2->ShowWindow(SW_SHOW);
 
 	RemoveAnchor(*m_btnWnd2);
 	RemoveAnchor(IDC_DOWNLOADLIST);
@@ -2974,6 +2942,7 @@ void CTransferWnd::ShowSplitWindow(bool bReDraw, uint32 dwListIDC, bool bInitSpl
 			downloadlistctrl.ShowFilesCount();
 			SetWnd1Icon(w1iDownloadFiles);
 			m_btnWnd1->CheckButton(MP_VIEW1_DOWNLOADS);
+			VerifyCatTabSize();
 			break;
 	}
 	GetDlgItem(IDC_QUEUE_REFRESH_BUTTON)->ShowWindow((m_uWnd2 == wnd2OnQueue || m_dwTopListIDC == IDC_QUEUELIST) ? SW_SHOW : SW_HIDE);
@@ -3179,12 +3148,13 @@ void CTransferWnd::ResetTransToolbar(bool bShowToolbar, bool bResetLists)
 		// 'GetMaxSize' does not work properly under:
 		//	- Win98SE with COMCTL32 v5.80
 		//	- Win2000 with COMCTL32 v5.81 
+		//  - WinXP && Win2003 with COMCTL32 v5.82 //zz_fly, DolphinX
 		// The value returned by 'GetMaxSize' is just couple of pixels too small so that the 
 		// last toolbar button is nearly not visible at all.
 		// So, to circumvent such problems, the toolbar control should be created right with
 		// the needed size so that we do not really need to call the 'GetMaxSize' function.
 		// Although it would be better to call it to adapt for system metrics basically.
-		if (theApp.m_ullComCtrlVer > MAKEDLLVERULL(5,81,0,0))
+		if (theApp.m_ullComCtrlVer > MAKEDLLVERULL(5,82,0,0)) //zz_fly :: in the case of disable theme service in xp and 2k3
 		{
 			CSize size;
 			m_btnWnd1->GetMaxSize(&size);
@@ -3241,12 +3211,13 @@ void CTransferWnd::ResetTransToolbar(bool bShowToolbar, bool bResetLists)
 		// 'GetMaxSize' does not work properly under:
 		//	- Win98SE with COMCTL32 v5.80
 		//	- Win2000 with COMCTL32 v5.81 
+		//  - WinXP && Win2003 with COMCTL32 v5.82 //zz_fly, DolphinX
 		// The value returned by 'GetMaxSize' is just couple of pixels too small so that the 
 		// last toolbar button is nearly not visible at all.
 		// So, to circumvent such problems, the toolbar control should be created right with
 		// the needed size so that we do not really need to call the 'GetMaxSize' function.
 		// Although it would be better to call it to adapt for system metrics basically.
-		if (theApp.m_ullComCtrlVer > MAKEDLLVERULL(5,81,0,0))
+		if (theApp.m_ullComCtrlVer > MAKEDLLVERULL(5,82,0,0)) //zz_fly :: in the case of disable theme service in xp and 2k3
 		{
 			CSize size;
 			m_btnWnd2->GetMaxSize(&size);
@@ -3309,21 +3280,115 @@ HBRUSH CTransferWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return __super::OnCtlColor(pDC, pWnd, nCtlColor);
 }
 */
-	hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }
 // <== Design Settings [eWombat/Stulle] - Max
+
+void CTransferWnd::OnPaint()
+{
+	CResizableFormView::OnPaint();
+	CRect rcWnd;
+	GetWindowRect(rcWnd);
+
+	// Another small work arround: Init/Redraw the layout as soon as we have our real windows size
+	// as the inital size is far below the minimum and will mess things up which expect this size
+	if (!m_bLayoutInited && rcWnd.Height() > 400)
+	{
+		m_bLayoutInited = true;
+		// ==> Advanced Transfer Window Layout [Stulle] - Stulle
+		/*
+		if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST)
+			this->ShowSplitWindow(true);
+		*/
+		if (m_dwShowListIDC == IDC_DOWNLOADLIST + IDC_UPLOADLIST)
+			this->ShowSplitWindow(true,m_dwTopListIDC);
+		// <== Advanced Transfer Window Layout [Stulle] - Stulle
+		else
+			ShowList(m_dwShowListIDC);
+		QueueListResize(thePrefs.GetSysInfo()?15:0); // CPU/MEM usage [$ick$/Stulle] - Stulle
+	}
+
+	if (m_wndSplitter)
+	{
+		if (rcWnd.Height() > 0)
+		{
+			CRect rcDown;
+			// ==> Advanced Transfer Window Layout [Stulle] - Stulle
+			/*
+			downloadlistctrl.GetWindowRect(rcDown);
+			*/
+			switch (m_dwTopListIDC)
+			{
+				case IDC_UPLOADLIST:
+					uploadlistctrl.GetWindowRect(rcDown);
+					break;
+				case IDC_QUEUELIST:
+					queuelistctrl.GetWindowRect(rcDown);
+					break;
+				case IDC_DOWNLOADCLIENTS:
+					downloadclientsctrl.GetWindowRect(rcDown);
+					break;
+				case IDC_CLIENTLIST:
+					clientlistctrl.GetWindowRect(rcDown);
+					break;
+				default:
+				case IDC_DOWNLOADLIST:
+					downloadlistctrl.GetWindowRect(rcDown);
+					break;
+			}
+			// <== Advanced Transfer Window Layout [Stulle] - Stulle
+			ScreenToClient(rcDown);
+
+			CRect rcBtn2;
+			m_btnWnd2->GetWindowRect(rcBtn2);
+			ScreenToClient(rcBtn2);
+
+			// splitter paint update
+			CRect rcSpl;
+			rcSpl.left = rcBtn2.right + 8;
+			rcSpl.right = rcDown.right;
+			rcSpl.top = rcDown.bottom + WND_SPLITTER_YOFF;
+			rcSpl.bottom = rcSpl.top + WND_SPLITTER_HEIGHT;
+			m_wndSplitter.MoveWindow(rcSpl, TRUE);
+			UpdateSplitterRange();
+		}	
+	}
+
+	// Workaround to solve a glitch with WM_SETTINGCHANGE message
+	if (m_btnWnd1 && m_btnWnd1->m_hWnd && m_btnWnd1->GetBtnWidth(IDC_DOWNLOAD_ICO) != WND1_BUTTON_WIDTH)
+		m_btnWnd1->SetBtnWidth(IDC_DOWNLOAD_ICO, WND1_BUTTON_WIDTH);
+	if (m_btnWnd2 && m_btnWnd2->m_hWnd && m_btnWnd2->GetBtnWidth(IDC_UPLOAD_ICO) != WND2_BUTTON_WIDTH)
+		m_btnWnd2->SetBtnWidth(IDC_UPLOAD_ICO, WND2_BUTTON_WIDTH);
+}
+
+void CTransferWnd::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	if (nID == SC_KEYMENU)
+	{
+		if (lParam == EMULE_HOTMENU_ACCEL)
+			theApp.emuledlg->SendMessage(WM_COMMAND, IDC_HOTMENU);
+		else
+			theApp.emuledlg->SendMessage(WM_SYSCOMMAND, nID, lParam);
+		return;
+	}
+	__super::OnSysCommand(nID, lParam);
+}
 
 // ==> CPU/MEM usage [$ick$/Stulle] - Max 
 void CTransferWnd::ShowRessources()
@@ -3447,8 +3512,8 @@ void CTransferWnd::QueueListResize(uint8 value)
 
 	AddAnchor(IDC_QUEUECOUNT,BOTTOM_LEFT);
 	AddAnchor(IDC_QUEUECOUNT_LABEL,BOTTOM_LEFT);
-    AddAnchor(IDC_QUEUE, BOTTOM_LEFT, BOTTOM_CENTER); //Commander - Added: ClientQueueProgressBar
-	AddAnchor(IDC_QUEUE2, BOTTOM_CENTER, BOTTOM_RIGHT); //Commander - Added: ClientQueueProgressBar
+    AddAnchor(IDC_QUEUE, BOTTOM_LEFT, CSize(73,100)); //Commander - Added: ClientQueueProgressBar
+	AddAnchor(IDC_QUEUE2, CSize(73,100), BOTTOM_RIGHT); //Commander - Added: ClientQueueProgressBar
 	AddAnchor(IDC_QUEUE_REFRESH_BUTTON, BOTTOM_RIGHT);
 }
 // <== CPU/MEM usage [$ick$/Stulle] - Max 
@@ -3480,7 +3545,7 @@ void CTransferWnd::CreateCategoryMenus()
 
 	// View Filter Menu
 	m_mnuCatViewFilter.CreateMenu();
-	m_mnuCatViewFilter.AddMenuTitle(GetResString(IDS_CHANGECATVIEW),false,false);
+	m_mnuCatViewFilter.AddMenuTitle(GetResString(IDS_CHANGECATVIEW));
 	m_mnuCatViewFilter.AppendMenu(MF_STRING, MP_CAT_SET0, GetResString(IDS_ALL) );
 	//m_mnuCatViewFilter.AppendMenu(MF_STRING, MP_CAT_SET0+1, GetResString(IDS_ALLOTHERS) );
 	m_mnuCatViewFilter.AppendMenu(MF_STRING, MP_CAT_SET0+2, GetResString(IDS_CAT_THISCAT) );
@@ -3545,7 +3610,7 @@ void CTransferWnd::OnMeasureItem(int nIDCtl, LPMEASUREITEMSTRUCT lpMeasureItemSt
 	if(CMenu *pMenu = CMenu::FromHandle(hMenu))
 		pMenu->MeasureItem(lpMeasureItemStruct);
 	
-	CResizableDialog::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
+	CResizableFormView::OnMeasureItem(nIDCtl, lpMeasureItemStruct);
 }
 
 LRESULT CTransferWnd::OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu) 
@@ -3553,7 +3618,7 @@ LRESULT CTransferWnd::OnMenuChar(UINT nChar, UINT nFlags, CMenu* pMenu)
 	if (pMenu->IsKindOf(RUNTIME_CLASS(CTitleMenu)) )
 		return CTitleMenu::OnMenuChar(nChar, nFlags, pMenu);
 
-	return CResizableDialog::OnMenuChar(nChar, nFlags, pMenu);
+	return CResizableFormView::OnMenuChar(nChar, nFlags, pMenu);
 }
 // <== XP Style Menu [Xanatos] - Stulle
 
@@ -3601,10 +3666,25 @@ void CTransferWnd::OnBackcolor()
 		
 	m_brMyBrush.DeleteObject();
 
+	// ==> Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
+#if _MSC_VER<1600
 	if(crTempColor != CLR_DEFAULT)
 		m_brMyBrush.CreateSolidBrush(crTempColor);
 	else
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+#else
+	if(crTempColor != CLR_DEFAULT)
+	{
+		m_brMyBrush.CreateSolidBrush(crTempColor);
+		m_Refresh.SetBackgroundColor(crTempColor);
+	}
+	else
+	{
+		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
+		m_Refresh.SetBackgroundColor(COLORREF(-1));
+	}
+#endif
+	// <== Visual Studio 2010 Compatibility [Stulle/Avi-3k/ied] - Stulle
 }
 // <== Design Settings [eWombat/Stulle] - Max
 

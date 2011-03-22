@@ -331,7 +331,9 @@ bool CFirewallOpener::OpenPort(const CICSRuleInfo& riPortRule){
 
 bool CFirewallOpener::DoesFWConnectionExist(){
 	return DoAction(FOC_FWCONNECTIONEXISTS, CICSRuleInfo());
-}// ==> Improved ICS-Firewall support [MoNKi] - Max
+}
+
+// ==> Improved ICS-Firewall support [MoNKi] - Max
 void CFirewallOpener::ClearOld(){
 	bool deleteFile = true;
 	bool ret = false;

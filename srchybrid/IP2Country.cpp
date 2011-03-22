@@ -155,26 +155,26 @@ bool CIP2Country::LoadFromFile(){
 			int iMerged = 0;
 			bool error = false;
 			TCHAR *szIPStart,*szIPEnd,*sz2L,*sz3L,*szCountry;
-				/*
-				http://ip-to-country.webhosting.info/node/view/54
+			/*
+			http://ip-to-country.webhosting.info/node/view/54
 
-				This is a sample of how the CSV file is structured:
+			This is a sample of how the CSV file is structured:
 
-				0033996344,0033996351,GB,GBR,"UNITED KINGDOM"
-				"0050331648","0083886079","US","USA","UNITED STATES"
-				"0094585424","0094585439","SE","SWE","SWEDEN"
+			0033996344,0033996351,GB,GBR,"UNITED KINGDOM"
+			"0050331648","0083886079","US","USA","UNITED STATES"
+			"0094585424","0094585439","SE","SWE","SWEDEN"
 
-				FIELD  			DATA TYPE		  	FIELD DESCRIPTION
-				IP_FROM 		NUMERICAL (DOUBLE) 	Beginning of IP address range.
-				IP_TO			NUMERICAL (DOUBLE) 	Ending of IP address range.
-				COUNTRY_CODE2 	CHAR(2)				Two-character country code based on ISO 3166.
-				COUNTRY_CODE3 	CHAR(3)				Three-character country code based on ISO 3166.
-				COUNTRY_NAME 	VARCHAR(50) 		Country name based on ISO 3166
-				*/
-				// we assume that the ip-to-country.csv is valid and doesn't cause any troubles
-				// Since dec 2007 the file is provided without " so we tokenize on ,
-				// get & process IP range
-				
+			FIELD  			DATA TYPE		  	FIELD DESCRIPTION
+			IP_FROM 		NUMERICAL (DOUBLE) 	Beginning of IP address range.
+			IP_TO			NUMERICAL (DOUBLE) 	Ending of IP address range.
+			COUNTRY_CODE2 	CHAR(2)				Two-character country code based on ISO 3166.
+			COUNTRY_CODE3 	CHAR(3)				Three-character country code based on ISO 3166.
+			COUNTRY_NAME 	VARCHAR(50) 		Country name based on ISO 3166
+			*/
+			// we assume that the ip-to-country.csv is valid and doesn't cause any troubles
+			// Since dec 2007 the file is provided without " so we tokenize on ,
+			// get & process IP range
+
 			while (!feof(readFile)) {
 				error = false;
 				if (_fgetts(szbuffer, 88,readFile)==0) break;
@@ -208,7 +208,7 @@ bool CIP2Country::LoadFromFile(){
 				++iCount;
 				#pragma warning(default:4245)
 				#pragma warning(default:4555)
-				//zz_fly :: VS2005 compatibility :: thanks Stulle/dolphin87
+				//zz_fly :: VS2005 compatibility :: thanks Stulle/DolphinX
 				/*
 				AddIPRange((uint32)_tstoi(szIPStart),(uint32)_tstoi(szIPEnd), sz2L, sz3L, szCountry);
 				*/
@@ -284,7 +284,7 @@ bool CIP2Country::LoadCountryFlagLib(){
 	try{
 
 		//detect windows version
-		if(thePrefs.GetWindowsVersion() == _WINVER_XP_ || thePrefs.GetWindowsVersion() == _WINVER_2003_ || thePrefs.GetWindowsVersion() == _WINVER_VISTA_){
+		if(thePrefs.GetWindowsVersion() >= _WINVER_XP_){
 			//it's XP, we can use beautiful 32bits flags with alpha channel :)
 			ip2countryCountryFlag = thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)+_T("countryflag32.dll");
 		}
@@ -365,8 +365,13 @@ bool CIP2Country::LoadCountryFlagLib(){
 			IDI_COUNTRY_FLAG_UK, //by tharghan
 			IDI_COUNTRY_FLAG_CS, //by propaganda
 			IDI_COUNTRY_FLAG_TP, //by commander
+			IDI_COUNTRY_FLAG_AQ, IDI_COUNTRY_FLAG_AX, IDI_COUNTRY_FLAG_BV, IDI_COUNTRY_FLAG_GF,
+			IDI_COUNTRY_FLAG_ME, IDI_COUNTRY_FLAG_MF, IDI_COUNTRY_FLAG_RE, IDI_COUNTRY_FLAG_RS,
+			IDI_COUNTRY_FLAG_YT, //by tomchen1989
+			IDI_COUNTRY_FLAG_AP, //by tomchen1989
+			IDI_COUNTRY_FLAG_EU, //by tomchen1989
 
-			242//the end ->242 used country-flags
+			65535//the end
 		};
 
 		CString countryID[] = {
@@ -390,29 +395,51 @@ bool CIP2Country::LoadCountryFlagLib(){
 			_T("VC"), _T("VE"), _T("VG"), _T("VI"), _T("VN"), _T("VU"), _T("WF"), _T("WS"), _T("YE"), _T("YU"), _T("ZA"), _T("ZM"), _T("ZW"), 
 			_T("UK"), //by tharghan
 			_T("CS"), //by propaganda
-			_T("TP") //by commander
+			_T("TP"), //by commander
+			_T("AQ"), _T("AX"), _T("BV"), _T("GF"), _T("ME"), _T("MF"), _T("RE"), _T("RS"), _T("YT"), //by tomchen1989
+			_T("AP"), _T("EU") //by tomchen1989
 		};
 
-		HICON iconHandle;
+		//HICON iconHandle;
 
 		CountryFlagImageList.DeleteImageList();
 		CountryFlagImageList.Create(18,16,theApp.m_iDfltImageListColorFlags|ILC_MASK,0,1);
 		CountryFlagImageList.SetBkColor(CLR_NONE);
 
-		//Xman Code Improcement
 		//the res Array have one element to be the STOP
-		uint16 elemens=sizeof(countryID)/sizeof(CString);
-		//for(uint16 cur_pos = 0; resID[cur_pos] != 242; cur_pos++){
-		for(uint16 cur_pos = 0; cur_pos < elemens; cur_pos++){
-			CountryIDtoFlagIndex.SetAt(countryID[cur_pos], cur_pos);
+		//NOTE: Wiz provided us with a fix so let's use this!
+		/*
+		for(int cur_pos = 0; resID[cur_pos] != 65535; cur_pos++){
+
+			CountryIDtoFlagIndex.SetAt(countryID[cur_pos], (uint16)cur_pos);
+
 			iconHandle = LoadIcon(_hCountryFlagDll, MAKEINTRESOURCE(resID[cur_pos]));
 			if(iconHandle == NULL) throw CString(GetResString(IDS_IP2COUNTRY_ERROR5));
 			
 			CountryFlagImageList.Add(iconHandle);
 		}
-		//Xman end
-	
-
+		*/
+		//>>> FiX for IP2Country and other custom lists
+		HICON iconHandle = NULL;
+		int iconIndex = -1;
+		//<<< FiX for IP2Country and other custom lists
+		for(int i = 0; resID[i] != 65535; i++)
+		{
+			//>>> FiX for IP2Country and other custom lists
+			iconHandle = (HICON)::LoadImage(_hCountryFlagDll, MAKEINTRESOURCE(resID[i]), IMAGE_ICON, 18, 16, LR_DEFAULTCOLOR);
+			if(iconHandle) 
+			//<<< FiX for IP2Country and other custom lists
+			{
+				//>>> FiX for IP2Country and other custom lists
+				iconIndex = CountryFlagImageList.Add(iconHandle);
+				if(iconIndex != -1)
+					CountryIDtoFlagIndex.SetAt(countryID[i], (uint16)iconIndex);
+				::DestroyIcon(iconHandle);
+				//<<< FiX for IP2Country and other custom lists
+			}
+			else
+				theApp.QueueDebugLogLineEx(LOG_WARNING, GetResString(IDS_IP2COUNTRY_ERROR5), resID[i]);
+		}
 	}
 	catch(CString error){
 		AddLogLine(false, _T("%s in %s"), error, ip2countryCountryFlag);
@@ -674,6 +701,33 @@ CString CIP2Country::GetDefaultFilePath() const
 {
 	return thePrefs.GetMuleDirectory(EMULE_CONFIGDIR) + DFLT_IP2COUNTRY_FILENAME;
 }
+
+IMAGELISTDRAWPARAMS CIP2Country::GetFlagImageDrawParams(CDC* dc,int iIndex, POINT point) const
+{
+	IMAGELISTDRAWPARAMS imldp;
+	imldp.cbSize   = sizeof(IMAGELISTDRAWPARAMS);
+	imldp.himl     = CountryFlagImageList.m_hImageList;
+	imldp.i        = iIndex;
+	imldp.hdcDst   = dc->m_hDC;
+	imldp.x        = point.x;
+	imldp.y        = point.y;
+	imldp.cx       = 18;
+	imldp.cy       = 16;
+	imldp.xBitmap  = 0;
+	imldp.yBitmap  = 0;
+	imldp.rgbBk    = CLR_DEFAULT;
+	imldp.rgbFg    = CLR_DEFAULT;
+	imldp.fStyle   = ILD_NORMAL;
+	imldp.dwRop    = SRCCOPY;
+#if (_WIN32_WINNT >= 0x501)
+	imldp.fState   = ILS_NORMAL;
+	imldp.Frame    = 0;
+	imldp.crEffect = CLR_DEFAULT;
+#endif
+
+	return imldp;
+}
+
 // ==> Advanced Updates [MorphXT/Stulle] - Stulle
 void CIP2Country::UpdateIP2CountryURL()
 {   

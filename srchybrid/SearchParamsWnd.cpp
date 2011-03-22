@@ -1160,6 +1160,29 @@ BOOL CSearchParamsWnd::OnHelpInfo(HELPINFO* /*pHelpInfo*/)
 	return TRUE;
 }
 
+void CSearchParamsWnd::ProcessEd2kSearchLinkRequest(CString strSearchTerm)
+{
+	// We have a ed2k search link, asking us to search for stuff
+	// For now we handle this very basic: Put the search term into the params window (so the users can also see it)
+	// And if we are connected, start the search otherwise not.
+	if (strSearchTerm.IsEmpty())
+	{
+		ASSERT( false );
+		return;
+	}
+	OnBnClickedSearchReset();
+	m_ctlName.SetWindowText(strSearchTerm);
+	if (theApp.IsConnected())
+	{
+		if ((!theApp.IsConnected(true, false) && (ESearchType)m_ctlMethod.GetCurSel() == SearchTypeKademlia)
+			|| (!theApp.IsConnected(false, true) && ((ESearchType)m_ctlMethod.GetCurSel() == SearchTypeEd2kServer || (ESearchType)m_ctlMethod.GetCurSel() == SearchTypeEd2kGlobal)))
+		{
+			m_ctlMethod.SetCurSel(0);
+		}
+		OnBnClickedStart();
+	}
+}
+
 // ==> Design Settings [eWombat/Stulle] - Max
 void CSearchParamsWnd::OnBackcolor() 
 {
@@ -1176,19 +1199,23 @@ void CSearchParamsWnd::OnBackcolor()
 		m_brMyBrush.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 }
 
-HBRUSH CSearchParamsWnd::OnCtlColor(CDC* pDC, CWnd* /*pWnd*/, UINT nCtlColor)
+HBRUSH CSearchParamsWnd::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
-	HBRUSH hbr = theApp.emuledlg->GetWndClr();
+	HBRUSH hbr = theApp.emuledlg->GetCtlColor(pDC, pWnd, nCtlColor);
+	if (hbr)
+		return hbr;
+	hbr = __super::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	if (nCtlColor == CTLCOLOR_DLG)
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
-	else if(nCtlColor != CTLCOLOR_EDIT)
+	switch(nCtlColor)
 	{
-		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+	case CTLCOLOR_EDIT:
+		break;
+	default:
 		pDC->SetBkMode(TRANSPARENT);
+	case CTLCOLOR_DLG:
+		hbr = (HBRUSH) m_brMyBrush.GetSafeHandle();
+		break;
 	}
-	else
-		hbr = (HBRUSH) WHITE_BRUSH;
 
 	return hbr;
 }

@@ -56,9 +56,9 @@ void CStatisticFile::MergeFileStats( CStatisticFile *toMerge )
 	requested += toMerge->GetRequests();
 	accepted += toMerge->GetAccepts();
 	transferred += toMerge->GetTransferred();
-	alltimerequested += toMerge->GetAllTimeRequests();
-	alltimetransferred += toMerge->GetAllTimeTransferred();
-	alltimeaccepted += toMerge->GetAllTimeAccepts();
+	SetAllTimeRequests(alltimerequested + toMerge->GetAllTimeRequests());
+	SetAllTimeTransferred(alltimetransferred + toMerge->GetAllTimeTransferred());
+	SetAllTimeAccepts(alltimeaccepted + toMerge->GetAllTimeAccepts());
 	//Xman advanced upload-priority
 	m_unotcountedtransferred += toMerge->m_unotcountedtransferred;
 	if(m_unotcountedtransferred > alltimetransferred)
@@ -137,6 +137,22 @@ void CStatisticFile::AddTransferred(uint64 start, uint64 bytes){ // Spread bars 
 	}
 	//Xman end
 }
+
+void CStatisticFile::SetAllTimeRequests(uint32 nVal)
+{
+	alltimerequested = nVal;
+}
+
+void CStatisticFile::SetAllTimeAccepts(uint32 nVal)
+{
+	alltimeaccepted = nVal;
+}
+
+void CStatisticFile::SetAllTimeTransferred(uint64 nVal)
+{
+	alltimetransferred = nVal;
+}
+
 // ==> Removed Spreadbars (old version) [SlugFiller] - Stulle
 /*
 //Xman PowerRelease
@@ -321,6 +337,7 @@ void CStatisticFile::UpdateCountedTransferred()
 	}
 }
 //Xman end
+
 // ==> Spread bars [Slugfiller/MorphXT] - Stulle
 void CStatisticFile::AddBlockTransferred(uint64 start, uint64 end, uint64 count){
 	if (start >= end || !count)

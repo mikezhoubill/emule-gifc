@@ -90,7 +90,6 @@ protected:
 	// ==> Design Settings [eWombat/Stulle] - Max
 protected:
 	CBrush m_brMyBrush;
-	HBRUSH hbr;	
 	COLORREF clrChatColor;
 public:
 	void OnBackcolor(); 

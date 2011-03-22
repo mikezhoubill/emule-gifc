@@ -21,7 +21,7 @@ All rights reserved.
 #include "HttpDownloadDlg.h"
 #include "OtherFunctions.h"
 #include "Log.h"
-#include "Preferences.h" //Xman Send user agent as firefox for http downloads when obfucscation enabled (leuk_he)
+#include "Preferences.h" //MORPH - Added by WiZaRd, Fix broken HTTP downloads
 
 ///////////////////////////////// Defines /////////////////////////////////////
 #define HAS_ZLIB
@@ -453,14 +453,7 @@ void CHttpDownloadDlg::DownloadThread()
 	ENCODING_INIT;
 	//Create the Internet session handle
 	ASSERT(m_hInternetSession == NULL);
-	//Xman Send user agent as firefox for http downloads when obfucscation enabled (leuk_he)
-	/*
 	m_hInternetSession = ::InternetOpen(AfxGetAppName(), INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	*/
-	m_hInternetSession = ::InternetOpen(
-		thePrefs.IsClientCryptLayerRequested()?_T("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;"):AfxGetAppName(),
-		INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-	//Xman end
 	if (m_hInternetSession == NULL)
 	{
 		TRACE(_T("Failed in call to InternetOpen, Error:%d\n"), ::GetLastError());
@@ -543,6 +536,23 @@ void CHttpDownloadDlg::DownloadThread()
 	HttpAddRequestHeaders(m_hHttpFile, ACCEPT_ENCODING_HEADER, (DWORD)-1L, HTTP_ADDREQ_FLAG_ADD);
 
 	// some sites give unacceptable low download speed if they don't see a well known user agent in the headers...
+	//MORPH START - Added by WiZaRd, Fix broken HTTP downloads
+	int curPos = 0;
+	bool skipAgent = false;
+	CString strBroken = thePrefs.GetBrokenURLs();
+	CString cur = strBroken.Tokenize(L"|", curPos);
+	while (!cur.IsEmpty() && !skipAgent)
+	{
+		cur.Trim();
+		if (!cur.IsEmpty()) 
+		{
+			if(StrStr(m_sURLToDownload, cur))
+				skipAgent = true;
+		}
+		cur = strBroken.Tokenize(L"|", curPos);
+	}
+	if(!skipAgent)
+	//MORPH END   - Added by WiZaRd, Fix broken HTTP downloads
 	HttpAddRequestHeaders(m_hHttpFile, _T("User-Agent: Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0; SLCC1)\r\n"), (DWORD)-1L, HTTP_ADDREQ_FLAG_ADD);
 
 //label used to jump to if we need to resend the request

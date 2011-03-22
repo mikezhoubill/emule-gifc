@@ -240,7 +240,7 @@ void CScheduler::ActivateSchedule(int index,bool makedefault) {
 				thePrefs.SetMaxUpload((float)_tstof(schedule->values[ai]));
 				thePrefs.CheckSlotSpeed(); //Xman Xtreme Upload
 				if (makedefault)
-					original_upload= original_upload=(float)_tstof(schedule->values[ai]); 
+					original_upload=(float)_tstof(schedule->values[ai]); 
 				break;
 			case 2 :
 				thePrefs.SetMaxDownload((float)_tstof(schedule->values[ai]));
@@ -281,7 +281,9 @@ void CScheduler::ActivateSchedule(int index,bool makedefault) {
 			// <== Advanced Updates [MorphXT/Stulle] - Stulle
 		}
 	}
-}// ==> Advanced Updates [MorphXT/Stulle] - Stulle
+}
+
+// ==> Advanced Updates [MorphXT/Stulle] - Stulle
 bool CScheduler::HasWeekly(int par_action)
 {
 	if (theApp.scheduler->GetCount()==0) return false; 
