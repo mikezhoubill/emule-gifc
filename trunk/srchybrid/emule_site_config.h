@@ -6,7 +6,7 @@
 #define	HAVE_SAPI_H
 #define HAVE_QEDIT_H
 #define HAVE_WMSDK_H
-//#define HAVE_WIN7_SDK_H
+//#define HAVE_WIN7_SDK_H // remark by Ken
 #define HAVE_VISTA_SDK	
 
 //////////////////////////////////////////////////////////////////////////////
