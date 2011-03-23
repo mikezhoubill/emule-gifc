@@ -3022,6 +3022,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\res\GIFC.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\GIFC1.ico"
+				>
+			</File>
+			<File
 				RelativePath="res\Global.ico"
 				>
 			</File>
@@ -3047,6 +3055,10 @@
 			</File>
 			<File
 				RelativePath="res\Incoming.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\IncomingGIFC.ico"
 				>
 			</File>
 			<File
@@ -3324,6 +3336,18 @@
 			</File>
 			<File
 				RelativePath=".\res\SharedFolderOvl.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ShowExt.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ShowLess.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\res\ShowMore.ico"
 				>
 			</File>
 			<File
