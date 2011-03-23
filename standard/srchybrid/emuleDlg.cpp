@@ -108,6 +108,10 @@
 #include <dbt.h>
 #include "XMessageBox.h"
 
+// >> add by Ken -- search GIFC
+#include "SearchParamsWnd.h"
+// << add by Ken
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -503,6 +507,11 @@ BOOL CemuleDlg::OnInitDialog()
 
 	// if still no active window, activate server window
 	if (activewnd == NULL)
+		// >> add by Ken - if thePrefs.IsLessControl, active transfer window
+		if (thePrefs.IsLessControls())
+			SetActiveDialog(transferwnd);
+		else
+		// << add by Ken
 		SetActiveDialog(serverwnd);
 
 	SetAllIcons();
@@ -2596,8 +2605,33 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 			break;
 		case TBBTN_SEARCH:
 		case MP_HM_SEARCH:
+			// >> add by Ken
+			searchwnd->m_pwndParams->m_bAutoDownload = false;
+			// << add by Ken
 			SetActiveDialog(searchwnd);
 			break;
+		// >> add by Ken
+		case MP_HM_GIFC:
+		case MP_HM_GIFC1:
+			searchwnd->m_pwndParams->m_ctlName.SetWindowText(L"GIFC");
+			searchwnd->m_pwndParams->m_ctlFileType.SelectItemDataStringA(ED2KFTSTR_ARCHIVE);
+			SetActiveDialog(searchwnd);
+			searchwnd->m_pwndParams->m_bAutoDownload = (wParam == MP_HM_GIFC);
+			searchwnd->m_pwndParams->OnBnClickedStart();
+			break;
+		case MP_HM_SHOWLESS:
+			thePrefs.SetLessControls(true);
+			thePrefs.SetExtControls(false);
+			break;
+		case MP_HM_SHOWMORE:
+			thePrefs.SetLessControls(false);
+			thePrefs.SetExtControls(false);
+			break;
+		case MP_HM_SHOWEXT:
+			thePrefs.SetLessControls(false);
+			thePrefs.SetExtControls(true);
+			break;
+		// << add by Ken
 		case TBBTN_SHARED:
 		case MP_HM_FILES:
 			SetActiveDialog(sharedfileswnd);
@@ -2626,6 +2660,11 @@ BOOL CemuleDlg::OnCommand(WPARAM wParam, LPARAM lParam)
 		case MP_HM_OPENINC:
 			ShellExecute(NULL, _T("open"), thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR),NULL, NULL, SW_SHOW); 
 			break;
+		// >> add by Ken
+		case MP_HM_OPENGIFC:
+			ShellExecute(NULL, _T("open"), thePrefs.GetMuleDirectory(EMULE_GIFCDIR), NULL, NULL, SW_SHOW);
+			break;
+		// << add by Ken
 		case MP_HM_HELP:
 		case TBBTN_HELP:
 			if (activewnd != NULL) {
@@ -2773,14 +2812,37 @@ void CemuleDlg::ShowToolPopup(bool toolsonly)
 	}
 
 	menu.AppendMenu(MF_STRING,MP_HM_OPENINC, GetResString(IDS_OPENINC) + _T("..."), _T("INCOMING"));
+	// >> add by Ken
+	menu.AppendMenu(MF_STRING,MP_HM_OPENGIFC, GetResString(IDS_OPENGIFC) + _T("..."), _T("INGIFC"));
+	if (!thePrefs.IsLessControls()) {
+	// << add by Ken
 	menu.AppendMenu(MF_STRING,MP_HM_CONVERTPF, GetResString(IDS_IMPORTSPLPF) + _T("..."), _T("CONVERT"));
 	menu.AppendMenu(MF_STRING,MP_HM_1STSWIZARD, GetResString(IDS_WIZ1) + _T("..."), _T("WIZARD"));
 	menu.AppendMenu(MF_STRING,MP_HM_IPFILTER, GetResString(IDS_IPFILTER) + _T("..."), _T("IPFILTER"));
+	// >> add by Ken
+	}
+	// << add by Ken
 	menu.AppendMenu(MF_STRING,MP_HM_DIRECT_DOWNLOAD, GetResString(IDS_SW_DIRECTDOWNLOAD) + _T("..."), _T("PASTELINK"));
 
 	menu.AppendMenu(MF_SEPARATOR);
+
+	// >> GIFC menu - add by Ken
+	bool gifcEnable = !(!theApp.serverconnect->IsConnected() && (!Kademlia::CKademlia::IsRunning() || !Kademlia::CKademlia::IsConnected()));
+	menu.AppendMenu(MF_STRING|(gifcEnable?MF_ENABLED:MF_GRAYED), MP_HM_GIFC, GetResString(IDS_GIFC), _T("GIFC"));
+	menu.AppendMenu(MF_STRING|(gifcEnable?MF_ENABLED:MF_GRAYED), MP_HM_GIFC1, GetResString(IDS_GIFC1) + _T("..."), _T("GIFC1"));
+	menu.AppendMenu(MF_SEPARATOR);
+	menu.AppendMenu(MF_STRING|(thePrefs.IsLessControls()?MF_CHECKED:MF_UNCHECKED), MP_HM_SHOWLESS, GetResString(IDS_SHOWLESS), _T("SHOWLESS"));
+	menu.AppendMenu(MF_STRING|(!thePrefs.IsLessControls()&&!thePrefs.IsExtControlsEnabled())?MF_CHECKED:MF_UNCHECKED, MP_HM_SHOWMORE, GetResString(IDS_SHOWMORE), _T("SHOWMORE"));
+	menu.AppendMenu(MF_STRING|(!thePrefs.IsLessControls()&&thePrefs.IsExtControlsEnabled())?MF_CHECKED:MF_UNCHECKED, MP_HM_SHOWEXT, GetResString(IDS_SHOWEXT), _T("SHOWEXT"));
+	if (!thePrefs.IsLessControls()) {
+	menu.AppendMenu(MF_SEPARATOR);
+	// << add by Ken
+
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)Links.m_hMenu, GetResString(IDS_LINKS), _T("WEB") );
 	menu.AppendMenu(MF_STRING|MF_POPUP,(UINT_PTR)scheduler.m_hMenu, GetResString(IDS_SCHEDULER), _T("SCHEDULER") );
+	// >> add by Ken
+	}
+	// << add by Ken
 
 	if (!toolsonly) {
 		menu.AppendMenu(MF_SEPARATOR);
@@ -4098,3 +4160,50 @@ void CemuleDlg::SetTaskbarIconColor()
 	else
 		thePrefs.SetStatsColor(11, RGB(0, 0, 0));
 }
+
+// >> add by Ken
+// MORPH START show less controls
+void setcolumns(CMuleListCtrl * control,CString Columnstohide, bool Show)
+{
+	int pos=0;
+	int count=0;
+	CString foundString;
+	do {
+		foundString=Columnstohide.Tokenize(_T(","),pos);
+		if ((foundString==_T("1")) && Show==false
+			&& control->IsColumnHidden(count))
+			control->ShowColumn(count); // show the ",0" columns if disabled showlesscontrol
+		if (foundString==_T("1") && Show==true
+			&& (control->IsColumnHidden(count))==false)
+			control->HideColumn(count); // show less controls. 
+		count++;
+	}
+	while (foundString != "");
+}
+
+void CemuleDlg::ShowLessControls (bool enable)
+{
+	// toolbar:
+	NMHDR nmh;
+	nmh.code = TBN_RESET;
+	nmh.hwndFrom = /*theApp.emuledlg->*/toolbar->GetSafeHwnd();
+	nmh.idFrom = /*theApp.emuledlg->*/toolbar->GetDlgCtrlID();
+	/*theApp.emuledlg->*/toolbar->SendMessage(WM_NOTIFY, nmh.idFrom, (LPARAM)&nmh);
+
+	// Listcontrols
+	// note, the settings are eqaul to the xxxCtrlcolumnHidden=0,1... line in preferences.ini when less controls are displayed
+	setcolumns(transferwnd->GetDownloadList(),_T("0,0,1,1,0,0,0,0,0,0,1,1,1,1,1,0,1"),enable);
+	setcolumns(transferwnd->GetUploadList(), _T("0,0,0,0,1,1,0,1,1,1,1,0,1,1,0,1,1"),enable);
+	setcolumns(transferwnd->GetQueueList(), _T("0,0,0,0,0,1,1,1,1,0,1,1,1,1"),enable);
+	setcolumns(transferwnd->GetClientList(), _T("0,0,0,0,0,0,1,1,1,1,1"),enable);
+	setcolumns(transferwnd->GetDownloadClientsList(), _T("0,1,0,0,0,0,0,1,1,1,1,1,1"),enable);
+	setcolumns(&(serverwnd->serverlistctrl),_T("0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,1,1"),enable);
+	setcolumns(&(searchwnd->m_pwndResults->searchlistctrl),_T("0,0,0,0,0,1,1,1,1,1,1,1,1,1,1"),enable);
+	setcolumns(&(sharedfileswnd->sharedfilesctrl),_T("0,0,0,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1"),enable);
+
+	//context menus
+	transferwnd->GetDownloadList()->CreateMenues();
+	sharedfileswnd->sharedfilesctrl.CreateMenues();
+}
+// MORPH END show less controls
+// << add by Ken

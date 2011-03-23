@@ -306,6 +306,11 @@ protected:
 
 	// UPnP
 	afx_msg LRESULT OnUPnPResult(WPARAM wParam, LPARAM lParam);
+
+// >> add by Ken
+public:
+	void ShowLessControls(bool enable);
+// << add by Ken
 };
 
 

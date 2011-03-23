@@ -190,7 +190,10 @@ public:
 	CPPgWiz1General(UINT nIDTemplate, LPCTSTR pszCaption = NULL, LPCTSTR pszHeaderTitle = NULL, LPCTSTR pszHeaderSubTitle = NULL)
 		: CDlgPageWizard(nIDTemplate, pszCaption, pszHeaderTitle, pszHeaderSubTitle)
 	{
-		m_iAutoConnectAtStart = 0;
+		// >> modified by Ken
+		//m_iAutoConnectAtStart = 0;
+		m_iAutoConnectAtStart = 1;
+		// << modified by Ken
 		m_iAutoStart = 0;
 	}
 	virtual ~CPPgWiz1General();
@@ -217,7 +220,10 @@ END_MESSAGE_MAP()
 CPPgWiz1General::CPPgWiz1General()
 	: CDlgPageWizard(CPPgWiz1General::IDD)
 {
-	m_iAutoConnectAtStart = 0;
+	// >> modified by Ken
+	//m_iAutoConnectAtStart = 0;
+	m_iAutoConnectAtStart = 1;
+	// << modified by Ken
 	m_iAutoStart = 0;
 }
 

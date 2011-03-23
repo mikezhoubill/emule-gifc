@@ -1540,6 +1540,19 @@
 #define IDS_DONOTASKAGAIN               1588
 #define IDS_POPULARITY                  1589
 #define IDS_SHOWWIN7TASKBARGOODIES      1590
+// >> add by Ken
+#define IDS_GIFC                        1900
+#define IDS_GIFC1                       1901
+#define IDS_PW_GIFC                     1902
+#define IDS_OPENGIFC                    1903
+#define IDS_OPEN_GIFC                   1903
+#define IDS_SEARCHWAIT                  1904
+#define IDS_GIFCUPDATED                 1905
+#define IDS_GIFCNOTFOUND                1906
+#define IDS_SHOWLESS                    1910
+#define IDS_SHOWMORE                    1911
+#define IDS_SHOWEXT                     1912
+// << add by Ken
 #define IDC_ANIMATE1                    2000
 #define IDC_STATUS                      2001
 #define IDC_FILESTATUS                  2002
@@ -2332,6 +2345,10 @@
 #define IDC_FS_POPULARITY2_LBL          3010
 #define IDC_FS_POPULARITY2_VAL          3011
 #define IDC_OPENPREFINI                 3012
+// >> add by Ken
+#define IDD_SEARCHWAIT                  3202
+// << add by Ken
+#define IDC_SEARCHWAIT                  4101
 #define IDA_ENTER                       32771
 
 // Next default values for new objects

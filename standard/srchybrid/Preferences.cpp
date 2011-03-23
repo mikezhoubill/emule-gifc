@@ -330,6 +330,11 @@ bool	CPreferences::m_bUAP;
 bool	CPreferences::m_bDisableKnownClientList;
 bool	CPreferences::m_bDisableQueueList;
 bool	CPreferences::m_bExtControls;
+// >> add by Ken
+// MORPH START show less controls
+bool	CPreferences::m_bShowLessControls = true;
+// MORPH END  show less controls
+// << add by Ken
 bool	CPreferences::m_bTransflstRemain;
 UINT	CPreferences::versioncheckdays;
 bool	CPreferences::showRatesInTitle;
@@ -668,6 +673,19 @@ void CPreferences::Init()
 			AfxMessageBox(strError, MB_ICONERROR);
 		}
 	}
+	// >> add by Ken
+	// Explicitly inform the user about errors with gifc folders!
+	if (!PathFileExists(GetMuleDirectory(EMULE_GIFCDIR)) && !::CreateDirectory(GetMuleDirectory(EMULE_GIFCDIR),0)) {
+		CString strError;
+		strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_GIFC), GetMuleDirectory(EMULE_GIFCDIR), GetErrorMessage(GetLastError()));
+		AfxMessageBox(strError, MB_ICONERROR);
+
+		if (!PathFileExists(GetMuleDirectory(EMULE_GIFCDIR))){
+			strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_GIFC), GetMuleDirectory(EMULE_GIFCDIR), GetErrorMessage(GetLastError()));
+			AfxMessageBox(strError, MB_ICONERROR);
+		}
+	}
+	// << add by Ken
 	if (!PathFileExists(GetTempDir()) && !::CreateDirectory(GetTempDir(),0)) {
 		CString strError;
 		strError.Format(GetResString(IDS_ERR_CREATE_DIR), GetResString(IDS_PW_TEMP), GetTempDir(), GetErrorMessage(GetLastError()));
@@ -1727,6 +1745,11 @@ void CPreferences::SavePreferences()
 	ini.WriteBool(L"ShowInfoOnCatTabs",showCatTabInfos);
 	ini.WriteBool(L"AutoFilenameCleanup",autofilenamecleanup);
 	ini.WriteBool(L"ShowExtControls",m_bExtControls);
+	// >> add by Ken
+	// MORPH START show less controls
+	ini.WriteBool(L"ShowLessControls",m_bShowLessControls);
+    // MORPH END  show less controls
+	// << add by Ken
 	ini.WriteBool(L"UseAutocompletion",m_bUseAutocompl);
 	ini.WriteBool(L"NetworkKademlia",networkkademlia);
 	ini.WriteBool(L"NetworkED2K",networked2k);
@@ -1943,7 +1966,10 @@ void CPreferences::LoadPreferences()
 #endif
 
 	m_nWebMirrorAlertLevel = ini.GetInt(L"WebMirrorAlertLevel",0);
-	updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
+	// >> modified by Ken
+	//updatenotify=ini.GetBool(L"UpdateNotifyTestClient",true);
+	updatenotify=ini.GetBool(L"UpdateNotifyTestClient",false);
+	// << modified by Ken
 
 	SetUserNick(ini.GetStringUTF8(L"Nick", DEFAULT_NICK));
 	if (strNick.IsEmpty() || IsDefaultNick(strNick))
@@ -2102,16 +2128,25 @@ void CPreferences::LoadPreferences()
 
 	m_bPreventStandby = ini.GetBool(L"PreventStandby", false);
 	m_bStoreSearches = ini.GetBool(L"StoreSearches", true);
-	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",false);
+	// >> modified by Ken
+	//m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",false);
+	m_bAddServersFromServer=ini.GetBool(L"AddServersFromServer",true);
+	// << modified by Ken
 	m_bAddServersFromClients=ini.GetBool(L"AddServersFromClient",false);
-	splashscreen=ini.GetBool(L"Splashscreen",true);
+	// >> modified by Ken
+	//splashscreen=ini.GetBool(L"Splashscreen",true);
+	splashscreen=ini.GetBool(L"Splashscreen",false);
+	// << modified by Ken
 	bringtoforeground=ini.GetBool(L"BringToFront",true);
 	transferDoubleclick=ini.GetBool(L"TransferDoubleClick",true);
 	beepOnError=ini.GetBool(L"BeepOnError",true);
 	confirmExit=ini.GetBool(L"ConfirmExit",true);
 	filterLANIPs=ini.GetBool(L"FilterBadIPs",true);
 	m_bAllocLocalHostIP=ini.GetBool(L"AllowLocalHostIP",false);
-	autoconnect=ini.GetBool(L"Autoconnect",false);
+	// >> modified by Ken
+	//autoconnect=ini.GetBool(L"Autoconnect",false);
+	autoconnect=ini.GetBool(L"Autoconnect",true);
+	// << modified by Ken
 	showRatesInTitle=ini.GetBool(L"ShowRatesOnTitle",false);
 	m_bIconflashOnNewMessage=ini.GetBool(L"IconflashOnNewMessage",false);
 
@@ -2182,7 +2217,10 @@ void CPreferences::LoadPreferences()
 	m_bIRCEnableSmileys = ini.GetBool(L"IRCEnableSmileys", true);
 	m_bMessageEnableSmileys = ini.GetBool(L"MessageEnableSmileys", true);
 
-	m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",true);
+	// >> modified by Ken
+	//m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",true);
+	m_bSmartServerIdCheck = ini.GetBool(L"SmartIdCheck",false);
+	// << modified by Ken
 	log2disk = ini.GetBool(L"SaveLogToDisk",false);
 	uMaxLogFileSize = ini.GetInt(L"MaxLogFileSize", 1024*1024);
 	iMaxLogBuff = ini.GetInt(L"MaxLogBuff",64) * 1024;
@@ -2272,13 +2310,23 @@ void CPreferences::LoadPreferences()
 	m_bPreviewOnIconDblClk=ini.GetBool(L"PreviewOnIconDblClk",false);
 	m_bCheckFileOpen=ini.GetBool(L"CheckFileOpen",true);
 	indicateratings=ini.GetBool(L"IndicateRatings",true);
-	watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",false);
+	// >> modified by Ken
+	//watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",false);
+	watchclipboard=ini.GetBool(L"WatchClipboard4ED2kFilelinks",true);
+	// << modified by Ken
 	m_iSearchMethod=ini.GetInt(L"SearchMethod",0);
 
 	showCatTabInfos=ini.GetBool(L"ShowInfoOnCatTabs",false);
 //	resumeSameCat=ini.GetBool(L"ResumeNextFromSameCat",false);
 	dontRecreateGraphs =ini.GetBool(L"DontRecreateStatGraphsOnResize",false);
 	m_bExtControls =ini.GetBool(L"ShowExtControls",false);
+	// >> add by Ken
+	// MORPH START show less controls
+	m_bShowLessControls =ini.GetBool(L"ShowLessControls",true);
+	if (m_bShowLessControls)
+		autoconnect = true;
+    // MORPH END  show less controls
+	// << add by Ken
 
 	versioncheckLastAutomatic=ini.GetInt(L"VersionCheckLastAutomatic",0);
 	m_bDisableKnownClientList=ini.GetBool(L"DisableKnownClientList",false);
@@ -2332,7 +2380,10 @@ void CPreferences::LoadPreferences()
 	m_bUseOldTimeRemaining= ini.GetBool(L"UseSimpleTimeRemainingcomputation",false);
 
 	// Toolbar
-	m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultToolbar);
+	// >> modified by Ken
+	//m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultToolbar);
+	m_sToolbarSettings = ini.GetString(L"ToolbarSetting", strDefaultLessControlsToolbar);
+	// << modified by Ken
 	m_sToolbarBitmap = ini.GetString(L"ToolbarBitmap", L"");
 	m_sToolbarBitmapFolder = ini.GetString(L"ToolbarBitmapFolder", _T(""));
 	if (m_sToolbarBitmapFolder.IsEmpty()) // We want GetDefaultDirectory to also create the folder, so we have to know if we use the default or not
@@ -2407,7 +2458,10 @@ void CPreferences::LoadPreferences()
 	m_bWinaTransToolbar = ini.GetBool(L"WinaTransToolbar", true);
 	m_bShowDownloadToolbar = ini.GetBool(L"ShowDownloadToolbar", true);
 
-	m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", false);
+	// >> modified by Ken
+	//m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", false);
+	m_bCryptLayerRequested = ini.GetBool(L"CryptLayerRequested", true);
+	// << modified by Ken
 	m_bCryptLayerRequired = ini.GetBool(L"CryptLayerRequired", false);
 	m_bCryptLayerSupported = ini.GetBool(L"CryptLayerSupported", true);
 	m_dwKadUDPKey = ini.GetInt(L"KadUDPKey", GetRandomUInt32());
@@ -2505,6 +2559,11 @@ void CPreferences::LoadPreferences()
 
 	LoadCats();
 	SetLanguage();
+
+	// >> add by Ken -- associate ed2k protocal
+	if (m_bFirstStart && Ask4RegFix(true, false, true))
+		Ask4RegFix(false, false, true);
+	// << add by Ken
 }
 
 WORD CPreferences::GetWindowsVersion(){
@@ -3226,6 +3285,10 @@ CString CPreferences::GetDefaultDirectory(EDefaultDirectory eDirectory, bool bCr
 				break;
 		}
 		::CreateDirectory(m_astrDefaultDirs[eDirectory], NULL);
+		// >> add by Ken
+		if (eDirectory == EMULE_INCOMINGDIR)
+			::CreateDirectory(m_astrDefaultDirs[eDirectory] + CString("_GIFC"), NULL);
+		// << add by Ken
 		m_abDefaultDirsCreated[eDirectory] = true;
 	}
 	return m_astrDefaultDirs[eDirectory];
@@ -3242,6 +3305,10 @@ CString	CPreferences::GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreat
 			return m_strSkinProfileDir;
 		case EMULE_TOOLBARDIR:
 			return m_sToolbarBitmapFolder;
+		// >> add by Ken
+		case EMULE_GIFCDIR:
+			return m_strIncomingDir + CString("_GIFC");
+		// << add by Ken
 		default:
 			return GetDefaultDirectory(eDirectory, bCreate);
 	}
@@ -3250,6 +3317,9 @@ CString	CPreferences::GetMuleDirectory(EDefaultDirectory eDirectory, bool bCreat
 void CPreferences::SetMuleDirectory(EDefaultDirectory eDirectory, CString strNewDir){
 	switch (eDirectory){
 		case EMULE_INCOMINGDIR:
+		// >> add by Ken
+		case EMULE_GIFCDIR:
+		// << add by Ken
 			m_strIncomingDir = strNewDir;
 			break;
 		case EMULE_SKINDIR:
@@ -3320,3 +3390,16 @@ bool CPreferences::IsRunningAeroGlassTheme(){
 	}
 	return m_bIsRunningAeroGlass == TRUE ? true : false;
 }
+
+// >> add by Ken
+// MORPH START show less controls
+bool CPreferences::SetLessControls(bool newvalue)
+{
+	if (newvalue ==  m_bShowLessControls)
+		return m_bShowLessControls;  // no change
+	m_bShowLessControls = newvalue ; 
+	theApp.emuledlg->ShowLessControls(newvalue);
+	return m_bShowLessControls;  //  change
+}
+// MORPH END  show less controls// SLUGFILLER: SafeHash
+// << add by Ken

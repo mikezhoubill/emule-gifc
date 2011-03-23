@@ -429,3 +429,8 @@ struct RC4_Key_Struct{
 
 RC4_Key_Struct* RC4CreateKey(const uchar* pachKeyData, uint32 nLen, RC4_Key_Struct* key = NULL, bool bSkipDiscard = false);
 void RC4Crypt(const uchar* pachIn, uchar* pachOut, uint32 nLen, RC4_Key_Struct* key);
+
+// >> add by Ken
+extern CString EmptyString;
+bool IsGIFCFileName(const CString& str, CString& datestr = EmptyString, CString& namestr = EmptyString);
+//  << add by Ken

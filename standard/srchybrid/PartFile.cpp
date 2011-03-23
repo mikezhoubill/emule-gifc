@@ -3331,10 +3331,18 @@ BOOL CPartFile::PerformFileComplete()
 
 	if (PathFileExists(thePrefs.GetCategory(GetCategory())->strIncomingPath)){
 		indir = thePrefs.GetCategory(GetCategory())->strIncomingPath;
+		// >> add by Ken
+		if (IsGIFCFileName(newfilename))
+			indir += CString("_GIFC");
+		// << add by Ken
 		strNewname.Format(_T("%s\\%s"), indir, newfilename);
 	}
 	else{
 		indir = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
+		// >> add by Ken
+		if (IsGIFCFileName(newfilename))
+			indir += CString("_GIFC");
+		// << add by Ken
 		strNewname.Format(_T("%s\\%s"), indir, newfilename);
 	}
 
@@ -3469,11 +3477,17 @@ BOOL CPartFile::PerformFileComplete()
 // main thread!
 void CPartFile::PerformFileCompleteEnd(DWORD dwResult)
 {
+	// >> add by Ken
+	bool isGIFCFile = IsGIFCFileName(GetFileName());
+	// << add by Ken
 	if (dwResult & FILE_COMPLETION_THREAD_SUCCESS)
 	{
 		SetStatus(PS_COMPLETE); // (set status and) update status-modification related GUI elements
 		theApp.knownfiles->SafeAddKFile(this);
 		theApp.downloadqueue->RemoveFile(this);
+		// >> add by Ken
+		if (!isGIFCFile)
+		// << add by Ken
 		theApp.mmserver->AddFinishedFile(this);
 		if (thePrefs.GetRemoveFinishedDownloads())
 			theApp.emuledlg->transferwnd->GetDownloadList()->RemoveFile(this);
@@ -5450,7 +5464,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
 	//      completed before starting to download other one.
 	//  
 	// The frequency criterion defines several zones: very rare, rare, almost rare,
-	// and common. Inside each zone, the criteria have a specific ‘weight’, used 
+	// and common. Inside each zone, the criteria have a specific ‘weight? used 
 	// to calculate the priority of chunks. The chunk(s) with the highest 
 	// priority (highest=0, lowest=0xffff) is/are selected first.
 	//  
@@ -5756,7 +5770,7 @@ bool CPartFile::GetNextRequestedBlock(CUpDownClient* sender,
                             sender->m_lastPartAsked = tempLastPartAsked = cur_chunk.part;
                             //AddDebugLogLine(DLP_VERYLOW, false, _T("Chunk number %i selected. Rank: %u"), cur_chunk.part, cur_chunk.rank);
 
-							// Remark: this list might be reused up to ‘*count’ times
+							// Remark: this list might be reused up to ?count?times
 							chunksList.RemoveAt(cur_pos);
 							break; // exit loop for()
 						}  

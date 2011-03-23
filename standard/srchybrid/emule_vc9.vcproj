@@ -1729,6 +1729,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SearchWaitDialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath="ServerWnd.cpp"
 				>
 			</File>
@@ -2318,6 +2322,10 @@
 			</File>
 			<File
 				RelativePath="SearchResultsWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SearchWaitDialog.h"
 				>
 			</File>
 			<File

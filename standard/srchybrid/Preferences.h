@@ -17,6 +17,9 @@
 #pragma once
 
 const CString strDefaultToolbar = _T("0099010203040506070899091011");
+// >> add by Ken
+const CString strDefaultLessControlsToolbar = _T("03049910");
+// << add by Ken
 
 enum EViewSharedFilesAccess{
 	vsfaEverybody = 0,
@@ -44,6 +47,9 @@ enum EDefaultDirectory{
 	EMULE_EXECUTEABLEDIR = 10, // assumed to be not writeable (!)
 	EMULE_TOOLBARDIR = 11,
 	EMULE_EXPANSIONDIR = 12 // this is a base directory accessable for all users for things eMule installs
+	// >> add by Ken
+	,EMULE_GIFCDIR = 13
+	// << add by Ken
 };
 
 
@@ -410,6 +416,9 @@ public:
 	static	bool	m_bDisableKnownClientList;
 	static	bool	m_bDisableQueueList;
 	static	bool	m_bExtControls;
+	// >> add by Ken
+	static	bool	m_bShowLessControls;
+	// >> add by Ken
 	static	bool	m_bTransflstRemain;
 
 	static	UINT	versioncheckdays;
@@ -1236,6 +1245,10 @@ public:
 	static	bool	IsExtControlsEnabled()				{return m_bExtControls;}
 	static	void	SetExtControls(bool in)				{m_bExtControls=in;}
 	static	bool	GetRemoveFinishedDownloads()		{return m_bRemoveFinishedDownloads;}
+	// >> add by Ken
+	static	bool	IsLessControls()						   { return m_bShowLessControls;}
+	static  bool    SetLessControls(bool newvalue);
+	// << add by Ken
 
 	static	UINT	GetMaxChatHistoryLines()			{return m_iMaxChatHistory;}
 	static	bool	GetUseAutocompletion()				{return m_bUseAutocompl;}

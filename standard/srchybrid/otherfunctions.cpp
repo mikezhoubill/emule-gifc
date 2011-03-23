@@ -4023,3 +4023,50 @@ bool AddIconGrayscaledToImageList(CImageList& rList, HICON hIcon)
 	}
 	return bResult;
 }
+
+// >> add by Ken
+CString EmptyString;
+bool IsGIFCFileName(const CString& str, CString& datestr, CString& namestr)
+{
+	int curPos = 0;
+	CString resToken = str.Tokenize(L"_", curPos);
+	if (resToken.CompareNoCase(L"GIFC"))  // start with GIFC
+		return false;
+
+	resToken = str.Tokenize(L"_", curPos);
+	if (resToken.GetLength() != 8) // follow YYYYMMDD
+		return false;
+	int y = _wtoi(resToken.Left(4).GetString());
+	if (y < 2010 || y > 2020) 
+		return false;
+	int m = _wtoi(resToken.Mid(4,2).GetString());
+	if (m < 1 || m > 12) 
+		return false;
+	int d = _wtoi(resToken.Right(2).GetString());
+	if (d < 1 && d > 31) 
+		return false;
+	if (&datestr != &EmptyString)
+		datestr = resToken;
+
+	resToken = str.Tokenize(L"_", curPos); // product
+	if (resToken == "")
+		return false;
+	if (&namestr != &EmptyString)
+		namestr = resToken;
+
+	resToken = str.Tokenize(L".", curPos); // some product (ex.FreeU) & version
+	if (resToken == "") 
+		return false;
+
+	for (int i = 0; i < resToken.GetLength(); i++)
+	{
+		if (isdigit(resToken[i]))
+			break;
+		if (i == 0)
+			namestr += "_";
+		namestr += resToken[i];
+	}
+
+	return str.Right(str.GetLength()-curPos).CompareNoCase(L"zip") == 0; // extension
+}
+// << add by Ken

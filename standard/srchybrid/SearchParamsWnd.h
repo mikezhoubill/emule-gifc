@@ -4,6 +4,9 @@
 #include "ComboBoxEx2.h"
 #include "ListCtrlEditable.h"
 class CCustomAutoComplete;
+// >> add by Ken
+class CSearchWaitDialog;
+// << add by Ken
 
 typedef enum EOptsRows
 {
@@ -37,6 +40,9 @@ public:
 	CButton m_ctlCancel;
 	CButton m_ctlMore;
 	CSearchResultsWnd* m_searchdlg;
+	// >> add by Ken
+	CSearchWaitDialog* m_searchWaitDlg;
+	// << add by Ken
 
 	void Localize();
 	void ResetHistory();
@@ -50,10 +56,18 @@ public:
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
+	// >> add by Ken
+	bool m_bAutoDownload;
+	// << add by Ken
+
 protected:
 	HCURSOR m_hcurMove;
 	CComboBoxEx2 m_ctlMethod;
+// >> modified by Ken -- change attribute from protected to public
+public:
 	CComboBoxEx2 m_ctlFileType;
+protected:
+// << modified by Ken
 	CEditableListCtrl m_ctlOpts;
 	CRect m_rcNameLbl;
 	CRect m_rcName;
@@ -87,7 +101,11 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	afx_msg LRESULT OnInitDialog(WPARAM, LPARAM);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+// >> modified by Ken -- change attribute from protected to public
+public:
 	afx_msg void OnBnClickedStart();
+protected:
+// << modified by Ken
 	afx_msg void OnBnClickedCancel();
 	afx_msg void OnBnClickedMore();
 	afx_msg void OnCbnSelChangeMethod();

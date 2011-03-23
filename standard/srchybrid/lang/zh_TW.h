@@ -2,6 +2,11 @@
 // Microsoft Visual C++ generated include file.
 // Used by zh_TW.rc
 //
+#define IDS_GIFC1                       1901
+#define IDS_OPENGIFC                    1903
+#define IDS_SHOWLESS                    1910
+#define IDS_SHOWMORE                    1911
+#define IDS_SHOWEXT                     1912
 
 // Next default values for new objects
 // 

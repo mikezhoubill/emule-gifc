@@ -18,6 +18,9 @@
 #include "emule.h"
 #include "emuledlg.h"
 #include "SearchDlg.h"
+// >> add by Ken
+#include "SearchWaitDialog.h"
+// << add by Ken
 #include "SearchParamsWnd.h"
 #include "SearchResultsWnd.h"
 #include "SearchParams.h"
@@ -68,6 +71,9 @@ CSearchParamsWnd::CSearchParamsWnd()
 	m_hcurMove = ::LoadCursor(NULL, IDC_SIZEALL);
 
 	m_searchdlg = NULL;
+	// >> add by Ken
+	m_searchWaitDlg = NULL;
+	// << add by Ken
 	m_pacSearchString = NULL;
 	m_rcNameLbl.SetRectEmpty();
 	m_rcName.SetRectEmpty();
@@ -727,6 +733,19 @@ void CSearchParamsWnd::OnBnClickedStart()
 		{
 			if (m_pacSearchString && m_pacSearchString->IsBound())
 				m_pacSearchString->AddItem(pParams->strExpression, 0);
+			// >> add by Ken
+			if (m_bAutoDownload)
+			{
+				if (m_searchWaitDlg)
+				{
+					m_searchWaitDlg->DestroyWindow();
+					delete m_searchWaitDlg;
+				}
+				m_searchWaitDlg = new CSearchWaitDialog(m_searchdlg);
+				m_searchWaitDlg->Create(IDD_SEARCHWAIT, m_searchdlg);
+				m_searchWaitDlg->ShowWindow(SW_SHOW);
+			}
+			// << add by Ken
 			m_searchdlg->StartSearch(pParams);
 		}
 		else

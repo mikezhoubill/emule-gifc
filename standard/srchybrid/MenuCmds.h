@@ -80,6 +80,14 @@
 #define MP_PAUSEONPREVIEW		10261
 #define MP_VIEW_KADCONTACTS		10262
 #define MP_VIEW_KADLOOKUP		10263
+// >> add by Ken
+#define MP_HM_GIFC				10270 // auto download GIFC tools menu item
+#define MP_HM_GIFC1				10271 // search/download GIFC tools menu item
+#define MP_HM_SHOWLESS			10275 // show simple interface
+#define MP_HM_SHOWMORE			10276 // show standard interface
+#define MP_HM_SHOWEXT			10277 // show expert interface
+#define MP_HM_OPENGIFC			10278 // open GIFC directory
+// << add by Ken
 
 #define MP_PRIOVERYLOW			10300
 #define MP_PRIOLOW				10301

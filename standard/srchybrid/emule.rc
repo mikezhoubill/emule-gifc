@@ -1940,6 +1940,12 @@ SMILEY_SADQ             ICON                    "res\\Smiley_sadq.ico"
 SMILEY_SMILEQ           ICON                    "res\\Smiley_smileq.ico"
 SMILEY_LOOKSIDE         ICON                    "res\\Smiley_lookside.ico"
 BROWSEFOLDERSMALL       ICON                    "res\\Browse8.ico"
+GIFC                    ICON                    "res\\GIFC.ico"
+INGIFC                  ICON                    "res\\IncomingGIFC.ico"
+GIFC1                   ICON                    "res\\GIFC1.ico"
+SHOWLESS                ICON                    "res\\ShowLess.ico"
+SHOWMORE                ICON                    "res\\ShowMore.ico"
+SHOWEXT                 ICON                    "res\\ShowExt.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -2177,6 +2183,14 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 // Dialog
 //
 
+_SEARCHWAIT DIALOGEX 0, 0, 115, 37
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CTEXT           "Searching, please wait...",IDC_SEARCHWAIT,7,16,101,14
+END
+
 IDD_FILESTATISTICS DIALOGEX 0, 0, 401, 95
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "File Statistics"
@@ -2248,6 +2262,13 @@ SPAM                    ICON                    "res\\Spam.ico"
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO 
 BEGIN
+    IDD_SEARCHWAIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 108
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 30
+    END
     IDD_FILESTATISTICS, DIALOG
     BEGIN
         RIGHTMARGIN, 396
@@ -4191,6 +4212,19 @@ BEGIN
     IDS_DONOTASKAGAIN       "Don't ask me again"
     IDS_POPULARITY          "Popularity Rank"
     IDS_SHOWWIN7TASKBARGOODIES "Enable Windows 7 taskbar effects"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_GIFC                "Search/DownLoad GIFC"
+    IDS_GIFC1               "Auto download recent GIFC software"
+    IDS_PW_GIFC             "GIFC File"
+    IDS_OPEN_GIFC           "Open GIFC Folder"
+    IDS_SEARCHWAIT          "Searching... Please wait."
+    IDS_GIFCNOTFOUND        "Your GIFC software is updated."
+    IDS_SHOWLESS            "Show simple interface"
+    IDS_SHOWMORE            "Show standard interface"
+    IDS_SHOWEXT             "Show expert interface"
 END
 
 #endif    // English (U.S.) resources

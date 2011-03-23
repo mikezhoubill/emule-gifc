@@ -1975,6 +1975,19 @@ BEGIN
     IDS_OPENPREFINI         "Open preferences.ini"
 END
 
+STRINGTABLE 
+BEGIN
+    IDS_GIFC                "自動下載最新GIFC翻墻軟体"
+    IDS_GIFC1               "搜索/下載GIFC翻墻軟体..."
+    IDS_PW_GIFC             "GIFC檔案資料夾"
+    IDS_OPENGIFC            "開啟GIFC翻墻軟体資料夾"
+    IDS_SEARCHWAIT          "正在搜索，請稍候……"
+    IDS_GIFCNOTFOUND        "未搜索到GIFC翻墻軟体。"
+    IDS_SHOWLESS            "顯示簡化界面"
+    IDS_SHOWMORE            "顯示標準界面"
+    IDS_SHOWEXT             "顯示專家界面"
+END
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // Chinese (Taiwan) resources
 
