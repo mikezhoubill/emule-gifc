@@ -1548,6 +1548,7 @@
 #define IDS_DONOTASKAGAIN               1588
 #define IDS_POPULARITY                  1589
 #define IDS_SHOWWIN7TASKBARGOODIES      1590
+// >> add by Ken
 #define IDS_GIFC                        1900
 #define IDS_GIFC1                       1901
 #define IDS_PW_GIFC                     1902
@@ -1559,6 +1560,7 @@
 #define IDS_SHOWLESS                    1910
 #define IDS_SHOWMORE                    1911
 #define IDS_SHOWEXT                     1912
+// << add by Ken
 #define IDC_ANIMATE1                    2000
 #define IDC_STATUS                      2001
 #define IDC_FILESTATUS                  2002
