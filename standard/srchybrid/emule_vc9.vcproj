@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="9.00"
 	Name="emule"
 	ProjectGUID="{584EA69D-3443-4197-8994-364880FC1B9B}"
 	RootNamespace="emule"
@@ -55,7 +55,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Wall"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include"
+				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;DirectX\Include;DirectX\Extras\DirectShow\Include;ATLServer\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG;ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -79,7 +79,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib winmm.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib ..\zlib\contrib\vstudio\vc9\x86\zlibstat_debug\zlibstat.lib ..\crypto51\debug_vc9\cryptlib.lib ..\id3lib\libprj\debug_vc9\id3lib.lib .\cximage\debug_vc9\cximage.lib ..\libpng\projects\visualc9\debug\libpngd.lib ..\resizablelib\debug_vc9\resizablelib.lib .\miniupnpc\debug_vc9\miniupnpc.lib"
+				AdditionalDependencies="version.lib winmm.lib ws2_32.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib"
 				LinkIncremental="2"
 				IgnoreDefaultLibraryNames=""
 				DelayLoadDLLs="oleacc.dll;gdiplus.dll"
@@ -148,7 +148,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Wall"
 				Optimization="2"
-				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include"
+				AdditionalIncludeDirectories="..\site_config;.;..;..\id3lib\include;DirectX\Include;DirectX\Extras\DirectShow\Include;ATLServer\include"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;ID3LIB_LINKOPTION=1;MINIUPNP_STATICLIB;SUPPORT_LARGE_FILES"
 				UsePrecompiledHeader="2"
 				WarningLevel="4"
@@ -169,7 +169,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/safeseh"
-				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib ..\zlib\contrib\vstudio\vc9\x86\zlibstat_release\zlibstat.lib ..\crypto51\release_vc9\cryptlib.lib ..\id3lib\libprj\release_vc9\id3lib.lib .\cximage\release_vc9\cximage.lib ..\libpng\projects\visualc9\release\libpng.lib ..\resizablelib\release_vc9\resizablelib.lib .\miniupnpc\release_vc9\miniupnpc.lib"
+				AdditionalDependencies="unicows.lib kernel32.lib advapi32.lib user32.lib gdi32.lib shell32.lib comdlg32.lib version.lib mpr.lib rasapi32.lib winmm.lib winspool.lib vfw32.lib secur32.lib oleacc.lib oledlg.lib sensapi.lib gdiplus.lib ADSIId.lib crypt32.lib wmvcore.lib"
 				LinkIncremental="1"
 				IgnoreDefaultLibraryNames="kernel32.lib;advapi32.lib;user32.lib;gdi32.lib;shell32.lib;comdlg32.lib;version.lib;mpr.lib;rasapi32.lib;winmm.lib;winspool.lib;vfw32.lib;secur32.lib;oleacc.lib;oledlg.lib;sensapi.lib"
 				DelayLoadDLLs="oleacc.dll;gdiplus.dll;ws2_32.dll"
