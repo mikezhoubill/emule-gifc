@@ -4019,3 +4019,750 @@ Trying Unlock
 ******************************************************************
 
 Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 202                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Inside UpnpInit 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 218                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 218                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 234                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 234                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\genlib\miniserver*
+*                    \miniserver.c, LINE: 686                    *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+mserv start: bind success
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\genlib\miniserver*
+*                    \miniserver.c, LINE: 568                    *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+sockfd = 852, .... port = 1100
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\genlib\miniserver*
+*                    \miniserver.c, LINE: 568                    *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+sockfd = 848, .... port = 59381
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 297                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Host Ip: 192.168.2.100 Host Port: 1100
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 301                             *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Exiting UpnpInit 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1311                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Inside UpnpRegisterClient 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1317                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1317                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1349                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1349                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1353                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Exiting UpnpRegisterClient 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1582                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Inside UpnpSearchAsync 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1584                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1584                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1597                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1597                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 552                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+>>> SSDP SEND >>>
+M-SEARCH * HTTP/1.1
+Host: 239.255.255.250:1900
+Man: "ssdp:discover"
+MX: 5
+ST: upnp:rootdevice
+
+
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 564                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 564                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 587                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 587                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1604                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Exiting UpnpSearchAsync 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1582                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Inside UpnpSearchAsync 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1584                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1584                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1597                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1597                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 552                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+>>> SSDP SEND >>>
+M-SEARCH * HTTP/1.1
+Host: 239.255.255.250:1900
+Man: "ssdp:discover"
+MX: 5
+ST: urn:schemas-upnp-org:device:InternetGatewayDevice:1
+
+
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 564                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 564                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 587                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 587                          *
+*                    TIME: 2011/3/23 23:25:49                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1604                            *
+*                    TIME: 2011/3/23 23:25:50                    *
+******************************************************************
+
+Exiting UpnpSearchAsync 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 458                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 458                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 485                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 485                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 458                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 458                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 485                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\ssdp\ssdp_ctrlpt.*
+*                          c, LINE: 485                          *
+*                    TIME: 2011/3/23 23:25:54                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1390                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Inside UpnpUnRegisterClient 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1391                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1391                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1396                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1396                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\gena\gena_ctrlpt.*
+*                          c, LINE: 396                          *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\gena\gena_ctrlpt.*
+*                          c, LINE: 396                          *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\gena\gena_ctrlpt.*
+*                          c, LINE: 428                          *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\gena\gena_ctrlpt.*
+*                          c, LINE: 428                          *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1402                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Lock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1402                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+LOCK
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1422                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Trying Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1422                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Unlock
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 1425                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Exiting UpnpUnRegisterClient 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 373                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Inside UpnpFinish : UpnpSdkInit is :1:
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 373                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+UpnpFinish : UpnpSdkInit is ONE
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 373                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Recv Thread Pool 
+ High Jobs pending = 0 
+Med Jobs Pending = 0
+ Low Jobs Pending = 0 
+Worker Threads = 1
+Idle Threads = 0
+Persistent Threads = 0
+Average Time spent in High Q = 0.000000
+Average Time spent in Med Q = 0.000000
+Average Time spent in Low Q = 0.000000
+Max Threads Used: 0
+Total Work Time= 0.000000
+Total Idle Time = 0.000000
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 373                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Send Thread Pool 
+ High Jobs pending = 0 
+Med Jobs Pending = 0
+ Low Jobs Pending = 0 
+Worker Threads = 1
+Idle Threads = 0
+Persistent Threads = 0
+Average Time spent in High Q = 0.000000
+Average Time spent in Med Q = 0.000000
+Average Time spent in Low Q = 0.000000
+Max Threads Used: 0
+Total Work Time= 5.000000
+Total Idle Time = 0.000000
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo: Handle is 1
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3608                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo : exiting
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3591                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo: Handle is 2
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 3608                            *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+GetHandleInfo : exiting
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\genlib\miniserver*
+*                    \miniserver.c, LINE: 504                    *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Received response !!!  ShutDown From host 127.0.0.1 
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\genlib\miniserver*
+*                    \miniserver.c, LINE: 509                    *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Received multicast packet: 
+ ShutDown
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 395                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Exiting UpnpFinish : UpnpSdkInit is :1:
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 395                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Recv Thread Pool 
+ High Jobs pending = 0 
+Med Jobs Pending = 0
+ Low Jobs Pending = 0 
+Worker Threads = 0
+Idle Threads = 0
+Persistent Threads = 0
+Average Time spent in High Q = 0.000000
+Average Time spent in Med Q = 0.000000
+Average Time spent in Low Q = 0.000000
+Max Threads Used: 1078886400
+Total Work Time= 0.000000
+Total Idle Time = 0.000000
+
+******************************************************************
+*                             DEBUG                              *
+*FILE: d:\emule-gifc\srchybrid\upnplib\upnp\src\api\upnpapi.c, LI*
+*                            NE: 395                             *
+*                    TIME: 2011/3/23 23:26:50                    *
+******************************************************************
+
+Send Thread Pool 
+ High Jobs pending = 0 
+Med Jobs Pending = 0
+ Low Jobs Pending = 0 
+Worker Threads = 0
+Idle Threads = 0
+Persistent Threads = 0
+Average Time spent in High Q = 0.000000
+Average Time spent in Med Q = 0.000000
+Average Time spent in Low Q = 0.000000
+Max Threads Used: 1078886400
+Total Work Time= 5.000000
+Total Idle Time = 0.000000
