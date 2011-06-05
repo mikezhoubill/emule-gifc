@@ -1,2 +1,16 @@
 syntax: glob
 */Debug
+*/Release
+*.user
+*.aps
+*/debug*
+dist/*
+*.bak
+*.ncb
+*.suo
+UpgradeLog.XML
+*/_UpgradeReport_Files
+BuildLog.htm
+*.res
+*.manifest
+*/release*
