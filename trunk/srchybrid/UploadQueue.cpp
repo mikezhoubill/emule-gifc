@@ -73,8 +73,12 @@ static uint32 igraph, istats, i2Secs;
 */
 //Xman end
 
+//Xman
+/*
 #define HIGHSPEED_UPLOADRATE_START 500*1024
 #define HIGHSPEED_UPLOADRATE_END   300*1024
+*/
+//Xman end
 
 
 CUploadQueue::CUploadQueue()
@@ -129,7 +133,7 @@ CUploadQueue::CUploadQueue()
 	/*
 	m_hHighSpeedUploadTimer = NULL;
 	*/
-	m_bUseHighSpeedUpload = false;
+	//m_bUseHighSpeedUpload = false;
 	//Xman end
 	m_bStatisticsWaitingListDirty = true;
 
@@ -145,6 +149,11 @@ CUploadQueue::CUploadQueue()
 	m_bSpreadCreditsSlotActive = false;
 	m_slotcounter = 1;
 	// <== Spread Credits Slot [Stulle] - Stulle
+
+	// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	m_bSuperiorInQueue = false;
+	m_bSuperiorInQueueDirty = false;
+	// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 }
 
 CUploadQueue::~CUploadQueue(){
@@ -213,7 +222,12 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue(bool bCheckOnly)
 		CUpDownClient* cur_client =	waitinglist.GetAt(pos2);
 		//While we are going through this list.. Lets check if a client appears to have left the network..
 		ASSERT ( cur_client->GetLastUpRequest() );
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		if ((::GetTickCount() - cur_client->GetLastUpRequest() > MAX_PURGEQUEUETIME) || !theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID()) )
+		*/
+		if ((::GetTickCount() - cur_client->GetLastUpRequest() > MAX_PURGEQUEUETIME) || !cur_client->CheckAndGetReqUpFile() )
+		// <== requpfile optimization [SiRoB] - Stulle
 		{
 			//This client has either not been seen in a long time, or we no longer share the file he wanted anymore..
 			cur_client->ClearWaitStartTime();
@@ -244,6 +258,11 @@ CUpDownClient* CUploadQueue::FindBestClientInQueue(bool bCheckOnly)
 					{
 						bestscoreSup = cur_score;
 						toaddSup = pos2;
+						// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+						// If we found any superior client on queue we don't need to search any further when just checking
+						if(bCheckOnly)
+							break;
+						// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 					}
                 } 
 				else if(!cur_client->m_bAddNextConnect) 
@@ -436,9 +455,6 @@ void CUploadQueue::InsertInUploadingList(CUpDownClient* newclient)
 	// ==> Superior Client Handling [Stulle] - Stulle
 	/*
 	if (newclient->GetFriendSlot())
-	*/
-	if(newclient->IsSuperiorClient())
-	// <== Superior Client Handling [Stulle] - Stulle
 	{
 		theApp.uploadBandwidthThrottler->AddToStandardList(true, newclient->GetFileUploadSocket());
 		theApp.uploadBandwidthThrottler->RecalculateOnNextLoop();
@@ -451,6 +467,49 @@ void CUploadQueue::InsertInUploadingList(CUpDownClient* newclient)
 			theApp.uploadBandwidthThrottler->RecalculateOnNextLoop();
 	}
 	uploadinglist.AddTail(newclient);
+	*/
+	if(newclient->GetFriendSlot()) // add to head
+	{
+		theApp.uploadBandwidthThrottler->AddToStandardList(0, newclient->GetFileUploadSocket());
+		uploadinglist.AddHead(newclient);
+		theApp.uploadBandwidthThrottler->RecalculateOnNextLoop();
+	}
+	else if(newclient->IsSuperiorClient()) // add to head or after last superior
+	{
+		POSITION lastSupPosition = NULL;
+		POSITION pos = uploadinglist.GetHeadPosition();
+		int posCounter = 0;
+		bool foundposition = false;
+
+		while(pos != NULL && foundposition == false)
+		{
+			CUpDownClient* uploadingClient = uploadinglist.GetAt(pos);
+
+			if(uploadingClient->IsSuperiorClient()==false)
+				foundposition = true;
+			else
+			{
+				lastSupPosition = pos;
+				uploadinglist.GetNext(pos);
+				posCounter++;
+			}
+		}
+
+		if(lastSupPosition != NULL) // add after last superior
+			uploadinglist.InsertAfter(lastSupPosition, newclient);
+		else // add to head
+			uploadinglist.AddHead(newclient);
+		theApp.uploadBandwidthThrottler->AddToStandardList(posCounter, newclient->GetFileUploadSocket());
+		theApp.uploadBandwidthThrottler->RecalculateOnNextLoop();
+	}
+	else // add to tail
+	{
+		theApp.uploadBandwidthThrottler->AddToStandardList(-1, newclient->GetFileUploadSocket());
+		if(uploadinglist.GetCount()==0)
+			theApp.uploadBandwidthThrottler->RecalculateOnNextLoop();
+		uploadinglist.AddTail(newclient);
+	}
+	// <== Superior Client Handling [Stulle] - Stulle
 	//Xman end
 }
 
@@ -481,7 +540,12 @@ bool CUploadQueue::AddUpNextClient(LPCTSTR pszReason, CUpDownClient* directadd){
         return false;
 
 	//Fafner: copying lets clients stuck in CReadBlockFromFileThread::Run because file is locked - 080421
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* reqfile = theApp.sharedfiles->GetFileByID(newclient->GetUploadFileID());
+	*/
+	CKnownFile* reqfile = newclient->CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if (reqfile->IsPartFile()
 		&& ((CPartFile*)reqfile)->GetFileOp() == PFOP_COPYING)
 		return false;
@@ -768,12 +832,14 @@ void CUploadQueue::Process() {
 	{
 		AvgOverhead=eMuleOutOverall-eMuleOut;
 	}
+	/*
 	uint32 realallowedDatarate = (uint32)(theApp.pBandWidthControl->GetMaxUpload()*1024)-AvgOverhead;
 
 	if (realallowedDatarate > HIGHSPEED_UPLOADRATE_START)
 		m_bUseHighSpeedUpload = true;
 	else if (realallowedDatarate < HIGHSPEED_UPLOADRATE_END)
 		m_bUseHighSpeedUpload = false;
+	*/
 	//Xman end
 };
 
@@ -1154,7 +1220,12 @@ CUpDownClient* CUploadQueue::GetWaitingClientByIP(uint32 dwIP){
 //Xman uploading problem client
 void CUploadQueue::AddClientDirectToQueue(CUpDownClient* client)
 {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* reqfile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+	*/
+	CKnownFile* reqfile = client->CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if(reqfile)
 	{
 		theApp.uploadqueue->waitinglist.AddTail(client);
@@ -1200,7 +1271,12 @@ void CUploadQueue::AddClientToQueue(CUpDownClient* client, bool bIgnoreTimelimit
 		return;
 
 	//Xman Code Improvement
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* reqfile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+	*/
+	CKnownFile* reqfile = client->CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if (!reqfile){
 		AddDebugLogLine(false,_T("AddClientToQueue: Client is asking for a unknown file, %s"),client->DbgGetClientInfo());
 		// send file request no such file packet (0x48)
@@ -1245,7 +1321,12 @@ void CUploadQueue::AddClientToQueue(CUpDownClient* client, bool bIgnoreTimelimit
 		{	
 			//Xman see OnUploadqueue
 			//look if the client is now asking for another file
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			CKnownFile* newreqfile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			CKnownFile* newreqfile = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			CKnownFile* oldreqfile = theApp.sharedfiles->GetFileByID(client->GetOldUploadFileID());
 			if(newreqfile != oldreqfile)
 			{
@@ -1290,7 +1371,7 @@ void CUploadQueue::AddClientToQueue(CUpDownClient* client, bool bIgnoreTimelimit
 				}
 				else if (client->isupprob) //Xman uploading problem client
 				{
-					AddUpNextClient(_T("Adding ~~~problematic client (second change) on reconnect"),client);
+					AddUpNextClient(_T("Adding ~~~problematic client (second chance) on reconnect"),client);
 				}
 				else
 					AddUpNextClient(_T("Adding ****lowid on reconnecting."), client);
@@ -1521,6 +1602,7 @@ void CUploadQueue::AddClientToQueue(CUpDownClient* client, bool bIgnoreTimelimit
 	else
 	{
 		m_bStatisticsWaitingListDirty = true;
+		SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 		waitinglist.AddTail(client);
 		client->SetUploadState(US_ONUPLOADQUEUE);
 		theApp.emuledlg->transferwnd->GetQueueList()->AddClient(client,true);
@@ -1612,7 +1694,12 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient* client, LPCTSTR pszReaso
 				theApp.emuledlg->transferwnd->GetUploadList()->RemoveClient(client);
 
 			if (thePrefs.GetLogUlDlEvents())
+				// ==> requpfile optimization [SiRoB] - Stulle
+				/*
                 AddDebugLogLine(DLP_DEFAULT, true,_T("Removing client from upload list: %s Client: %s Transferred: %s SessionUp: %s QueueSessionPayload: %s In buffer: %s Req blocks: %i File: %s"), pszReason==NULL ? _T("") : pszReason, client->DbgGetClientInfo(), CastSecondsToHM( client->GetUpStartTimeDelay()/1000), CastItoXBytes(client->GetSessionUp(), false, false), CastItoXBytes(client->GetQueueSessionPayloadUp(), false, false), CastItoXBytes(client->GetPayloadInBuffer()), client->GetNumberOfRequestedBlocksInQueue(), (theApp.sharedfiles->GetFileByID(client->GetUploadFileID())?theApp.sharedfiles->GetFileByID(client->GetUploadFileID())->GetFileName():_T("")));
+				*/
+                AddDebugLogLine(DLP_DEFAULT, true,_T("Removing client from upload list: %s Client: %s Transferred: %s SessionUp: %s QueueSessionPayload: %s In buffer: %s Req blocks: %i File: %s"), pszReason==NULL ? _T("") : pszReason, client->DbgGetClientInfo(), CastSecondsToHM( client->GetUpStartTimeDelay()/1000), CastItoXBytes(client->GetSessionUp(), false, false), CastItoXBytes(client->GetQueueSessionPayloadUp(), false, false), CastItoXBytes(client->GetPayloadInBuffer()), client->GetNumberOfRequestedBlocksInQueue(), (client->CheckAndGetReqUpFile()?client->CheckAndGetReqUpFile()->GetFileName():_T("")));
+				// <== requpfile optimization [SiRoB] - Stulle
             client->m_bAddNextConnect = false;
 			uploadinglist.RemoveAt(pos);
 			
@@ -1662,7 +1749,12 @@ bool CUploadQueue::RemoveFromUploadQueue(CUpDownClient* client, LPCTSTR pszReaso
 			client->SetCollectionUploadSlot(false);
 			// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
 
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
             CKnownFile* requestedFile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			CKnownFile* requestedFile = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
             if(requestedFile != NULL) {
                 requestedFile->UpdatePartsInfo();
             }
@@ -1748,6 +1840,7 @@ bool CUploadQueue::RemoveFromWaitingQueue(CUpDownClient* client, bool updatewind
 
 void CUploadQueue::RemoveFromWaitingQueue(POSITION pos, bool updatewindow){	
 	m_bStatisticsWaitingListDirty = true;
+	SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 	CUpDownClient* todelete = waitinglist.GetAt(pos);
 	
 	//Xman see OnUploadqueue
@@ -1883,7 +1976,12 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 		return false;
 
 	if(client->HasCollectionUploadSlot()){
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		CKnownFile* pDownloadingFile = theApp.sharedfiles->GetFileByID(client->requpfileid);
+		*/
+		CKnownFile* pDownloadingFile = client->CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
 		if(pDownloadingFile == NULL)
 			return true;
 		if (pDownloadingFile->HasCollectionExtenesion_Xtreme() /*CCollection::HasCollectionExtention(pDownloadingFile->GetFileName())*/ && pDownloadingFile->GetFileSize() < (uint64)MAXPRIORITYCOLL_SIZE) //Xman Code Improvement for HasCollectionExtention
@@ -1899,22 +1997,29 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 
 	// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 	// ScarAngel always does nothing if uPrevenTimeOver > 0... easier merging. ;)
-	uint8 uPreventTimeOver = 0; // 0 = not prevent; 1 = test move down; 2 = do nothing
-	// ==> Keep friends in upload like PBF clients [Stulle] - Stulle
-	if (client->IsFriend() && client->GetFriendSlot())
-		uPreventTimeOver = 2;
-	// <== Keep friends in upload like PBF clients [Stulle] - Stulle
+	bool bPreventTimeOver = false;
 	// ==> Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 	if(client->IsPBFClient())
-		uPreventTimeOver = 1; // PBF should stay in upload no matter what
+		bPreventTimeOver = true; // PBF should stay in upload no matter what
 	// <== Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 	else if(client->IsSuperiorClient())
 	{
-		CUpDownClient* bestClient = FindBestClientInQueue(true);
-		if(!bestClient || bestClient->IsSuperiorClient()==false)
-			uPreventTimeOver = 1;
+		if(m_bSuperiorInQueueDirty)
+		{
+			CUpDownClient* bestClient = FindBestClientInQueue(true);
+			if(!bestClient || bestClient->IsSuperiorClient()==false)
+			{
+				bPreventTimeOver = true;
+				m_bSuperiorInQueue = true;
+			}
+			else
+				m_bSuperiorInQueue = false;
+			m_bSuperiorInQueueDirty = false;
+		}
+		else if(m_bSuperiorInQueue)
+			bPreventTimeOver = true;
 	}
-	if(uPreventTimeOver == 0){
+	if(bPreventTimeOver == false){
 	// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 		if( client->GetUpStartTimeDelay() > SESSIONMAXTIME){ // Try to keep the clients from downloading for ever
 			if (thePrefs.GetLogUlDlEvents())
@@ -1922,15 +2027,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 			returnvalue=true;
 		}
 	} // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
-
-
-	// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
-	if(uPreventTimeOver > 0)
-	{
-		; // do nothing
-	}
-	else
-	// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	
 	//not full chunk method:
 	if (!thePrefs.TransferFullChunks() 
 		// ==> Superior Client Handling [Stulle] - Stulle
@@ -1941,6 +2038,16 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 		)
 	{
 		//Xman: we allow a min of 2.0 MB
+		// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+		if(bPreventTimeOver)
+		{
+			// ==> Superior Client Handling [Stulle] - Stulle
+			if(bPreventTimeOver && client->IsDifferentPartBlock(true))
+				MoveDownInUpload(client);// move down
+			// <== Superior Client Handling [Stulle] - Stulle
+		}
+		else
+		// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 		if( client->GetSessionUp() >= 2097152
 		&& m_dwnextallowedscoreremove < ::GetTickCount() //Xman avoid to short upload-periods
 		)
@@ -1974,6 +2081,16 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 		}
 	}
 	else //full chunk method
+	// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	if(bPreventTimeOver)
+	{
+		// ==> Superior Client Handling [Stulle] - Stulle
+		if(bPreventTimeOver && client->IsDifferentPartBlock(true))
+			MoveDownInUpload(client);// move down
+		// <== Superior Client Handling [Stulle] - Stulle
+	}
+	else
+	// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 	if( (client->IsDifferentPartBlock() || client->GetQueueSessionPayloadUp() > SESSIONMAXTRANS))
 	{	
 		// Allow the client to download a specified amount per session
@@ -2027,10 +2144,20 @@ UINT CUploadQueue::GetWaitingPosition(CUpDownClient* client){
 
 	UINT rank = 1;
 	const UINT myscore = client->GetScore(false);
+	const bool mysuperior = client->IsSuperiorClient(); // Superior Client Handling [Stulle] - Stulle
 
 	if(thePrefs.GetEnableMultiQueue() == false){
 		for(POSITION pos = waitinglist.GetHeadPosition(); pos != NULL; ){
+			// ==> Superior Client Handling [Stulle] - Stulle
+			/*
 			if(waitinglist.GetNext(pos)->GetScore(false) > myscore)
+			*/
+			CUpDownClient* pOtherClient = waitinglist.GetNext(pos);
+			UINT uOtherScore = pOtherClient->GetScore(false);
+			bool bOtherSup = pOtherClient->IsSuperiorClient();
+			if(!mysuperior && (bOtherSup || uOtherScore > myscore) ||
+				mysuperior && bOtherSup && uOtherScore > myscore)
+			// <== Superior Client Handling [Stulle] - Stulle
 				rank++;
 		}
 	}
@@ -2038,8 +2165,17 @@ UINT CUploadQueue::GetWaitingPosition(CUpDownClient* client){
 		// Compare score only with others clients waiting for the same file
 		for(POSITION pos = waitinglist.GetHeadPosition(); pos != NULL; ){
 			CUpDownClient* pOtherClient = waitinglist.GetNext(pos);
+			// ==> Superior Client Handling [Stulle] - Stulle
+			/*
 			if(md4cmp(client->GetUploadFileID(), pOtherClient->GetUploadFileID()) == 0 && 
 				pOtherClient->GetScore(false) > myscore){
+			*/
+			// superior overrules same file
+			UINT uOtherScore = pOtherClient->GetScore(false);
+			bool bOtherSup = pOtherClient->IsSuperiorClient();
+			if(!mysuperior && (bOtherSup || md4cmp(client->GetUploadFileID(), pOtherClient->GetUploadFileID()) == 0 && uOtherScore > myscore) ||
+				mysuperior && bOtherSup && uOtherScore > myscore){
+			// <== Superior Client Handling [Stulle] - Stulle
 					rank++;
 				}
 		}
@@ -2713,7 +2849,12 @@ CUpDownClient* CUploadQueue::FindBestSpreadClientInQueue()
 	{
 		waitinglist.GetNext(pos1);
 		CUpDownClient* cur_client =	waitinglist.GetAt(pos2);
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		CKnownFile* queueNewReqfile = theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID());
+		*/
+		CKnownFile* queueNewReqfile = cur_client->CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
 		//While we are going through this list.. Lets check if a client appears to have left the network..
 		ASSERT ( cur_client->GetLastUpRequest() );
 		if ((::GetTickCount() - cur_client->GetLastUpRequest() > MAX_PURGEQUEUETIME) || !queueNewReqfile )
@@ -2794,3 +2935,27 @@ CUpDownClient* CUploadQueue::FindBestSpreadClientInQueue()
 	return ToAddClient;
 }
 // <== Spread Credits Slot [Stulle] - Stulle
+
+// ==> Superior Client Handling [Stulle] - Stulle
+void CUploadQueue::MoveDownInUpload(CUpDownClient* client)
+{
+	POSITION pos = uploadinglist.Find(client);
+	if(pos != NULL)
+	{
+		// remove from uploadlist
+		uploadinglist.RemoveAt(pos);
+
+		// remove socket
+		bool removed = theApp.uploadBandwidthThrottler->RemoveFromStandardList(client->socket);
+		bool pcRemoved = theApp.uploadBandwidthThrottler->RemoveFromStandardList((CClientReqSocket*)client->m_pPCUpSocket);
+		(void)removed;
+		(void)pcRemoved;
+
+		// reinstate the client at his new position
+		InsertInUploadingList(client);
+
+		if (thePrefs.GetLogUlDlEvents())
+			AddDebugLogLine(DLP_LOW, false, _T("%s: Moved down in Upload after one chunk finished."), client->GetUserName());
+	} 
+}
+// <== Superior Client Handling [Stulle] - Stulle

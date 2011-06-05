@@ -254,11 +254,18 @@ bool UploadBandwidthThrottler::ReplaceSocket(ThrottledFileSocket* normalsocket, 
 
 //Xman Xtreme Upload
 //threadsafe for Main-thread (only caller) and upbloadbandwidthThrottler (sendLocker)
+// ==> Superior Client Handling [Stulle] - Stulle
+/*
 void UploadBandwidthThrottler::AddToStandardList(bool first, ThrottledFileSocket* socket) {
+*/
+void UploadBandwidthThrottler::AddToStandardList(int posCounter, ThrottledFileSocket* socket) {
+// <== Superior Client Handling [Stulle] - Stulle
 	if(socket != NULL) {
 		sendLocker.Lock();
 
 		RemoveFromStandardListNoLock(socket);
+		// ==> Superior Client Handling [Stulle] - Stulle
+		/*
 		if(first)
 		{
 			m_StandardOrder_list.InsertAt(0, socket);
@@ -267,6 +274,25 @@ void UploadBandwidthThrottler::AddToStandardList(bool first, ThrottledFileSocket
 			m_highestNumberOfFullyActivatedSlots++;
 			SetNumberOfFullyActivatedSlots();
 		}
+		*/
+		if(posCounter >= 0) // add somewhere before the tail
+		{
+			m_StandardOrder_list.InsertAt(posCounter, socket);
+
+			// If we would add the new slot after the last full we make it trickle
+			if(posCounter < m_StandardOrder_list_full.GetSize())
+			{
+				socket->SetFull();
+				m_StandardOrder_list_full.AddTail(socket);
+				m_highestNumberOfFullyActivatedSlots++;
+				SetNumberOfFullyActivatedSlots();
+			}
+			else
+			{
+				socket->SetTrickle();
+			}
+		}
+		// <== Superior Client Handling [Stulle] - Stulle
 		else
 		{
 			m_StandardOrder_list.InsertAt(m_StandardOrder_list.GetSize(),socket);

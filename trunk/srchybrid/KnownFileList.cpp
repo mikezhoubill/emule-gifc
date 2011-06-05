@@ -705,7 +705,6 @@ bool CKnownFileList::CheckAlreadyDownloadedFileQuestion(const uchar* hash, CStri
 			// << add by Ken
 			msg = GetResString(IDS_DOWNHISTORY_CHECK1);
 		}
-		// >> modified by Ken
 		else if(ret==3)
 		{
 			// >> add by Ken

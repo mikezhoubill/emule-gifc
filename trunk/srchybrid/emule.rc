@@ -611,41 +611,46 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD | WS_DISABLED | WS_CAPTION
 CAPTION "Files"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Static",IDC_ONND,7,3,215,58,BS_FLAT
+    GROUPBOX        "Static",IDC_ONND,7,3,215,53,BS_FLAT
     CONTROL         "Add new added file for downloading in paused mode",
                     IDC_ADDNEWFILESPAUSED,"Button",BS_AUTOCHECKBOX | BS_FLAT | 
                     WS_GROUP | WS_TABSTOP,13,14,207,10
     CONTROL         "Add new shared files with auto priority",IDC_UAP,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,25,206,11
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,24,206,10
     CONTROL         "Add new downloads with auto priority",IDC_DAP,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,37,206,8
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,34,206,10
     CONTROL         "Cleanup filenames of new downloads",IDC_FNCLEANUP,
-                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,48,
+                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,44,
                     158,10
-    PUSHBUTTON      "Button1",IDC_FNC,172,46,48,13,BS_FLAT
+    PUSHBUTTON      "Button1",IDC_FNC,172,42,48,13,BS_FLAT
     CONTROL         "Try to transfer full chunks to all uploads",
                     IDC_FULLCHUNKTRANS,"Button",BS_AUTOCHECKBOX | BS_FLAT | 
-                    WS_TABSTOP,13,63,209,10
+                    WS_TABSTOP,13,58,209,10
     CONTROL         "Try to Download preview chunks first.",IDC_PREVIEWPRIO,
-                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,73,
+                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,68,
                     209,10
     CONTROL         "IDS_PF_WATCHCB",IDC_WATCHCB,"Button",BS_AUTOCHECKBOX | 
-                    BS_FLAT | WS_TABSTOP,13,84,209,10
+                    BS_FLAT | WS_TABSTOP,13,78,209,10
     CONTROL         "Use advanced calculation method for remaining time",
                     IDC_PF_TIMECALC,"Button",BS_AUTOCHECKBOX | BS_FLAT | 
-                    WS_TABSTOP,13,95,209,10
+                    WS_TABSTOP,13,88,209,10
     CONTROL         "Start next paused file when a file completes",
                     IDC_STARTNEXTFILE,"Button",BS_AUTOCHECKBOX | BS_FLAT | 
-                    WS_TABSTOP,13,106,209,10
+                    WS_TABSTOP,13,98,209,10
     CONTROL         "Prefer same category",IDC_STARTNEXTFILECAT,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,25,118,197,8
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,25,108,197,8
     CONTROL         "Only same category",IDC_STARTNEXTFILECAT2,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,25,129,197,8
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,25,118,197,8
     CONTROL         "Remember downloaded files",IDC_REMEMBERDOWNLOADED,
-                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,139,
+                    "Button",BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,128,
                     209,10
     CONTROL         "Remember cancelled files",IDC_REMEMBERCANCELLED,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,150,209,10
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,138,209,10
+    CONTROL         "Remember unused AICH-Hashes",IDC_REMEMBERAICH,"Button",
+                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,148,209,10
+    CONTROL         "Split Known2_64.met (unused AICHHashsets in extra file)",
+                    IDC_KNOWN2SPLIT_PPGFILES,"Button",BS_AUTOCHECKBOX | BS_FLAT |
+                    WS_TABSTOP,13,158,209,10
     GROUPBOX        "Static",IDC_STATICVIDEOPLAYER,7,169,216,70,BS_FLAT
     LTEXT           "Command:",IDC_VIDEOPLAYER_CMD_LBL,13,178,151,8
     EDITTEXT        IDC_VIDEOPLAYER,13,188,206,12,ES_AUTOHSCROLL
@@ -654,8 +659,6 @@ BEGIN
     EDITTEXT        IDC_VIDEOPLAYER_ARGS,13,210,205,12,ES_AUTOHSCROLL
     CONTROL         "Create file backup for preview",IDC_VIDEOBACKUP,"Button",
                     BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,226,195,8
-    CONTROL         "Remember unused AICH-Hashes",IDC_REMEMBERAICH,"Button",
-                    BS_AUTOCHECKBOX | BS_FLAT | WS_TABSTOP,13,160,209,10
 END
 
 IDD_PPG_DIRECTORIES DIALOGEX 0, 0, 231, 241
@@ -1143,20 +1146,22 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,22,107,256,8
 END
 
-IDD_SELCATEGORY DIALOGEX 0, 0, 186, 76
+IDD_SELCATEGORY DIALOGEX 0, 0, 186, 120
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Select Category"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,70,55,50,14,BS_FLAT
-    PUSHBUTTON      "Cancel",IDCANCEL,130,55,50,14,BS_FLAT
-    COMBOBOX        IDC_CATCOMBO,7,23,172,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
-                    WS_VSCROLL | WS_TABSTOP
     LTEXT           "Select a category or type in a title for a new category for this link.",
-                    IDC_STATIC_INS,6,3,174,16
+                    IDC_STATIC_INS,6,4,174,16
+    COMBOBOX        IDC_CATCOMBO,6,22,174,42,CBS_DROPDOWN | CBS_AUTOHSCROLL | 
+                    WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_SELFILES,6,38,174,45,ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL |
+                    ES_AUTOHSCROLL, WS_EX_CLIENTEDGE
     CONTROL         "Do not ask me again",IDC_DONTASKMEAGAINCB,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,11,41,111,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,6,88,174,10
+    DEFPUSHBUTTON   "OK",IDOK,70,100,50,14,BS_FLAT
+    PUSHBUTTON      "Cancel",IDCANCEL,130,100,50,14,BS_FLAT
 END
 // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
@@ -2428,7 +2433,7 @@ BEGIN
     CONTROL         "Convert hexadecimal numbers ""%xx"" back to characters",
                     IDC_CHECKCONVERTHEX,"Button",BS_AUTOCHECKBOX | BS_FLAT | 
                     WS_TABSTOP,7,37,197,10
-    CONTROL         "Convert wrong apostrophes ""¡¯"", ""`"" to standard apostrophes "" ' """,
+    CONTROL         "Convert wrong apostrophes ""’"", ""`"" to standard apostrophes "" ' """,
                     IDC_CHECKCONVERTAPOSTROPHES,"Button",BS_AUTOCHECKBOX | 
                     BS_FLAT | WS_TABSTOP,7,27,232,10
     CONTROL         "Search and Replace:",IDC_CHECKSEARCHANDREPLACE,"Button",
@@ -2788,7 +2793,11 @@ SHAREDIR                ICON                    "res\\ShareDir.ico"
 TRAYCONNECTEDPLUS       ICON                    "res\\ScarTrayConnectedPlus.ico"
 TRAYNOTCONNECTEDPLUS    ICON                    "res\\ScarTrayDisconnectedPlus.ico"
 TRAYLOWIDPLUS           ICON                    "res\\ScarTrayLowIDPlus.ico"
-GIFC                    ICON                    "res\\GIFC.ico"
+FILEADDSRC              ICON                    "res\\FileAddSrc.ico"
+FILEDOWNLOAD            ICON                    "res\\FileDownload.ico"
+FILEDOWNLOADPAUSED      ICON                    "res\\FileDownloadPaused.ico"
+FILEDOWNLOADPREVIEWFIRST ICON                    "res\\FileDownloadPreviewFirst.ico"
+FILEDOWNLOADPREVIEWPAUSE ICON                    "res\\FileDownloadPreviewPause.ico"GIFC                    ICON                    "res\\GIFC.ico"
 INGIFC                  ICON                    "res\\IncomingGIFC.ico"
 GIFC1                   ICON                    "res\\GIFC1.ico"
 SHOWLESS                ICON                    "res\\ShowLess.ico"
@@ -5286,7 +5295,7 @@ BEGIN
     IDS_ENABLEKNOWN2BUFFER  "Enable AICHHashset buffer (reduce diskio while hashing tons of files)"
     IDS_ANTILEECHERFINCAN_CHECK 
                             "Detect Fincan Community Hash (CPU intensive!)"
-    IDS_ENABLEKNOWN2SPLIT   "Split Known2_64.met, let unshared AICHHashsets in a single file"
+    IDS_ENABLEKNOWN2SPLIT   "Split Known2_64.met (unused AICHHashsets in extra file)"
     IDS_EMULE_CTRL_DATA     "eMule control + data"
     IDS_NETWORK_ADAPTER     "Network Adapter"
 END
@@ -5422,6 +5431,13 @@ BEGIN
     IDS_SKIPALL             "S&kip All"
     IDS_TRYAGAIN            "&Try Again"
     IDS_YESTOALL            "Y&es to All"
+    IDS_OVERWRITE1          "File %s Already Exists. OverWrite It?"
+    IDS_OVERWRITE2          "OverWrite?"    
+    IDS_BACKUPERROR         "Error encountered during backup"
+    IDS_BACKUP_PART         "Because of their size, backing up *.part files may take a few minutes.\nAre you sure you want to do this?"
+    IDS_BACKUP_PART_W       "Are you sure?"
+    IDS_BACKUP_COMPLETE     "File(s) Copied Successfully."
+    IDS_BACKUP_COMPLETE_W   "Backup complete"
     // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
     // ==> TBH: minimule - Max
     IDS_MM_SHOW             "Use TBH Mini-Mule instead"
@@ -5458,7 +5474,7 @@ BEGIN
     IDS_CHECKDOTTOSPACE     "Convert ""."" to "" """
     IDS_CHECKUNDERLINETOSPACE "Convert ""_"" to "" """
     IDS_CHECKCONVERTAPOSTROPHES 
-                            "Convert wrong apostrophes ""¡¯"", ""`"" to standard apostrophes "" ' """
+                            "Convert wrong apostrophes ""´"", ""`"" to standard apostrophes "" ' """
     IDS_CHECKCONVERTHEX     "Convert hexadecimal numbers ""%xx"" back to characters"
     IDS_CHECKSEARCHANDREPLACE "Search and Replace:"
     IDS_SC_SEARCHFOR        "Search for:"
@@ -5537,6 +5553,7 @@ BEGIN
     IDS_KEEPCATINCSHARED    "Should incoming directory of removed category be added as share?"
     IDS_KEEPCATINCSHARED_TITLE "Category removed"
     IDS_ADD_REMOVED_INC     "Ask if incoming dir of removed cat should be added as share"
+    IDS_DONOTWATCHCLIP      "Stop watching clipboard"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Shared Files Management" // Shared Files Management [Stulle] - Stulle
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -5891,7 +5908,8 @@ BEGIN
     IDS_ADVADMIN_HIADMIN    "Hi-Admin"
     IDS_ADVADMINENABLED     "Enable multi user Webinterface right management"
     IDS_ADVADMIN_GUEST      "Guest"
-    IDS_ADVADMIN_DFILES     "Acces - Download files?"
+    IDS_ADVADMIN_DFILES     "Access - Download files?"
+    IDS_WS_HIDDEN           "Filename hidden"
     // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
     // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
     IDS_TAB_WEB_SERVER      "Web Server"
@@ -5944,6 +5962,7 @@ BEGIN
     IDS_SVC_STRTUP_OPN_FAIL "Failed to open service to change startup mode: %s"
     IDS_SVC_STRTUP_CTRL_FAIL "Failed to connect to service control to change startup mode: %s"
     IDS_SVC_LINK_PASS_FAIL  "Pass link to webservice: Internetopen error"
+    IDS_SERVICE_OPT_GUI     "Mod GUI addons"
     // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
     // ==> Adjustable NT Service Strings [Stulle] - Stulle
     IDS_SERVICE_STR_GROUP   "NT Service strings (empty = default)"
@@ -5970,6 +5989,7 @@ BEGIN
     IDS_NOMINIMIZE          "No, To tray"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_WS_FRIENDSLOT       "Friend Slot" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Chunk Detail" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 STRINGTABLE 

@@ -576,13 +576,23 @@ void CQueueListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIte
 			break;
 
 		case 1: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			const CKnownFile *file = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			_tcsncpy(pszText, file != NULL ? file->GetFileName() : _T(""), cchTextMax);
 			break;
 		}
 
 		case 2: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			const CKnownFile *file = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if (file)
 			{
 				// ==> PowerShare [ZZ/MorphXT] - Stulle
@@ -658,6 +668,13 @@ void CQueueListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIte
 					default:
 						Sbuffer.Empty();
 				}
+				// ==> Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
+				if(client->GetUploadState()==US_BANNED || client->IsGPLEvildoer() || client->IsLeecher())
+				{
+					_tcsncpy(pszText, Sbuffer, cchTextMax);
+					break;
+				}
+				// <== Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
 				if(client->GetPowerShared(file)) {
 					CString tempString = GetResString(IDS_POWERSHARE_PREFIX);
 					tempString.Append(_T(","));
@@ -875,8 +892,14 @@ int CQueueListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 			break;
 
 		case 1: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file1 = theApp.sharedfiles->GetFileByID(item1->GetUploadFileID());
 			const CKnownFile *file2 = theApp.sharedfiles->GetFileByID(item2->GetUploadFileID());
+			*/
+			const CKnownFile *file1 = item1->CheckAndGetReqUpFile();
+			const CKnownFile *file2 = item2->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if (file1 != NULL && file2 != NULL)
 				iResult = CompareLocaleStringNoCase(file1->GetFileName(), file2->GetFileName());
 			else if (file1 == NULL)
@@ -887,8 +910,14 @@ int CQueueListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 		}
 
 		case 2: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file1 = theApp.sharedfiles->GetFileByID(item1->GetUploadFileID());
 			const CKnownFile *file2 = theApp.sharedfiles->GetFileByID(item2->GetUploadFileID());
+			*/
+			const CKnownFile *file1 = item1->CheckAndGetReqUpFile();
+			const CKnownFile *file2 = item2->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if (file1 != NULL && file2 != NULL)
 			// ==> PowerShare [ZZ/MorphXT] - Stulle
 			// ==> Fair Play [AndCycle/Stulle] - Stulle

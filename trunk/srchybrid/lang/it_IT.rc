@@ -2337,6 +2337,13 @@ BEGIN
     IDS_SKIPALL             "Salta tutti"
     IDS_TRYAGAIN            "Prova ancora"
     IDS_YESTOALL            "Si a tutti"
+    IDS_OVERWRITE1          "Il file %s esiste già. Vuoi sovrascriverlo?"
+    IDS_OVERWRITE2          "Sovrascrivere?"    
+    IDS_BACKUPERROR         "E' stato riscontrato un errore durante il Backup."
+    IDS_BACKUP_PART         "A causa della loro dimensione, il Backup dei File *.part potrebbe richiedere alcuni minuti.\nSei sicuro di volerlo fare?"
+    IDS_BACKUP_PART_W       "Sei sicuro?"
+    IDS_BACKUP_COMPLETE     "File Copiato/i con Successo!"
+    IDS_BACKUP_COMPLETE_W   "Backup completato"
     // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
     // ==> TBH: minimule - Max
     IDS_MM_SHOW             "Usa MiniMule TBH"
@@ -2452,6 +2459,7 @@ BEGIN
     IDS_KEEPCATINCSHARED    "La cartella incoming della categoria cancellata deve essere aggiunta come condivisione?"
     IDS_KEEPCATINCSHARED_TITLE "Categoria cancellata"
     IDS_ADD_REMOVED_INC     "Chiedi se la cartella incoming della categoria cancellata \ndeve essere aggiunta come condivisione"
+    IDS_DONOTWATCHCLIP "Non analizzare gli appunti"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Gestione File Condivisi" // Shared Files Management [Stulle] - Stulle
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2806,6 +2814,7 @@ BEGIN
     IDS_ADVADMINENABLED     "Attiva l'interfaccia web multiutente per la gestione dei diritti"
     IDS_ADVADMIN_GUEST      "Ospite"
     IDS_ADVADMIN_DFILES     "Accesso - Scaricare file?"
+    IDS_WS_HIDDEN           "Nome file nascosto"
     // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
     // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
     IDS_TAB_WEB_SERVER      "WebServer"
@@ -2858,6 +2867,7 @@ BEGIN
     IDS_SVC_STRTUP_OPN_FAIL "Apertura del servizio fallita per la modifica della modalità di avvio: %s"
     IDS_SVC_STRTUP_CTRL_FAIL "Connessione al controllo servizio per cambiare la modalità di avvio fallita: %s"
     IDS_SVC_LINK_PASS_FAIL  "Passa collegamento al servizio web: Errore apertura Internet"
+    IDS_SERVICE_OPT_GUI     "Aggiunte grafiche Mod"
     // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
     // ==> Adjustable NT Service Strings - Stulle
     IDS_SERVICE_STR_GROUP   "Stringhe servizio NT (vuota = default)"
@@ -2884,6 +2894,7 @@ BEGIN
     IDS_NOMINIMIZE          "No, minimizza in tray"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_WS_FRIENDSLOT       "Slot Amico" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Dettaglio Chunk" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 #endif    // Italian (Italy) resources

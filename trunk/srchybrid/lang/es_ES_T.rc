@@ -2336,6 +2336,13 @@ BEGIN
     IDS_SKIPALL             "O&mitir Todo"
     IDS_TRYAGAIN            "&Volver a intentar"
     IDS_YESTOALL            "S&í a Todo"
+    IDS_OVERWRITE1          	"El archivo %s ya existe. ¿Sobrescribir?"
+    IDS_OVERWRITE2         	"¿Sobrescribir?"    
+    IDS_BACKUPERROR        	"Se ha encontrado un error mientras se hacía el BackUp"
+    IDS_BACKUP_PART       	"Debido a su tamaño, el BackUp de los archivos *.part puede durar unos minutos.\n¿Está seguro de querer hacerlo?"
+    IDS_BACKUP_PART_W     	"¿Estás seguro?"
+    IDS_BACKUP_COMPLETE   	"Archivo(s) Copiados Satisfactoriamente"
+    IDS_BACKUP_COMPLETE_W       "Copia de seguridad completada"
 // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 // ==> TBH: minimule - Max
 	IDS_MM_SHOW             "Usar TBH en lugar de Mini-Mule"
@@ -2447,6 +2454,8 @@ BEGIN
     IDS_KEEPCATINCSHARED    "En caso de eliminar una categoría el directorio compartido sera puesto a compartir?"
     IDS_KEEPCATINCSHARED_TITLE "Categoría Eliminada"
     IDS_ADD_REMOVED_INC     "Pregunta si el directorio compartido de una categoría eliminada es puesto a compartir."
+    IDS_DONOTWATCHCLIP 		"Parar de monitorizar el portapapeles"
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Gestión de los Archivos Compartidos" // Shared Files Management [Stulle] - Stulle
 // ==> Spread bars [Slugfiller/MorphXT] - Stulle
     IDS_SPREAD_BARS         "Activar las Barras de Difusión"
@@ -2798,6 +2807,7 @@ BEGIN
     IDS_ADVADMINENABLED     "Activar la administración de la interfaz multiusuario"
     IDS_ADVADMIN_GUEST      "Invitado"
     IDS_ADVADMIN_DFILES     "Acceso - Arhivos descargados"
+    IDS_WS_HIDDEN           "Nombre de archivo oculto"
     // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
     // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
     IDS_TAB_WEB_SERVER      "Servidor Web"
@@ -2850,6 +2860,7 @@ BEGIN
     IDS_SVC_STRTUP_OPN_FAIL "Error al abrir el servicio para cambiar el modo de arranque: %s"
     IDS_SVC_STRTUP_CTRL_FAIL "Error al conectarse con el Control de Servicios para cambiar el modo de arranque: %s"
     IDS_SVC_LINK_PASS_FAIL  "Link del servicio web: No abierto hacia Internet"
+    IDS_SERVICE_OPT_GUI     "Complementos GUI del Mod"
     // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
     // ==> Adjustable NT Service Strings - Stulle
     IDS_SERVICE_STR_GROUP   "Comandos Servicio NT (Vacío = Por Defecto)"
@@ -2876,6 +2887,7 @@ BEGIN
     IDS_NOMINIMIZE          "No, a la Bandeja del Sistema"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_WS_FRIENDSLOT       "Slot Amigo" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Detalles de la parte" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 #endif    // Spanish (Castilian) resources

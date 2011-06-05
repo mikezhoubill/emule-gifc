@@ -34,7 +34,12 @@ public:
 
 	//void ReplaceSocket(ThrottledFileSocket* oldsocket, ThrottledFileSocket* newsocket); //Xman Xtreme Upload: Peercache-part
 	bool ReplaceSocket(ThrottledFileSocket* normalsocket, ThrottledFileSocket* pcsocket, ThrottledFileSocket* newsocket); //Xman Xtreme Upload: Peercache-part
+	// ==> Superior Client Handling [Stulle] - Stulle
+	/*
 	void AddToStandardList(bool first, ThrottledFileSocket* socket); //Xman bugfix: sometimes a socket was placed on wrong position
+	*/
+	void AddToStandardList(int posCounter, ThrottledFileSocket* socket); //Xman bugfix: sometimes a socket was placed on wrong position
+	// <== Superior Client Handling [Stulle] - Stulle
     bool RemoveFromStandardList(ThrottledFileSocket* socket);
 
     void QueueForSendingControlPacket(ThrottledControlSocket* socket, bool hasSent = false); // ZZ:UploadBandWithThrottler (UDP)

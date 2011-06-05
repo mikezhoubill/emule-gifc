@@ -197,11 +197,6 @@ protected:
 	HTREEITEM m_htiKnown2Buffer;
 	//zz_fly :: end
 
-	//zz_fly :: known2 split
-	bool m_bKnown2Split; 
-	HTREEITEM m_htiKnown2Split;
-	//zz_fly :: end
-
 	virtual void DoDataExchange(CDataExchange* pDX);
 	virtual BOOL OnInitDialog();
 	virtual BOOL OnApply();

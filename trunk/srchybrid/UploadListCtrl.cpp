@@ -113,6 +113,9 @@ void CUploadListCtrl::Init()
 	InsertColumn(7, GetResString(IDS_UPSTATUS),		LVCFMT_LEFT,  DFLT_PARTSTATUS_COL_WIDTH);
 	InsertColumn(8,	GetResString(IDS_CD_CSOFT),		LVCFMT_LEFT, 90); //Xman version see clientversion in every window
 	InsertColumn(9, GetResString(IDS_UPDOWNUPLOADLIST),	LVCFMT_LEFT, 90); //Xman show complete up/down in uploadlist
+	// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+	InsertColumn(10,GetResString(IDS_CHUNK),LVCFMT_LEFT,100);
+	// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
 	
 
 	SetAllIcons();
@@ -181,6 +184,12 @@ void CUploadListCtrl::Localize()
 	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
 	pHeaderCtrl->SetItem(9, &hdi);
 	//Xman end
+
+	// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+	strRes = GetResString(IDS_CHUNK);
+	hdi.pszText = const_cast<LPTSTR>((LPCTSTR)strRes);
+	pHeaderCtrl->SetItem(10, &hdi);
+	// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle
 	theApp.emuledlg->transferwnd->SetBackgroundColor(style_b_uploadlist);
@@ -571,6 +580,21 @@ void CUploadListCtrl::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
 						break;
 					}
 
+					// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+					case 10:
+					{
+						cur_rec.bottom--;
+						cur_rec.top++;
+						client->DrawUpStatusBarChunk(dc,&cur_rec,false,thePrefs.UseFlatBar());
+						CFont *pOldFont = dc.SelectObject(&m_fontBoldSmaller);
+						client->DrawUpStatusBarChunkText(dc,&cur_rec);
+						dc.SelectObject(pOldFont);
+						cur_rec.bottom++;
+						cur_rec.top--;
+					}
+						break;
+					// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+
 					default:
 						// ==> Design Settings [eWombat/Stulle] - Stulle
 						/*
@@ -618,7 +642,12 @@ void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 			break;
 
 		case 1: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			const CKnownFile *file = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			_tcsncpy(pszText, file != NULL ? file->GetFileName() : _T(""), cchTextMax);
 			break;
 		}
@@ -661,7 +690,12 @@ void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 			break;
 
 		case 5:
+			// ==> Display remaining upload time [Stulle] - Stulle
+			/*
 			_tcsncpy(pszText, CastSecondsToHM(client->GetUpStartTimeDelay() / 1000), cchTextMax);
+			*/
+			_sntprintf(pszText, cchTextMax, _T("%s (+%s)"), CastSecondsToHM((client->GetUpStartTimeDelay())/1000), client->GetRemainingUploadTime());
+			// <== Display remaining upload time [Stulle] - Stulle
 			break;
 
 		case 6:
@@ -676,11 +710,23 @@ void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 			if (client->IsFriend() && client->GetFriendSlot())
 				Sbuffer.Append(_T(",FS"));
 			// <== Display friendslot [Stulle] - Stulle
+			// ==> Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
+			if(client->GetUploadState()==US_BANNED || client->IsGPLEvildoer() || client->IsLeecher())
+			{
+				_tcsncpy(pszText, Sbuffer, cchTextMax);
+				break;
+			}
+			// <== Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
 			if (client->GetPowerShared())
 				Sbuffer.Append(_T(",PS"));
 			// ==> Fair Play [AndCycle/Stulle] - Stulle
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
-			if (file && file->statistic.GetFairPlay()) {
+			*/
+			const CKnownFile *file = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
+			if (file && !file->IsPartFile() && file->statistic.GetFairPlay()) {
 				Sbuffer.Append(_T(",FairPlay"));
 			}
 			// <== Fair Play [AndCycle/Stulle] - Stulle
@@ -718,6 +764,12 @@ void CUploadListCtrl::GetItemDisplayText(const CUpDownClient *client, int iSubIt
 				_tcsncpy(pszText, _T("?"), cchTextMax);
 			break;
 		//Xman end
+
+		// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+		case 10:
+			_tcsncpy(pszText, _T("Chunk Details"), cchTextMax);
+			break;
+		// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
 	}
 	pszText[cchTextMax - 1] = _T('\0');
 }
@@ -766,7 +818,12 @@ void CUploadListCtrl::OnLvnGetInfoTip(NMHDR *pNMHDR, LRESULT *pResult)
 		{
 			CString strInfo;
 			strInfo.Format(GetResString(IDS_USERINFO), client->GetUserName());
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+			*/
+			const CKnownFile* file = client->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if (file)
 			{
 				strInfo += GetResString(IDS_SF_REQUESTED) + _T(' ') + file->GetFileName() + _T('\n');
@@ -834,8 +891,14 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 			break;
 
 		case 1: {
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			const CKnownFile *file1 = theApp.sharedfiles->GetFileByID(item1->GetUploadFileID());
 			const CKnownFile *file2 = theApp.sharedfiles->GetFileByID(item2->GetUploadFileID());
+			*/
+			const CKnownFile *file1 = item1->CheckAndGetReqUpFile();
+			const CKnownFile *file2 = item2->CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if (file1 != NULL && file2 != NULL)
 				iResult = CompareLocaleStringNoCase(file1->GetFileName(), file2->GetFileName());
 			else if (file1 == NULL)
@@ -915,6 +978,15 @@ int CUploadListCtrl::SortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				iResult=0;
 			break;
 		//Xman end
+
+		// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+		case 10:
+			if (item1->GetUpChunkProgressPercent() == item2->GetUpChunkProgressPercent())
+				iResult=0;
+			else
+				iResult=item1->GetUpChunkProgressPercent() > item2->GetUpChunkProgressPercent()?1:-1;
+			break;
+		// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
 	}
 
 	if (lParamSort >= 100)

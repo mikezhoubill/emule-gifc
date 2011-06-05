@@ -21,7 +21,7 @@ public:
 	/*
 	BOOL TrayShow();
 	*/
-	BOOL TrayShow(BOOL bMiniMule = true);
+	BOOL TrayShow(bool bMiniMule = true, bool bOnlyMiniMule = false);
 	// <== TBH: minimule - MyTh88
 	BOOL TrayHide();
 	void TraySetToolTip(LPCTSTR lpszToolTip);
@@ -53,7 +53,7 @@ protected:
 	// ==> Static Tray Icon [MorphXT] - MyTh88
 	BOOL m_bMaximized; 
 	// <== Static Tray Icon [MorphXT] - MyTh88
-	BOOL m_bTbhMiniMuleVis; // TBH: minimule - Stulle
+	bool m_bTbhMiniMuleVis; // TBH: minimule - Stulle
 
 	void KillSingleClickTimer();
 

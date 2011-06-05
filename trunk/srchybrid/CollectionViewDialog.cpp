@@ -197,10 +197,8 @@ void CCollectionViewDialog::DownloadSelected(void)
 		if (pCollectionFile)
 			//Xman [MoNKi: -Check already downloaded files-]
 			if ( theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pCollectionFile->GetFileHash(), pCollectionFile->GetFileName()) )
-			{
-				theApp.downloadqueue->AddSearchToDownload(pCollectionFile->GetED2kLink(), thePrefs.AddNewFilesPaused(), iNewIndex);
-			}
 			//Xman end
+				theApp.downloadqueue->AddSearchToDownload(pCollectionFile->GetED2kLink(), thePrefs.AddNewFilesPaused(), iNewIndex);
 	}
 }
 

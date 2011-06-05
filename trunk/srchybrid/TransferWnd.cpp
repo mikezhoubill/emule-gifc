@@ -312,6 +312,10 @@ void CTransferWnd::OnInitialUpdate()
 
 void CTransferWnd::ShowQueueCount(uint32 number)
 {
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if(theApp.IsRunningAsService(SVC_BASIC_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	TCHAR buffer[100];
 	_sntprintf(buffer, _countof(buffer), _T("%u (%u ") + GetResString(IDS_BANNED).MakeLower() + _T(")"), number, theApp.clientlist->GetBannedCount());
 	buffer[_countof(buffer) - 1] = _T('\0');
@@ -2049,7 +2053,12 @@ BOOL CTransferWnd::OnCommand(WPARAM wParam, LPARAM /*lParam*/)
 			break;
 		}
 		case MP_HM_OPENINC:
-			ShellExecute(NULL, _T("open"), curCat->strIncomingPath,NULL, NULL, SW_SHOW);
+			// ==> Open Incoming Folder Fix [CommanderGER] - Stulle
+			/*
+			ShellExecute(NULL, _T("open"), thePrefs.GetCategory(m_isetcatmenu)->strIncomingPath,NULL, NULL, SW_SHOW);
+			*/
+			ShellExecute(NULL, _T("open"), thePrefs.GetCategory(rightclickindex)->strIncomingPath,NULL, NULL, SW_SHOW);
+			// <== Open Incoming Folder Fix [CommanderGER] - Stulle
 			break;
 	}
 

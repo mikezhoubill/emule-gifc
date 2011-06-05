@@ -90,6 +90,7 @@ typedef struct
 	bool	bIsPartFile;
 	CString	sFileState;
 	CString	sFileName;
+	bool	bShowFileName; // Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	CString sFileType;
 	uint64	m_qwFileSize;
 	uint64	nFileTransferred;
@@ -139,6 +140,7 @@ typedef struct
 	CString	sFileName;
 	CString	sClientNameVersion;
 	uint32	nScore;
+	bool bSuperior; // Superior Client Handling [Stulle] - Stulle
 	CString sIndex;	//SyruS CQArray-Sorting element
 } QueueUsers;
 
@@ -431,7 +433,12 @@ private:
 private:
 	static void		SaveWIConfigArray(BOOL array[], int size, LPCTSTR key);
 	static CString	GetWebImageNameForFileType(CString filename);
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	/*
 	static CString  GetClientSummary(CUpDownClient* client);
+	*/
+	static CString  GetClientSummary(CUpDownClient* client, bool bShowFilename);
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	static CString	_GetMyInfo(ThreadData Data);
 	static CString	GetClientversionImage(CUpDownClient* client);
 	// ==> New failed login handling for WebInterface [MorphXT/leuk_he/dreamwalker/Stulle] - Stulle

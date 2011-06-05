@@ -20,13 +20,13 @@
 /*
 //Xman
 //ModID
-#define MOD_VERSION		_T("Xtreme 8.0") 
+#define MOD_VERSION		_T("Xtreme 8.1") 
 */
 // <== ModID [itsonlyme/SiRoB] - Stulle
 
 //Xman versions check
 #define MOD_MAIN_VER	8
-#define MOD_MIN_VER		0
+#define MOD_MIN_VER		1
 #define	MOD_BUILD_VER	1 //1=Xtreme x.x 2=Xtreme x.x.1
 
 // ==> ModID [itsonlyme/SiRoB] - Stulle
@@ -34,7 +34,7 @@
 //Xman Anti-Leecher: simple Anti-Thief
 #define MOD_MAJOR_VERSION _T("eMule v0.50a") 
 //const float MOD_FLOAT_VERSION= (float)_tstof(CString(MOD_VERSION).Mid(7)) ;
-#define MOD_NICK_ADD _T(" «") + MOD_VERSION + _T("»")
+#define MOD_NICK_ADD _T(" ?) + MOD_VERSION + _T("?)
 */
 // <== ModID [itsonlyme/SiRoB] - Stulle
 

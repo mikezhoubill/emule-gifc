@@ -62,6 +62,10 @@ public:
 	CtrlItem_Struct* parent;
 	DWORD            dwUpdated;
 	CBitmap          status;
+	// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+	DWORD            dwUpdatedchunk;
+	CBitmap          statuschunk;
+	// <== Downloading Chunk Detail Display [SiRoB] - Stulle
 };
 
 

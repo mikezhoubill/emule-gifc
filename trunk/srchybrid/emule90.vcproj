@@ -2826,19 +2826,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\banner_quer.jpg"
-				>
-			</File>
-			<File
 				RelativePath="res\bold.ico"
 				>
 			</File>
 			<File
 				RelativePath="res\boldFont.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Browse8.ico"
 				>
 			</File>
 			<File
@@ -3322,10 +3314,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\fileimportparts.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\FileInfo.gif"
 				>
 			</File>
@@ -3634,19 +3622,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\MagicAngel.ico"
-				>
-			</File>
-			<File
 				RelativePath="res\MagicAngel.jpg"
 				>
 			</File>
 			<File
 				RelativePath="res\MediaInfo.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\mephisto.ico"
 				>
 			</File>
 			<File
@@ -3736,10 +3716,6 @@
 			</File>
 			<File
 				RelativePath="res\NavigateForward.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\NoAccessFolderOvl.ico"
 				>
 			</File>
 			<File
@@ -3848,94 +3824,6 @@
 			</File>
 			<File
 				RelativePath="res\ScarAngel.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarClientsKnown.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarClientsOnQueue.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarConnectDo.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarConnectDrop.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarConnectStop.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarDownload.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarDownloadFiles.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarHelp.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarIRC.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarKad.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarMessages.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarPreferences.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarSearch.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarServer.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarSharedFiles.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarStatistics.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarTools.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarTransfer.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarTrayConnectedPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarTrayDisconnectedPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarTrayLowIDPlus.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ScarUpload.ico"
 				>
 			</File>
 			<File
@@ -4151,10 +4039,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\res\startup.bmp"
-				>
-			</File>
-			<File
 				RelativePath="res\Statistics.ico"
 				>
 			</File>
@@ -4324,10 +4208,6 @@
 			</File>
 			<File
 				RelativePath="res\Wizard.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\XP-Menu.jpg"
 				>
 			</File>
 			<File

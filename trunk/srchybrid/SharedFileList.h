@@ -145,6 +145,12 @@ private: // Automatic shared files updater [MoNKi] - Stulle
 public:
 	void	UpdatePartsInfo(); //MORPH - Added by SiRoB, POWERSHARE Limit
 	// <== PowerShare [ZZ/MorphXT] - Stulle
+
+	// ==> requpfile optimization [SiRoB] - Stulle
+	DWORD	GetLastTimeFileMapUpdated() { return m_dwFile_map_updated; }
+protected:
+	DWORD m_dwFile_map_updated;
+	// <== requpfile optimization [SiRoB] - Stulle
 };
 
 class CAddFileThread : public CWinThread

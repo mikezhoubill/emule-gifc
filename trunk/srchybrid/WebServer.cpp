@@ -2200,7 +2200,10 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 							cur_client->SetFriendSlot(false);
 						}
 						if (sOp.CompareNoCase(_T("addfriendslot")) == 0)
+						{
+							theApp.friendlist->RemoveAllFriendSlots();
 							cur_client->SetFriendSlot(true);
+						}
 						else if (sOp.CompareNoCase(_T("removefriendslot")) == 0) {
 							cur_client->SetFriendSlot(false);
 						// <== Friendslot support for WebInterface [Stulle] - Stulle
@@ -2825,10 +2828,15 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 			dUser.sClientState = _T("connecting");
 		}
 
+		// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+		// Moved down to be able to hide File name in tooltip
+		/*
 		dUser.sFileInfo = _SpecialChars(GetClientSummary(cur_client),false);
 		dUser.sFileInfo.Replace(_T("\\"),_T("\\\\"));
 		dUser.sFileInfo.Replace(_T("\n"), _T("<br />"));
 		dUser.sFileInfo.Replace(_T("'"),_T("&#8217;"));
+		*/
+		// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 
 		sTemp= GetClientversionImage(cur_client) ;
 		dUser.sClientSoft = sTemp;
@@ -2862,26 +2870,32 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 		if(cun.GetLength() > SHORT_LENGTH_MIN)
 			dUser.sUserName = _SpecialChars(cun.Left(SHORT_LENGTH_MIN-3)) + _T("...");
 		
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		CKnownFile* file = theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID() );
+		*/
+		CKnownFile* file = cur_client->CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
 		// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 		/*
 		if (file)
 		*/
-		// If the user is restricted to see all cats don't show the upload files, <-- prior 4.4
-		// but show the ones that are allowed <-- added in 4.4
+		// If the user may only see certain categories hide file names if the user has no access to the
+		// category that shares the file
 		bool bAllowed = true;
-		if(thePrefs.UseIonixWebsrv())
+		if(thePrefs.UseIonixWebsrv() && Rights.RightsToCategories.GetLength()>=2)
 		{
-			if(file->IsPartFile() && Rights.RightsToCategories.GetLength()>=2)
-			{
-				bAllowed = false;
-				int curPos=0;
+			bAllowed = false;
 
+			if(file->IsPartFile()) // It's a partfile, so we only check if the category is available
+			{
+				int curPos=0;
 				CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
 				while (Cat!=_T(""))
 				{
 					if (((CPartFile*)file)->GetCategory() == 0 || // always show default category files
-						Cat==thePrefs.GetCategory(((CPartFile*)file)->GetCategory())->strTitle)
+						Cat==thePrefs.GetCategory(((CPartFile*)file)->GetCategory())->strTitle) // or user has access to this cat
 					{
 						bAllowed = true;
 						break;
@@ -2889,8 +2903,53 @@ CString CWebServer::_GetTransferList(ThreadData Data)
 					Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
 				}
 			}
+			else
+			{
+				bool bFoundMatchingCat = false;
+
+				for (int i = 0; i < thePrefs.GetCatCount() && !bAllowed; i++)
+				{
+					CString strFilePath = file->GetPath();
+					if(strFilePath.Left(strFilePath.GetLength()-1) == thePrefs.GetCategory(i)->strIncomingPath) // check if the files dir equals this cats inc dir
+					{
+						bFoundMatchingCat = true;
+						if(i == 0) // always show default category files
+						{
+							bAllowed = true;
+							break;
+						}
+					}
+					else
+						continue; // next cat if the dirs don't match
+
+					int curPos=0;
+					CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
+					while (Cat!=_T(""))
+					{
+						if (Cat==thePrefs.GetCategory(i)->strTitle) // user has access to this cat
+						{
+							bAllowed = true;
+							break;
+						}
+						Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+					}
+				}
+
+				if(bFoundMatchingCat == false) // If we did not find a cat with matching dir
+					bAllowed = true; // we just show the name
+			}
 		}
-		if (file && bAllowed)
+
+		// Moved down to be able to hide File name in tooltip
+		dUser.sFileInfo = _SpecialChars(GetClientSummary(cur_client,bAllowed),false);
+		dUser.sFileInfo.Replace(_T("\\"),_T("\\\\"));
+		dUser.sFileInfo.Replace(_T("\n"), _T("<br />"));
+		dUser.sFileInfo.Replace(_T("'"),_T("&#8217;"));
+
+		if (file && !bAllowed)
+			dUser.sFileName = _GetPlainResString(IDS_WS_HIDDEN);
+		else if (file)
 		// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 			dUser.sFileName = _SpecialChars(file->GetFileName());
 		else
@@ -2977,6 +3036,11 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 
 	double fTotalSize = 0, fTotalTransferred = 0, fTotalSpeed = 0;
 
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	long lSession = _tstol(_ParseURL(Data->sURL, _T("ses")));
+	Session Rights = GetSessionByID(*Data, lSession);  
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+
 	CQArray<QueueUsers, QueueUsers> QueueArray;
 	for (POSITION pos = theApp.uploadqueue->waitinglist.GetHeadPosition(); pos != NULL;)
 	{
@@ -2997,6 +3061,10 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 			dUser.sClientExtra = _T("friendslot");
 			nCountQueueFriend++;
 			if (bSecure) nCountQueueFriendSecure++;
+			// ==> Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
+			nCountQueue++;
+			if (bSecure) nCountQueueSecure++;
+			// <== Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
 		}
 		// <== Friendslot support for WebInterface [Stulle] - Stulle
 		else if (cur_client->IsFriend())
@@ -3004,7 +3072,19 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 			dUser.sClientExtra = _T("friend");
 			nCountQueueFriend++;
 			if (bSecure) nCountQueueFriendSecure++;
+			// ==> Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
+			nCountQueue++;
+			if (bSecure) nCountQueueSecure++;
+			// <== Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
 		}
+		// ==> Display if a client has credits in On Queue list of WebInterface [Stulle] - Stulle
+		else if (cur_client->Credits()->GetHasScore(cur_client))
+		{
+			dUser.sClientExtra = _T("credit");
+			nCountQueue++;
+			if (bSecure) nCountQueueSecure++;
+		}
+		// <== Display if a client has credits in On Queue list of WebInterface [Stulle] - Stulle
 		else
 		{
 			dUser.sClientExtra = _T("none");
@@ -3019,14 +3099,87 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 			dUser.sUserName = _SpecialChars(usn);
 
 		dUser.sClientNameVersion = cur_client->GetClientSoftVer();
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		CKnownFile* file = theApp.sharedfiles->GetFileByID(cur_client->GetUploadFileID() );
+		*/
+		CKnownFile* file = cur_client->CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
+		// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+		/*
 		if (file)
+		*/
+		// If the user may only see certain categories hide file names if the user has no access to the
+		// category that shares the file
+		bool bAllowed = true;
+		if(thePrefs.UseIonixWebsrv() && Rights.RightsToCategories.GetLength()>=2)
+		{
+			bAllowed = false;
+
+			if(file->IsPartFile()) // It's a partfile, so we only check if the category is available
+			{
+				int curPos=0;
+				CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
+				while (Cat!=_T(""))
+				{
+					if (((CPartFile*)file)->GetCategory() == 0 || // always show default category files
+						Cat==thePrefs.GetCategory(((CPartFile*)file)->GetCategory())->strTitle) // or user has access to this cat
+					{
+						bAllowed = true;
+						break;
+					}
+					Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+				}
+			}
+			else
+			{
+				bool bFoundMatchingCat = false;
+
+				for (int i = 0; i < thePrefs.GetCatCount() && !bAllowed; i++)
+				{
+					CString strFilePath = file->GetPath();
+					if(strFilePath.Left(strFilePath.GetLength()-1) == thePrefs.GetCategory(i)->strIncomingPath) // check if the files dir equals this cats inc dir
+					{
+						bFoundMatchingCat = true;
+						if(i == 0) // always show default category files
+						{
+							bAllowed = true;
+							break;
+						}
+					}
+					else
+						continue; // next cat if the dirs don't match
+
+					int curPos=0;
+					CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
+					while (Cat!=_T(""))
+					{
+						if (Cat==thePrefs.GetCategory(i)->strTitle) // user has access to this cat
+						{
+							bAllowed = true;
+							break;
+						}
+						Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+					}
+				}
+
+				if(bFoundMatchingCat == false) // If we did not find a cat with matching dir
+					bAllowed = true; // we just show the name
+			}
+		}
+		if (file && !bAllowed)
+			dUser.sFileName = _GetPlainResString(IDS_WS_HIDDEN);
+		else if (file)
+		// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 			dUser.sFileName = _SpecialChars(file->GetFileName());
 		else
 			dUser.sFileName = _GetPlainResString(IDS_REQ_UNKNOWNFILE);
 		dUser.sClientState = dUser.sClientExtra;
 		dUser.sClientStateSpecial = _T("connecting");
 		dUser.nScore = cur_client->GetScore(false);
+		dUser.bSuperior = cur_client->IsSuperiorClient(); // Superior Client Handling [Stulle] - Stulle
 
 		sTemp=GetClientversionImage(cur_client);
 		dUser.sClientSoft = sTemp;
@@ -3047,7 +3200,15 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 			dUser.sIndex = dUser.sFileName;
 			break;
 		case QU_SORT_SCORE:
+			// ==> Superior Client Handling [Stulle] - Stulle
+			/*
 			dUser.sIndex.Format(_T("%09u"), dUser.nScore);
+			*/
+			if(dUser.bSuperior)
+				dUser.sIndex.Format(_T("1%09u"), dUser.nScore);
+			else
+				dUser.sIndex.Format(_T("%09u"), dUser.nScore);
+			// <== Superior Client Handling [Stulle] - Stulle
 			break;
 		default:
 			dUser.sIndex.Empty();
@@ -3057,10 +3218,18 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 
 	int nNextPos = 0;	// position in queue of the user with the highest score -> next upload user
 	uint32 nNextScore = 0;	// highest score -> next upload user
+	bool bNextSuperior = false; // Superior Client Handling [Stulle] - Stulle
 	for(int i = 0; i < QueueArray.GetCount(); i++)
 	{
+		// ==> Superior Client Handling [Stulle] - Stulle
+		/*
 		if (QueueArray[i].nScore > nNextScore)
 		{
+		*/
+		if (QueueArray[i].bSuperior && (!bNextSuperior || QueueArray[i].nScore > nNextScore) ||
+			!QueueArray[i].bSuperior && !bNextSuperior && QueueArray[i].nScore > nNextScore)
+		{
+		// <== Superior Client Handling [Stulle] - Stulle
 			nNextPos = i;
 			nNextScore = QueueArray[i].nScore;
 		}
@@ -3084,10 +3253,6 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 #endif
 	}
 
-	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
-	long lSession = _tstol(_ParseURL(Data->sURL, _T("ses")));
-	Session Rights = GetSessionByID(*Data, lSession);  
-	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	for(int i = 0; i < FilesArray->GetCount(); i++)
 	{
 		HTTPProcessData = OutE;
@@ -3404,7 +3569,12 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 		for(int i = 0; i < QueueArray.GetCount(); i++)
 		{
             TCHAR HTTPTempC[100] = _T("");
+			// ==> Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
+			/*
 			if (QueueArray[i].sClientExtra == _T("none"))
+			*/
+			if (QueueArray[i].sClientExtra != _T("banned"))
+			// <== Show all clients that are not banned in On Queue list of WebInterface [Stulle] - Stulle
 			{
 				HTTPProcessData = OutE;
 				pcTmp = (!WSqueueColumnHidden[0]) ? QueueArray[i].sUserName.GetString() : _T("");
@@ -3419,7 +3589,12 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 				pcTmp = _T("");
 				if (!WSqueueColumnHidden[3])
 				{
-					_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
+					// ==> Superior Client Handling [Stulle] - Stulle
+					if(QueueArray[i].bSuperior)
+						_stprintf(HTTPTempC, _T("Sup, %i") , QueueArray[i].nScore);
+					else
+					// <== Superior Client Handling [Stulle] - Stulle
+						_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
 					pcTmp = HTTPTempC;
 				}
 				HTTPProcessData.Replace(_T("[Score]"), pcTmp);
@@ -3464,7 +3639,12 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 				pcTmp = _T("");
 				if (!WSqueueColumnHidden[3])
 				{
-					_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
+					// ==> Superior Client Handling [Stulle] - Stulle
+					if(QueueArray[i].bSuperior)
+						_stprintf(HTTPTempC, _T("Sup, %i") , QueueArray[i].nScore);
+					else
+					// <== Superior Client Handling [Stulle] - Stulle
+						_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
 					pcTmp = HTTPTempC;
 				}
 				HTTPProcessData.Replace(_T("[Score]"), pcTmp);
@@ -3516,7 +3696,12 @@ CString CWebServer::_CreateTransferList(CString Out, CWebServer *pThis, ThreadDa
 				pcTmp = _T("");
 				if (!WSqueueColumnHidden[3])
 				{
-					_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
+					// ==> Superior Client Handling [Stulle] - Stulle
+					if(QueueArray[i].bSuperior)
+						_stprintf(HTTPTempC, _T("Sup, %i") , QueueArray[i].nScore);
+					else
+					// <== Superior Client Handling [Stulle] - Stulle
+						_stprintf(HTTPTempC, _T("%i") , QueueArray[i].nScore);
 					pcTmp = HTTPTempC;
 				}
 				HTTPProcessData.Replace(_T("[Score]"), pcTmp);
@@ -4042,7 +4227,76 @@ CString CWebServer::_GetSharedFilesList(ThreadData Data)
 		SharedFiles dFile;
 		//dFile.sFileName = _SpecialChars(cur_file->GetFileName());
 		dFile.bIsPartFile = cur_file->IsPartFile();
+		// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+		/*
 		dFile.sFileName = cur_file->GetFileName();
+		*/
+		// If the user may only see certain categories hide file names if the user has no access to the
+		// category that shares the file
+		bool bAllowed = true;
+		if(thePrefs.UseIonixWebsrv() && Rights.RightsToCategories.GetLength()>=2)
+		{
+			bAllowed = false;
+
+			if(cur_file->IsPartFile()) // It's a partfile, so we only check if the category is available
+			{
+				int curPos=0;
+				CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
+				while (Cat!=_T(""))
+				{
+					if (((CPartFile*)cur_file)->GetCategory() == 0 || // always show default category files
+						Cat==thePrefs.GetCategory(((CPartFile*)cur_file)->GetCategory())->strTitle) // or user has access to this cat
+					{
+						bAllowed = true;
+						break;
+					}
+					Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+				}
+			}
+			else
+			{
+				bool bFoundMatchingCat = false;
+
+				for (int i = 0; i < thePrefs.GetCatCount() && !bAllowed; i++)
+				{
+					CString strFilePath = cur_file->GetPath();
+					if(strFilePath.Left(strFilePath.GetLength()-1) == thePrefs.GetCategory(i)->strIncomingPath) // check if the files dir equals this cats inc dir
+					{
+						bFoundMatchingCat = true;
+						if(i == 0) // always show default category files
+						{
+							bAllowed = true;
+							break;
+						}
+					}
+					else
+						continue; // next cat if the dirs don't match
+
+					int curPos=0;
+					CString Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+
+					while (Cat!=_T(""))
+					{
+						if (Cat==thePrefs.GetCategory(i)->strTitle) // user has access to this cat
+						{
+							bAllowed = true;
+							break;
+						}
+						Cat=Rights.RightsToCategories.Tokenize(_T("|"),curPos);
+					}
+				}
+
+				if(bFoundMatchingCat == false) // If we did not find a cat with matching dir
+					bAllowed = true; // we just show the name
+			}
+		}
+		if (bAllowed)
+			dFile.sFileName = cur_file->GetFileName();
+		else
+			dFile.sFileName = _GetPlainResString(IDS_WS_HIDDEN);
+		dFile.bShowFileName = bAllowed;
+		// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 		if(bPartFile)
 			dFile.sFileState = _T("filedown");
 		else
@@ -4363,7 +4617,7 @@ CString CWebServer::_GetSharedFilesList(ThreadData Data)
 					HTTPProcessData.Replace(_T("[FileIsPriority]"), _T("none"));
 				downloadable = !cur_file->IsPartFile() && (thePrefs.GetMaxWebUploadFileSizeMB() == 0 || SharedArray[i].m_qwFileSize < thePrefs.GetMaxWebUploadFileSizeMB()*1024*1024);
 				// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
-				downloadable &= !thePrefs.UseIonixWebsrv() || Rights.RightsToDownloadFiles;
+				downloadable &= !thePrefs.UseIonixWebsrv() || Rights.RightsToDownloadFiles && SharedArray[i].bShowFileName;
 				// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 			}
 		}
@@ -5297,6 +5551,8 @@ CString CWebServer::_GetDownloadGraph(ThreadData Data, CString filehash)
 	/**/	_stprintf(HTTPHeader, _T("%.1f%%"), (static_cast<double>(pPartFile->GetPercentCompleted())));   
 	/**/	Out.Replace(_T("[FilePercentage]"), HTTPHeader);
 	/**/}
+	/**/else
+	/**/	Out.Replace(_T("[FilePercentage]"), _T("100%"));
 	// <== File Percentage in title of progress images in WebServer [unknown/Stulle] - Stulle
 	return Out;
 }
@@ -6018,7 +6274,12 @@ CString CWebServer::GetWebImageNameForFileType(CString filename)
 	}
 }
 
+// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+/*
 CString CWebServer::GetClientSummary(CUpDownClient* client) {
+*/
+CString CWebServer::GetClientSummary(CUpDownClient* client, bool bShowFilename) {
+// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 
 	// name
 	CString buffer=	GetResString(IDS_CD_UNAME) + _T(" ") + client->GetUserName() + _T("\n");
@@ -6027,11 +6288,26 @@ CString CWebServer::GetClientSummary(CUpDownClient* client) {
 	
 	// uploading file
 	buffer+= GetResString(IDS_CD_UPLOADREQ) + _T(" ");
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID() );
+	*/
+	CKnownFile* file = client->CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	ASSERT(file);
+	// ==> Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
+	/*
 	if (file) {
 		buffer += file->GetFileName();
 	}
+	*/
+	if (file && !bShowFilename)
+		buffer += _GetPlainResString(IDS_WS_HIDDEN);
+	else if (file)
+		buffer += file->GetFileName();
+	else
+		buffer += _GetPlainResString(IDS_REQ_UNKNOWNFILE);
+	// <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 	buffer+= _T("\n\n");
 	
 

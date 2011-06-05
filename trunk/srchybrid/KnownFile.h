@@ -264,6 +264,7 @@ public:
 	UINT	HideOSInWork() const;
 	void	SetShareOnlyTheNeed(int newValue) {m_iShareOnlyTheNeed = newValue;}
 	int		GetShareOnlyTheNeed() const {return m_iShareOnlyTheNeed;}
+	UINT	SotnInWork() const;
 protected:
 	void	CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* client);	// SLUGFILLER: hideOS
 private:

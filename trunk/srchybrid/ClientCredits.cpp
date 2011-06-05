@@ -434,7 +434,12 @@ float CClientCredits::GetScoreRatio(const CUpDownClient* client)
 				float uPloadedSessionTotal = (float)client->GetTransferredUp();
 				float allowance = dOwnloadedSessionTotal/4.0F;
 				if(uPloadedSessionTotal > (float)(dOwnloadedSessionTotal + allowance + 1048576.0F)){
+					// ==> requpfile optimization [SiRoB] - Stulle
+					/*
 					CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+					*/
+					CKnownFile* file = client->CheckAndGetReqUpFile();
+					// <== requpfile optimization [SiRoB] - Stulle
 					if(file!=NULL){//Are they requesting a file? NULL can be produced when client details calls getscoreratio() without this line eMule will crash.
 						if(file->IsPartFile()){//It's a file we are trying to obtain so we want to give to givers so we may get the file quicker.
 							float MbSqd =sqrt((float)(uPloadedSessionTotal-(dOwnloadedSessionTotal + allowance))/1048576.0F);
@@ -460,7 +465,12 @@ float CClientCredits::GetScoreRatio(const CUpDownClient* client)
 			we share completed files based on time waited + any credit thay have for giving us stuff.
 			If the files a partfile we are trying to get the modifier will start to get smaller -1 to -90Mb range 9 to 1 beyond that 1 to 0 eg: -400Mb = 0.452839 */
 				//CUpDownClient* pClient = theApp.clientlist->FindClientByIP(dwForIP);//Get 'client' so we can get file info
+				// ==> requpfile optimization [SiRoB] - Stulle
+				/*
 				CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+				*/
+				CKnownFile* file = client->CheckAndGetReqUpFile();
+				// <== requpfile optimization [SiRoB] - Stulle
 				if(file!=NULL){//Are they requesting a file? NULL can be produced when client details calls getscoreratio() without this line eMule will crash.
 					if(file->IsPartFile()){//It's a file we are trying to obtain so we want to give to givers so we may get the file quicker.
 						float MbSqd =sqrt((float)(uPloadedTotal-(dOwnloadedTotal + allowance))/1048576.0F);

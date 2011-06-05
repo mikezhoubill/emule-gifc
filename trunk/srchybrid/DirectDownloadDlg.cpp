@@ -103,16 +103,15 @@ void CDirectDownloadDlg::OnOK()
 					/*
 					//Xman [MoNKi: -Check already downloaded files-]
 					if(theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pLink->GetFileLink()->GetHashKey(),pLink->GetFileLink()->GetName()))
-					{
+					//Xman end
 						theApp.downloadqueue->AddFileLinkToDownload(pLink->GetFileLink(), (thePrefs.GetCatCount() == 0) ? 0 : m_cattabs.GetCurSel());
-					}
 					//Xman end
 					*/
 					CED2KFileLink* pFileLink = (CED2KFileLink*)CED2KLink::CreateLinkFromUrl(strTok.Trim());
 					if(theApp.knownfiles->CheckAlreadyDownloadedFileQuestion(pLink->GetFileLink()->GetHashKey(),pLink->GetFileLink()->GetName()))
 					{
 						theApp.downloadqueue->AddFileLinkToDownload(pFileLink,
-							(thePrefs.GetCatCount()==0)?-1 : m_cattabs.GetCurSel(), true);
+							(thePrefs.GetCatCount()==1)?-1 : m_cattabs.GetCurSel(), true);
 					}
 					// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 				}
@@ -169,7 +168,12 @@ BOOL CDirectDownloadDlg::OnInitDialog()
 	GetDlgItem(IDCANCEL)->SetWindowText(GetResString(IDS_CANCEL));
 	
 
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
 	if (thePrefs.GetCatCount()==0) {
+	*/
+	if (thePrefs.GetCatCount()==1) {
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 		GetDlgItem(IDC_CATLABEL)->ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_CATS)->ShowWindow(SW_HIDE);
 	}
@@ -206,7 +210,7 @@ void CDirectDownloadDlg::UpdateCatTabs() {
 		m_cattabs.InsertItem(ix,label);
 	}
 	if (oldsel>=m_cattabs.GetItemCount())
-		oldsel=-1; 
+		oldsel=-1;
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
 	m_cattabs.SetCurSel(oldsel);
@@ -233,4 +237,5 @@ void CDirectDownloadDlg::OnNMClickCats(NMHDR* /*pNMHDR*/, LRESULT *pResult)
 			m_cattabs.DeselectAll(false);
 		}
 	*pResult = 0;
-}// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+}
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle

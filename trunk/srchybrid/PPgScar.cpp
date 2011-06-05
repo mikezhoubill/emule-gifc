@@ -46,6 +46,7 @@
 #include "IPFilter.h"
 #include "DLP.h"
 // <== Advanced Updates [MorphXT/Stulle] - Stulle
+#include "UploadQueue.h" // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -1860,7 +1861,7 @@ BOOL CPPgScar::OnApply()
 			/*
 			theApp.emuledlg->TrayShow();
 			*/
-			theApp.emuledlg->TrayShow(FALSE);
+			theApp.emuledlg->TrayShow(false);
 			// <== TBH: minimule - Stulle
 		else if(theApp.emuledlg->IsWindowVisible()) //only hide when window visible
 			theApp.emuledlg->TrayHide();
@@ -2143,6 +2144,8 @@ BOOL CPPgScar::OnApply()
 	// <== Advanced Updates [MorphXT/Stulle] - Stulle
 
 	LoadSettings();
+
+	theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 
 	// ==> Show sources on title - Stulle
 	TCHAR buffer[510];
@@ -3821,6 +3824,7 @@ void CPPgScar::OnBnClickedBackupnow()
 {
 	TCHAR buffer[200];
 	y2All = FALSE;
+	n2All = FALSE;
 	if (m_Dat.GetCheck() == BST_CHECKED)
 	{
 		Backup(_T("*.dat"), true);
@@ -3850,8 +3854,8 @@ void CPPgScar::OnBnClickedBackupnow()
 
 	if (m_Part.GetCheck() == BST_CHECKED)
 	{
-		_stprintf(buffer,_T("Because of their size, backing up *.part files may take a few minutes.\nAre you sure you want to do this?"));
-		if(MessageBox(buffer,_T("Are you sure?"),MB_ICONQUESTION|MB_YESNO)== IDYES)
+		_stprintf(buffer,GetResString(IDS_BACKUP_PART  ) );		//"Because of their size, backing up *.part files may take a few minutes.\nAre you sure you want to do this?"
+		if(MessageBox(buffer,GetResString(IDS_BACKUP_PART_W),MB_ICONQUESTION|MB_YESNO)== IDYES)
 			Backup2(_T("*.part"));
 		m_Part.SetCheck(false);
 
@@ -3859,7 +3863,7 @@ void CPPgScar::OnBnClickedBackupnow()
 
 	BackupNowEnable();
 
-	MessageBox(_T("File(s) Copied Successfully."), _T("BackUp complete."), MB_OK);
+	MessageBox(GetResString(IDS_BACKUP_COMPLETE), GetResString(IDS_BACKUP_COMPLETE_W), MB_OK); //"File(s) Copied Successfully."
 	y2All = FALSE;
 }
 
@@ -3867,47 +3871,47 @@ void CPPgScar::OnBnClickedBackupnow()
 
 void CPPgScar::Backup(LPCTSTR extensionToBack, BOOL conFirm)  
 {
-	WIN32_FIND_DATA FileData; 
-	HANDLE hSearch; 
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
 	TCHAR buffer[200];
 	//CString szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_EXECUTEABLEDIR));
 	CString szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
-	TCHAR szNewPath[MAX_PATH]; 
+	TCHAR szNewPath[MAX_PATH];
 
 	SetCurrentDirectory(szDirPath);
 	BOOL error = FALSE;
 	BOOL OverWrite = TRUE;
 	szDirPath +="Backup\\";
 
-	BOOL fFinished = FALSE; 
+	BOOL fFinished = FALSE;
 
 	// Create a new directory if one does not exist
 	if(!PathFileExists(szDirPath))
 		CreateDirectory(szDirPath, NULL);
 
-	// Start searching for files in the current directory. 
+	// Start searching for files in the current directory.
 
-	hSearch = FindFirstFile(extensionToBack, &FileData); 
-	if (hSearch == INVALID_HANDLE_VALUE) 
-	{ 
+	hSearch = FindFirstFile(extensionToBack, &FileData);
+	if (hSearch == INVALID_HANDLE_VALUE)
+	{
 		error = TRUE;
-	} 
+	}
 
-	// Copy each file to the new directory 
+	// Copy each file to the new directory
 	CString str;
-	while (!fFinished && !error) 
-	{ 
-		lstrcpy(szNewPath, szDirPath); 
-		lstrcat(szNewPath, FileData.cFileName); 
+	while (!fFinished && !error)
+	{
+		lstrcpy(szNewPath, szDirPath);
+		lstrcat(szNewPath, FileData.cFileName);
 
 		if(PathFileExists(szNewPath))
 		{
 			if (conFirm)
 			{
-				if (y2All == FALSE)
+				if (y2All == FALSE && n2All == FALSE)
 				{
-					_stprintf(buffer, _T("File %s Already Exists. OverWrite It?"), FileData.cFileName);
-					int rc = ::XMessageBox(m_hWnd,buffer,_T("OverWrite?"),MB_YESNO|MB_YESTOALL|MB_ICONQUESTION);
+					_stprintf(buffer, GetResString(IDS_OVERWRITE1), FileData.cFileName);
+					int rc = ::XMessageBox(m_hWnd,buffer,GetResString(IDS_OVERWRITE2),MB_YESNO|MB_YESTOALL|MB_NOTOALL|MB_ICONQUESTION);
 					if (rc == IDYES)
 						OverWrite = TRUE;
 					else if (rc == IDYESTOALL)
@@ -3915,93 +3919,101 @@ void CPPgScar::Backup(LPCTSTR extensionToBack, BOOL conFirm)
 						OverWrite = TRUE;
 						y2All = TRUE;
 					}
+					else if (rc == IDNOTOALL)
+					{
+						OverWrite = FALSE;
+						n2All = TRUE;
+					}
 					else 
 						OverWrite = FALSE;
-				} else
+				} else if(y2All == TRUE)
 					OverWrite = TRUE;
+				else //if(n2All == TRUE)
+					OverWrite = FALSE;
 			} 
 			else
 				OverWrite = TRUE;
-		}	
+		}
 		if(OverWrite)
 			CopyFile(FileData.cFileName, szNewPath, FALSE);
 
-		if (!FindNextFile(hSearch, &FileData)) 
+		if (!FindNextFile(hSearch, &FileData))
 		{
-			if (GetLastError() == ERROR_NO_MORE_FILES) 
-			{ 
-				//MessageBox("File Copied Successfully.", "BackUp complete", MB_OK); 
-				fFinished = TRUE; 
-
-			} 
-			else 
-			{ 
+			if (GetLastError() == ERROR_NO_MORE_FILES)
+			{
+				//MessageBox("File Copied Successfully.", "BackUp complete", MB_OK);
+				fFinished = TRUE;
+			}
+			else
+			{
 				error = TRUE;
-			} 
+			}
 		}
+	}
 
-	} 
-
-
-	// Close the search handle. 
-	if (!FindClose(hSearch)) 
-	{ 
+	// Close the search handle.
+	if (!FindClose(hSearch))
+	{
 		error = TRUE;
-	} 
+	}
 	if (error)
-		MessageBox(_T("Error encountered during backup"),_T("Error"),MB_OK);
+		MessageBox(GetResString(IDS_BACKUPERROR), GetResString(IDS_ERROR), MB_OK);
 }
 
 
 void CPPgScar::Backup2(LPCTSTR extensionToBack)  
 {
-	WIN32_FIND_DATA FileData;   
-	HANDLE hSearch;   
-	TCHAR buffer[200];  
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
+	TCHAR buffer[200];
+	BOOL error = FALSE;
 
+	for (int i=0;i<thePrefs.tempdir.GetCount();i++) {
+		CString szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
+		CString szTempPath = CString(thePrefs.GetTempDir(i));
+		TCHAR szNewPath[MAX_PATH];
 
-	//CString szDirPath = CString(thePrefs.GetAppDir());  
-	CString szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR));
-	CString szTempPath = CString(thePrefs.GetTempDir());  
-	TCHAR szNewPath[MAX_PATH]; 
+		BOOL fFinished = FALSE;  
+		BOOL OverWrite = TRUE; 
+		szDirPath +="Backup\\";
 
-	BOOL fFinished = FALSE;     
-	BOOL error = FALSE;  
-	BOOL OverWrite = TRUE;  
-	szDirPath +="Backup\\";
+		if(!PathFileExists(szDirPath))
+			CreateDirectory(szDirPath, NULL);
 
-	if(!PathFileExists(szDirPath))  
-		CreateDirectory(szDirPath, NULL);  
+		if (i==0)
+			szDirPath+="Temp\\";
+		else { // i> 0
+			CString tempno;
+			tempno.Format(L"Temp%d\\",i);
+			szDirPath+=tempno;
+	    }
 
-	szDirPath+="Temp\\";  
+		if(!PathFileExists(szDirPath))
+			CreateDirectory(szDirPath, NULL);
 
-	if(!PathFileExists(szDirPath))  
-		CreateDirectory(szDirPath, NULL);  
+		// Start searching for files in the current directory.
+		SetCurrentDirectory(szTempPath);
 
+		hSearch = FindFirstFile(extensionToBack, &FileData);
 
-	// Start searching for files in the current directory.   
-	SetCurrentDirectory(szTempPath);  
+		if (hSearch == INVALID_HANDLE_VALUE)
+		{
+			error = TRUE;
+		}
 
-	hSearch = FindFirstFile(extensionToBack, &FileData);   
+		// Copy each file to the new directory   
+		while (!fFinished && !error)
+		{
+			lstrcpy(szNewPath, szDirPath);
+			lstrcat(szNewPath, FileData.cFileName);
 
-	if (hSearch == INVALID_HANDLE_VALUE)   
-	{   
-		error = TRUE;
-	}   
-
-	// Copy each file to the new directory   
-	while (!fFinished && !error)   
-	{   
-		lstrcpy(szNewPath, szDirPath);   
-		lstrcat(szNewPath, FileData.cFileName);   
-
-		//MessageBox(szNewPath,"New Path",MB_OK);  
-		if(PathFileExists(szNewPath))  
-		{  
-				if (y2All == FALSE)
+			//MessageBox(szNewPath,"New Path",MB_OK);
+			if(PathFileExists(szNewPath))
+			{
+				if (y2All == FALSE && n2All == FALSE)
 				{
-					_stprintf(buffer, _T("File %s Already Exists. OverWrite It?"), FileData.cFileName);
-					int rc = ::XMessageBox(m_hWnd,buffer,_T("OverWrite?"),MB_YESNO|MB_YESTOALL|MB_ICONQUESTION);
+					_stprintf(buffer, GetResString(IDS_OVERWRITE1), FileData.cFileName);
+					int rc = ::XMessageBox(m_hWnd,buffer,GetResString(IDS_OVERWRITE2),MB_YESNO|MB_YESTOALL|MB_NOTOALL|MB_ICONQUESTION);
 					if (rc == IDYES)
 						OverWrite = TRUE;
 					else if (rc == IDYESTOALL)
@@ -4009,40 +4021,46 @@ void CPPgScar::Backup2(LPCTSTR extensionToBack)
 						OverWrite = TRUE;
 						y2All = TRUE;
 					}
-					else 
+					else if (rc == IDNOTOALL)
+					{
 						OverWrite = FALSE;
-				} else
-					OverWrite = TRUE;  
-		}  
+						n2All = TRUE;
+					}
+					else
+						OverWrite = FALSE;
+				} else if(y2All == TRUE)
+					OverWrite = TRUE;
+				else //if(n2All == TRUE)
+					OverWrite = FALSE;
+			}
 
-		if(OverWrite)  
-			CopyFile(FileData.cFileName, szNewPath, FALSE);  
+			if(OverWrite)
+				CopyFile(FileData.cFileName, szNewPath, FALSE);
 
-		if (!FindNextFile(hSearch, &FileData))   
-		{  
-			if (GetLastError() == ERROR_NO_MORE_FILES)   
-			{   
+			if (!FindNextFile(hSearch, &FileData))
+			{
+				if (GetLastError() == ERROR_NO_MORE_FILES)
+				{
+					fFinished = TRUE;
+				}
+				else
+				{
+					error = TRUE;
+				}
+			}
+		}
 
-				fFinished = TRUE;   
-			}   
-			else   
-			{   
-				error = TRUE;  
-			}   
-		}  
+		// Close the search handle.
+		if (!FindClose(hSearch))
+		{
+			error = TRUE;
+		}
 
-	}   
+		SetCurrentDirectory(CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)));
+	}
 
-	// Close the search handle.   
-	if (!FindClose(hSearch))   
-	{   
-		error = TRUE;  
-	}   
-	SetCurrentDirectory(CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR)));  
-
-	if (error)  
-		MessageBox(_T("Error encountered during backup"),_T("Error"),MB_OK);  
-
+	if (error)
+		MessageBox(GetResString(IDS_BACKUPERROR),GetResString(IDS_ERROR),MB_OK);
 } 
 
 void CPPgScar::OnBnClickedSelectall()
@@ -4068,62 +4086,59 @@ void CPPgScar::OnBnClickedAutobackup2()
 
 void CPPgScar::Backup3()
 {
-	WIN32_FIND_DATA FileData; 
-	HANDLE hSearch; 
+	WIN32_FIND_DATA FileData;
+	HANDLE hSearch;
 	CString szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("Backup\\");
 	if(!PathFileExists(szDirPath)) return;
-	TCHAR szNewPath[MAX_PATH]; 
+	TCHAR szNewPath[MAX_PATH];
 
 	SetCurrentDirectory(szDirPath);
 	BOOL error = FALSE;
 	szDirPath = CString(thePrefs.GetMuleDirectory(EMULE_CONFIGDIR))+_T("Backup2\\");
 
-	BOOL fFinished = FALSE; 
+	BOOL fFinished = FALSE;
 
 	// Create a new directory if one does not exist
 	if(!PathFileExists(szDirPath))
 		CreateDirectory(szDirPath, NULL);
 
-	// Start searching for files in the current directory. 
+	// Start searching for files in the current directory.
 
-	hSearch = FindFirstFile(_T("*.*"), &FileData); 
-	if (hSearch == INVALID_HANDLE_VALUE) 
-	{ 
+	hSearch = FindFirstFile(_T("*.*"), &FileData);
+	if (hSearch == INVALID_HANDLE_VALUE)
+	{
 		error = TRUE;
-	} 
+	}
 
-	// Copy each file to the new directory 
-	while (!fFinished && !error) 
-	{ 
-		lstrcpy(szNewPath, szDirPath); 
-		lstrcat(szNewPath, FileData.cFileName); 
+	// Copy each file to the new directory
+	while (!fFinished && !error)
+	{
+		lstrcpy(szNewPath, szDirPath);
+		lstrcat(szNewPath, FileData.cFileName);
 
-		CopyFile(FileData.cFileName, szNewPath, FALSE);
+		MoveFileEx(FileData.cFileName, szNewPath, MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
 
-		if (!FindNextFile(hSearch, &FileData)) 
+		if (!FindNextFile(hSearch, &FileData))
 		{
-			if (GetLastError() == ERROR_NO_MORE_FILES) 
-			{ 
-				//MessageBox("File Copied Successfully.", "BackUp complete", MB_OK); 
-				fFinished = TRUE; 
-
-			} 
-			else 
-			{ 
+			if (GetLastError() == ERROR_NO_MORE_FILES)
+			{
+				//MessageBox("File Copied Successfully.", "BackUp complete", MB_OK);
+				fFinished = TRUE;
+			}
+			else
+			{
 				error = TRUE;
-			} 
+			}
 		}
+	}
 
-	} 
-
-
-	// Close the search handle. 
-	if (!FindClose(hSearch)) 
-	{ 
+	// Close the search handle.
+	if (!FindClose(hSearch))
+	{
 		error = TRUE;
-	} 
+	}
 	if (error)
-		MessageBox(_T("Error encountered during backup"),_T("Error"),MB_OK);
+		MessageBox(GetResString(IDS_BACKUPERROR),GetResString(IDS_ERROR),MB_OK);
 }
 // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 

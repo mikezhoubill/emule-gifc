@@ -185,7 +185,12 @@ BOOL CClientDetailPage::OnSetActive()
 			GetDlgItem(IDC_LEECHERINFO)->SetWindowText(_T(" "));
 		//Xman end
 
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
 		CKnownFile* file = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+		*/
+		CKnownFile* file = client->CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
 		if (file)
 			GetDlgItem(IDC_DDOWNLOADING)->SetWindowText(file->GetFileName());
 		else
@@ -219,7 +224,7 @@ BOOL CClientDetailPage::OnSetActive()
 			buffer.Format(_T("%.1f"),(float)client->Credits()->GetScoreRatio(client->GetIP()));
 			*/
 			// ==> CreditSystems [EastShare/ MorphXT] - Stulle
-			if (thePrefs.GetCreditSystem() == 7) // is Xman CS¿
+			if (thePrefs.GetCreditSystem() == 7) // is Xman CS?
 			buffer.Format(_T("%.1f %+.1f [%.1f]"),(float)client->Credits()->GetScoreRatio(client)- (float)client->Credits()->GetBonusFaktor(client),(float)client->Credits()->GetBonusFaktor(client),(float)client->Credits()->GetMyScoreRatio(client->GetIP()));	//  See own credits VQB
 			else
 				buffer.Format(_T("%.1f [%.1f]"),(float)client->Credits()->GetScoreRatio(client),(float)client->Credits()->GetMyScoreRatio(client->GetIP()));	//  See own credits VQB

@@ -302,7 +302,7 @@ bool CServerListCtrl::AddServer(const CServer* pServer, bool bAddToList, bool bR
 		return false;
 
 	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
-	if (theApp.IsRunningAsService(SVC_SVR_OPT))
+	if (theApp.IsRunningAsService(SVC_FULL_OPT))
 		return true;
 	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 
@@ -318,7 +318,7 @@ bool CServerListCtrl::AddServer(const CServer* pServer, bool bAddToList, bool bR
 void CServerListCtrl::RefreshServer(const CServer* server)
 {
 	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
-	if (theApp.IsRunningAsService(SVC_SVR_OPT))
+	if (theApp.IsRunningAsService(SVC_FULL_OPT))
 		return;
 	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 

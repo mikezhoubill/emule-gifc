@@ -271,10 +271,17 @@ BOOL CPPgDirectories::OnApply()
 
 	// on changing incoming dir, update incoming dirs of category of the same path
 	if (testincdirchanged.CompareNoCase(thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) != 0) {
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+		/*
 		thePrefs.GetCategory(0)->strIncomingPath = thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR);
 		CString oldpath;
 		bool dontaskagain=false;
 		for (int cat=1; cat<=thePrefs.GetCatCount()-1;cat++){
+		*/
+		CString oldpath;
+		bool dontaskagain=false;
+		for (int cat=0; cat<=thePrefs.GetCatCount()-1;cat++){
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			oldpath=CString(thePrefs.GetCatPath(cat));
 			if (oldpath.Left(testincdirchanged.GetLength()).CompareNoCase(testincdirchanged)==0) {
 
