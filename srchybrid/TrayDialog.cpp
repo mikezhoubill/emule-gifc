@@ -136,20 +136,34 @@ void CTrayDialog::TraySetToolTip(LPCTSTR lpszToolTip)
 /*
 BOOL CTrayDialog::TrayShow()
 */
-BOOL CTrayDialog::TrayShow(BOOL bMiniMule)
+BOOL CTrayDialog::TrayShow(bool bMiniMule, bool bOnlyMiniMule)
 // <== TBH: minimule - Stulle
 {
 	BOOL bSuccess = FALSE;
+	// ==> TBH: minimule - Stulle
+	/*
 	if (!m_bTrayIconVisible)
 	{
 		bSuccess = Shell_NotifyIcon(NIM_ADD, &m_nidIconData);
 		if (bSuccess)
 			m_bTrayIconVisible = TRUE;
+	*/
+	if (bOnlyMiniMule || !m_bTrayIconVisible)
+	{
+		if(!bOnlyMiniMule)
+		{
+			bSuccess = Shell_NotifyIcon(NIM_ADD, &m_nidIconData);
+			if (bSuccess)
+				m_bTrayIconVisible = TRUE;
+		}
+		else
+			bSuccess = TRUE;
+	// <== TBH: minimule - Stulle
 
 		// ==> TBH: minimule - Max
 		if (bMiniMule == TRUE)
 		{
-			if (thePrefs.IsMiniMuleEnabled() &&	thePrefs.GetMMOpen())
+			if (thePrefs.IsMiniMuleEnabled() &&	thePrefs.GetMMOpen() && theApp.minimule)
 			{
 				if (thePrefs.GetMiniMuleLives())
 					theApp.minimule->RunMiniMule();
@@ -179,7 +193,7 @@ BOOL CTrayDialog::TrayHide()
 			m_bTrayIconVisible = FALSE;
 
 		// ==> TBH: minimule - Max
-		if ((theApp.minimule!= NULL) &&theApp.minimule->IsWindowVisible())
+		if (theApp.minimule && theApp.minimule->IsWindowVisible())
 			theApp.minimule->ShowWindow(SW_HIDE);
 		// <== TBH: minimule - Max
 	}
@@ -327,7 +341,12 @@ void CTrayDialog::OnSysCommand(UINT nID, LPARAM lParam)
 			if (TrayShow())
 			*/
 			m_bMaximized = IsZoomed();
+			// ==> TBH: minimule - MyTh88
+			/*
 			if (thePrefs.GetStaticIcon() || TrayShow())
+			*/
+			if (TrayShow(true, thePrefs.GetStaticIcon()))
+			// <== TBH: minimule - MyTh88
 			// <== Static Tray Icon [MorphXT] - MyTh88
 				ShowWindow(SW_HIDE);
 		}
@@ -341,7 +360,12 @@ void CTrayDialog::OnSysCommand(UINT nID, LPARAM lParam)
 		if (TrayShow())
 		*/
 		m_bMaximized = IsZoomed();
+		// ==> TBH: minimule - MyTh88
+		/*
 		if (thePrefs.GetStaticIcon() || TrayShow())
+		*/
+		if (TrayShow(true, thePrefs.GetStaticIcon()))
+		// <== TBH: minimule - MyTh88
 		// <== Static Tray Icon [MorphXT] - MyTh88
 			ShowWindow(SW_HIDE);
 	}
@@ -415,7 +439,7 @@ void CTrayDialog::RestoreWindow()
 	// <== Static Tray Icon [MorphXT] - MyTh88
 
 	// ==> TBH: minimule - Stulle
-	if (theApp.minimule->IsWindowVisible())
+	if (theApp.minimule && theApp.minimule->IsWindowVisible())
 		theApp.minimule->ShowWindow(SW_HIDE);
 	// <== TBH: minimule - Stulle
 }

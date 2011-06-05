@@ -476,6 +476,7 @@ void CDownloadListCtrl::AddSource(CPartFile* owner, CUpDownClient* source, bool 
     newitem->type = (notavailable) ? UNAVAILABLE_SOURCE : AVAILABLE_SOURCE;
     newitem->value = source;
 	newitem->dwUpdated = 0; 
+	newitem->dwUpdatedchunk = 0; // Downloading Chunk Detail Display [SiRoB] - Stulle
 
 	// Update cross link to the owner
 	ListItems::const_iterator ownerIt = m_ListItems.find(owner);
@@ -497,6 +498,7 @@ void CDownloadListCtrl::AddSource(CPartFile* owner, CUpDownClient* source, bool 
 				// Update this instance with its new setting
 				cur_item->type = newitem->type;
 				cur_item->dwUpdated = 0;
+				cur_item->dwUpdatedchunk = 0; // Downloading Chunk Detail Display [SiRoB] - Stulle
 				bFound = true;
 			}
 			else if(notavailable == false){
@@ -616,6 +618,7 @@ void CDownloadListCtrl::UpdateItem(void* toupdate)
 		int result = FindItem(&find);
 		if (result != -1){
 			updateItem->dwUpdated = 0;
+			updateItem->dwUpdatedchunk = 0; // Downloading Chunk Detail Display [SiRoB] - Stulle
 			Update(result);
 		}
 	}
@@ -996,7 +999,17 @@ void CDownloadListCtrl::GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlIte
 			break;
 
 		case 2:		// transferred
+			// ==> Show Client UL and DL in Transferred column of DownloadListCtrl [SiRoB] - Stulle
+			if(pClient->Credits() && (pClient->Credits()->GetUploadedTotal() || pClient->Credits()->GetDownloadedTotal())){
+				_sntprintf(pszText, cchTextMax, _T("%s/%s"),
+				CastItoXBytes(pClient->Credits()->GetUploadedTotal(), false, false),
+				CastItoXBytes(pClient->Credits()->GetDownloadedTotal(), false, false));
+			}
+			break;
+			// <== Show Client UL and DL in Transferred column of DownloadListCtrl [SiRoB] - Stulle
 		case 3:		// completed
+			// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+			/*
 			// - 'Transferred' column: Show transferred data
 			// - 'Completed' column: If 'Transferred' column is hidden, show the amount of transferred data
 			//	  in 'Completed' column. This is plain wrong (at least when receiving compressed data), but
@@ -1005,6 +1018,10 @@ void CDownloadListCtrl::GetSourceItemDisplayText(const CtrlItem_Struct *pCtrlIte
 				if (pCtrlItem->type == AVAILABLE_SOURCE && pClient->GetTransferredDown())
 					_tcsncpy(pszText, CastItoXBytes(pClient->GetTransferredDown(), false, false), cchTextMax);
 			}
+			*/
+			if (pClient->GetSessionPayloadDown())
+				_tcsncpy(pszText, CastItoXBytes(pClient->GetSessionPayloadDown(), false, false), cchTextMax);
+			// <== Downloading Chunk Detail Display [SiRoB] - Stulle
 			break;
 
 		case 4:		// speed
@@ -1330,6 +1347,93 @@ void CDownloadListCtrl::DrawSourceItem(CDC *dc, int nColumn, LPCRECT lpRect, UIN
 			dc->DrawText(szItem, -1, &cur_rec, MLC_DT_TEXT | uDrawTextAlignment);
 			break;
 		}
+
+		// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+		case 3:// completed
+		{
+			if (pCtrlItem->type == AVAILABLE_SOURCE && pClient->GetDownloadState() == DS_DOWNLOADING) {
+				CRect rcDraw(*lpRect);
+				rcDraw.bottom--;
+				rcDraw.top++; 
+
+				int iWidth = rcDraw.Width();
+				int iHeight = rcDraw.Height();
+				if (pCtrlItem->statuschunk == (HBITMAP)NULL)
+					VERIFY(pCtrlItem->statuschunk.CreateBitmap(1, 1, 1, 8, NULL)); 
+				CDC cdcStatus;
+				HGDIOBJ hOldBitmap;
+				cdcStatus.CreateCompatibleDC(dc);
+				int cx = pCtrlItem->statuschunk.GetBitmapDimension().cx;
+				DWORD dwTicks = GetTickCount();
+				if(pCtrlItem->dwUpdatedchunk + DLC_BARUPDATE < dwTicks || cx !=  iWidth  || !pCtrlItem->dwUpdatedchunk) { 
+					pCtrlItem->statuschunk.DeleteObject(); 
+					pCtrlItem->statuschunk.CreateCompatibleBitmap(dc,  iWidth, iHeight); 
+					pCtrlItem->statuschunk.SetBitmapDimension(iWidth,  iHeight); 
+					hOldBitmap = cdcStatus.SelectObject(pCtrlItem->statuschunk); 
+
+					RECT rec_status; 
+					rec_status.left = 0; 
+					rec_status.top = 0; 
+					rec_status.bottom = iHeight; 
+					rec_status.right = iWidth; 
+					pClient->DrawStatusBarChunk(&cdcStatus,  &rec_status,(CPartFile*)pCtrlItem->owner, thePrefs.UseFlatBar());
+
+					CString buffer;
+					COLORREF oldclr = cdcStatus.SetTextColor(RGB(0,0,0));
+					int iOMode = cdcStatus.SetBkMode(TRANSPARENT);
+					if (pClient->GetCurrentDownloadingChunk()==(UINT)-1) {
+						if (pClient->m_lastPartAsked==(uint16)-1)
+							buffer = _T("?");
+						else
+							buffer.Format(_T("%u"), pClient->m_lastPartAsked);
+					} else
+						buffer.Format(_T("%u"), pClient->GetCurrentDownloadingChunk());
+					buffer.AppendFormat(_T(" @ %.1f%%"), pClient->GetDownChunkProgressPercent());
+					CFont *pOldFont = cdcStatus.SelectObject(&m_fontBoldSmaller);
+#define	DrawClientPercentTextLeft		cdcStatus.DrawText(buffer, buffer.GetLength(),&rec_status, MLC_DT_TEXT)
+					rec_status.top-=1;rec_status.bottom-=1;
+					rec_status.left+=1;rec_status.right-=3;
+					DrawClientPercentTextLeft;rec_status.left+=1;rec_status.right+=1;
+					DrawClientPercentTextLeft;rec_status.left+=1;rec_status.right+=1;
+					DrawClientPercentTextLeft;rec_status.top+=1;rec_status.bottom+=1;
+					DrawClientPercentTextLeft;rec_status.top+=1;rec_status.bottom+=1;
+					DrawClientPercentTextLeft;rec_status.left-=1;rec_status.right-=1;
+					DrawClientPercentTextLeft;rec_status.left-=1;rec_status.right-=1;
+					DrawClientPercentTextLeft;rec_status.top-=1;rec_status.bottom-=1;
+					DrawClientPercentTextLeft;rec_status.left++;rec_status.right++;
+					cdcStatus.SetTextColor(RGB(255,255,255));
+					DrawClientPercentTextLeft;
+					
+					cdcStatus.SetTextColor(RGB(0,0,0));
+					buffer.Format(_T("%s"), CastItoXBytes(pClient->GetSessionPayloadDown(), false, false));
+#define	DrawClientPercentTextRight		cdcStatus.DrawText(buffer, buffer.GetLength(),&rec_status, MLC_DT_TEXT | DT_RIGHT)
+					rec_status.top-=1;rec_status.bottom-=1;
+					DrawClientPercentTextRight;rec_status.left+=1;rec_status.right+=1;
+					DrawClientPercentTextRight;rec_status.left+=1;rec_status.right+=1;
+					DrawClientPercentTextRight;rec_status.top+=1;rec_status.bottom+=1;
+					DrawClientPercentTextRight;rec_status.top+=1;rec_status.bottom+=1;
+					DrawClientPercentTextRight;rec_status.left-=1;rec_status.right-=1;
+					DrawClientPercentTextRight;rec_status.left-=1;rec_status.right-=1;
+					DrawClientPercentTextRight;rec_status.top-=1;rec_status.bottom-=1;
+					DrawClientPercentTextRight;rec_status.left++;rec_status.right++;
+					cdcStatus.SetTextColor(RGB(255,255,255));
+					DrawClientPercentTextRight;
+
+					cdcStatus.SelectObject(pOldFont);
+					cdcStatus.SetBkMode(iOMode);
+					cdcStatus.SetTextColor(oldclr);
+					
+					pCtrlItem->dwUpdatedchunk = dwTicks + (rand() % 128); 
+				} else 
+					hOldBitmap = cdcStatus.SelectObject(pCtrlItem->statuschunk); 
+
+				dc->BitBlt(rcDraw.left, rcDraw.top, iWidth, iHeight,  &cdcStatus, 0, 0, SRCCOPY); 
+				cdcStatus.SelectObject(hOldBitmap);
+			} else if (pClient->GetSessionPayloadDown())
+				dc->DrawText(szItem, -1, const_cast<LPRECT>(lpRect), MLC_DT_TEXT | uDrawTextAlignment);
+			break;
+		}
+		// <== Downloading Chunk Detail Display [SiRoB] - Stulle
 
 		case 5: {	// file info
 			CRect rcDraw(*lpRect);
@@ -1798,7 +1902,9 @@ void CDownloadListCtrl::HideSources(CPartFile* toCollapse)
 		{
 			pre++;
 			item->dwUpdated = 0;
+			item->dwUpdatedchunk = 0; // Downloading Chunk Detail Display [SiRoB] - Stulle
 			item->status.DeleteObject();
+			item->statuschunk.DeleteObject(); // Downloading Chunk Detail Display [SiRoB] - Stulle
 			DeleteItem(i--);
 			post++;
 		}
@@ -3729,8 +3835,28 @@ int CDownloadListCtrl::Compare(const CUpDownClient *client1, const CUpDownClient
 			return client1->GetSourceFrom() - client2->GetSourceFrom();
 
 		case 2://transferred asc
+			// ==> Show Client UL and DL in Transferred column of DownloadListCtrl [SiRoB] - Stulle
+			if (!client1->Credits())
+				return 1;
+			else if (!client2->Credits())
+				return -1;
+			return CompareUnsigned64(client2->Credits()->GetDownloadedTotal(), client1->Credits()->GetDownloadedTotal());
+			// <== Show Client UL and DL in Transferred column of DownloadListCtrl [SiRoB] - Stulle
 		case 3://completed asc
+			// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+			/*
 			return CompareUnsigned(client1->GetTransferredDown(), client2->GetTransferredDown());
+			*/
+			if (client1->GetDownloadState() == DS_DOWNLOADING && client2->GetDownloadState() == DS_DOWNLOADING)
+			{
+				if (client1->GetDownChunkProgressPercent() == client2->GetDownChunkProgressPercent())
+					return 0;
+				else
+					return (client1->GetDownChunkProgressPercent() > client2->GetDownChunkProgressPercent()?1:-1);
+			}
+			else
+				return CompareUnsigned(client1->GetSessionPayloadDown(), client2->GetSessionPayloadDown());
+			// <== Downloading Chunk Detail Display [SiRoB] - Stulle
 
 		case 4: //speed asc
 			return CompareUnsigned(client1->GetDownloadDatarate(), client2->GetDownloadDatarate());
@@ -3947,9 +4073,16 @@ void CDownloadListCtrl::CreateMenues()
 		m_PreviewMenu.AddMenuTitle(GetResString(IDS_MENU_PREVIEW), true, false);
 		// <== XP Style Menu [Xanatos] - Stulle
 		m_PreviewMenu.AppendMenu(MF_STRING, MP_PREVIEW, GetResString(IDS_DL_PREVIEW), _T("PREVIEW"));
+		// ==> XP Style Menu [Xanatos] - Stulle
+		/*
 		m_PreviewMenu.AppendMenu(MF_STRING, MP_PAUSEONPREVIEW, GetResString(IDS_PAUSEONPREVIEW));
 		if (!thePrefs.GetPreviewPrio())
     		m_PreviewMenu.AppendMenu(MF_STRING, MP_TRY_TO_GET_PREVIEW_PARTS, GetResString(IDS_DL_TRY_TO_GET_PREVIEW_PARTS));
+		*/
+		m_PreviewMenu.AppendMenu(MF_STRING, MP_PAUSEONPREVIEW, GetResString(IDS_PAUSEONPREVIEW), _T("FILEDOWNLOADPREVIEWPAUSE"));
+		if (!thePrefs.GetPreviewPrio())
+	    	m_PreviewMenu.AppendMenu(MF_STRING, MP_TRY_TO_GET_PREVIEW_PARTS, GetResString(IDS_DL_TRY_TO_GET_PREVIEW_PARTS), _T("FILEDOWNLOADPREVIEWFIRST"));
+		// <== XP Style Menu [Xanatos] - Stulle
 		m_FileMenu.AppendMenu(MF_STRING|MF_POPUP, (UINT_PTR)m_PreviewMenu.m_hMenu, GetResString(IDS_DL_PREVIEW), _T("PREVIEW"));
 	}
 	else
@@ -3982,7 +4115,12 @@ void CDownloadListCtrl::CreateMenues()
 		m_SourcesMenu.AppendMenu(MF_STRING, MP_ALL_A4AF_TO_THIS, GetResString(IDS_ALL_A4AF_TO_THIS)); 
 		m_SourcesMenu.AppendMenu(MF_STRING, MP_ALL_A4AF_TO_OTHER, GetResString(IDS_ALL_A4AF_TO_OTHER)); 
 		//Xman end
+		// ==> XP Style Menu [Xanatos] - Stulle
+		/*
 		m_SourcesMenu.AppendMenu(MF_STRING, MP_ADDSOURCE, GetResString(IDS_ADDSRCMANUALLY));
+		*/
+		m_SourcesMenu.AppendMenu(MF_STRING, MP_ADDSOURCE, GetResString(IDS_ADDSRCMANUALLY), _T("FILEADDSRC"));
+		// <== XP Style Menu [Xanatos] - Stulle		
 		// ==> File Settings [sivka/Stulle] - Stulle
 		/*
 		m_SourcesMenu.AppendMenu(MF_STRING, MP_SETSOURCELIMIT, GetResString(IDS_SETPFSLIMIT));

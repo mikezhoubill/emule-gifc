@@ -2546,6 +2546,7 @@
 #define IDS_ENABLEKNOWN2BUFFER		4188
 #define IDS_ANTILEECHERFINCAN_CHECK	4189
 #define IDS_ENABLEKNOWN2SPLIT		4190
+#define IDC_KNOWN2SPLIT_PPGFILES		4195 //Known2Split checkbox in ppgfiles
 //zz_fly :: End
 #define IDD_PPG_Xtreme                  5000
 #define IDC_13RATIO                     5001
@@ -2825,42 +2826,49 @@
 #define IDS_BACKUP                      60573
 // <== Tabbed Preferences [TPT] - Stulle
 // ==> TBH: Backup [TBH/EastShare/MorphXT] - Stulle
-#define IDC_BACKUP_FILEFRAME            60580
-#define IDC_DAT                         60581
-#define IDC_MET                         60582
-#define IDC_INI                         60583
-#define IDC_PART                        60584
-#define IDC_PARTMET                     60585
-#define IDC_SELECTALL                   60586
-#define IDC_BACKUPNOW                   60587
-#define IDC_BACKUP_AUTO                 60588
-#define IDC_AUTOBACKUP                  60589
-#define IDC_AUTOBACKUP2                 60590
-#define IDC_BACKUP_NOTE                 60591
-#define IDC_BACKUP_MESSAGE              60592
-#define IDS_BACKUP_FILEFRAME            60593
-#define IDS_BACKUP_SELECTALL            60594
-#define IDS_BACKUP_AUTOFRAME            60595
-#define IDS_BACKUP_AUTOBACKUP           60596
-#define IDS_BACKUP_NOTE                 60597
-#define IDS_BACKUP_BACKUPNOW            60598
-#define IDS_BACKUP_MESSAGE              60599
-#define IDS_BACKUP_AUTOBACKUP2          60600
-#define IDS_ABORT                       60601
-#define IDS_CONTINUE                    60602
-#define IDS_DONOTSHOWAGAIN              60604
-#define IDS_DONOTTELLAGAIN              60605
-#define IDS_HELP                        60606
-#define IDS_IGNORE                      60607
-#define IDS_IGNOREALL                   60608
-#define IDS_NOTOALL                     60609
-#define IDS_OK                          60610
-#define IDS_REPORT                      60611
-#define IDS_RETRY                       60612
-#define IDS_SKIP                        60613
-#define IDS_SKIPALL                     60614
-#define IDS_TRYAGAIN                    60615
-#define IDS_YESTOALL                    60616
+#define IDC_BACKUP_FILEFRAME            60575
+#define IDC_DAT                         60576
+#define IDC_MET                         60577
+#define IDC_INI                         60578
+#define IDC_PART                        60579
+#define IDC_PARTMET                     60580
+#define IDC_SELECTALL                   60581
+#define IDC_BACKUPNOW                   60582
+#define IDC_BACKUP_AUTO                 60583
+#define IDC_AUTOBACKUP                  60584
+#define IDC_AUTOBACKUP2                 60585
+#define IDC_BACKUP_NOTE                 60586
+#define IDC_BACKUP_MESSAGE              60587
+#define IDS_BACKUP_FILEFRAME            60589
+#define IDS_BACKUP_SELECTALL            60590
+#define IDS_BACKUP_AUTOFRAME            60591
+#define IDS_BACKUP_AUTOBACKUP           60592
+#define IDS_BACKUP_NOTE                 60593
+#define IDS_BACKUP_BACKUPNOW            60594
+#define IDS_BACKUP_MESSAGE              60595
+#define IDS_BACKUP_AUTOBACKUP2          60596
+#define IDS_ABORT                       60597
+#define IDS_CONTINUE                    60598
+#define IDS_DONOTSHOWAGAIN              60599
+#define IDS_DONOTTELLAGAIN              60600
+#define IDS_HELP                        60601
+#define IDS_IGNORE                      60602
+#define IDS_IGNOREALL                   60603
+#define IDS_NOTOALL                     60604
+#define IDS_OK                          60605
+#define IDS_REPORT                      60606
+#define IDS_RETRY                       60607
+#define IDS_SKIP                        60608
+#define IDS_SKIPALL                     60609
+#define IDS_TRYAGAIN                    60610
+#define IDS_YESTOALL                    60611
+#define IDS_OVERWRITE1                  60612
+#define IDS_OVERWRITE2                  60613
+#define IDS_BACKUPERROR                 60614
+#define IDS_BACKUP_PART                 60615
+#define IDS_BACKUP_PART_W               60616
+#define IDS_BACKUP_COMPLETE             60617
+#define IDS_BACKUP_COMPLETE_W           60618
 // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 // ==> TBH: minimule - Max
 #define IDD_MINI_MULE                   60620
@@ -3048,6 +3056,8 @@
 #define IDS_KEEPCATINCSHARED            60852
 #define IDS_KEEPCATINCSHARED_TITLE      60853
 #define IDS_ADD_REMOVED_INC             60854
+#define IDC_SELFILES                    60855
+#define IDS_DONOTWATCHCLIP              60856
 // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 #define IDS_SHARED_PREFS                60860 // Shared Files Management [Stulle] - Stulle
 // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -3471,6 +3481,7 @@
 #define IDC_STATIC_ADVADMIN_USERLEVEL   61544
 #define IDC_ADVADMIN_NOTE               61545
 #define IDC_ADVADMIN_DFILES             61546
+#define IDS_WS_HIDDEN                   61547
 // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
 // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
 #define IDC_TAB_WEBSERVER               61550
@@ -3538,6 +3549,7 @@
 #define IDS_SVC_STRTUP_OPN_FAIL         61625
 #define IDS_SVC_STRTUP_CTRL_FAIL        61626
 #define IDS_SVC_LINK_PASS_FAIL          60627
+#define IDS_SERVICE_OPT_GUI             60628
 // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 // ==> Adjustable NT Service Strings [Stulle] - Stulle
 #define IDC_SERVICE_STR_GROUP           61630
@@ -3575,6 +3587,7 @@
 #define IDS_NOMINIMIZE                  61665
 // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
 #define IDS_WS_FRIENDSLOT               61670 // Friendslot support for WebInterface [Stulle] - Stulle
+#define IDS_CHUNK                       61680 // Downloading Chunk Detail Display [SiRoB] - Stulle
 
 // Next default values for new objects
 // 

@@ -691,7 +691,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 						//Xman Filefaker Detection		
 						if(client->GetUploadState()!=US_NONE && reqfile->GetFileSize()>PARTSIZE)
 						{
+							// ==> requpfile optimization [SiRoB] - Stulle
+							/*
 							CKnownFile* upfile = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+							*/
+							CKnownFile* upfile = client->CheckAndGetReqUpFile();
+							// <== requpfile optimization [SiRoB] - Stulle
 							if(upfile && upfile == reqfile) //we speak about the same file
 							{
 								AddDebugLogLine(false,_T("Dropped src: (%s) does not seem to have own reqfile!(TCP)"), DbgGetClientInfo()); 
@@ -771,10 +776,10 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					} //Xman
 					//zz_fly :: test code
 					//note: the easyMule client may send unexpect OP_FILESTATUS packet. from its src, it will send OP_FILESTATUS when CPartFile::FlushBuffer().
-					//		ignore those unexpect packets. thanks Enig123
-					//if(StrStrI(client->GetClientModVer(), L"easyMule") && client->GetDownloadState() == DS_DOWNLOADING)
-					//	AddDebugLogLine(false, _T("easyMule client send unexpect OP_FILESTATUS packet: %s"), client->DbgGetClientInfo());
-					//else
+					//		ignore those unexpect packets. thanks Enig123.
+					if(StrStrI(client->GetClientModVer(), L"easyMule") && client->GetDownloadState() == DS_DOWNLOADING)
+						AddDebugLogLine(false, _T("easyMule client send unexpect OP_FILESTATUS packet: %s"), client->DbgGetClientInfo());
+					else
 					//zz_fly :: test code
 					client->ProcessFileStatus(false, &data, file);
 					break;
@@ -880,7 +885,12 @@ bool CClientReqSocket::ProcessPacket(const BYTE* packet, uint32 size, UINT opcod
 					//         With this a client might be in a waiting queue with a high 
 					//         priority but download block of a file set to a lower priority.
 					CKnownFile* reqfileNr1 = theApp.sharedfiles->GetFileByID(reqfilehash);
+					// ==> requpfile optimization [SiRoB] - Stulle
+					/*
 					CKnownFile* reqfileNr2 = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+					*/
+					CKnownFile* reqfileNr2 = client->CheckAndGetReqUpFile();
+					// <== requpfile optimization [SiRoB] - Stulle
 					if(reqfileNr1==NULL) 
 					{
 						//We don't know the requesting file, this can happen when we delete the file during upload
@@ -2281,12 +2291,25 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 
 						uint32 ip = data.ReadUInt32();
 						uint16 tcp = data.ReadUInt16();
+						//Enig123 :: don't reconnect to banned clients
+						uint32 nClientIP = ntohl(ip);
+						if (theApp.clientlist->IsBannedClient(nClientIP)) {
+							if (thePrefs.GetLogBannedClients())
+								AddDebugLogLine(false, _T("Banned client IP=%s asked me to callback, rejected!"), ipstr(nClientIP));
+							break;
+						}
+						//End
 						CUpDownClient* callback;
 						callback = theApp.clientlist->FindClientByIP(ntohl(ip), tcp);
 						if( callback == NULL )
 						{
 							callback = new CUpDownClient(NULL,tcp,ip,0,0);
+							//Enig123 :: Optimizations - SkipDupCheck
+							/*
 							theApp.clientlist->AddClient(callback);
+							*/
+							theApp.clientlist->AddClient(callback, true);
+							//End
 						}
 						callback->TryToConnect(true);
 					}
@@ -2535,7 +2558,12 @@ bool CClientReqSocket::ProcessExtPacket(const BYTE* packet, uint32 size, UINT op
 					//         With this a client might be in a waiting queue with a high 
 					//         priority but download block of a file set to a lower priority.
 					CKnownFile* reqfileNr1 = theApp.sharedfiles->GetFileByID(reqfilehash);
+					// ==> requpfile optimization [SiRoB] - Stulle
+					/*
 					CKnownFile* reqfileNr2 = theApp.sharedfiles->GetFileByID(client->GetUploadFileID());
+					*/
+					CKnownFile* reqfileNr2 = client->CheckAndGetReqUpFile();
+					// <== requpfile optimization [SiRoB] - Stulle
 					if(reqfileNr1==NULL) 
 					{
 						//We don't know the requesting file, this can happen when we delete the file during upload

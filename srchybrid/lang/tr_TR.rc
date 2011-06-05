@@ -2342,7 +2342,13 @@ BEGIN
     IDS_SKIP                "&Atla"
     IDS_SKIPALL             "S&kip All"
     IDS_TRYAGAIN            "&Yeniden Dene"
-    IDS_YESTOALL            "Y&es to All"
+    IDS_YESTOALL            "&Tümüne Evet"
+    IDS_OVERWRITE1          "%s dosyasý zaten mevcut. Üzerine yazýlsýn mý?"
+    IDS_OVERWRITE2          "Üzerine yaz?"    
+    IDS_BACKUPERROR         "Yedekleme sýrasýnda hata oluþtu"
+    IDS_BACKUP_PART         "Boyutlarý yüzünden *.part dosyalarýnýn yedeklenmesi uzun sürebilir.\nYapmak istediðinizden emin misiniz?"
+    IDS_BACKUP_PART_W       "Emin misiniz?"
+    IDS_BACKUP_COMPLETE     "Dosya(lar) baþarý ile kopyalandý."
     // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
     // ==> TBH: minimule - Max
     IDS_MM_SHOW             "Use TBH Mini-Mule instead"
@@ -2458,6 +2464,7 @@ BEGIN
     IDS_KEEPCATINCSHARED    "Should incoming directory of removed category be added as share?"
     IDS_KEEPCATINCSHARED_TITLE "Category removed"
     IDS_ADD_REMOVED_INC     "Ask if incoming dir of removed cat should be added as share"
+    IDS_DONOTWATCHCLIP      "Panoyu izlemekten vazgeç"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Paylaþýlanlar Yönetimi" // Shared Files Management [Stulle] - Stulle
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2890,6 +2897,7 @@ IDS_SERVICE_NAME_CHANGED "Zaten eklenmiþ durumdaki NT Hizmetinin ismini deðiþtir
     IDS_NOMINIMIZE          "Hayýr, Tablaya at"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_WS_FRIENDSLOT       "Arkadaþslotu" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Parça Bilgisi" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 

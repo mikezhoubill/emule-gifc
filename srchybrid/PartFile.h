@@ -558,7 +558,9 @@ private:
 	uint32	lastpurgetime;
 	uint32	m_LastNoNeededCheck;
 	bool	m_is_A4AF_auto; //Xman Xtreme Downloadmanager: Auto-A4AF-check
+public: // Downloading Chunk Detail Display [SiRoB] - Stulle
 	CTypedPtrList<CPtrList, Gap_Struct*> gaplist;
+private: // Downloading Chunk Detail Display [SiRoB] - Stulle
 	CTypedPtrList<CPtrList, Requested_Block_Struct*> requestedblocks_list;
 	CArray<uint16,uint16> m_SrcpartFrequency;
 	//Xman

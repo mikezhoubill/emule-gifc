@@ -660,24 +660,22 @@ BOOL CPPgConnection::OnApply()
 	theApp.scheduler->SaveOriginals();
 
 	// ==> TBH: minimule - Max
-	int iMaxRange = (int)thePrefs.GetMaxGraphDownloadRate();
-	if(thePrefs.GetMaxGraphUploadRate() > iMaxRange)
-		iMaxRange = (int)thePrefs.GetMaxGraphUploadRate();
-	UINT nLastMaxRange, nLastMinRange;
-	nLastMaxRange = thePrefs.GetSpeedMeterMax();
-	nLastMinRange = thePrefs.GetSpeedMeterMin();
-	if((int)nLastMaxRange != iMaxRange)
+	if(lastMaxGraphUploadRate != thePrefs.GetMaxGraphUploadRate() || 
+		lastMaxGraphDownloadRate != thePrefs.GetMaxGraphDownloadRate())
 	{
-		thePrefs.SetSpeedMeterMax(iMaxRange);
-		if (thePrefs.IsMiniMuleEnabled() && theApp.minimule->IsWindowVisible())
-			theApp.minimule->SetSpeedMeterRange(iMaxRange, nLastMinRange);
+		int iMaxRange = (int)thePrefs.GetMaxGraphDownloadRate();
+		if(thePrefs.GetMaxGraphUploadRate() > iMaxRange)
+			iMaxRange = (int)thePrefs.GetMaxGraphUploadRate();
+		
+		if (thePrefs.IsMiniMuleEnabled() && theApp.minimule && theApp.minimule->IsWindowVisible())
+			theApp.minimule->SetSpeedMeterRange(iMaxRange, 0);
+
+		// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
+		theApp.emuledlg->m_co_UpTrafficGraph.Init_Graph(_T("Up"),(UINT)thePrefs.GetMaxGraphUploadRate());
+		theApp.emuledlg->m_co_DownTrafficGraph.Init_Graph(_T("Down"),(UINT)thePrefs.GetMaxGraphDownloadRate());
+		// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 	}
 	// <== TBH: minimule - Max
-
-	// ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
-	theApp.emuledlg->m_co_UpTrafficGraph.Init_Graph(_T("Up"),(UINT)thePrefs.GetMaxGraphUploadRate());
-	theApp.emuledlg->m_co_DownTrafficGraph.Init_Graph(_T("Down"),(UINT)thePrefs.GetMaxGraphDownloadRate());
-	// <== High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 
 	SetModified(FALSE);
 	LoadSettings();

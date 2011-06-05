@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=eMule
-AppVerName=eMule ScarAngel 4.0
+AppVerName=eMule ScarAngel 4.1
 AppPublisher=Stulle
 AppPublisherURL=http://scarangel.sourceforge.net/
 AppSupportURL=http://forum.emule-project.net/index.php?showforum=97

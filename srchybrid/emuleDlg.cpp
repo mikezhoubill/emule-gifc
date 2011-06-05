@@ -533,7 +533,7 @@ BOOL CemuleDlg::OnInitDialog()
 		/*
 		TrayShow();
 		*/
-		TrayShow(FALSE);
+		TrayShow(false);
 		// <== TBH: minimule - Stulle
 	// <== Static Tray Icon [MorphXT] - MyTh88
 
@@ -5904,7 +5904,7 @@ void CemuleDlg::ToggleHide()
 	// ==> Static Tray Icon [MorphXT] - MyTh88
 	m_bMaximized = IsZoomed();
 	// <== Static Tray Icon [MorphXT] - MyTh88
-	m_bTbhMiniMuleVis = theApp.minimule->IsWindowVisible(); // TBH: minimule - Stulle
+	m_bTbhMiniMuleVis = theApp.minimule->IsWindowVisible()?true:false; // TBH: minimule - Stulle
 	b_HideApp = true;
 	b_TrayWasVisible = TrayHide();
 	b_WindowWasVisible = IsWindowVisible();
@@ -6131,6 +6131,10 @@ void CemuleDlg::CheckIPFilter()
 // ==> High resolution speedmeter on toolbar [eFMod/Stulle] - Myth88
 void CemuleDlg::Update_TrafficGraph()
 {
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if(theApp.IsRunningAsService(SVC_GUI_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
 	//Xman
 	// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 	// Retrieve the current datarates

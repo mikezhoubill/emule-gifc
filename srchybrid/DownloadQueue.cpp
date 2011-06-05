@@ -117,6 +117,7 @@ CDownloadQueue::CDownloadQueue()
 	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	m_iLastLinkQueuedTick = 0;
 	m_bBusyPurgingLinks = false;
+	m_bClipboardLinkInQueue =false;
 	m_ED2KLinkQueue.RemoveAll();
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
@@ -546,12 +547,13 @@ void CDownloadQueue::AddFileLinkToDownload(CED2KFileLink* pLink, int cat)
 */
 // This function has been modified in order
 // to accomodate the category selection.
-// NEW PARAM:  bool AllocatedLink = false by default
-void CDownloadQueue::AddFileLinkToDownload(CED2KFileLink* pLink, int theCat, bool AllocatedLink)
+// NEW PARAM:  bool AllocatedLink = false by default, bFromClipboard  false by default
+void CDownloadQueue::AddFileLinkToDownload(CED2KFileLink* pLink, int theCat, bool AllocatedLink,bool bFromClipboard)
 {
-	if (thePrefs.SelectCatForNewDL() && theCat==-1)
+	if (thePrefs.SelectCatForNewDL() && theCat==-1  || bFromClipboard)
 	{
 		m_ED2KLinkQueue.AddTail(pLink);
+		m_bClipboardLinkInQueue = bFromClipboard ;
 		m_iLastLinkQueuedTick = GetTickCount();
 		return;
 	}
@@ -567,7 +569,7 @@ void CDownloadQueue::AddFileLinkToDownload(CED2KFileLink* pLink, int theCat, boo
 			useCat = 0;
 	}
 	// Just in case...
-	if (m_ED2KLinkQueue.GetCount() && !thePrefs.SelectCatForNewDL()) PurgeED2KLinkQueue();
+	if (m_ED2KLinkQueue.GetCount() && !(m_bClipboardLinkInQueue||thePrefs.SelectCatForNewDL())) PurgeED2KLinkQueue();
 	m_iLastLinkQueuedTick = 0;
 
 	// Pass useCat instead of cat and autoset resume order.
@@ -1102,20 +1104,26 @@ void CDownloadQueue::Process(){
 	// Purge ED2K Link Queue
 	if (m_iLastLinkQueuedTick && !m_bBusyPurgingLinks && (GetTickCount() - m_iLastLinkQueuedTick) > 400)
 		PurgeED2KLinkQueue();
-	else if (m_ED2KLinkQueue.GetCount() && !thePrefs.SelectCatForNewDL()) // This should not happen.
+	else if (m_ED2KLinkQueue.GetCount() && !(m_bClipboardLinkInQueue|| thePrefs.SelectCatForNewDL())) // This should not happen.
 	{
 		PurgeED2KLinkQueue();
+		ASSERT(0);
 		AddDebugLogLine(false, _T("ERROR: Links in ED2K Link Queue while SelectCatForNewDL was disabled!"));
 	}
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 
-	// ==> CPU/MEM usage [$ick$/Stulle] - Max 
-	if(::GetTickCount() > m_dwResTimer) 
-		{
-			theApp.emuledlg->transferwnd->ShowRessources();
-			m_dwResTimer = ::GetTickCount() + 1000; // update ever 1 sec
-		}
-	// <== CPU/MEM usage [$ick$/Stulle] - Max 
+	// ==> CPU/MEM usage [$ick$/Stulle] - Max
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	/*
+	if(::GetTickCount() > m_dwResTimer)
+	*/
+	if(!theApp.IsRunningAsService(SVC_GUI_OPT) && ::GetTickCount() > m_dwResTimer)
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	{
+		theApp.emuledlg->transferwnd->ShowRessources();
+		m_dwResTimer = ::GetTickCount() + 1000; // update ever 1 sec
+	}
+	// <== CPU/MEM usage [$ick$/Stulle] - Max
 
 	CheckDiskspaceTimed();
 }
@@ -3251,7 +3259,7 @@ void CDownloadQueue::SetHardLimits()
 			else if(!m_bTooMuchSrc)
 				cur_file->IncrHL(m_uSourcesDif);
 			else
-			cur_file->DecrHL();
+				cur_file->DecrHL();
 		}
 	}
 
@@ -3329,9 +3337,10 @@ bool CDownloadQueue::PurgeED2KLinkQueue()
 	int		addedFiles = 0;
 	bool	bCreatedNewCat = false;
 	bool	bCanceled = false;
-	if (thePrefs.SelectCatForNewDL() && thePrefs.GetCatCount()>1)
+	bool	bCurClipboardLinkInQueue = m_bClipboardLinkInQueue;
+	if ((thePrefs.SelectCatForNewDL() || m_bClipboardLinkInQueue) && thePrefs.GetCatCount()>1)
 	{
-		CSelCategoryDlg* getCatDlg = new CSelCategoryDlg((CWnd*)theApp.emuledlg);
+		CSelCategoryDlg* getCatDlg = new CSelCategoryDlg((CWnd*)theApp.emuledlg,m_bClipboardLinkInQueue);
 		getCatDlg->DoModal();
 		
 		// Returns 0 on 'Cancel', otherwise it returns the selected category
@@ -3341,6 +3350,7 @@ bool CDownloadQueue::PurgeED2KLinkQueue()
 		bCreatedNewCat = getCatDlg->CreatedNewCat();
 		bCanceled = getCatDlg->WasCancelled();
 		delete getCatDlg;
+		m_bClipboardLinkInQueue=false;
 	}
 	else if (thePrefs.UseActiveCatForLinks())
 		useCat = theApp.emuledlg->transferwnd->GetActiveCategory();
@@ -3355,7 +3365,7 @@ bool CDownloadQueue::PurgeED2KLinkQueue()
 			pLink = NULL;
 			continue;
 		}
-		if (!thePrefs.SelectCatForNewDL() && thePrefs.UseAutoCat())
+		if (!(thePrefs.SelectCatForNewDL() || bCurClipboardLinkInQueue) && thePrefs.UseAutoCat())
 		{
 			useCat = GetAutoCat(CString(pLink->GetName()), pLink->GetSize());
 			if (!useCat && thePrefs.UseActiveCatForLinks())

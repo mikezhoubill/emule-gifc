@@ -152,7 +152,26 @@ void CPPgScheduler::LoadSchedule(int index) {
 	for (int i=0;i<16;i++) {
 		if (schedule->actions[i]==0) break;
 		m_actions.InsertItem(i,GetActionLabel(schedule->actions[i]));
-		m_actions.SetItemText(i,1,schedule->values[i]);
+		// ==> Show cat name for scheduler cat actions [Stulle] - Stulle
+		if(schedule->actions[i]==ACTION_CATSTOP || schedule->actions[i]==ACTION_CATRESUME)
+		{
+			int iCat = _tstoi(schedule->values[i]);
+			CString strCatTitle;
+			if(iCat == -1)
+				strCatTitle = GetResString(IDS_ALL);
+			else
+			{
+				Category_Struct* thisCat = thePrefs.GetCategory(iCat);
+				if(thisCat)
+					strCatTitle = thisCat->strTitle;
+				else
+					strCatTitle = GetResString(IDS_UNKNOWN);
+			}
+			m_actions.SetItemText(i,1,schedule->values[i]+L" ("+strCatTitle+L")");
+		}
+		else
+		// <== Show cat name for scheduler cat actions [Stulle] - Stulle
+			m_actions.SetItemText(i,1,schedule->values[i]);
 		m_actions.SetItemData(i,schedule->actions[i]);
 	}
 }
@@ -226,7 +245,15 @@ void CPPgScheduler::OnBnClickedApply()
 		schedule->ResetActions();
 		for (uint8 i=0;i<m_actions.GetItemCount();i++) {
 			schedule->actions[i]=m_actions.GetItemData(i);
-			schedule->values[i]=m_actions.GetItemText(i,1);
+			// ==> Show cat name for scheduler cat actions [Stulle] - Stulle
+			if(schedule->actions[i]==ACTION_CATSTOP || schedule->actions[i]==ACTION_CATRESUME)
+			{
+				CString strCat = m_actions.GetItemText(i,1);
+				schedule->values[i]=strCat.Left(strCat.Find(L"(")-1);
+			}
+			else
+			// <== Show cat name for scheduler cat actions [Stulle] - Stulle
+				schedule->values[i]=m_actions.GetItemText(i,1);
 		}
 		
 		m_list.SetItemText(index, 0, schedule->title);
@@ -362,9 +389,16 @@ void CPPgScheduler::OnNmRClickActionlist(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 	if (!isParameterless) { // Advanced Updates [MorphXT/Stulle] - Stulle
 	if (isCatAction) {
+		// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+		/*
 		if (thePrefs.GetCatCount()>1) m_CatActionSel.AppendMenu(MF_STRING,MP_SCHACTIONS+20,GetResString(IDS_ALLUNASSIGNED));
 		m_CatActionSel.AppendMenu(MF_STRING,MP_SCHACTIONS+21,GetResString(IDS_ALL));
 		for (int i=1;i<thePrefs.GetCatCount();i++)
+		*/
+		m_CatActionSel.AppendMenu(MF_STRING,MP_SCHACTIONS+21,GetResString(IDS_ALL));
+		m_CatActionSel.AppendMenu(MF_SEPARATOR);
+		for (int i=0;i<thePrefs.GetCatCount();i++)
+		// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			m_CatActionSel.AppendMenu(MF_STRING,MP_SCHACTIONS+22+i,thePrefs.GetCategory(i)->strTitle);
 		// ==> more icons - Stulle
 		/*
@@ -423,11 +457,32 @@ BOOL CPPgScheduler::OnCommand(WPARAM wParam, LPARAM lParam)
 					 m_timeTo.SetTime(&myTime1); // On ok reset end time. 
 		}
 		// <== Advanced Updates [MorphXT/Stulle] - Stulle
+		// ==> Show cat name for scheduler cat actions [Stulle] - Stulle
+		else
+			m_actions.SetItemText(i,1,L"-1 ("+GetResString(IDS_ALL)+L")");
+		// <== Show cat name for scheduler cat actions [Stulle] - Stulle
 	}
 	else if (wParam>=MP_SCHACTIONS+20 && wParam<=MP_SCHACTIONS+80)
 	{
 		CString newval;
+		// ==> Show cat name for scheduler cat actions [Stulle] - Stulle
+		/*
 		newval.Format(_T("%i"),wParam-MP_SCHACTIONS-22);
+		*/
+		int iCat = wParam-MP_SCHACTIONS-22;
+		CString strCatTitle;
+		if(iCat == -1)
+			strCatTitle = GetResString(IDS_ALL);
+		else
+		{
+			Category_Struct* thisCat = thePrefs.GetCategory(iCat);
+			if(thisCat)
+				strCatTitle = thisCat->strTitle;
+			else // should not happen
+				strCatTitle = GetResString(IDS_UNKNOWN);
+		}
+		newval.Format(L"%i (%s)",iCat,strCatTitle);
+		// <== Show cat name for scheduler cat actions [Stulle] - Stulle
 		m_actions.SetItemText(item,1,newval);
 	}
 	else if (wParam == ID_HELP)

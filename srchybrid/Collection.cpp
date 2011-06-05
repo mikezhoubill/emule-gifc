@@ -49,7 +49,15 @@ CCollection::CCollection(void)
 
 CCollection::CCollection(const CCollection* pCollection)
 {
+	//leuk_he  CB Mod : Fix : Collection double extension
+	//see http://forum.emule-project.net/index.php?showtopic=107054
+	/*
 	m_sCollectionName = pCollection->m_sCollectionName;
+	*/
+	CString collectionName = pCollection->m_sCollectionName;
+	collectionName.Left(collectionName.ReverseFind('.')); // no extension should be handled correctly as well
+	m_sCollectionName = collectionName;
+	//leuk_he  CB Mod : Fix : Collection double extension
 	if (pCollection->m_pabyCollectionAuthorKey != NULL){
 		m_nKeySize = pCollection->m_nKeySize;
 		m_pabyCollectionAuthorKey = new BYTE[m_nKeySize];

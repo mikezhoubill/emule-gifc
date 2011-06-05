@@ -1015,8 +1015,6 @@ public:
 	// <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 
 	// ==> TBH: minimule - Max
-	static  int		speedmetermin;
-	static  int		speedmetermax;
 	static  bool	m_bMiniMule;
 	static  uint32	m_iMiniMuleUpdate;
 	static  bool	m_bMiniMuleLives;
@@ -2471,10 +2469,6 @@ public:
 	// <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 
 	// ==> TBH: minimule - Max
-	static	int		GetSpeedMeterMin()		{return speedmetermin;}
-	static	int		GetSpeedMeterMax()		{return speedmetermax;}
-	static	void	SetSpeedMeterMin(int in)	{speedmetermin = in;}
-	static	void	SetSpeedMeterMax(int in)    {speedmetermax = in;}
 	static	bool	IsMiniMuleEnabled() {return m_bMiniMule;}
 	static	void	SetMiniMuleEnabled(bool in) {m_bMiniMule = in;}
 	static	uint32	GetMiniMuleUpdate()	{return m_iMiniMuleUpdate;}

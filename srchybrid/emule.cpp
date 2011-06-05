@@ -1927,7 +1927,7 @@ HICON CemuleApp::LoadIcon(LPCTSTR lpszResourceName, int cx, int cy, UINT uFlags)
 			else
 			{
 				// WINBUG???: 'ExtractIcon' does not work well on ICO-files when using the color 
-				// scheme 'Windows-Standard (extragroß)' -> always try to use 'LoadImage'!
+				// scheme 'Windows-Standard (extragro?' -> always try to use 'LoadImage'!
 				//
 				// If the ICO file contains a 16x16 icon, 'LoadImage' will though return a 32x32 icon,
 				// if LR_DEFAULTSIZE is specified! -> always specify the requested size!
@@ -2106,7 +2106,12 @@ CTempIconLoader::~CTempIconLoader()
 /*
 void CemuleApp::AddEd2kLinksToDownload(CString strLinks, int cat)
 */
+// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+/*
 void CemuleApp::AddEd2kLinksToDownload(CString strLinks, int cat, bool askIfAlreadyDownloaded)
+*/
+void CemuleApp::AddEd2kLinksToDownload(CString strLinks, int cat, bool fromclipboard, bool askIfAlreadyDownloaded)
+// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 //Xman end
 {
 	int curPos = 0;
@@ -2141,10 +2146,10 @@ void CemuleApp::AddEd2kLinksToDownload(CString strLinks, int cat, bool askIfAlre
 					if ( askIfAlreadyDownloaded )
 					{
 						if ( knownfiles->CheckAlreadyDownloadedFileQuestion(pLink->GetFileLink()->GetHashKey(), pLink->GetFileLink()->GetName()) )
-							downloadqueue->AddFileLinkToDownload(pFileLink->GetFileLink(),cat, true);
+							downloadqueue->AddFileLinkToDownload(pFileLink->GetFileLink(), cat, true, fromclipboard);
 					}
 					else
-						theApp.downloadqueue->AddFileLinkToDownload(pFileLink->GetFileLink(),cat, true);
+						theApp.downloadqueue->AddFileLinkToDownload(pFileLink->GetFileLink(), cat, true, fromclipboard);
 					// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 				}
 				else
@@ -2202,7 +2207,7 @@ void CemuleApp::SearchClipboard()
 			/*
 			AddEd2kLinksToDownload(pszTrimmedLinks, 0, true);
 			*/
-			AddEd2kLinksToDownload(strLinks, -1, true);
+			AddEd2kLinksToDownload(strLinks, -1, true, true);
 			// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 			//Xman end
 	}
@@ -2221,7 +2226,12 @@ void CemuleApp::PasteClipboard(int cat)
 	/*
 	AddEd2kLinksToDownload(strLinks, cat);
 	*/
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
 	AddEd2kLinksToDownload(strLinks, cat, true);
+	*/
+	AddEd2kLinksToDownload(strLinks, cat, false, true);
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	//Xman end
 }
 
@@ -3454,10 +3464,9 @@ void CemuleApp::RebindUPnP()
 // <== UPnP support [MoNKi] - leuk_he
 
 // ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
-bool CemuleApp::IsRunningAsService(int OptimizeLevel )
+bool CemuleApp::IsRunningAsService(int OptimizeLevel)
 {
-	//if (OptimizeLevel < 5)	// 5: all optmization except server list : need an option for preferneces. 
-	if (OptimizeLevel < thePrefs.GetServiceOptLvl())
+	if (thePrefs.GetServiceOptLvl() > SVC_NO_OPT && OptimizeLevel <= thePrefs.GetServiceOptLvl())
 		return RunningAsService();
 	else
 		return false;  // disable optimizations

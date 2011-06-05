@@ -271,6 +271,7 @@ protected:
 	// <== Design Settings [eWombat/Stulle] - Stulle
 
 	//Xman client percentage
+public: // Downloading Chunk Detail Display [SiRoB] - Stulle
 	CFont		m_fontBoldSmaller;
 
 private:

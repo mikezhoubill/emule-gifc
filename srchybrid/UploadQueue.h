@@ -107,7 +107,7 @@ public:
 	bool		AcceptNewClient(bool addOnNextConnect = false); //Xman 4.8.2 must be punlic because of access in ClientUDPSocket
 
 	void	UploadTimer(); //Xman process timer code via messages (Xanatos)
-	bool	UseHighSpeedUpload()					{return m_bUseHighSpeedUpload;} //Xman for SiRoB: ReadBlockFromFileThread
+	//bool	UseHighSpeedUpload()					{return m_bUseHighSpeedUpload;} //Xman for SiRoB: ReadBlockFromFileThread
 	bool		AddUpNextClient(LPCTSTR pszReason, CUpDownClient* directadd = 0);
 
 protected:
@@ -159,6 +159,7 @@ private:
 	CUpDownClient* releaseslotclient;
 	//Xman end
 	*/
+	void MoveDownInUpload(CUpDownClient* client);
 	// <== Superior Client Handling [Stulle] - Stulle
 
     void InsertInUploadingList(CUpDownClient* newclient);
@@ -186,7 +187,7 @@ private:
 	/*
 	UINT_PTR m_hHighSpeedUploadTimer;
 	*/
-	bool	m_bUseHighSpeedUpload;
+	//bool	m_bUseHighSpeedUpload;
 	//Xman end
 	uint32	successfullupcount;
 	uint32	failedupcount;
@@ -213,9 +214,15 @@ private:
 	bool	m_bStatisticsWaitingListDirty;
 
 	// ==> Spread Credits Slot [Stulle] - Stulle
-public:
 	int		m_slotcounter;
 	bool	m_bSpreadCreditsSlotActive;
 	CUpDownClient* FindBestSpreadClientInQueue();
 	// <== Spread Credits Slot [Stulle] - Stulle
+
+	// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	bool	m_bSuperiorInQueue;
+	bool	m_bSuperiorInQueueDirty;
+public:
+	void	SetSuperiorInQueueDirty()	{m_bSuperiorInQueueDirty = true;}
+	// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 };

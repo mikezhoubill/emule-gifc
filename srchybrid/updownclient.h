@@ -26,6 +26,7 @@
 #include <map>
 #include "IP2Country.h" //EastShare - added by AndCycle, IP to Country
 #include "Preferences.h" //Xman Funny-Nick (Stulle/Morph)
+#include "opcodes.h" // Downloading Chunk Detail Display [SiRoB] - Stulle
 
 class CTag; //Xman Anti-Leecher
 class CClientReqSocket;
@@ -619,7 +620,12 @@ public:
 	
 	//Xman Full Chunk
 	bool upendsoon;
+	// ==> Superior Client Handling [Stulle] - Stulle
+	/*
 	bool 			IsDifferentPartBlock();
+	*/
+	bool 			IsDifferentPartBlock(bool bCheckForMulti = false);
+	// <== Superior Client Handling [Stulle] - Stulle
 	//Xman end
 	
 	//Xman Dynamic block request (netfinity/Xman)
@@ -1124,6 +1130,8 @@ protected: // File Settings [sivka/Stulle] - Stulle
 	*/
 	//Xman end
 
+	bool	m_bACATHelloAnswerPending;	//zz_fly :: Client is always highid if we are connecting to them - by Enig123, idea from ACAT
+
 //EastShare Start - added by AndCycle, IP to Country
 public:
 	CString			GetCountryName(bool longName = true) const; //Xman changed 
@@ -1189,5 +1197,32 @@ public:
 	uint8 GetSpreadClient() const	{return m_uSpreadClient;}
 	void SetSpreadClient(uint8 in){m_uSpreadClient = in;};
 	// <== Spread Credits Slot [Stulle] - Stulle
+
+	// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+	void DrawStatusBarChunk(CDC* dc, LPCRECT rect,const CPartFile* file, bool  bFlat) const;
+	float GetDownChunkProgressPercent() const;
+	UINT GetCurrentDownloadingChunk() const { return (m_nLastBlockOffset!=(uint64)-1)?(UINT)(m_nLastBlockOffset/PARTSIZE):(UINT)-1;}
+	// <== Downloading Chunk Detail Display [SiRoB] - Stulle
+
+	// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+	void DrawUpStatusBarChunk(CDC* dc, RECT* rect, bool onlygreyrect, bool  bFlat) const;
+	float GetUpChunkProgressPercent() const;
+	void DrawUpStatusBarChunkText(CDC* dc, RECT* cur_rec) const;
+	// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+
+	// ==> Display remaining upload time [Stulle] - Stulle
+	CString GetRemainingUploadTime() const;
+	// <== Display remaining upload time [Stulle] - Stulle
+
+	// ==> Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
+	bool IsGPLEvildoer() const	{return m_bGPLEvildoer;}
+	// <== Do not display PowerShare or Fair Play for bad clients [Stulle] - Stulle
+
+	// ==> requpfile optimization [SiRoB] - Stulle
+	CKnownFile*		CheckAndGetReqUpFile() const;
+protected:
+	CKnownFile* requpfile;
+	DWORD		requpfileid_lasttimeupdated;
+	// <== requpfile optimization [SiRoB] - Stulle
 };
 //#pragma pack()

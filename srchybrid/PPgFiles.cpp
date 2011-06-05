@@ -57,6 +57,7 @@ BEGIN_MESSAGE_MAP(CPPgFiles, CPropertyPage)
 	ON_BN_CLICKED(IDC_REMEMBERDOWNLOADED, OnBnClickedRememberdownloaded)
 	ON_BN_CLICKED(IDC_REMEMBERAICH, OnSettingsChange)
 	//Xman end
+	ON_BN_CLICKED(IDC_KNOWN2SPLIT_PPGFILES, OnSettingsChange) //zz_fly :: Known2Split
 	ON_BN_CLICKED(IDC_REMEMBERCANCELLED, OnSettingsChange) 
 	ON_BN_CLICKED(IDC_BROWSEV, BrowseVideoplayer)
 	ON_WM_HELPINFO()
@@ -167,10 +168,13 @@ void CPPgFiles::LoadSettings(void)
 	{
 		CheckDlgButton(IDC_REMEMBERAICH,FALSE);
 		GetDlgItem(IDC_REMEMBERAICH)->EnableWindow(FALSE);
+		GetDlgItem(IDC_KNOWN2SPLIT_PPGFILES)->EnableWindow(FALSE); //zz_fly :: Known2Split
 	}
 	else
 		CheckDlgButton(IDC_REMEMBERAICH, thePrefs.GetRememberAICH());
 	//Xman end
+
+	CheckDlgButton(IDC_KNOWN2SPLIT_PPGFILES, thePrefs.m_bKnown2Split_next);//zz_fly :: Known2Split
 
 	GetDlgItem(IDC_STARTNEXTFILECAT)->EnableWindow(IsDlgButtonChecked(IDC_STARTNEXTFILE));
 }
@@ -231,6 +235,7 @@ BOOL CPPgFiles::OnApply()
 		thePrefs.SetRememberCancelledFiles(false);
 
 	thePrefs.SetRememberAICH(IsDlgButtonChecked(IDC_REMEMBERAICH)!=0); //Xman remove unused AICH-hashes
+	thePrefs.m_bKnown2Split_next = (IsDlgButtonChecked(IDC_KNOWN2SPLIT_PPGFILES)!=0); //zz_fly :: Known2Split
 
 	thePrefs.addnewfilespaused = IsDlgButtonChecked(IDC_ADDNEWFILESPAUSED)!=0;
 	thePrefs.autofilenamecleanup = IsDlgButtonChecked(IDC_FNCLEANUP)!=0;
@@ -277,6 +282,7 @@ void CPPgFiles::Localize(void)
 		GetDlgItem(IDC_REMEMBERDOWNLOADED)->SetWindowText(GetResString(IDS_PW_REMEMBERDOWNLOADED));
 		GetDlgItem(IDC_REMEMBERCANCELLED)->SetWindowText(GetResString(IDS_PW_REMEMBERCANCELLED));		
 		GetDlgItem(IDC_REMEMBERAICH)->SetWindowText(GetResString(IDS_REMEMBERAICH)); //Xman remove unused AICH-hashes
+		GetDlgItem(IDC_KNOWN2SPLIT_PPGFILES)->SetWindowText(GetResString(IDS_ENABLEKNOWN2SPLIT)); //zz_fly :: Known2Split
 	}
 }
 
@@ -355,11 +361,13 @@ void CPPgFiles::OnBnClickedRememberdownloaded()
 	if(IsDlgButtonChecked(IDC_REMEMBERDOWNLOADED))
 	{
 		GetDlgItem(IDC_REMEMBERAICH)->EnableWindow(true);
+		GetDlgItem(IDC_KNOWN2SPLIT_PPGFILES)->EnableWindow(true); //zz_fly :: Known2Split
 	}
 	else
 	{
 		CheckDlgButton(IDC_REMEMBERAICH,FALSE);
 		GetDlgItem(IDC_REMEMBERAICH)->EnableWindow(false);
+		GetDlgItem(IDC_KNOWN2SPLIT_PPGFILES)->EnableWindow(false); //zz_fly :: Known2Split
 	}
 }
 //Xman end

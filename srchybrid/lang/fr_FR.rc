@@ -2337,6 +2337,13 @@ BEGIN
     IDS_SKIPALL             "P&asser tous"
     IDS_TRYAGAIN            "&Réessayer"
     IDS_YESTOALL            "O&ui à tout"
+    IDS_OVERWRITE1          "Le fichier %s existe déjà. L'écraser ?"
+    IDS_OVERWRITE2          "Ecraser ?"
+    IDS_BACKUPERROR         "Une erreur a été rencontrée pendant la sauvegarde"
+    IDS_BACKUP_PART         "En raison de leur taille, les sauvegardes des fichiers *.part peuvent prendre quelques minutes.\nÊtes-vous sûr de vouloir faire ceci ?"
+    IDS_BACKUP_PART_W       "Etes-vous sûr ?"
+    IDS_BACKUP_COMPLETE     "Fichier(s) copié(s) avec succès."
+    IDS_BACKUP_COMPLETE_W   "Sauvegarde achevée"
     // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
     // ==> TBH: minimule - Max
     IDS_MM_SHOW             "Utiliser Mini-Mule TBH à la place"
@@ -2449,6 +2456,7 @@ BEGIN
     IDS_KEEPCATINCSHARED  "Le dossier enlevée de incoming devrait-il être ajouté comme départ ?"
     IDS_KEEPCATINCSHARED_TITLE  "Catégorie effacée"
     IDS_ADD_REMOVED_INC  "Demandez si le dossier incoming entrant et supprimé est ajouté comme départ ?"
+    IDS_DONOTWATCHCLIP      "Arréter de surveiller le presse-papier"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Gestion des fichiers partagés"
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2712,6 +2720,7 @@ BEGIN
     IDS_MSGONLYSEC          "Autoriser seulement les clients valides"
     IDS_DISABLEPEERACHE    "Désactiver le téléchargement à partir du PeerCache"
     IDS_KEEPUNAVAILABLEFIXEDSHAREDDIRS  "Gardez les annuaires indisponibles sur les commandes fixes"
+    // <== Advanced Options [Official/MorphXT] - Stulle
     // ==> Advanced Updates [MorphXT/Stulle] - Stulle
     IDS_UPDATEANTILEECHERONSTART "Mettre à jour antiLeech.dll au démarrage"
     IDS_AUTOUPWEEK          "MAJ hebdomadaire"
@@ -2723,7 +2732,7 @@ BEGIN
     IDS_AUTOUPIP2COUNTRY    "Mise à jour des drapeaux de pays au démarrage"
     IDS_SCHED_UPDATE_IPCONFIG_LOG "Mise à jour planifiée de ipfilter.dat"
     IDS_SCHED_UPDATE_ANTILEECH_LOG "Mise à jour programmée de antiLeech.dll en cours"
-    IDS_SCHEDTEXT           "Ajouté par Morph pour la mise à jour auto"
+    IDS_SCHEDTEXT           "Ajouté par ScarAngel pour la mise à jour auto"
     IDS_SCHED_UPDATE_IPCONFIG  "Mettre à jour fichier IPFILTER.DAT"
     IDS_SCHED_UPDATE_ANTILEECH "Mise à jour du fichier antiLeech.dll"
     IDS_SCHED_UPDATE_WARNING "Evitez de planifier les mises à jour trop fréquemment pour limiter le trafic réseau.\nUne mise à jour hebdomadaire devrait suffire"
@@ -2802,6 +2811,7 @@ BEGIN
     IDS_ADVADMINENABLED     "Activer la gestion multi-utilisateur du serveur WEB"
     IDS_ADVADMIN_GUEST      "Invité"
     IDS_ADVADMIN_DFILES     "Access - Télécharger des fichiers?"
+    IDS_WS_HIDDEN           "Nom de fichier caché"
     // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
     // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
     IDS_TAB_WEB_SERVER      "Serveur Web"
@@ -2854,6 +2864,7 @@ BEGIN
     IDS_SVC_STRTUP_OPN_FAIL "Impossible d'ouvrir le service à changer le mode de démarrage:% s"
     IDS_SVC_STRTUP_CTRL_FAIL "Impossible de se connecter au service de commande pour changer le mode de démarrage:% s"
     IDS_SVC_LINK_PASS_FAIL  "Pass pour le service web: erreur d'ouverture Internet"
+    IDS_SERVICE_OPT_GUI     "Addons GUI du mod"
     // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
     // ==> Adjustable NT Service Strings - Stulle
     IDS_SERVICE_STR_GROUP   "Chaîne du service NT  (vide = défaut)"
@@ -2877,9 +2888,10 @@ BEGIN
     // <== Adjustable NT Service Strings - Stulle
     // ==> Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_YESSERVICE          "Oui, et démarrage du service eMule"
-    IDS_NOMINIMIZE          "No, To tray"
+    IDS_NOMINIMIZE          "Non, dans la barre de notification"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
-    IDS_WS_FRIENDSLOT       "Friendslot" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_WS_FRIENDSLOT       "Slot ami" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Détails de la partie" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 #endif    // French (France) resources

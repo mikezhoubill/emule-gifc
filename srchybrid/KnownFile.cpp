@@ -49,6 +49,7 @@
 #include "SharedFilesWnd.h"
 #include "MediaInfo.h"
 #include "MuleStatusBarCtrl.h" //Xman Progress Hash (O2)
+#include "UploadQueue.h" // Superior Client Handling [Stulle] - Stulle
 
 #pragma warning(disable:4100) // unreferenced formal parameter
 #include <id3/tag.h>
@@ -3043,6 +3044,7 @@ void CKnownFile::CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* clien
 		partsavail[i] = true;
 	}
 
+	/*
 	if (IsPartFile()) {
 		uint32 somethingtoshare = 0;
 		for (i = 0; i < parts; i++)
@@ -3054,6 +3056,7 @@ void CKnownFile::CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* clien
 		if (somethingtoshare<=2)
 			return;
 	}
+	*/
 	if (client->m_abyUpPartStatus) {
 		uint32 somethingtoshare = 0;
 		for (i = 0; i < parts; i++)
@@ -3115,7 +3118,7 @@ void CKnownFile::CalcPartSpread(CArray<uint64>& partspread, CUpDownClient* clien
 			if (partspread[i] >= hideOS && client->m_abyUpPartStatus)
 				client->m_abyUpPartStatus[i] |= SC_HIDDENBYHIDEOS;
 	}
-	UINT SOTN = ((GetShareOnlyTheNeed()>=0)?GetShareOnlyTheNeed():thePrefs.GetShareOnlyTheNeed()); 
+	UINT SOTN = SotnInWork();
 	if (SOTN) {
 		/*
 		if (IsPartFile()) {
@@ -3287,7 +3290,7 @@ bool CKnownFile::HideOvershares(CSafeMemFile* file, CUpDownClient* client){
 		if (partspread[i] > max)
 			max = partspread[i];
 	UINT hideOS = HideOSInWork();
-	UINT SOTN = ((GetShareOnlyTheNeed()>=0)?GetShareOnlyTheNeed():thePrefs.GetShareOnlyTheNeed());
+	UINT SOTN = SotnInWork();
 	if (!hideOS && SOTN)
 		hideOS = 1;
 	if (max < hideOS || !hideOS)
@@ -3313,7 +3316,7 @@ bool CKnownFile::HideOvershares(CSafeMemFile* file, CUpDownClient* client){
 	return TRUE;
 }
 
-UINT	CKnownFile::HideOSInWork() const
+UINT CKnownFile::HideOSInWork() const
 {
 	// ==> Spread bars [Slugfiller/MorphXT] - Stulle
 	if(thePrefs.GetSpreadbarSetStatus() == false)
@@ -3324,13 +3327,30 @@ UINT	CKnownFile::HideOSInWork() const
 
 	return  (m_iHideOS>=0)?m_iHideOS:thePrefs.GetHideOvershares();
 }
+
+UINT CKnownFile::SotnInWork() const
+{
+	if(IsPartFile() == true) // not for partfiles
+		return 0;
+
+	return  (GetShareOnlyTheNeed()>=0)?GetShareOnlyTheNeed():thePrefs.GetShareOnlyTheNeed();
+}
 // <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
 
 // ==> PowerShare [ZZ/MorphXT] - Stulle
-void CKnownFile::SetPowerShared(int newValue) {
+void CKnownFile::SetPowerShared(int newValue)
+{
+	int oldValue = m_powershared; // Superior Client Handling [Stulle] - Stulle
     m_powershared = newValue;
 	if (IsPartFile() == false)
 		UpdatePartsInfo();
+	// ==> Superior Client Handling [Stulle] - Stulle
+	if(theApp.uploadqueue && oldValue != newValue)
+	{
+		theApp.uploadqueue->ReSortUploadSlots(true);
+		theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	}
+	// <== Superior Client Handling [Stulle] - Stulle
 }
 
 void CKnownFile::UpdatePowerShareLimit(bool authorizepowershare,bool autopowershare, bool limitedpowershare)
@@ -3339,7 +3359,15 @@ void CKnownFile::UpdatePowerShareLimit(bool authorizepowershare,bool autopowersh
 	m_bPowerShareAuto = autopowershare;
 	m_bPowerShareLimited = limitedpowershare;
 	int temppowershared = (m_powershared>=0)?m_powershared:thePrefs.GetPowerShareMode();
+	bool oldPowershare = m_bpowershared; // Superior Client Handling [Stulle] - Stulle
 	m_bpowershared = ((temppowershared&1) || ((temppowershared == 2) && m_bPowerShareAuto)) && m_bPowerShareAuthorized && !((temppowershared == 3) && m_bPowerShareLimited);
+	// ==> Superior Client Handling [Stulle] - Stulle
+	if(theApp.uploadqueue && oldPowershare != m_bpowershared)
+	{
+		theApp.uploadqueue->ReSortUploadSlots(true);
+		theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+	}
+	// <== Superior Client Handling [Stulle] - Stulle
 }
 bool CKnownFile::GetPowerShared() const
 {

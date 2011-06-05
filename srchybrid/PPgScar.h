@@ -565,6 +565,7 @@ private:
 	void Backup2(LPCTSTR extensionToBack);
 	void BackupNowEnable();
 	BOOL y2All;
+	BOOL n2All;
 	// <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
 
 	// ==> Design Settings [eWombat/Stulle] - Stulle

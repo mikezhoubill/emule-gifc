@@ -1936,6 +1936,7 @@ void CEMSocket::SetConnectedState(const uint8 state)
 	sendLocker.Unlock();
 }
 //Xman end
+
 // netfinity: Maximum Segment Size (MSS - Vista only) //added by zz_fly
 void CEMSocket::SetMSSFromSocket(SOCKET socket){
 #ifdef HAVE_VISTA_SDK

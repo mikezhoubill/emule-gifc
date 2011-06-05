@@ -103,7 +103,12 @@ void CUpDownClient::DrawUpStatusBar(CDC* dc, RECT* rect, bool onlygreyrect, bool
     }
 
 	// wistily: UpStatusFix
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	EMFileSize filesize;
 	if (currequpfile)
 		filesize = currequpfile->GetFileSize();
@@ -337,7 +342,12 @@ int CUpDownClient::GetFilePrioAsNumber() const {
 }
 */
 int CUpDownClient::GetFilePrioAsNumber() const {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if(!currequpfile)
 		return 0;
 	
@@ -441,7 +451,12 @@ uint32 CUpDownClient::GetScore(bool sysvalue, bool isdownloading, bool onlybasev
 		return 0;
 
 	//Xman Code Improvement
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if(!currequpfile)
 		return 0;
 	//Xman end
@@ -840,11 +855,10 @@ void CUpDownClient::CreateNextBlockPackage(){
 	//Xman end
 
 	// See if we can do an early return. There may be no new blocks to load from disk and add to buffer, or buffer may be large enough allready.
-	const uint32 nBufferLimit = theApp.uploadqueue->UseHighSpeedUpload() ? (800 * 1024) : (160 * 1024); //Xman changed - 160 was 50
     if(m_BlockRequests_queue.IsEmpty() || // There is no new blocks requested
        m_abyfiledata == (byte*)-2 || //we are still waiting for a block read from disk
 	   m_abyfiledata != (byte*)-1 && //Make sur we don't have something to do
-	    m_addedPayloadQueueSession > GetQueueSessionPayloadUp() && GetPayloadInBuffer() > nBufferLimit) { // the buffered data is large enough already according to client datarate
+	    m_addedPayloadQueueSession > GetQueueSessionPayloadUp() && GetPayloadInBuffer() > max(GetUploadDatarate()<<1, 50*1024)) { // the buffered data is large enough already according to client datarate
 		return;
 	}
 
@@ -853,8 +867,7 @@ void CUpDownClient::CreateNextBlockPackage(){
 
 	try{
 		// Buffer new data if current buffer is less than 180 KBytes
-		while (!m_BlockRequests_queue.IsEmpty() && m_abyfiledata != (byte*)-2 &&
-				(m_addedPayloadQueueSession <= GetQueueSessionPayloadUp() || m_addedPayloadQueueSession-GetQueueSessionPayloadUp() < EMBLOCKSIZE)) { //Xman changed  
+		while (!m_BlockRequests_queue.IsEmpty() && m_abyfiledata != (byte*)-2) {
 			//Xman Full Chunk
 			//at this point we do the check if it is time to kick the client
 			//if we kick soon, we don't add new packages
@@ -1044,6 +1057,11 @@ void CUpDownClient::CreateNextBlockPackage(){
 
 				delete[] filedata_ReadFromDisk;
 				filedata_ReadFromDisk = NULL;
+
+				//Xman Full Chunk
+				if(upendsoon)
+					break;
+				//Xman end
 			}
 			//now process error from nextblock to read
 		}
@@ -1277,7 +1295,12 @@ void CUpDownClient::CreateStandartPackets(byte* data,uint32 togo, Requested_Bloc
 			CSafeMemFile dataHttp(10240);
 			if (m_iHttpSendState == 0)
 			{
+				// ==> requpfile optimization [SiRoB] - Stulle
+				/*
 				CKnownFile* srcfile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+				*/
+				CKnownFile* srcfile = CheckAndGetReqUpFile();
+				// <== requpfile optimization [SiRoB] - Stulle
 				CStringA str;
 				str.AppendFormat("HTTP/1.0 206\r\n");
 				str.AppendFormat("Content-Range: bytes %I64u-%I64u/%I64u\r\n", currentblock->StartOffset, currentblock->EndOffset - 1, srcfile->GetFileSize());
@@ -1467,11 +1490,17 @@ void CUpDownClient::CreatePackedPackets(byte* data, uint32 togo, Requested_Block
 
 void CUpDownClient::SetUploadFileID(CKnownFile* newreqfile)
 {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* oldreqfile;
 	//We use the knownfilelist because we may have unshared the file..
 	//But we always check the download list first because that person may have decided to redownload that file.
 	//Which will replace the object in the knownfilelist if completed.
 	if ((oldreqfile = theApp.downloadqueue->GetFileByID(requpfileid)) == NULL)
+	*/
+	CKnownFile* oldreqfile = requpfile;
+	if (!theApp.downloadqueue->IsPartFile(requpfile))
+	// <== requpfile optimization [SiRoB] - Stulle
 		oldreqfile = theApp.knownfiles->FindKnownFileByID(requpfileid);
 	else
 	{
@@ -1504,6 +1533,11 @@ void CUpDownClient::SetUploadFileID(CKnownFile* newreqfile)
 	}
 	else
 		md4clr(requpfileid);
+
+	// ==> requpfile optimization [SiRoB] - Stulle
+	requpfile = newreqfile;
+	requpfileid_lasttimeupdated = theApp.sharedfiles->GetLastTimeFileMapUpdated();
+	// <== requpfile optimization [SiRoB] - Stulle
 
 	if (oldreqfile)
 	{ //Xman
@@ -2084,7 +2118,12 @@ void CUpDownClient::SetCollectionUploadSlot(bool bValue){
 // [Returns] 
 //   true : Next requested block is from another different chunk or file than last downloaded block 
 //   false: Next requested block is from same chunk that last downloaded block 
+// ==> Superior Client Handling [Stulle] - Stulle
+/*
 bool CUpDownClient::IsDifferentPartBlock()
+*/
+bool CUpDownClient::IsDifferentPartBlock(bool bCheckForMulti)
+// <== Superior Client Handling [Stulle] - Stulle
 { 
 	Requested_Block_Struct* lastBlock;
 	Requested_Block_Struct* currBlock;
@@ -2095,7 +2134,12 @@ bool CUpDownClient::IsDifferentPartBlock()
 	
 	//try {
 		// Check if we have good lists and proceed to check for different chunks
+		// ==> Superior Client Handling [Stulle] - Stulle
+		/*
 		if (GetSessionUp() >= 3145728 //Xman-Full-Chunk: Client is allowed to get min 3.0 MB
+		*/
+		if ((GetSessionUp() >= 3145728 || bCheckForMulti)
+		// <== Superior Client Handling [Stulle] - Stulle
 			&& !m_BlockRequests_queue.IsEmpty() && !m_DoneBlocks_list.IsEmpty())
 		{
 			// Calculate corresponding parts to blocks
@@ -2107,22 +2151,34 @@ bool CUpDownClient::IsDifferentPartBlock()
              
 			// Test is we are asking same file and same part
 			//
-			if ( lastDone != currRequested )  
-			{ 
-				different = true;
+			// ==> Superior Client Handling [Stulle] - Stulle
+			if(!bCheckForMulti)
+			{
+			// <== Superior Client Handling [Stulle] - Stulle
+				if ( lastDone != currRequested )  
+				{ 
+					different = true;
 				
-				if(thePrefs.GetLogUlDlEvents()){
-					AddDebugLogLine(false, _T("%s: Upload session will end soon due to new chunk."), this->GetUserName());
-				}				
-			}
-			if (md4cmp(lastBlock->FileID, currBlock->FileID) != 0 ) 
-			{ 
-				different = true;
-				
-				if(thePrefs.GetLogUlDlEvents()){
-					AddDebugLogLine(false, _T("%s: Upload session will end soon due to different file."), this->GetUserName());
+					if(thePrefs.GetLogUlDlEvents()){
+						AddDebugLogLine(false, _T("%s: Upload session will end soon due to new chunk."), this->GetUserName());
+					}				
 				}
+				if (md4cmp(lastBlock->FileID, currBlock->FileID) != 0 ) 
+				{ 
+					different = true;
+				
+					if(thePrefs.GetLogUlDlEvents()){
+						AddDebugLogLine(false, _T("%s: Upload session will end soon due to different file."), this->GetUserName());
+					}
+				}
+			// ==> Superior Client Handling [Stulle] - Stulle
 			}
+			else
+			{
+				if (lastDone != currRequested || md4cmp(lastBlock->FileID, currBlock->FileID) != 0) 
+					different = true;
+			}
+			// <== Superior Client Handling [Stulle] - Stulle
 		} 
    /*
 	}
@@ -2468,7 +2524,12 @@ int CReadBlockFromFileThread::Run() {
 // ==> push small files [sivka] - Stulle
 bool CUpDownClient::GetSmallFilePush() const
 {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	return(currequpfile &&
 		currequpfile->IsPushSmallFile());
 }
@@ -2478,7 +2539,12 @@ bool CUpDownClient::GetSmallFilePush() const
 float CUpDownClient::GetRareFilePushRatio() const {
 	if(!thePrefs.GetEnablePushRareFile())
 		return 1.0f;
-	CKnownFile* srcfile = theApp.sharedfiles->GetFileByID(/*(uchar*)*/GetUploadFileID());
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
+	CKnownFile* srcfile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	*/
+	CKnownFile* srcfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	if (srcfile == (CKnownFile*)NULL)
 		return 4.0f;
 	
@@ -2527,7 +2593,12 @@ void CUpDownClient::GetUploadingAndUploadedPart(uint8* m_abyUpPartUploadingAndUp
 /* FairPlay                                                             */
 bool CUpDownClient::IsSuperiorClient() const
 {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currentReqFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	*/
+	CKnownFile* currentReqFile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 
 	// only clients requesting a valid file can be superior
 	if(currentReqFile == NULL)
@@ -2585,7 +2656,12 @@ bool CUpDownClient::IsSuperiorClient() const
 
 // ==> PowerShare [ZZ/MorphXT] - Stulle
 bool CUpDownClient::GetPowerShared() const {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currentReqFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	*/
+	CKnownFile* currentReqFile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	return currentReqFile && currentReqFile->GetPowerShared();
 }
 
@@ -2596,7 +2672,12 @@ bool CUpDownClient::GetPowerShared(const CKnownFile* file) const {
 
 // ==> Design Settings [eWombat/Stulle] - Stulle
 bool CUpDownClient::GetPowerReleased() const {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currentReqFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	*/
+	CKnownFile* currentReqFile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 	return currentReqFile && currentReqFile->GetUpPriority()==PR_POWER;
 }
 // <== Design Settings [eWombat/Stulle] - Stulle
@@ -2604,7 +2685,12 @@ bool CUpDownClient::GetPowerReleased() const {
 // ==> Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
 bool CUpDownClient::IsPBFClient() const
 {
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
 	CKnownFile* currentReqFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+	*/
+	CKnownFile* currentReqFile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
 
 	// only clients requesting a valid file, which is not PartFile can be superior
 	if(currentReqFile == NULL || currentReqFile->IsPartFile())
@@ -2633,3 +2719,318 @@ bool CUpDownClient::IsSecure() const
 	return credits && theApp.clientcredits->CryptoAvailable() && credits->GetCurrentIdentState(GetIP()) == IS_IDENTIFIED;
 }
 // <== Pay Back First [AndCycle/SiRoB/Stulle] - Stulle
+
+// ==> Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+void CUpDownClient::DrawUpStatusBarChunk(CDC* dc, RECT* rect, bool /*onlygreyrect*/, bool  bFlat) const
+{
+	COLORREF crNeither;
+	COLORREF crNextSending;
+	COLORREF crBoth;
+	COLORREF crSending;
+	COLORREF crBuffer;
+	COLORREF crProgress;
+    if(GetFileUploadSocket() && GetFileUploadSocket()->IsFull()) {
+        crNeither = RGB(224, 224, 224);
+	    crNextSending = RGB(255,208,0);
+	    crBoth = bFlat ? RGB(0, 0, 0) : RGB(104, 104, 104);
+	    crSending = RGB(0, 150, 0);
+		crBuffer = RGB(255, 100, 100);
+		crProgress = RGB(0, 224, 0);
+    } else {
+        // grayed out
+        crNeither = RGB(248, 248, 248);
+	    crNextSending = RGB(255,244,191);
+	    crBoth = bFlat ? RGB(191, 191, 191) : RGB(191, 191, 191);
+	    crSending = RGB(191, 229, 191);
+		crBuffer = RGB(255, 216, 216);
+		crProgress = RGB(191, 255, 191);
+    }
+
+	// wistily: UpStatusFix
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
+	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
+	EMFileSize filesize;
+	uint64 chunksize = PARTSIZE;
+	if (currequpfile)
+		filesize=currequpfile->GetFileSize();
+	else
+		filesize = (uint64)(PARTSIZE * (uint64)m_nUpPartCount);
+	// wistily: UpStatusFix
+
+	if(filesize <= (uint64)0)
+		return;
+
+	CBarShader statusBar;
+
+	if (!m_BlockRequests_queue.IsEmpty() || !m_DoneBlocks_list.IsEmpty()) {
+		uint32 cur_chunk = (uint32)-1;
+		uint64 start = (uint64)-1;
+		uint64 end = (uint64)-1;
+		const Requested_Block_Struct* block;
+		if (!m_DoneBlocks_list.IsEmpty()){
+			block = m_DoneBlocks_list.GetHead();
+			if (cur_chunk == (uint32)-1) {
+				cur_chunk = (uint32)(block->StartOffset/PARTSIZE);
+				start = end = cur_chunk*PARTSIZE;
+				end += PARTSIZE-1;
+				if (end > filesize)
+				{
+					end = filesize;
+					chunksize = end - start;
+					if(chunksize <= 0) chunksize = PARTSIZE;
+				}
+				statusBar.SetFileSize(chunksize);
+				statusBar.SetHeight(rect->bottom - rect->top); 
+				statusBar.SetWidth(rect->right - rect->left); 
+				/*
+				if (end > filesize) {
+					end = filesize;
+					s_UpStatusBar.Reset();
+					s_UpStatusBar.FillRange(0, end%PARTSIZE, crNeither);
+				} else
+				*/
+					statusBar.Fill(crNeither);
+			}
+		}
+		if (!m_BlockRequests_queue.IsEmpty()){
+			for(POSITION pos=m_BlockRequests_queue.GetHeadPosition();pos!=0;){
+				block = m_BlockRequests_queue.GetNext(pos);
+				if (cur_chunk == (uint32)-1) {
+					cur_chunk = (uint32)(block->StartOffset/PARTSIZE);
+					start = end = cur_chunk*PARTSIZE;
+					end += PARTSIZE-1;
+					if (end > filesize)
+					{
+						end = filesize;
+						chunksize = end - start;
+						if(chunksize <= 0) chunksize = PARTSIZE;
+					}
+					statusBar.SetFileSize(chunksize);
+					statusBar.SetHeight(rect->bottom - rect->top); 
+					statusBar.SetWidth(rect->right - rect->left); 
+					/*
+					if (end > filesize) {
+						end = filesize;
+						s_UpStatusBar.Reset();
+						s_UpStatusBar.FillRange(0, end%PARTSIZE, crNeither);
+					} else
+					*/
+						statusBar.Fill(crNeither);
+				}
+				if (block->StartOffset <= end && block->EndOffset >= start) {
+					statusBar.FillRange((block->StartOffset > start)?block->StartOffset%PARTSIZE:(uint64)0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crNextSending);
+				}
+			}
+		}
+		
+		if (!m_DoneBlocks_list.IsEmpty() && cur_chunk != (uint32)-1){
+			// Also show what data is buffered (with color crBuffer)
+            uint64 total = 0;
+    
+		    for(POSITION pos=m_DoneBlocks_list.GetTailPosition();pos!=0; ){
+			    block = m_DoneBlocks_list.GetPrev(pos);
+				if (block->StartOffset <= end && block->EndOffset >= start) {
+					if(total + (block->EndOffset-block->StartOffset) <= GetQueueSessionPayloadUp()) {
+						// block is sent
+						statusBar.FillRange((block->StartOffset > start)?block->StartOffset%PARTSIZE:(uint64)0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crProgress);
+						total += block->EndOffset-block->StartOffset;
+					}
+					else if (total < GetQueueSessionPayloadUp()){
+						// block partly sent, partly in buffer
+						total += block->EndOffset-block->StartOffset;
+						uint64 rest = total -  GetQueueSessionPayloadUp();
+						uint64 newEnd = (block->EndOffset-rest);
+						if (newEnd>=start) {
+							if (newEnd<=end) {
+								uint64 uNewEnd = newEnd%PARTSIZE;
+								statusBar.FillRange(block->StartOffset%PARTSIZE, uNewEnd, crSending);
+								if (block->EndOffset <= end)
+									statusBar.FillRange(uNewEnd, block->EndOffset%PARTSIZE, crBuffer);
+								else
+									statusBar.FillRange(uNewEnd, end%PARTSIZE, crBuffer);
+							} else 
+								statusBar.FillRange(block->StartOffset%PARTSIZE, end%PARTSIZE, crSending);
+						} else if (block->EndOffset <= end)
+							statusBar.FillRange((uint64)0, block->EndOffset%PARTSIZE, crBuffer);
+					}
+					else{
+						// entire block is still in buffer
+						total += block->EndOffset-block->StartOffset;
+						statusBar.FillRange((block->StartOffset>start)?block->StartOffset%PARTSIZE:(uint64)0, ((block->EndOffset < end)?block->EndOffset:end)%PARTSIZE, crBuffer);
+					}
+				} else
+					total += block->EndOffset-block->StartOffset;
+		    }
+	    }
+   	    statusBar.Draw(dc, rect->left, rect->top, bFlat);
+	}
+}
+
+float CUpDownClient::GetUpChunkProgressPercent() const
+{
+	// ==> requpfile optimization [SiRoB] - Stulle
+	/*
+	CKnownFile* currequpfile = theApp.sharedfiles->GetFileByID(requpfileid);
+	*/
+	CKnownFile* currequpfile = CheckAndGetReqUpFile();
+	// <== requpfile optimization [SiRoB] - Stulle
+	EMFileSize filesize;
+	uint64 chunksize = PARTSIZE;
+	if (currequpfile)
+		filesize=currequpfile->GetFileSize();
+	else
+		filesize = (uint64)(PARTSIZE * (uint64)m_nUpPartCount);
+
+	if(filesize <= (uint64)0)
+		return 0.0f;
+
+	if (!m_DoneBlocks_list.IsEmpty()) {
+		uint32 cur_chunk = (uint32)-1;
+		uint64 start = (uint64)-1;
+		uint64 end = (uint64)-1;
+		const Requested_Block_Struct* block;
+		block = m_DoneBlocks_list.GetHead();
+		cur_chunk = (uint32)(block->StartOffset/PARTSIZE);
+		start = end = cur_chunk*PARTSIZE;
+		end += PARTSIZE-1;
+		if (end > filesize)
+		{
+			chunksize = end - start;
+			if(chunksize <= 0) chunksize = PARTSIZE;
+		}
+		return (float)(((double)(block->EndOffset%PARTSIZE)/(double)chunksize)*100.0f);
+	}
+	return 0.0f;
+}
+
+void CUpDownClient::DrawUpStatusBarChunkText(CDC* dc, RECT* cur_rec) const
+{
+//	if (!thePrefs.GetShowClientPercentage())
+//		return;
+	CString Sbuffer;
+	CRect rcDraw = cur_rec;
+	rcDraw.top--;rcDraw.bottom--;
+	COLORREF oldclr = dc->SetTextColor(RGB(0,0,0));
+	int iOMode = dc->SetBkMode(TRANSPARENT);
+	if (!m_DoneBlocks_list.IsEmpty())
+		Sbuffer.Format(_T("%u"), (UINT)(m_DoneBlocks_list.GetHead()->StartOffset/PARTSIZE));
+	else if (!m_BlockRequests_queue.IsEmpty())
+		Sbuffer.Format(_T("%u"), (UINT)(m_BlockRequests_queue.GetHead()->StartOffset/PARTSIZE));
+	else
+		Sbuffer.Format(_T("?"));
+
+	Sbuffer.AppendFormat(_T(" @ %.1f%%"),GetUpChunkProgressPercent());
+	
+	#define	DrawChunkText	dc->DrawText(Sbuffer, Sbuffer.GetLength(), &rcDraw, DT_LEFT|DT_SINGLELINE|DT_VCENTER|DT_NOPREFIX|DT_END_ELLIPSIS)
+	DrawChunkText;
+	rcDraw.left+=1;rcDraw.right+=1;
+	DrawChunkText;
+	rcDraw.left+=1;rcDraw.right+=1;
+	DrawChunkText;
+	
+	rcDraw.top+=1;rcDraw.bottom+=1;
+	DrawChunkText;
+	rcDraw.top+=1;rcDraw.bottom+=1;
+	DrawChunkText;
+	
+	rcDraw.left-=1;rcDraw.right-=1;
+	DrawChunkText;
+	rcDraw.left-=1;rcDraw.right-=1;
+	DrawChunkText;
+	
+	rcDraw.top-=1;rcDraw.bottom-=1;
+	DrawChunkText;
+	
+	rcDraw.left++;rcDraw.right++;
+	dc->SetTextColor(RGB(255,255,255));
+	DrawChunkText;
+	dc->SetBkMode(iOMode);
+	dc->SetTextColor(oldclr);
+}
+// <== Uploading Chunk Detail Display [SiRoB/Fafner] - Stulle
+
+// ==> Display remaining upload time [Stulle] - Stulle
+CString CUpDownClient::GetRemainingUploadTime() const
+{
+	if(IsFriend() && GetFriendSlot() || GetUploadDatarate() <= 0 || upendsoon)
+		return _T("?");
+
+	sint64 sTogo = 0;
+
+	if(IsPBFClient() && Credits())
+	{
+		sTogo = sint64(Credits()->GetDownloadedTotal()) - sint64(Credits()->GetUploadedTotal());
+		if(sTogo > 0)
+			return CastSecondsToHM(time_t(UINT(sTogo)/GetUploadDatarate()));
+		else
+			return _T("?");
+	}
+
+	// This is way too expensive! We just use usual way and have the sTogo <= 0 fallback to _T("?")
+	/*
+	if(IsSuperiorClient())
+	{
+		CUpDownClient* bestClient = theApp.uploadqueue->FindBestClientInQueue(true);
+		if(!bestClient || bestClient->IsSuperiorClient()==false)
+			return _T("?");
+	}
+	*/
+
+	if(!thePrefs.TransferFullChunks())
+	{
+		if(GetSessionUp() < 2097152)
+			return CastSecondsToHM(time_t(UINT(GetSessionUp())/GetUploadDatarate()));
+		else
+			return _T("?");
+	}
+	else if(!m_DoneBlocks_list.IsEmpty())
+	{
+		// ==> requpfile optimization [SiRoB] - Stulle
+		/*
+		CKnownFile* currentReqFile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+		*/
+		CKnownFile* currentReqFile = CheckAndGetReqUpFile();
+		// <== requpfile optimization [SiRoB] - Stulle
+		if(currentReqFile)
+		{
+			Requested_Block_Struct* lastBlock = m_DoneBlocks_list.GetHead();
+			const uint32 lastDone = (uint32)(lastBlock->StartOffset / PARTSIZE);
+
+			// Bytes to go for current part
+			sTogo = (lastDone+1)*PARTSIZE-1;
+			if((uint64)sTogo > currentReqFile->GetFileSize())
+				sTogo = (sint64)currentReqFile->GetFileSize();
+			sTogo -= lastBlock->EndOffset;
+
+			if(GetSessionUp() + sTogo < 3145728) // If the part ends too early
+				sTogo = SESSIONMAXTRANS - GetQueueSessionPayloadUp(); // we assume full SESSIONMAXTRANS will be sent.
+			else if(GetQueueSessionPayloadUp() > SESSIONMAXTRANS) // If we Uploaded too much already
+				sTogo = -1; // we don't display anything anymore.
+			else if(GetSessionUp() + sTogo > SESSIONMAXTRANS) // If we uploaded too much to finish the current chunk
+				sTogo = SESSIONMAXTRANS - GetQueueSessionPayloadUp(); // we will send SESSIONMAXTRANS at the most.
+		}
+	}
+	else // Fallback when we haven't finished uploading any block
+		sTogo = SESSIONMAXTRANS - GetQueueSessionPayloadUp();
+	
+	if(sTogo>0)
+		return CastSecondsToHM(time_t(UINT(sTogo)/GetUploadDatarate()));
+
+	return _T("?");
+}
+// <== Display remaining upload time [Stulle] - Stulle
+
+// ==> requpfile optimization [SiRoB] - Stulle
+CKnownFile* CUpDownClient::CheckAndGetReqUpFile() const
+{
+	if (requpfileid_lasttimeupdated < theApp.sharedfiles->GetLastTimeFileMapUpdated()) {
+		return theApp.sharedfiles->GetFileByID(requpfileid);
+		//requpfileid_lasttimeupdated = theApp.sharedfiles->GetLastTimeFileMapUpdated();
+	}
+	return requpfile;
+}
+// <== requpfile optimization [SiRoB] - Stulle

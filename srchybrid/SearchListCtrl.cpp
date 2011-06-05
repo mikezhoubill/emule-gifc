@@ -1105,9 +1105,19 @@ void CSearchListCtrl::CreateMenues()
 
 	m_SearchFileMenu.CreatePopupMenu();
 	m_SearchFileMenu.AddMenuTitle(GetResString(IDS_FILE), true);
+	// ==> XP Style Menu [Xanatos] - Stulle
+	/*
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DOWNLOAD), _T("Resume"));
+	*/
+	m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUME, GetResString(IDS_DOWNLOAD), _T("FILEDOWNLOAD"));
+	// <== XP Style Menu [Xanatos] - Stulle
 	if (thePrefs.IsExtControlsEnabled())
+		// ==> XP Style Menu [Xanatos] - Stulle
+		/*
 		m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, GetResString(IDS_DOWNLOAD) + _T(" (") + GetResString(IDS_PAUSED) + _T(")"));
+		*/
+		m_SearchFileMenu.AppendMenu(MF_STRING, MP_RESUMEPAUSED, GetResString(IDS_DOWNLOAD) + _T(" (") + GetResString(IDS_PAUSED) + _T(")"), _T("FILEDOWNLOADPAUSED"));
+		// <== XP Style Menu [Xanatos] - Stulle
 	//Xman add search to cancelled
 	m_SearchFileMenu.AppendMenu(MF_STRING, MP_ADDSEARCHCANCELLED, GetResString(IDS_MARKCANCELLED));
 	//Xman end

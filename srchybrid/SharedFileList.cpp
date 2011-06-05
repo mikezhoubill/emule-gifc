@@ -468,6 +468,7 @@ CSharedFileList::CSharedFileList(CServerConnect* in_server)
 	FindSharedFiles();
 	*/
 	// SLUGFILLER End
+	m_dwFile_map_updated = 0; // requpfile optimization [SiRoB] - Stulle
 }
 
 CSharedFileList::~CSharedFileList(){
@@ -547,7 +548,9 @@ void CSharedFileList::FindSharedFiles()
 			m_UnsharedFiles_map.SetAt(CSKey(cur_file->GetFileHash()), true);
 			listlock.Lock();
 			m_Files_map.RemoveKey(key);
+			m_dwFile_map_updated = GetTickCount(); // requpfile optimization [SiRoB] - Stulle
 			listlock.Unlock();
+			theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 		}
 		
 		ASSERT( theApp.downloadqueue );
@@ -600,7 +603,12 @@ void CSharedFileList::FindSharedFiles()
 	tempDir.MakeLower();
 	l_sAdded.AddHead( tempDir );
 
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
 	for (int ix=1;ix<thePrefs.GetCatCount();ix++)
+	*/
+	for (int ix=0;ix<thePrefs.GetCatCount();ix++)
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	{
 		tempDir=CString( thePrefs.GetCatPath(ix) );
 		if (tempDir.Right(1)!=_T("\\"))
@@ -799,7 +807,9 @@ bool CSharedFileList::AddFile(CKnownFile* pFile)
 	CSingleLock listlock(&m_mutWriteList);
 	listlock.Lock();	
 	m_Files_map.SetAt(key, pFile);
+	m_dwFile_map_updated = GetTickCount(); // requpfile optimization [SiRoB] - Stulle
 	listlock.Unlock();
+	theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 
 	bool bKeywordsNeedUpdated = true;
 
@@ -898,6 +908,8 @@ bool CSharedFileList::RemoveFile(CKnownFile* pFile, bool bDeleted)
 		theApp.knownfiles->m_nAcceptedTotal -= pFile->statistic.GetAllTimeAccepts();
 		theApp.knownfiles->m_nTransferredTotal -= pFile->statistic.GetAllTimeTransferred();
 	}
+	m_dwFile_map_updated = GetTickCount(); // requpfile optimization [SiRoB] - Stulle
+	theApp.uploadqueue->SetSuperiorInQueueDirty(); // Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
 	return bResult;
 }
 
@@ -1675,7 +1687,12 @@ bool CSharedFileList::ShouldBeShared(CString strPath, CString strFilePath, bool 
 	if (CompareDirectories(strPath, thePrefs.GetMuleDirectory(EMULE_INCOMINGDIR)) == 0)
 		return true;
 
+	// ==> Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
+	/*
 	for (int ix=1;ix<thePrefs.GetCatCount();ix++)
+	*/
+	for (int ix=0;ix<thePrefs.GetCatCount();ix++)
+	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	{
 		if (CompareDirectories(strPath, thePrefs.GetCatPath(ix)) == 0)
 			return true;		

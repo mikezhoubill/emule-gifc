@@ -122,7 +122,7 @@ public:
 	//Modified these three functions by adding and in some cases removing params.
 	void	AddSearchToDownload(CSearchFile* toadd, uint8 paused = 2, int cat = 0, uint16 useOrder = 0);
 	void	AddSearchToDownload(CString link,uint8 paused = 2, int cat = 0, uint16 useOrder = 0);
-	void	AddFileLinkToDownload(class CED2KFileLink* pLink, int cat = 0, bool AllocatedLink = false);
+	void	AddFileLinkToDownload(class CED2KFileLink* pLink, int cat = 0, bool AllocatedLink = false,bool bFromClipboard = false);
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 	void	RemoveFile(CPartFile* toremove);
 	void	DeleteAll();
@@ -399,7 +399,9 @@ private:
 	bool		m_bBusyPurgingLinks;
 	bool		PurgeED2KLinkQueue();
 	uint32		m_iLastLinkQueuedTick;
+	bool        m_bClipboardLinkInQueue;
 
+public: // public for category selection box:
 	CTypedPtrList<CPtrList, CED2KFileLink*> m_ED2KLinkQueue;
 	// <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
 };

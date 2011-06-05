@@ -28,8 +28,8 @@ CTBHMM::CTBHMM(CWnd* pParent /*=NULL*/)
 {
 	for (int i = 0; i < ARRSIZE(m_hConState); i++)
 		m_hConState[i] = NULL;
-	smmin = thePrefs.GetSpeedMeterMin();
-	smmax = thePrefs.GetSpeedMeterMax();
+	smmin = 0;
+	smmax = (thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate();
 	running = false;
 	m_nLastUpdate = ::GetTickCount(); //Fafner: fixed uninitialized memory read (BC) - 1213
 }
@@ -111,6 +111,11 @@ BOOL CTBHMM::OnInitDialog()
 // [TPT] - Improved minimule
 void CTBHMM::RunMiniMule(bool resetMiniMule)
 {
+	// ==> Run eMule as NT Service [leuk_he/Stulle] - Stulle
+	if(theApp.IsRunningAsService(SVC_GUI_OPT))
+		return;
+	// <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
+
 	reset = resetMiniMule;
 	if (!running)
 	{
@@ -142,15 +147,14 @@ void CTBHMM::MMUpdate()
 		return;
 	try
 	{
-
 		uint32 mmUpdateIt = thePrefs.GetMiniMuleUpdate();
 		if (::GetTickCount() - m_nLastUpdate < mmUpdateIt*1000)
 			return;
 		m_nLastUpdate = ::GetTickCount();
 		if (reset)
 		{
-			smmin = thePrefs.GetSpeedMeterMin();
-			smmax = thePrefs.GetSpeedMeterMax();
+			smmin = 0;
+			smmax = (thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate();
 			m_ctrlSpeedMeter.SetRange(smmin,smmax);
 			m_ctrlSpeedMeter.SoftReset();
 		}
@@ -243,16 +247,16 @@ void CTBHMM::MMUpdate()
 		//Xman
 		// Maella -Accurate measure of bandwidth: eDonkey data + control, network adapter-
 		// Retrieve the current datarates
-		uint32 downratekb;	uint32 eMuleInOverall;
-		uint32 upratekb; uint32 eMuleOutOverall;
+		uint32 downrate;	uint32 eMuleInOverall;
+		uint32 uprate; uint32 eMuleOutOverall;
 		uint32 notUsed;
 		theApp.pBandWidthControl->GetDatarates(thePrefs.GetDatarateSamples(),
-			downratekb, eMuleInOverall,
-			upratekb, eMuleOutOverall,
+			downrate, eMuleInOverall,
+			uprate, eMuleOutOverall,
 			notUsed, notUsed);
 
-		uint32 lastuprateoverheadkb=eMuleOutOverall-upratekb;
-		uint32 lastdownrateoverheadkb=eMuleInOverall-downratekb;
+		uint32 lastuprateoverhead=eMuleOutOverall-uprate;
+		uint32 lastdownrateoverhead=eMuleInOverall-downrate;
 		uint64 bEmuleIn= theApp.pBandWidthControl->GeteMuleIn();
 		uint64 bEmuleOut= theApp.pBandWidthControl->GeteMuleOut();
 		//Xman end
@@ -297,17 +301,26 @@ void CTBHMM::MMUpdate()
 		// ==> changed - Stulle
 		/*
 		if( thePrefs.ShowOverhead() )
-			_stprintf(buffer3,GetResString(IDS_UPDOWN), (float)upratekb/1024, (float)lastuprateoverheadkb/1024, (float)downratekb/1024, (float)lastdownrateoverheadkb/1024);
+			_stprintf(buffer3,GetResString(IDS_UPDOWN), (float)uprate/1024, (float)lastuprateoverhead/1024, (float)downrate/1024, (float)lastdownrateoverhead/1024);
 		else
-			_stprintf(buffer3,GetResString(IDS_UPDOWNSMALL),(float)upratekb/1024, (float)downratekb/1024);
+			_stprintf(buffer3,GetResString(IDS_UPDOWNSMALL),(float)uprate/1024, (float)downrate/1024);
 		*/
 		if( thePrefs.ShowOverhead() )
-			_stprintf(buffer3,GetResString(IDS_MM_UPDOWN), CastItoXBytes(upratekb, false, true), (float)lastuprateoverheadkb/1024, CastItoXBytes(downratekb, false, true), (float)lastdownrateoverheadkb/1024);
+			_stprintf(buffer3,GetResString(IDS_MM_UPDOWN), CastItoXBytes(uprate, false, true), (float)lastuprateoverhead/1024, CastItoXBytes(downrate, false, true), (float)lastdownrateoverhead/1024);
 		else
-			_stprintf(buffer3,GetResString(IDS_MM_DATA),CastItoXBytes(upratekb, false, true), CastItoXBytes(downratekb, false, true));
+			_stprintf(buffer3,GetResString(IDS_MM_DATA),CastItoXBytes(uprate, false, true), CastItoXBytes(downrate, false, true));
 		// <== changed - Stulle
 		GetDlgItem(IDC_MM_ULDL)->SetWindowText(buffer3);
-		SetSpeedMeterValues((int)upratekb/1024, (int)downratekb/1024);
+		if(thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())
+		{
+			float fGraphSizeRatio = thePrefs.GetMaxGraphUploadRate()/thePrefs.GetMaxGraphDownloadRate();
+			SetSpeedMeterValues((int)uprate/1024, (int)(fGraphSizeRatio*downrate)/1024);
+		}
+		else
+		{
+			float fGraphSizeRatio = thePrefs.GetMaxGraphDownloadRate()/thePrefs.GetMaxGraphUploadRate();
+			SetSpeedMeterValues((int)(fGraphSizeRatio*uprate)/1024, (int)downrate/1024);
+		}
 
 		// ==> added - Stulle
 		m_btnIncoming.SetIcon(_T("OPENFOLDER"));	

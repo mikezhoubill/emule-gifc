@@ -1250,6 +1250,11 @@ void CUpDownClient::SetDownloadState(EDownloadState nNewState, LPCTSTR pszReason
                     AddDebugLogLine(DLP_VERYLOW, false, _T("Download session ended: %s User: %s in SetDownloadState(). New State: %i, Length: %s, Payload: %s, Transferred: %s, Req blocks not yet completed: %i."), pszReason, DbgGetClientInfo(), nNewState, CastSecondsToHM(GetDownTimeDifference(false)/1000), CastItoXBytes(GetSessionPayloadDown(), false, false), CastItoXBytes(GetSessionDown(), false, false), m_PendingBlocks_list.GetCount());
 			}
 
+			// ==> Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+			// We declare the list dirty at this point so we might catch on if a client is now eligible for PBF
+			theApp.uploadqueue->SetSuperiorInQueueDirty();
+			// <== Keep Sup clients in up if there is no other sup client in queue [Stulle] - Stulle
+
 			//Xman filter clients with failed downloads
 			/*
 			ResetSessionDown();
@@ -2229,7 +2234,12 @@ void CUpDownClient::UDPReaskFNF()
 		*/
 		if(reqfile && GetUploadState()!=US_NONE)
 		{
+			// ==> requpfile optimization [SiRoB] - Stulle
+			/*
 			CKnownFile* upfile = theApp.sharedfiles->GetFileByID(GetUploadFileID());
+			*/
+			CKnownFile* upfile = CheckAndGetReqUpFile();
+			// <== requpfile optimization [SiRoB] - Stulle
 			if(upfile && upfile == reqfile) //we speak about the same file
 			{
 				AddDebugLogLine(false,_T("Dropped src: (%s) does not seem to have own reqfile!(UDP)"), DbgGetClientInfo()); 
@@ -3696,3 +3706,172 @@ uint64 CUpDownClient::GetBytesRemaining() const{
 	return bytesRemaining;
 }
 //zz_fly :: Drop stalled downloads :: netfinity :: end
+
+// ==> Downloading Chunk Detail Display [SiRoB] - Stulle
+void CUpDownClient::DrawStatusBarChunk(CDC* dc, LPCRECT rect,const CPartFile* file, bool  bFlat) const
+{ 
+	if (m_PendingBlocks_list.IsEmpty() && m_DownloadBlocks_list.IsEmpty() || file != reqfile || reqfile == NULL) 
+		return;
+	if (g_bLowColorDesktop)
+		bFlat = true;
+	COLORREF crBoth;
+	COLORREF crClientOnly;
+	COLORREF crPending;
+	COLORREF crNextPending;
+	COLORREF crNeither;
+	COLORREF crBuffer;
+	COLORREF crProgress;
+	COLORREF crDot;
+	if (g_bLowColorDesktop) {
+		crBoth = RGB(0, 0, 0);
+		crClientOnly = RGB(0, 0, 255);
+		crPending = RGB(0, 191, 0);
+		crNextPending = RGB(255, 255, 0);
+		crNeither = RGB(191, 191, 191);
+		crBuffer = RGB(255, 0, 0);
+		crProgress = RGB(0, 255, 0);
+		crDot = RGB(255, 255, 255);
+	} else if (bFlat) {
+		crBoth = RGB(0, 0, 0);
+		crClientOnly = RGB(0, 100, 255);
+		crPending = RGB(0, 150, 0);
+		crNextPending = RGB(255, 208, 0);
+		crNeither = RGB(224, 224, 224);
+		crBuffer = RGB(255, 0, 0);
+		crProgress = RGB(0, 224, 0);
+		crDot = RGB(255, 255, 255);
+	} else {
+		crBoth = RGB(104, 104, 104);
+		crClientOnly = RGB(0, 100, 255);
+		crPending = RGB(0, 150, 0);
+		crNextPending = RGB(255, 208, 0);
+		crNeither = RGB(240, 240, 240);
+		crBuffer = RGB(255, 100, 100);
+		crProgress = RGB(0, 224, 0);
+		crDot = RGB(255, 255, 255);
+	}
+
+	
+	CBarShader statusBar(rect->bottom - rect->top, rect->right - rect->left);
+	
+	UINT cur_chunk = (uint32)-1;
+	uint64 start = (uint64)-1;
+	uint64 end = (uint64)-1;
+	uint64 chunksize = PARTSIZE;
+	const Requested_Block_Struct* block;
+	//Find Sent Requested part
+	if (!m_PendingBlocks_list.IsEmpty()) {
+		block = m_PendingBlocks_list.GetHead()->block;
+		cur_chunk = (UINT)(block->StartOffset / PARTSIZE);
+		start = end = PARTSIZE*(uint64)cur_chunk;
+		end += PARTSIZE-1;
+		if ( end > file->GetFileSize()) {
+			end = file->GetFileSize();
+			chunksize = end - start;
+			if(chunksize <= 0) chunksize = PARTSIZE;
+		}
+		//s_StatusBar.Fill(crProgress);
+	}
+
+	//Find reserved block
+	if (!m_DownloadBlocks_list.IsEmpty()){
+		block = m_DownloadBlocks_list.GetHead();
+		if (cur_chunk == (uint32)-1) {
+			cur_chunk = (uint32)(block->StartOffset/PARTSIZE);
+			start = end = cur_chunk*PARTSIZE;
+			end += PARTSIZE-1;
+			if (end > file->GetFileSize()) {
+				end = file->GetFileSize();
+				chunksize = end - start;
+				if(chunksize <= 0) chunksize = PARTSIZE;
+			}
+			//s_StatusBar.Fill(crProgress);
+		}
+	}
+
+	statusBar.SetFileSize(chunksize);
+	statusBar.Fill(crProgress); // We would do it any way, if we left it in one of the above blocks.
+
+	if (cur_chunk == (uint32)-1)
+		return;
+
+	// Draw Gap part of the chunk in blue for normal client and none for proxy
+	for (POSITION pos = file->gaplist.GetHeadPosition();pos !=  0;){
+		const Gap_Struct* cur_gap = file->gaplist.GetNext(pos);
+		uint64 gapstart = cur_gap->start;
+		uint64 gapend = cur_gap->end;
+		if (gapstart <= end && gapend >= start) {
+			statusBar.FillRange((gapstart>start)?gapstart%PARTSIZE:(uint64)0, ((gapend<end)?(gapend+1):end)%PARTSIZE, crClientOnly);
+		}
+	}
+	
+	if (!m_DownloadBlocks_list.IsEmpty()){
+		//Fill with white Block reserved but not requested yet
+		for(POSITION pos=m_DownloadBlocks_list.GetHeadPosition();pos!=0;){
+			block = m_DownloadBlocks_list.GetNext(pos);
+			if (block->StartOffset <= end && block->EndOffset >= start) {
+				statusBar.FillRange((block->StartOffset>start)?block->StartOffset%PARTSIZE:0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crDot);
+			}
+		}
+	}
+
+	if (!m_PendingBlocks_list.IsEmpty()){
+		//Fill with red block part not received yet for the current recieving block
+		//Fill with darkgreen block part received for the current receiving block
+		//Fill with yellow block requested
+		for(POSITION pos=m_PendingBlocks_list.GetTailPosition();pos!=0; ){
+			Pending_Block_Struct* Pending = m_PendingBlocks_list.GetPrev(pos);
+			block = Pending->block;
+			if (block->StartOffset <= end && block->EndOffset >= start) {
+				uint64 currentpos = m_nLastBlockOffset+Pending->totalUnzipped;
+				if(currentpos <= block->StartOffset) {
+					// block have not been started yet
+					statusBar.FillRange((block->StartOffset>start)?block->StartOffset%PARTSIZE:0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crNextPending);
+				}
+				else if (currentpos > block->EndOffset) {
+					// block have not been started yet
+					statusBar.FillRange((block->StartOffset>start)?block->StartOffset%PARTSIZE:0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crNextPending);
+				}
+				else {
+					uint64 newEnd = currentpos;
+					// block partly received or partly in buffer
+					if (newEnd>start) {
+						if (newEnd<end) {
+							statusBar.FillRange((uint64)(block->StartOffset>start)?block->StartOffset%PARTSIZE:0, newEnd%PARTSIZE, crPending);
+							statusBar.FillRange((uint64)newEnd%PARTSIZE, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crBuffer);
+						} else {
+							statusBar.FillRange((uint64)(block->StartOffset>start)?block->StartOffset%PARTSIZE:0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crPending);
+						}
+					} else {
+						statusBar.FillRange((uint64)0, ((block->EndOffset < end)?block->EndOffset+1:end)%PARTSIZE, crNextPending);
+					}
+				}
+			}
+		}
+	}
+	statusBar.Draw(dc, rect->left, rect->top, bFlat);
+} 
+
+float CUpDownClient::GetDownChunkProgressPercent() const
+{
+	if (m_PendingBlocks_list.IsEmpty() || reqfile == NULL) 
+		return 0.0f;
+	UINT cur_chunk = (uint32)-1;
+	uint64 start = (uint64)-1;
+	uint64 end = (uint64)-1;
+	uint64 chunksize = PARTSIZE;
+	const Requested_Block_Struct* block;
+
+	//Find Sent Requested part
+	block = m_PendingBlocks_list.GetHead()->block;
+	cur_chunk = (UINT)(block->StartOffset / PARTSIZE);
+	start = end = PARTSIZE*(uint64)cur_chunk;
+	end += PARTSIZE-1;
+	if ( end > reqfile->GetFileSize()) {
+		end = reqfile->GetFileSize();
+		chunksize = end - start;
+		if(chunksize <= 0) chunksize = PARTSIZE;
+	}
+	return (float)(((double)(block->EndOffset%PARTSIZE)/(double)chunksize)*100.0f);
+}
+// <== Downloading Chunk Detail Display [SiRoB] - Stulle

@@ -2313,6 +2313,13 @@ BEGIN
     IDS_SKIPALL             "Ü&berspringe Alles"
     IDS_TRYAGAIN            "&Noch ein mal versuchen"
     IDS_YESTOALL            "J&a zu Allem"
+    IDS_OVERWRITE1          "Datei %s besteht bereits. Überschreiben?"
+    IDS_OVERWRITE2          "Überschreiben?"    
+    IDS_BACKUPERROR         "Ein Fehler ist während des Backups aufgetreten"
+    IDS_BACKUP_PART         "Wegen Ihrer Größe, kann die Sicherung der *.part Datei einige Minuten dauern.\nMöchten sie dies trotzdem?"
+    IDS_BACKUP_PART_W       "Sind sie sicher?"
+    IDS_BACKUP_COMPLETE     "Datei(en) wurde(n) erfolgreich kopiert."
+    IDS_BACKUP_COMPLETE_W   "Backup fertig"
     // <== TBH: Backup [TBH/EastShare/MorphXT] - Stulle
     // ==> TBH: minimule - Max
     IDS_MM_SHOW             "Nutze TBH Mini-Mule stattdessen"
@@ -2426,6 +2433,7 @@ BEGIN
     IDS_KEEPCATINCSHARED    "Sollte Ziel-Ordner für fertige Dateien der entfernten Kategorie als\nfreigegebenes Verzeichnis hinzugefügt werden?"
     IDS_KEEPCATINCSHARED_TITLE "Kategorie entfernt"
     IDS_ADD_REMOVED_INC     "Frage ob Ziel-Ordner für fertige Dateien entfernter Kategorien als freigegebenes Verzeichnis hinzugefügt werden sollten."
+    IDS_DONOTWATCHCLIP      "Zwischenablage nicht mehr überprüfen"
     // <== Smart Category Control (SCC) [khaos/SiRoB/Stulle] - Stulle
     IDS_SHARED_PREFS        "Freigegebene Dateien Verwaltung" // Shared Files Management [Stulle] - Stulle
     // ==> Spread bars [Slugfiller/MorphXT] - Stulle
@@ -2781,6 +2789,7 @@ BEGIN
     IDS_ADVADMINENABLED     "Aktiviere Mehrbenutzer Webinterface Rechteverwaltung"
     IDS_ADVADMIN_GUEST      "Gast"
     IDS_ADVADMIN_DFILES     "Zugriff auf - Lade Dateien herunter?"
+    IDS_WS_HIDDEN           "Dateiname versteckt"
     // <== Ionix advanced (multiuser) webserver [iOniX/Aireoreion/wizard/leuk_he/Stulle] - Stulle
     // ==> Tabbed WebInterface settings panel [Stulle] - Stulle
     IDS_TAB_WEB_SERVER      "Webinterface"
@@ -2832,7 +2841,8 @@ BEGIN
     IDS_SVC_STRTUP_FAIL     "Änderung des Starttyps fehlgeschlagen: %s"
     IDS_SVC_STRTUP_OPN_FAIL "Öffnen des Dienstes zum Ändern des Starttyps fehlgeschlagen: %s"
     IDS_SVC_STRTUP_CTRL_FAIL "Konnte keine Verbindung zu Dienstkontrolle für das Ändern des Starttyps herstellen: %s"
-	IDS_SVC_LINK_PASS_FAIL  "Übergebe Link an Webinterface: Internetopen fehlgeschlagen"
+    IDS_SVC_LINK_PASS_FAIL  "Übergebe Link an Webinterface: Internetopen fehlgeschlagen"
+    IDS_SERVICE_OPT_GUI     "Mod GUI Erweiterungen"
     // <== Run eMule as NT Service [leuk_he/Stulle] - Stulle
     // ==> Adjustable NT Service Strings - Stulle
     IDS_SERVICE_STR_GROUP   "NT Dienst Bezeichnungen (leer = standard)"
@@ -2859,6 +2869,7 @@ BEGIN
     IDS_NOMINIMIZE          "Nein, minimiere zu Tray"
     // <== Extended Prompt on Exit dialog [leuk_he] - Stulle
     IDS_WS_FRIENDSLOT       "Freund-Uploadplatz" // Friendslot support for WebInterface [Stulle] - Stulle
+    IDS_CHUNK               "Chunk Detail" // Downloading Chunk Detail Display [SiRoB] - Stulle
 END
 
 #endif    // German (Germany) resources
