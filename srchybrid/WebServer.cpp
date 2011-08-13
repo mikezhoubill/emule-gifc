@@ -1372,6 +1372,15 @@ CString CWebServer::_GetHeader(ThreadData Data, long lSession)
 		HTTPHelp = GetResString(IDS_PW_UNLIMITED);
 	else
 		HTTPHelp.Format(_T("%.1f"), dwMax);
+	// ==> Display ratio activation in WebInterface [Stulle] - Stulle
+	if(theApp.downloadqueue)
+	{
+		if(theApp.downloadqueue->GetLimitState()>=DLR_SOURCE)
+			HTTPHelp.AppendFormat(_T(" R 1:%u"),theApp.downloadqueue->GetLimitRatio());
+		else if(theApp.downloadqueue->GetLimitState()>=DLR_SESLIM)
+			HTTPHelp.Append(_T(" r"));
+	}
+	// <== Display ratio activation in WebInterface [Stulle] - Stulle
 	Out.Replace(_T("[MaxDownload]"), HTTPHelp);
 
 	UINT udwMax = thePrefs.GetMaxConnections();

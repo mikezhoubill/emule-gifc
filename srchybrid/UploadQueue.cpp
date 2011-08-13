@@ -735,6 +735,33 @@ void CUploadQueue::Process() {
 
     // The loop that feeds the upload slots with data.
 	POSITION pos = uploadinglist.GetHeadPosition();
+	// ==> Superior Client Handling [Stulle] - Stulle
+	// Note: This loop takes care of resorting the uploading list
+	while(pos != NULL){
+        // Get the client. Note! Also updates pos as a side effect.
+		CUpDownClient* cur_client = uploadinglist.GetNext(pos);
+		if(cur_client->GetScheduleForMoveDown())
+		{
+			MoveDownInUpload(cur_client);
+			cur_client->SetScheduleForMoveDown(false);
+			pos = uploadinglist.GetHeadPosition(); // We start over to be sure to not miss any client
+		}
+		// ==> Schedule blocking clients for removal [Stulle] - Stulle
+		// remove blocking clients that are marked for removal
+		else if(cur_client->GetScheduleForRemoval())
+		{
+			cur_client->SetScheduleForRemoval(false);
+			CString buffer;
+			buffer.Format(_T("client is blocking too often: avg20: %0.0f%%, all: %0.0f%%, avg-speed: %0.0f B/s"),cur_client->GetFileUploadSocket()->GetBlockRatio(),cur_client->GetFileUploadSocket()->GetBlockRatio_overall(),(float)cur_client->GetSessionUp()/cur_client->GetUpStartTimeDelay()*1000.0f );
+			RemoveFromUploadQueue(cur_client,buffer,CUpDownClient::USR_BLOCKING); // Maella -Upload Stop Reason-
+			pos = uploadinglist.GetHeadPosition(); // We start over to be sure we do not get an exception
+		}
+		// <== Schedule blocking clients for removal [Stulle] - Stulle
+	}
+
+	// Note: The following loop actually feeds the slots.
+	pos = uploadinglist.GetHeadPosition();
+	// <== Superior Client Handling [Stulle] - Stulle
 	while(pos != NULL){
         // Get the client. Note! Also updates pos as a side effect.
 		CUpDownClient* cur_client = uploadinglist.GetNext(pos);
@@ -1006,9 +1033,14 @@ bool CUploadQueue::AcceptNewClient(bool addOnNextConnect)
 					&& cur_client->GetFileUploadSocket()->GetBlockRatio() >= ratioreference //96% the last 20 seconds
 					)
 				{
+					// ==> Schedule blocking clients for removal [Stulle] - Stulle
+					/*
 					CString buffer;
 					buffer.Format(_T("client is blocking too often: avg20: %0.0f%%, all: %0.0f%%, avg-speed: %0.0f B/s"),cur_client->GetFileUploadSocket()->GetBlockRatio(),cur_client->GetFileUploadSocket()->GetBlockRatio_overall(),(float)cur_client->GetSessionUp()/cur_client->GetUpStartTimeDelay()*1000.0f );
 					RemoveFromUploadQueue(cur_client,buffer,CUpDownClient::USR_BLOCKING); // Maella -Upload Stop Reason-
+					*/
+					cur_client->SetScheduleForRemoval(true);
+					// <== Schedule blocking clients for removal [Stulle] - Stulle
 					break; //only one socket 
 				}
 			}
@@ -2043,7 +2075,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 		{
 			// ==> Superior Client Handling [Stulle] - Stulle
 			if(bPreventTimeOver && client->IsDifferentPartBlock(true))
-				MoveDownInUpload(client);// move down
+				client->SetScheduleForMoveDown(true);// move down
 			// <== Superior Client Handling [Stulle] - Stulle
 		}
 		else
@@ -2086,7 +2118,7 @@ bool CUploadQueue::CheckForTimeOver(CUpDownClient* client){
 	{
 		// ==> Superior Client Handling [Stulle] - Stulle
 		if(bPreventTimeOver && client->IsDifferentPartBlock(true))
-			MoveDownInUpload(client);// move down
+			client->SetScheduleForMoveDown(true);// move down
 		// <== Superior Client Handling [Stulle] - Stulle
 	}
 	else
@@ -2939,6 +2971,7 @@ CUpDownClient* CUploadQueue::FindBestSpreadClientInQueue()
 // ==> Superior Client Handling [Stulle] - Stulle
 void CUploadQueue::MoveDownInUpload(CUpDownClient* client)
 {
+	theApp.uploadBandwidthThrottler->Pause(true);
 	POSITION pos = uploadinglist.Find(client);
 	if(pos != NULL)
 	{
@@ -2957,5 +2990,6 @@ void CUploadQueue::MoveDownInUpload(CUpDownClient* client)
 		if (thePrefs.GetLogUlDlEvents())
 			AddDebugLogLine(DLP_LOW, false, _T("%s: Moved down in Upload after one chunk finished."), client->GetUserName());
 	} 
+	theApp.uploadBandwidthThrottler->Pause(false);
 }
 // <== Superior Client Handling [Stulle] - Stulle

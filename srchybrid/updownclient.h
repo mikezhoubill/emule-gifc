@@ -1157,7 +1157,14 @@ public:
 	void GetUploadingAndUploadedPart(uint8* abyUpPartUploadingAndUploaded, uint32 partcount) const;
 	// <== HideOS & SOTN [Slugfiller/ MorphXT] - Stulle
 
-	bool IsSuperiorClient() const; // Superior Client Handling [Stulle] - Stulle
+	// ==> Superior Client Handling [Stulle] - Stulle
+protected:
+	bool m_bScheduleForMoveDown;
+public:
+	bool IsSuperiorClient() const;
+	void SetScheduleForMoveDown(bool in) { m_bScheduleForMoveDown = in; }
+	bool GetScheduleForMoveDown() const { return m_bScheduleForMoveDown; }
+	// <== Superior Client Handling [Stulle] - Stulle
 
 	// ==> PowerShare [ZZ/MorphXT] - Stulle
 	bool			GetPowerShared() const;
@@ -1184,7 +1191,6 @@ protected:
 	// <== SUQWT [Moonlight/EastShare/ MorphXT] - Stulle
 
      // ==> Anti Uploader Ban [Stulle] - Stulle
-private:
 	bool	m_bAntiUploaderCaseThree;
 public:
 	bool	AntiUploaderBanActive();
@@ -1224,5 +1230,13 @@ protected:
 	CKnownFile* requpfile;
 	DWORD		requpfileid_lasttimeupdated;
 	// <== requpfile optimization [SiRoB] - Stulle
+
+	// ==> Schedule blocking clients for removal [Stulle] - Stulle
+public:
+	void SetScheduleForRemoval(bool in) { m_bScheduleForRemoval = in; }
+	bool GetScheduleForRemoval() const { return m_bScheduleForRemoval; }
+protected:
+	bool m_bScheduleForRemoval;
+	// <== Schedule blocking clients for removal [Stulle] - Stulle
 };
 //#pragma pack()

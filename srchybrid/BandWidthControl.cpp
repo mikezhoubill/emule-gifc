@@ -660,7 +660,7 @@ float CBandWidthControl::GetMaxDownloadEx(uint8 force, uint8 &uReason, uint8 &uR
 				fMaxDownload = GetMaxDownloadEqualUploadLimit();
 			}
 		}
-		else if(ueMuleIn > (ueMuleOut*((float)(thePrefs.GetRatioValue()-0.1f))))
+		else if(ueMuleIn > (ueMuleOut*(float(thePrefs.GetRatioValue())-0.1f)))
 		{
 			uReason |= 2;
 			if(fMaxDownload == -1.0f || thePrefs.GetRatioValue() < 4)

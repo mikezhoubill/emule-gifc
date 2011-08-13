@@ -391,7 +391,12 @@ BOOL CMuleSystrayDlg::OnInitDialog()
 
 	m_ctrlSidebar.SetHorizontal(false);
 	m_ctrlSidebar.SetFont(&Font);
+	// ==> Show ModID in systray dialog sidebar [Stulle] - Stulle
+	/*
 	m_ctrlSidebar.SetWindowText(_T("eMule ") + theApp.m_strCurVersionLong);
+	*/
+	m_ctrlSidebar.SetWindowText(_T("eMule ") + theApp.m_strCurVersionLong + _T(" [") + theApp.m_strModLongVersion + _T("]"));
+	// <== Show ModID in systray dialog sidebar [Stulle] - Stulle
 	
 	CRect rDesktop;
 	CWnd *pDesktopWnd = GetDesktopWindow();
