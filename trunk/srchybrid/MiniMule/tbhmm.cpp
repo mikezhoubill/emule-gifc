@@ -29,7 +29,7 @@ CTBHMM::CTBHMM(CWnd* pParent /*=NULL*/)
 	for (int i = 0; i < ARRSIZE(m_hConState); i++)
 		m_hConState[i] = NULL;
 	smmin = 0;
-	smmax = (thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate();
+	smmax = int((thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate());
 	running = false;
 	m_nLastUpdate = ::GetTickCount(); //Fafner: fixed uninitialized memory read (BC) - 1213
 }
@@ -154,7 +154,7 @@ void CTBHMM::MMUpdate()
 		if (reset)
 		{
 			smmin = 0;
-			smmax = (thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate();
+			smmax = int((thePrefs.GetMaxGraphUploadRate()>thePrefs.GetMaxGraphDownloadRate())?thePrefs.GetMaxGraphUploadRate():thePrefs.GetMaxGraphDownloadRate());
 			m_ctrlSpeedMeter.SetRange(smmin,smmax);
 			m_ctrlSpeedMeter.SoftReset();
 		}

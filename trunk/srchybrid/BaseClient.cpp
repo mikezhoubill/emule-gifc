@@ -293,6 +293,7 @@ void CUpDownClient::Init()
     m_lastRefreshedULDisplay = ::GetTickCount();
 	m_bGPLEvildoer = false;
 	m_bHelloAnswerPending = false;
+	m_bACATHelloAnswerPending = false;	//zz_fly :: Client is always highid if we are connecting to them - by Enig123, idea from ACAT
 	m_fNoViewSharedFiles = 0;
 	m_bMultiPacket = 0;
 	md4clr(requpfileid);
@@ -420,6 +421,10 @@ void CUpDownClient::Init()
 	requpfile = NULL;
 	requpfileid_lasttimeupdated = 0;
 	// <== requpfile optimization [SiRoB] - Stulle
+
+	m_bScheduleForMoveDown = false; // Superior Client Handling [Stulle] - Stulle
+
+	m_bScheduleForRemoval = false; // Schedule blocking clients for removal [Stulle] - Stulle
 }
 
 CUpDownClient::~CUpDownClient(){
